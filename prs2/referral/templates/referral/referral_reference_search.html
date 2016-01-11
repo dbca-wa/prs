@@ -1,0 +1,26 @@
+{% if object_list %}
+<div id="reference-search-table" style="-moz-border-radius:4px; background-color:#FFDFDF; border:1px solid #F3AFB5; padding:0.5em 5em;">
+    <p>NOTE: {{ object_count }} referrals have a similar reference recorded:</p>
+    <table class="table table-condensed">
+    <tr>
+        <th></th>
+        <th align="left">ID</th>
+        <th align="left">Reference</th>
+        <th align="left">Region(s)</th>
+        <th align="left">Type</th>
+        <th align="left">Address</th>
+        <th align="left">Description</th>
+    {% for object in object_list %}
+    <tr>
+        <td>{{ forloop.counter }}.</td>
+        <td><a href="{{ object.get_absolute_url }}">{{ object.id }}</a></td>
+        <td>{{ object.reference }}</td>
+        <td>{{ object.regions_str }}</td>
+        <td>{{ object.type }}</td>
+        <td>{{ object.address }}</td>
+        <td>{{ object.description }}</td>
+    </tr>
+    {% endfor %}
+    </table>
+</div>
+{% endif %}

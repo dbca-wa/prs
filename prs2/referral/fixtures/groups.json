@@ -1,0 +1,16 @@
+[
+{
+    "fields": {
+        "name": "PRS user",
+        "permissions": []
+    },
+    "model": "auth.group"
+},
+{
+    "fields": {
+        "name": "PRS power user",
+        "permissions": []
+    },
+    "model": "auth.group"
+}
+]

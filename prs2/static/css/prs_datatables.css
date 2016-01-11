@@ -1,0 +1,5 @@
+.dataTables_wrapper {
+    <!-- Hack to prevent DataTables from adding a horizontal scrollbar to object table -->
+    table-layout: fixed;
+    width: 98% !important;
+}

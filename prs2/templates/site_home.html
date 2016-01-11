@@ -1,0 +1,72 @@
+{% extends "base_prs.html" %}
+{% load static from staticfiles %}
+
+{% block extra_style %}
+{{ block.super }}
+<link rel="stylesheet" type="text/css" href="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.9/css/dataTables.bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="{% static 'css/prs_datatables.css' %}" />
+{% endblock %}
+
+{% block page_content_inner %}
+<h1>{% if stopped_tasks %}STOPPED TASKS{% else %}ONGOING TASKS{% endif %}</h1>
+{% if stopped_tasks %}
+    <div id="stopped-tasks-div">
+{% else %}
+    <div id="ongoing-tasks-div">
+{% endif %}
+{% if object_list %}
+<div class="table-responsive">
+    <table class="table table-striped table-bordered table-condensed prs-object-table">
+        <thead>
+            <tr>
+                {% for header in headers %}
+                    <th>{{ header }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+        {% for object in object_list %}
+        <tr{% if object.is_overdue %} class="error"{%endif%}>{{ object.as_row_for_site_home|safe }}</tr>
+        {% endfor %}
+        </tbody>
+        <tfoot></tfoot>
+    </table>
+</div>
+{% else %}
+    <p>There are no {% if stopped_tasks %}stopped{% else %}ongoing{% endif %} tasks assigned to you.</p>
+{% endif %}
+{% if stopped_tasks %}
+    <p>View your <a href="{% url 'site_home' %}">ongoing tasks</a>.</p>
+    <p><a href="{% url 'stopped_tasks_list' %}?print=true"><i class="fa fa-print"></i> Print-friendly view</a></p>
+{% else %}
+    {% if stopped_tasks_exist %}
+        <p>Please note that you also have <a href="{% url 'stopped_tasks_list' %}" title="Stopped tasks">stopped tasks</a> assigned to you.</p>
+    {% endif %}
+    <p><a href="{% url 'site_home_print' %}"><i class="fa fa-print"></i> Print-friendly view</a></p>
+{% endif %}
+</div>
+<br>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.9/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.9/js/dataTables.bootstrap.min.js"></script>
+<script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/moment.js/2.10.6/moment.min.js"></script>
+<script type="text/javascript" src="{% static 'js/datetime-moment.js' %}"></script>
+<script type="text/javascript">
+    // Document ready events
+    $(function() {
+        // Initialise the DataTable.
+        $.fn.dataTable.moment("dd MMM YYYY", "en-AU");
+        var prsDataTable = $(".prs-object-table").DataTable({
+            "autoWidth": false,
+            "info": false,
+            "ordering": true,
+            "paging": false,
+            "responsive": true,
+            "searching": false
+        });
+    });
+</script>
+{% endblock extra_js %}

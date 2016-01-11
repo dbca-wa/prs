@@ -1,0 +1,24 @@
+{% extends "base_prs.html" %}
+
+{% block page_content_inner %}
+<h1>HELP</h1>
+<p>Welcome to the Planning Referral Sysyem, DPaW's system for recording and managing land use planning referrals and related work.</p>
+<h3>New to PRS?</h3>
+<ul>
+    <li>"Read-only" access to PRS requires only that you be logged in with their DPaW credentials.</li>
+    <li>If you require "edit" rights or more information, please contact:</li>
+        <ul>
+        {% for manager in managers %}
+            <li><a href="mailto:{{ manager.1 }}">{{ manager.0 }}</a> ({{ manager.2 }})</li>
+        {% endfor %}
+        </ul>
+    <li>To search for a referral, click <strong>Referrals</strong> under <strong>Search</strong> in the top menu,
+        and type in known information e.g. address, description, WAPC reference, PRS reference (place inverted
+        commas around phrases).</li>
+    <li>Click hyperlinks on any screen to access more data on referrals or PRS functions.</li>
+</ul>
+<h3>User documentation</h3>
+<p><a href="https://confluence.dpaw.wa.gov.au/display/prs/" target="_blank">PRS user documentation</a>
+is located on Confluence.</p>
+<p><strong>NOTE: you will need to log in to Confluence using your DPaW username and password.</strong></p>
+{% endblock %}

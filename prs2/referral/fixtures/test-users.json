@@ -1,0 +1,74 @@
+[
+{
+    "fields": {
+        "id": 1,
+        "username": "admin",
+        "first_name": "Admin",
+        "last_name": "User",
+        "is_active": true,
+        "is_superuser": true,
+        "is_staff": true,
+        "groups": [],
+        "user_permissions": [],
+        "password": "",
+        "email": "asi@dpaw.wa.gov.au"
+    },
+    "model": "auth.user"
+},
+{
+    "fields": {
+        "id": 2,
+        "username": "readonlyuser",
+        "first_name": "ReadOnly",
+        "last_name": "User",
+        "is_active": true,
+        "is_superuser": false,
+        "is_staff": false,
+        "groups": [],
+        "user_permissions": [],
+        "password": "",
+        "email": "readonlyuser@dpaw.wa.gov.au"
+    },
+    "model": "auth.user"
+},
+{
+    "fields": {
+        "id": 3,
+        "username": "normaluser",
+        "first_name": "Normal",
+        "last_name": "User",
+        "is_active": true,
+        "is_superuser": false,
+        "is_staff": false,
+        "groups": [
+            [
+                "PRS user"
+            ]
+        ],
+        "user_permissions": [],
+        "password": "",
+        "email": "normaluser@dpaw.wa.gov.au"
+    },
+    "model": "auth.user"
+},
+{
+    "fields": {
+        "id": 4,
+        "username": "poweruser",
+        "first_name": "Power",
+        "last_name": "User",
+        "is_active": true,
+        "is_superuser": false,
+        "is_staff": false,
+        "groups": [
+            [
+                "PRS power user"
+            ]
+        ],
+        "user_permissions": [],
+        "password": "",
+        "email": "poweruser@dpaw.wa.gov.au"
+    },
+    "model": "auth.user"
+}
+]

@@ -1,0 +1,226 @@
+{% extends "base_prs.html" %}
+{% load cache %}
+{% load static from staticfiles %}
+{% load bootstrap_pagination %}
+
+{% block extra_style %}
+{{ block.super }}
+{% if geojson_locations %}
+<link rel="stylesheet" type="text/css" href="//api.mapbox.com/mapbox.js/v2.2.1/mapbox.css" />
+<link rel="stylesheet" type="text/css" href="{% static 'leaflet-search/leaflet-search.css' %}" />
+{% endif %}
+<link rel="stylesheet" type="text/css" href="//static.dpaw.wa.gov.au/static/libs/dropzone/4.2.0/min/dropzone.min.css">
+<link rel="stylesheet" type="text/css" href="{% static 'css/prs_dropzone.css' %}" />
+<link rel="stylesheet" type="text/css" href="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.9/css/dataTables.bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="{% static 'css/prs_datatables.css' %}" />
+<style>
+    #map { width:100%; height: 480px;}
+</style>
+{% endblock extra_style %}
+
+{% block navbar_links %}
+{% cache 600 referral_navbar_links referral.pk request.user.username %}
+<li class="dropdown">
+    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Referral <span class="caret"></span></a>
+    <ul class="dropdown-menu" role="menu">
+        <li class="is_prs_user"><a href="{% url 'referral_create_child' pk=referral.pk model='note' %}" title="Add note">Add a note</a></li>
+        <li class="is_prs_user"><a href="{% url 'referral_create_child' pk=referral.pk model='record' %}" title="Add record">Add a record</a></li>
+        <li class="is_prs_user"><a href="{% url 'referral_create_child' pk=referral.pk model='task' %}" title="Add task">Add a task</a></li>
+        <li class="is_prs_user"><a href="{% url 'referral_create_child' pk=referral.pk model='condition' %}" title="Add condition">Add a condition</a></li>
+        {% if has_conditions %}
+          <li class="is_prs_user"><a href="{% url 'referral_create_child_type' pk=referral.pk model='task' type='clearance' %}" title="Add request">Add a clearance request</a></li>
+        {% endif %}
+        <li class="is_prs_user"><a href="{% url 'referral_location_create' pk=referral.pk %}" title="Add location">Create location(s)</a></li>
+        <li class="is_prs_user"><a href="{% url 'referral_relate' pk=referral.pk %}" title="Add related">Add a related referral</a></li>
+        <li class="is_prs_user"><a href="{% url 'prs_object_update' model='referral' pk=referral.pk %}" title="Edit referral">Edit this referral</a></li>
+        {% if location_list %}
+        {% comment %}
+        <li><a href="javascript:plugin.export([map, geojsonFeatures])">Export locations to QGIS</a></li>
+        {% endcomment %}
+        <li><a href="{% url 'referral_detail' pk=referral.pk %}?generate_qgis=true" title="Generate QGIS project">Generate QGIS project</a></li>
+        {% endif %}
+        {% if prs_power_user %}
+        <li><a href="{% url 'referral_delete' pk=referral.pk %}" title="Delete referral">Delete this referral</a></li>
+        {% endif %}
+        {% if bookmark %}
+        <li class="is_prs_user"><a href="{% url 'prs_object_delete' model='bookmark' pk=bookmark.pk %}" title="Remove bookmark">Remove bookmark</a></li>
+        {% else %}
+        <li class="is_prs_user"><a href="{% url 'referral_create_child' pk=referral.pk model='bookmark' %}" title="Add bookmark">Bookmark this referral</a></li>
+        {% endif %}
+        <li><a href="{% url 'referral_detail' pk=referral.pk %}?print=notes" title="Print notes">Print all notes</a></li>
+        <li><a href="{% url 'prs_object_history' model='referral' pk=referral.pk %}" title="Referral history">Referral change history</a></li>
+    </ul>
+</li>
+{% endcache %}
+{{ block.super }}
+{% endblock navbar_links %}
+
+{% block page_content_inner %}
+<!-- Tags and related referrals pane -->
+{% if not object.is_deleted %}
+    <h1>{{ title }}</h1>
+    <div class="row">
+        <div class="col-sm-12 col-md-8">
+            {% if object.related_refs.all %}
+            <div class="alert alert-info">
+                <h4>Related referrals:</h4>
+                {% for ref in object.related_refs.all %}
+                    <form method="post" action="{% url 'referral_relate' pk=referral.id %}?ref_pk={{ ref.pk }}&delete=">
+                        {% csrf_token %}
+                        <a href="{% url 'referral_detail' pk=ref.pk %}" class="tooltip-help">
+                            {{ ref.type }}, ref. {{ ref.reference }} (referral ID {{ ref.pk }})
+                        </a>
+                        <button type="submit" class="btn btn-link is_prs_user_btn">
+                            <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+                        </button>
+                    </form>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        <div class="col-sm-12 col-md-4">
+            <div class="alert alert-warning">
+                {% if object.tags.all %}
+                    <h4>Key issues:</h4>
+                    {% for tag in object.tags.all %}
+                    <a href="{% url 'referral_tagged' slug=tag.slug %}"><span class="label label-primary">{{ tag.name }}</span></a>
+                        {% if forloop.last %}{% else %}
+                            {% ifequal forloop.revcounter0 1 %}and{% else %},{% endifequal %}
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    No issues recorded</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <!-- Referral details table -->
+    <div class="row">
+        <div class="col-sm-12 col-md-8">
+            <div id="referral-details-table">
+                <table class="table table-striped table-bordered table-condensed">
+                    <tbody>
+                        {{ object.as_tbody }}
+                    </tbody>
+                </table>
+                <br>
+            </div>
+        </div>
+        <div class="col-sm-12 col-md-4">
+            <div id="file-uploader">
+                <form action="{% url 'referral_record_upload' pk=object.pk %}" class="dropzone" id="id_referral_dropzone">
+                    <div class="dz-message">Drop files here or click to upload.</div>
+                </form>
+            </div>
+        </div>
+    </div><!-- /.row -->
+    <div class="row">
+        <div class="col-xs-12">
+            <!-- Navigation tabs -->
+            <ul class="nav nav-tabs" role="tablist">
+                <li role="presentation"{% if rel_model == 'tasks' %} class="active"{% endif %}>
+                    <a href="#tab_task" aria-controls="tab_task" role="tab" data-toggle="tab">Tasks</a>
+                </li>
+                <li role="presentation"{% if rel_model == 'notes' %} class="active"{% endif %}>
+                    <a href="#tab_note" aria-controls="tab_note" role="tab" data-toggle="tab">Notes</a>
+                </li>
+                <li role="presentation"{% if rel_model == 'records' %} class="active"{% endif %}>
+                    <a href="#tab_record" aria-controls="tab_record" role="tab" data-toggle="tab">Records</a>
+                </li>
+                <li role="presentation"{% if rel_model == 'locations' %} class="active"{% endif %}>
+                    <a href="#tab_location" aria-controls="tab_location" role="tab" data-toggle="tab">Locations</a>
+                </li>
+                <li role="presentation"{% if rel_model == 'conditions' %} class="active"{% endif %}>
+                    <a href="#tab_condition" aria-controls="tab_condition" role="tab" data-toggle="tab">Conditions</a>
+                </li>
+            </ul>
+            <div class="tab-content">
+                <div role="tabpanel" class="tab-pane{% if rel_model == 'tasks' %} active{% endif %}" id="tab_task">{{ tab_task }}</div>
+                <div role="tabpanel" class="tab-pane{% if rel_model == 'notes' %} active{% endif %}" id="tab_note">{{ tab_note }}</div>
+                <div role="tabpanel" class="tab-pane{% if rel_model == 'records' %} active{% endif %}" id="tab_record">{{ tab_record }}</div>
+                <div role="tabpanel" class="tab-pane{% if rel_model == 'locations' %} active{% endif %}" id="tab_location">{{ tab_location }}</div>
+                <div role="tabpanel" class="tab-pane{% if rel_model == 'conditions' %} active{% endif %}" id="tab_condition">{{ tab_condition }}</div>
+            </div>
+        </div><!-- /.col-xs-12-->
+    </div><!-- /.row -->
+{% endif %}
+{% if geojson_locations %}
+<div class="row">
+    <div class="col-xs-12">
+        <button class="btn btn-primary" role="button" data-toggle="collapse" data-target="#id_collapseMap" aria-expanded="false" aria-controls="id_collapseMap">
+            Show/hide locations
+        </button>
+    </div><!-- /.col-xs-12-->
+</div><!-- /.row -->
+<div class="collapse in" id="id_collapseMap">
+    <div class="row">
+        <div class="col-xs-12">
+            <div id="map"></div>
+        </div><!-- /.col-xs-12-->
+    </div><!-- /.row -->
+</div>
+{% endif %}
+{% endblock page_content_inner %}
+
+{% block extra_js %}
+{{ block.super }}
+{% if geojson_locations %}
+<script src="//api.mapbox.com/mapbox.js/v2.2.2/mapbox.js"></script>
+<script src="{% static 'leaflet-search/leaflet-search.min.js' %}"></script>
+<script>
+    // Set global variables (needs to happen before loading referral_map.js)
+    var geoserver_wms_url = '{{ geoserver_wms_url }}';
+    var geocoder_url = '{{ geocoder_url }}';
+</script>
+<script src="{% static 'js/referral_map.js' %}"></script>
+<script>
+    // Add Location polygons to the map display and zoom to their bounds.
+    var geojsonFeatures = JSON.parse('{{ geojson_locations|escapejs }}');
+    var locationsLayer = L.geoJson(null, {
+        style: {"color": "#ff0000", "weight": 5}
+    }).addTo(map);
+    locationsLayer.addData(geojsonFeatures);
+    map.fitBounds(locationsLayer.getBounds());
+    locationsLayer.addTo(map);
+</script>
+{% comment %}
+<script src="https://static.dpaw.wa.gov.au/static/brocket/plugin/prs2/dist/bundle.v0_1_6.js"></script>
+<script>
+    var plugin = Object.create(BrocketPlugin);
+    plugin.init();
+</script>
+{% endcomment %}
+{% endif %}
+<script src="//static.dpaw.wa.gov.au/static/libs/dropzone/4.2.0/min/dropzone.min.js"></script>
+<script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.9/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.9/js/dataTables.bootstrap.min.js"></script>
+<script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/moment.js/2.10.6/moment.min.js"></script>
+<script type="text/javascript" src="{% static 'js/datetime-moment.js' %}"></script>
+<script type="text/javascript">
+    // Document ready events
+    $(function() {
+        // Configure file upload Dropzone element.
+        Dropzone.options.idReferralDropzone = {
+            paramName: "file",
+            acceptedFiles: ".tif,.jpg,.gif,.png,.doc,.docx,.xls,.xlsx,.csv,.pdf,.txt,.zip",
+        };
+        // Initialise all DataTables.
+        $.fn.dataTable.moment("dd MMM YYYY", "en-AU");
+        $(".prs-object-table").each(function(idx) {
+            $(this).DataTable({
+                "autoWidth": false,
+                "info": false,
+                "ordering": true,
+                "paging": false,
+                "responsive": true,
+                "searching": false
+            });
+        });
+    });
+    {% if geojson_locations %}
+    // Hide the map viewer by default.
+    $("#id_collapseMap").collapse("hide");
+    {% endif %}
+
+</script>
+{% endblock extra_js %}

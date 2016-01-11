@@ -1,0 +1,56 @@
+{% extends "base_prs.html" %}
+
+{% block navbar_button %}{% endblock %}
+{% block navbar_links %}{% endblock %}
+
+{% block page_content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-xs-12">
+            <h4>Please log in with your DPaW username and password:</h4>
+            <form class="form-horizontal" action="" method="POST">
+                {% csrf_token %}
+                {% if form.errors %}
+                <div class="form-group">
+                    <div class="col-xs-12 col-sm-8 col-md-4">
+                        <div class="alert alert-danger">Sorry, that's not a valid username or password.</div>
+                    </div>
+                </div>
+                {% endif %}
+                <div class="form-group">
+                    <label for="username" class="col-xs-12 col-sm-2 col-md-1 control-label">Username:</label>
+                    <div class="col-xs-12 col-sm-6 col-md-3">
+                        <input type="text" class="form-control" name="username" value="" id="username">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="password" class="col-xs-12 col-sm-2 col-md-1  control-label">Password:</label>
+                    <div class="col-xs-12 col-sm-6 col-md-3">
+                        <input type="password" class="form-control" name="password" value="" id="password">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-xs-12 col-sm-offset-2 col-md-offset-1">
+                        <button type="submit" class="btn btn-default">Log in</button>
+                    </div>
+                </div>
+                <input type="hidden" name="next" value="{{ next }}" />
+            </form>
+            <p>Welcome to the Planning Referral Sysyem, DPaW's system for recording and managing land use planning referrals and related work.</p>
+            <h4>New to PRS?</h4>
+            <ul>
+                <li>For "read-only" access to PRS, enter your DPaW username and password to log in. No additional permissions are required.</li>
+                <li>If you require "edit" rights, please contact the application owner(s):</li>
+                    <ul>
+                    {% for manager in managers %}
+                        <li><a href="mailto:{{ manager.1 }}">{{ manager.0 }}</a> ({{ manager.2 }})</li>
+                    {% endfor %}
+                    </ul>
+                <li>Once logged in, click on the <strong>Help</strong> link at the top of the page to access the PRS user manual and other guides.</li>
+                <li>To search for a referral, click <strong>Referrals</strong> under <strong>Search</strong> in the top menu (after logging in), and type in known information e.g. address, description, WAPC reference, PRS reference (place inverted commas around phrases).</li>
+                <li>Click hyperlinks on any screen to access more data on referrals or PRS functions.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

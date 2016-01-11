@@ -1,0 +1,145 @@
+{% extends "base_prs.html" %}
+{% load bootstrap_pagination %}
+
+{% block page_content_inner %}
+<h1>SEARCH EVERYTHING</h1>
+<!-- Search bar -->
+<form action="" method="get">
+    <div class="row">
+        <div class="hidden-xs col-sm-1">
+            <label for="search_field">Search:</label>
+        </div>
+        <div class="col-xs-12 col-sm-11 col-md-8">
+            <input id="search_field" type="text" class="form-control" name="q" placeholder="Search all text..." value="{{ query_string }}">
+        </div>
+    </div>
+</form>
+<hr>
+{% if query %}
+    <!-- Referrals results table -->
+    {% if referrals %}
+    <h3>Search returned referrals:</h3>
+    <div id="referral-object-table" class="table-responsive">
+        <table class="table table-striped table-bordered table-condensed" id="referral-objects-table">
+            <thead>
+                <tr>
+                {% for header in referral_headers %}
+                    <th>{{ header }}</th>
+                {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+            {% for obj in referrals %}
+                <tr>{{ obj.as_row }}</tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <p><a href="{% url 'prs_object_list' model='referrals' %}?q={{ search_string_norm }}">See more results for referrals.</a></p>
+    <hr>
+    {% else %}
+        <h3>Search returned no referrals.</h3>
+        <hr>
+    {% endif %}
+    <!-- Notes results table -->
+    {% if notes %}
+    <h3>Search returned notes:</h3>
+    <div id="note-object-table" class="table-responsive">
+        <table class="table table-striped table-bordered table-condensed">
+            <thead>
+                <tr>
+                {% for header in note_headers %}
+                    <th>{{ header }}</th>
+                {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+            {% for obj in notes %}
+                <tr>{{ obj.as_row }}</tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <p><a href="{% url 'prs_object_list' model='notes' %}?q={{ search_string_norm }}">See more results for notes.</a></p>
+    <hr>
+    {% else %}
+        <h3>Search returned no notes.</h3>
+        <hr>
+    {% endif %}
+    <!-- Records results table -->
+    {% if records %}
+    <h3>Search returned records:</h3>
+    <div id="record-object-table" class="table-responsive">
+        <table class="table table-striped table-bordered table-condensed">
+            <thead>
+                <tr>
+                {% for header in record_headers %}
+                    <th>{{ header }}</th>
+                {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+            {% for obj in records %}
+                <tr>{{ obj.as_row }}</tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <p><a href="{% url 'prs_object_list' model='records' %}?q={{ search_string_norm }}">See more results for records.</a></p>
+    <hr>
+    {% else %}
+        <h3>Search returned no records.</h3>
+        <hr>
+    {% endif %}
+    <!-- Conditions results table -->
+    {% if conditions %}
+    <h3>Search returned approved conditions:</h3>
+    <div id="condition-object-table" class="table-responsive">
+        <table class="table table-striped table-bordered table-condensed">
+            <thead>
+                <tr>
+                {% for header in condition_headers %}
+                    <th>{{ header }}</th>
+                {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+            {% for obj in conditions %}
+                <tr>{{ obj.as_row }}</tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <p><a href="{% url 'prs_object_list' model='conditions' %}?q={{ search_string_norm }}">See more results for conditions.</a></p>
+    <hr>
+    {% else %}
+        <h3>Search returned no conditions.</h3>
+        <hr>
+    {% endif %}
+    <!-- Tasks results table -->
+    {% if tasks %}
+    <h3>Search returned tasks:</h3>
+    <div id="task-object-table" class="table-responsive">
+        <table class="table table-striped table-bordered table-condensed">
+            <thead>
+                <tr>
+                {% for header in task_headers %}
+                    <th>{{ header }}</th>
+                {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+            {% for obj in tasks %}
+                <tr>{{ obj.as_row }}</tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <p><a href="{% url 'prs_object_list' model='tasks' %}?q={{ search_string_norm }}">See more results for tasks.</a></p>
+    <hr>
+    {% else %}
+        <h3>Search returned no tasks.</h3>
+        <hr>
+    {% endif %}
+{% endif %}
+{% endblock %}

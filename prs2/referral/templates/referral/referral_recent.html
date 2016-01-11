@@ -1,0 +1,25 @@
+{% extends "referral/prs_object_list.html" %}
+
+{% block page_content_inner %}
+<h1>RECENTLY OPENED REFERRALS</h1>
+<div id="object-list-table">
+    {% if object_list %}
+    <table class="table table-striped table-bordered table-condensed prs-object-table">
+        <thead>
+            <tr>
+            {% for header in object_list_headers %}
+                <th>{{ header }}</th>
+            {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+        {% for object in object_list %}
+            <tr>{{ object.as_row }}</tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>None found.</p>
+    {% endif %}
+</div>
+{% endblock %}

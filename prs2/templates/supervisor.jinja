@@ -1,0 +1,6 @@
+[program:{{ DEPLOY_SUPERVISOR_NAME }}]
+user={{ DEPLOY_USER }}
+stopasgroup=true
+directory={{ DEPLOY_TARGET }}
+command={{ DEPLOY_VENV_PATH }}/{{ DEPLOY_VENV_NAME }}/bin/honcho start
+environment=PATH="{{ DEPLOY_VENV_PATH }}/{{ DEPLOY_VENV_NAME }}/bin/:%(ENV_PATH)s",PYTHONUNBUFFERED="true"

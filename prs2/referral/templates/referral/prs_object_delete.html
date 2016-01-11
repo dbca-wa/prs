@@ -1,0 +1,31 @@
+{% extends "base_prs.html" %}
+
+{% block page_content_inner %}
+<div class="row-fluid">
+    <div class="span12">
+        <h1>{{ title }}</h1>
+        <div class="alert">
+            {% if object_type == 'Related Referral' %}
+                Are you sure that you want to unrelate the following {{ object_type }}?
+            {% else %}
+                Are you sure that you want to delete the following {{ object_type }}?
+            {% endif %}
+        </div>
+        <table class="table table-striped table-bordered table-condensed" style="width:auto;">
+            <tbody>
+                {{ object.as_tbody|safe }}
+            </tbody>
+        </table>
+        <br>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next_redirect }}">
+            <div class="form-actions">
+                <button class="btn btn-danger" type="submit" value="delete" name="delete" >Delete</button>
+                <button class="btn" type="submit" value="cancel" name="cancel">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

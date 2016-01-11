@@ -1,0 +1,44 @@
+{% extends "base_prs.html" %}
+
+{% block page_content_inner %}
+        <div id="object-details">
+        <!-- Object details -->
+            <h1>{{ title }}</h1>
+            <h3>Current version:</h3>
+            {{ object.as_table|safe }}
+            {# Only object revision comment for the latest version. #}
+            {% for version in obj_versions %}
+                {% if forloop.first %}
+                <table class="table table-striped table-bordered table-condensed">
+                    <p>{{ version.object_version.object.as_tbody }}</p>
+                </table>
+                    <p style="font-size:10px;">Created by {{ version.revision.user.get_full_name }} at
+                    {{ version.revision.date_created|date:"d M Y, H:i"}}
+                    ({{ version.revision.comment }})</p>
+                {% endif %}
+            {% endfor %}
+            <hr>
+            <h3>Previous versions:</h3>
+            {# Only show object revisions after the latest one. #}
+            {% for version in obj_versions|slice:"1:" %}
+                <table class="table table-striped table-bordered table-condensed">
+                <p>{{ version.object_version.object.as_tbody }}</p>
+                <p style="font-size:10px;">Created by {{ version.revision.user.get_full_name }} at
+                {{ version.revision.date_created|date:"d M Y, H:i"}}
+                {% if not forloop.last %}({{ version.revision.comment }}){% endif %}</p>
+                </table>
+                <br>
+            {% endfor %}
+        </div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="text/javascript" charset="utf-8">
+    $(function() {
+        $("#object-history-table").tablesorter({
+            dateFormat: "uk",
+            sortList: [[0,0]]
+        });
+    } );
+</script>
+{% endblock %}

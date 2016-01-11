@@ -1,0 +1,84 @@
+{% extends "base_prs.html" %}
+{% load static from staticfiles %}
+{% load crispy_forms_tags %}
+
+{% block extra_head %}
+{{ block.super }}
+{{ form.media }}
+<link rel="stylesheet" href="{% static 'css/jquery-ui/jquery-ui.css' %}" />
+<link rel="stylesheet" type="text/css" href="//static.dpaw.wa.gov.au/static/libs/bootstrap-datepicker/1.4.1/css/bootstrap-datepicker.min.css">
+<link rel="stylesheet" type="text/css" href="//static.dpaw.wa.gov.au/static/libs/bootstrap-tokenfield/0.12.0/css/bootstrap-tokenfield.min.css">
+{% endblock %}
+
+{% block page_content_inner %}
+<h1>{{ title }}</h1>
+{% crispy form %}
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script type="text/javascript" src="{% static 'js/jquery-ui.js' %}"></script>
+<script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/bootstrap-tokenfield/0.12.0/bootstrap-tokenfield.min.js"></script>
+<script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/bootstrap-datepicker/1.4.1/js/bootstrap-datepicker.min.js"></script>
+<script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/tinymce/4.3.0/tinymce.min.js"></script>
+<script type="text/javascript">
+    // Document ready events:
+    $(function() {
+        // Initialise datepicker widgets
+        $(".dateinput").datepicker({
+            format: 'dd/mm/yyyy',
+            autoclose: true,
+            todayHighlight: true
+        });
+
+        {% if tags %}
+        // Initialise the tags widget.
+        $('#id_tags').tokenfield({
+            autocomplete: {
+                source: {{ tags|safe }}
+            },
+            showAutocompleteOnFocus: true
+        });
+        {% endif %}
+    });
+
+    $('#hint_id_proposed_condition_html').after('<button class="btn btn-primary" id="id-copy-proposed" type="button">Copy Proposed Condition</button>');
+
+    // copy proposed condition text to approved condition text area section
+    $("#id-copy-proposed").click(function() {
+        var c=$('#id_proposed_condition_html_ifr').contents().find('body').contents().clone();
+
+        // there is a default tinymce relate ,.br tag within <p></p>, needs to be removed, else we get a blank line
+        if($('#id_condition_html_ifr').contents().find('body p').contents()['length'] == 1) {
+            $('#id_condition_html_ifr').contents().find('body p').remove();
+        }
+        $('#id_condition_html_ifr').contents().find('body').append(c);
+    });
+
+    // copy model field text to proposed itext area section
+    $("#id_model_condition").change(function() {
+        var selected_text = $('#id_model_condition option:selected').text()
+        // there is a default tinymce relate ,.br tag within <p></p>, needs to be removed, else we get a blank line
+        if($('#id_proposed_condition_html_ifr').contents().find('body p').contents()['length'] == 1) {
+            $('#id_proposed_condition_html_ifr').contents().find('body p').remove();
+        }
+        $('#id_proposed_condition_html_ifr').contents().find('body').append('<p>' + selected_text + '</p>');
+    });
+
+    // Textarea inputs (ID ends with '_html'): alter the CSS of the parent div.
+    // FIXME: work out how to do this using crispy_forms
+    $("textarea[id$='_html']").each(function() {
+        $(this).parent('div').attr("class", "controls col-xs-12 col-sm-8 col-md-9 col-lg-10");
+    });
+    // Initialise a TinyMCE widget on all these textareas.
+    tinymce.init({
+        selector: "textarea[id$='_html']",
+        plugins: ['advlist anchor autolink autoresize code contextmenu link lists paste table'],
+        autoresize_max_height: 480,
+        autoresize_bottom_margin: 0,
+        menubar: false,
+        toolbar: 'undo redo | styleselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link',
+        statusbar: false
+    });
+</script>
+{% endblock %}
