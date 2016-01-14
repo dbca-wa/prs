@@ -201,8 +201,8 @@ class ReferralForm(BaseForm):
 class ReferralCreateForm(ReferralForm):
     due_date = forms.DateField(
         required=False,
-        help_text='''Optional. Date that the referral must be actioned by (system will set a due
-            date of 42 days if no date is chosen).''',
+        help_text='''Optional. Date that the referral must be actioned by (
+            system will set a due date of 42 days if no date is chosen).''',
         widget=forms.DateInput(format='%d/%m/%Y'),
         input_formats=settings.DATE_INPUT_FORMATS)
     task_type = TaskTypeChoiceField()
@@ -244,7 +244,7 @@ class ReferralCreateForm(ReferralForm):
             'referral_date', 'due_date', 'type', 'task_type', 'assigned_user',
             # Hack to make crispy_forms output proper HTML for Bootstrap 3:
             PrependedText('email_user', ''),
-            'region', 'dop_triggers', 'file_no', 'tags',
+            'region', 'dop_triggers', 'file_no',
             Div(
                 self.save_button,
                 self.cancel_button,
@@ -261,7 +261,7 @@ class ReferralUpdateForm(ReferralForm):
         self.helper.layout = Layout(
             'referring_org', 'reference', 'description', 'address',
             'referral_date', 'type', 'region', 'dop_triggers',
-            'file_no', 'tags',
+            'file_no',
             Div(
                 self.save_button, self.cancel_button,
                 css_class='col-sm-offset-4 col-md-offset-3 col-lg-offset-2')
