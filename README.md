@@ -20,10 +20,6 @@ variables (in a `.env` file). Required settings are as follows:
     PORT=8080
     DATABASE_URL="postgis://USER:PASSWORD@HOST:PORT/DATABASE_NAME"
     SECRET_KEY="ThisIsASecretKey"
-    LDAP_SERVER_URI="ldap://URL"
-    LDAP_ACCESS_DN="ldap-access-dn"
-    LDAP_ACCESS_PASSWORD="password"
-    LDAP_SEARCH_SCOPE="DC=searchscope"
     EMAIL_HOST="email.host"
     EMAIL_PORT=25
     SITE_URL="prs.dpaw.wa.gov.au"

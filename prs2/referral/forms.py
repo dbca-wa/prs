@@ -227,7 +227,7 @@ class ReferralCreateForm(ReferralForm):
             given by the referrer and distingushing details. Other key info may
             be added.'''
         self.fields['address'].help_text = '''[Searchable] Insert physical
-            address of the proposal, unless all details are described above.'''
+            address of the proposal.'''
         self.fields['type'].label = '''<a class="btn btn-info"
             data-toggle="modal" data-target="#refTypeModal">
             <span class="glyphicon glyphicon-info-sign"></span>
@@ -454,7 +454,7 @@ class TaskCompleteForm(BaseForm):
     '''
     tags = forms.CharField(
         required=False,
-        help_text='''Record any tags relevant to the advice supplied (required
+        help_text='''Select all tags relevant to the advice supplied (required
         for response with advice / condition / objection).''')
 
     def __init__(self, *args, **kwargs):
