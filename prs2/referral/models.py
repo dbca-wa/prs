@@ -806,7 +806,7 @@ class Record(ReferralBaseModel):
         null=True,
         max_length=255,
         upload_to='uploads/%Y/%m/%d',
-        help_text='Allowed file types: TIF,JPG,GIF,PNG,DOC,DOCX,XLS,XLSX,CSV,PDF,TXT,ZIP'
+        help_text='Allowed file types: TIF,JPG,GIF,PNG,DOC,DOCX,XLS,XLSX,CSV,PDF,TXT,ZIP,MSG'
     )
     infobase_id = models.SlugField(
         blank=True, null=True, verbose_name='Infobase ID',

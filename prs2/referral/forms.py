@@ -389,7 +389,6 @@ class RecordCreateForm(RecordForm):
     def __init__(self, *args, **kwargs):
         super(RecordCreateForm, self).__init__(*args, **kwargs)
         self.fields['order_date'].initial = datetime.today().strftime('%d/%m/%Y')
-        self.fields['order_date'].input_formats = settings.DATE_INPUT_FORMATS
         self.fields['infobase_id'].help_text = '''To link to an Infobase record,
             enter the Infobase object ID exactly as it appears in Infobase (i.e.
             case-sensitive, no spaces). E.g.: eA498596'''

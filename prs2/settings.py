@@ -118,6 +118,7 @@ ALLOWED_UPLOAD_TYPES = [
     'application/x-zip',
     'application/x-zip-compressed',
     'application/octet-stream',  # MIME type for zip files in Chrome.
+    'application/vnd.ms-outlook',  # Outlook MSG format.
     'image/tiff',
     'image/jpeg',
     'image/gif',
