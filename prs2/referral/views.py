@@ -1023,7 +1023,6 @@ class TaskAction(PrsObjectUpdate):
                     # Save tags on the parent referral.
                     for name in tag_names:
                         obj.referral.tags.add(name)
-                        print(name)
 
         obj.modifier = self.request.user
         obj.save()

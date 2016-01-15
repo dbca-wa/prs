@@ -793,8 +793,7 @@ class ModelConditionChoiceField(forms.ModelChoiceField):
     '''
 
     def __init__(self, *args, **kwargs):
-        kwargs['queryset'] = ModelCondition.objects.current().filter(
-            model_condition__referral__isnull=True).order_by('pk')
+        kwargs['queryset'] = ModelCondition.objects.current().order_by('identifier')
         super(ModelConditionChoiceField, self).__init__(*args, **kwargs)
 
     def label_from_instance(self, obj):
