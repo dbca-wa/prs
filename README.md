@@ -1,4 +1,4 @@
-# Planning Referral System 2
+# Planning Referral System
 
 This project consists of a redesign and reorganisation of the [Planning
 Referral System](https://confluence.dec.wa.gov.au/display/prs/Home)
