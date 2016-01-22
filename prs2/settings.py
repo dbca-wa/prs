@@ -119,6 +119,7 @@ ALLOWED_UPLOAD_TYPES = [
     'application/x-zip-compressed',
     'application/octet-stream',  # MIME type for zip files in Chrome.
     'application/vnd.ms-outlook',  # Outlook MSG format.
+    'application/x-qgis-project',
     'image/tiff',
     'image/jpeg',
     'image/gif',
