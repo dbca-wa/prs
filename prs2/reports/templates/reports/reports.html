@@ -319,6 +319,8 @@
 <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/select2/4.0.0/js/select2.min.js"></script>
 <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/moment.js/2.10.6/moment.min.js"></script>
 <script type="text/javascript">
+    const refListUrl = '{% url 'prs_object_list' model='referrals' %}';
+
     function _updateSelectOptions(el, url, filters) {
         // Utility function to replace options in a DOM select element
         // by querying a passed-in endpoint URL.
@@ -505,25 +507,13 @@
         processing: true,
         serverSide: true,
         searching: false,  // Disable search filter.
-        //ordering: false,  // Disable column sorting.
+        ordering: false,  // Disable column sorting.
         pageLength: 25,  // Initial number of results to show.
         responsive: true,
         pagingType: "numbers",
         ajax: function(data, callback, settings) {
-            console.log(data.order);
-            var column_map = [
-                "id",
-                "region",
-                "referring_org__name",
-                "type__name",
-                "reference",
-                "referral_date",
-                "tags",
-                "description"
-            ]
             delete data.columns;  // Remove the columns array attribute to shorten the query params.
             delete data.search;
-            delete data.order
             data.limit = settings._iDisplayLength;
             data.offset = settings._iDisplayStart;
             var params = $.extend({}, data, queryReferralFilters());
@@ -541,10 +531,14 @@
             );
         },
         columns: [
-            {"data": "id"},
+            {
+                "data": "id",
+                "render": function(data, type, row, meta) {
+                    return "<a href='" + refListUrl + data + "/'>" + data +"</a>";
+                }
+            },
             {
                 "data": "region",
-                "orderable": false,
                 "render": function(data, type, row, meta) {
                     return data.map(function(obj) {return obj.name}).join(", ")
                 }
@@ -562,7 +556,6 @@
             },
             {
                 "data": "tags",
-                "orderable": false,
                 "render": function(data, type, row, meta) {
                     return data.map(function(obj) {return obj.name}).join(", ")
                 }
@@ -600,7 +593,12 @@
             );
         },
         columns: [
-            {"data": "condition.referral.id"},
+            {
+                "data": "condition.referral.id",
+                "render": function(data, type, row, meta) {
+                    return "<a href='" + refListUrl + data + "/'>" + data +"</a>";
+                }
+            },
             {
                 "data": "condition.referral.region",
                 "render": function(data, type, row, meta) {
@@ -666,7 +664,12 @@
             );
         },
         columns: [
-            {"data": "referral.id"},
+            {
+                "data": "referral.id",
+                "render": function(data, type, row, meta) {
+                    return "<a href='" + refListUrl + data + "/'>" + data +"</a>";
+                }
+            },
             {"data": "referral.reference"},
             {
                 "data": "referral.region",
