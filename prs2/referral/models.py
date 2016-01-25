@@ -265,7 +265,7 @@ class ReferralBaseModel(ActiveModel, Audit):
 
     class Meta:
         abstract = True
-        ordering = ['-pk']
+        ordering = ['-created']
 
     def __unicode__(self):
         return u'{0} {1}'.format(self._meta.object_name, self.pk)
