@@ -4,7 +4,7 @@ Call and extend these settings by passing --settings=<PATH> to runserver, e.g.
 
 > python manage.py runserver --settings=prs2.settings_dev.py
 """
-from confy import database
+from confy import env, database
 import os
 import sys
 from unipath import Path
@@ -17,10 +17,10 @@ PROJECT_DIR = os.path.join(BASE_DIR, 'prs2')
 sys.path.insert(0, PROJECT_DIR)
 
 # Application definition
-DEBUG = True if os.environ.get('DEBUG', False) else False
-SECRET_KEY = os.environ['SECRET_KEY']
-CSRF_COOKIE_SECURE = True if os.environ.get('CSRF_COOKIE_SECURE', False) == 'True' else False
-SESSION_COOKIE_SECURE = True if os.environ.get('SESSION_COOKIE_SECURE', False) == 'True' else False
+DEBUG = env('DEBUG', False)
+SECRET_KEY = env('SECRET_KEY')
+CSRF_COOKIE_SECURE = env('CSRF_COOKIE_SECURE', False)
+SESSION_COOKIE_SECURE = env('SESSION_COOKIE_SECURE', False)
 if not DEBUG:
     # Localhost, UAT and Production hosts:
     ALLOWED_HOSTS = [
@@ -34,9 +34,9 @@ if not DEBUG:
 INTERNAL_IPS = ['127.0.0.1', '::1']
 ROOT_URLCONF = 'prs2.urls'
 WSGI_APPLICATION = 'prs2.wsgi.application'
-GEOSERVER_WMS_URL = os.environ.get('GEOSERVER_WMS_URL', '')
-GEOSERVER_WFS_URL = os.environ.get('GEOSERVER_WFS_URL', '')
-GEOCODER_URL = os.environ.get('GEOCODER_URL', '')
+GEOSERVER_WMS_URL = env('GEOSERVER_WMS_URL', '')
+GEOSERVER_WFS_URL = env('GEOSERVER_WFS_URL', '')
+GEOCODER_URL = env('GEOCODER_URL', '')
 INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.auth',
@@ -98,14 +98,14 @@ MANAGERS = (
     ('Cho Lamb', 'cho.lamb@dpaw.wa.gov.au', '9442 0309'),
 )
 LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/'
+#LOGIN_REDIRECT_URL = '/'
 APPLICATION_TITLE = 'Planning Referral System'
 APPLICATION_ACRONYM = 'PRS'
 APPLICATION_VERSION_NO = '2.0'
 APPLICATION_ALERTS_EMAIL = 'PRS-Alerts@dpaw.wa.gov.au'
-SITE_URL = os.environ['SITE_URL']
-PRS_USER_GROUP = os.environ['PRS_USER_GROUP']
-PRS_POWER_USER_GROUP = os.environ['PRS_PWUSER_GROUP']
+SITE_URL = env('SITE_URL', 'localhost')
+PRS_USER_GROUP = env('PRS_USER_GROUP', 'PRS user')
+PRS_POWER_USER_GROUP = env('PRS_PWUSER_GROUP', 'PRS power user')
 ALLOWED_UPLOAD_TYPES = [
     'application/msword',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -131,8 +131,8 @@ ALLOWED_UPLOAD_TYPES = [
 
 # Email settings
 ADMINS = ('asi@dpaw.wa.gov.au',)
-EMAIL_HOST = os.environ['EMAIL_HOST']
-EMAIL_PORT = os.environ['EMAIL_PORT']
+EMAIL_HOST = env('EMAIL_HOST', 'email.host')
+EMAIL_PORT = env('EMAIL_PORT', 25)
 
 # Database configuration
 DATABASES = {
@@ -235,8 +235,8 @@ DEBUG_LOGGING = {
 # Supplement some settings when DEBUG is True.
 if DEBUG:
     LOGGING = DEBUG_LOGGING
-    if os.environ.get('INTERNAL_IP', False):  # Optionally add developer local IP
-        INTERNAL_IPS.append(os.environ['INTERNAL_IP'])
+    if env('INTERNAL_IP', False):  # Optionally add developer local IP
+        INTERNAL_IPS.append(env('INTERNAL_IP'))
     INSTALLED_APPS += (
         'debug_toolbar',
     )

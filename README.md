@@ -17,7 +17,6 @@ variables (in a `.env` file). Required settings are as follows:
 
     DJANGO_SETTINGS_MODULE=prs2.settings
     DEBUG=True
-    PORT=8080
     DATABASE_URL="postgis://USER:PASSWORD@HOST:PORT/DATABASE_NAME"
     SECRET_KEY="ThisIsASecretKey"
     EMAIL_HOST="email.host"
