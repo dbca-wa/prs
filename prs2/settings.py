@@ -235,7 +235,8 @@ DEBUG_LOGGING = {
 # Supplement some settings when DEBUG is True.
 if DEBUG:
     LOGGING = DEBUG_LOGGING
-    if env('INTERNAL_IP', False):  # Optionally add developer local IP
+    # Developer local IP may be required for debug_toolbar to work/
+    if env('INTERNAL_IP', False):
         INTERNAL_IPS.append(env('INTERNAL_IP'))
     INSTALLED_APPS += (
         'debug_toolbar',

@@ -7,6 +7,9 @@ addons:
     postgresql: "9.4"
 services:
     - postgresql
+branches:
+    only:
+        - master
 env:
     global:
         - SECRET_KEY=SecretKeyForTravis
@@ -22,3 +25,5 @@ script:
     - python manage.py test -k -v 0 prs2.referral.test_api
     - python manage.py test -k -v 0 prs2.referral.test_views
     - python manage.py test -k -v 0 prs2.referral.test_utils
+    - python manage.py test -k -v 0 prs2.reports
+
