@@ -447,24 +447,17 @@ class Referral(ReferralBaseModel):
             return True
         return False
 
-    def generate_qgis_project(self):
-        """Generates and returns the content for a valid QGIS project.
+    def generate_qgis_layer(self):
+        """Generates and returns the content for a QGIS layer definition.
         """
         # Only return a value for a referral with child locations.
         if not self.location_set.current().exists():
             return None
         # Read in the base Jinja template.
-        t = Template(open('prs2/referral/templates/qgis.jinja', 'r').read())
+        t = Template(open('prs2/referral/templates/qgis_layer.jinja', 'r').read())
         # Build geographical extent of associated locations.
         xmin, ymin, xmax, ymax = self.location_set.current().filter(poly__isnull=False).extent()
         d = {
-            'PROJECT_TITLE': 'PRS referral {} locations'.format(self.pk),
-            'XMIN': xmin,
-            'YMIN': ymin,
-            'XMAX': xmax,
-            'YMAX': ymax,
-            'GEOSERVER_WMS_URL': settings.GEOSERVER_WMS_URL,
-            'GEOSERVER_WFS_URL': settings.GEOSERVER_WFS_URL,
             'REFERRAL_PK': self.pk}
         return t.render(**d)
 

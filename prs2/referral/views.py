@@ -249,10 +249,10 @@ class ReferralDetail(PrsObjectDetail):
 
     def get(self, request, *args, **kwargs):
         ref = self.get_object()
-        # Override the get() to optionally return a QGIS project attachment.
+        # Override the get() to optionally return a QGIS layer definition.
         if 'generate_qgis' in request.GET and ref.location_set.current().exists():
-            content = ref.generate_qgis_project()
-            fn = 'prs_referral_{}_locations.qgs'.format(ref.pk)
+            content = ref.generate_qgis_layer()
+            fn = 'prs_referral_{}.qlr'.format(ref.pk)
             resp = HttpResponse(content, content_type='application/x-qgis-project')
             resp['Content-Disposition'] = 'attachement; filename="{}"'.format(fn)
             return resp
