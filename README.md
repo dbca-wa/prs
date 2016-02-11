@@ -12,14 +12,17 @@ Create a new virtualenv and install required libraries using `pip`:
 
 # Environment variables
 
-This project uses confy to set environment
-variables (in a `.env` file). Required settings are as follows:
+This project uses confy to set environment variables (in a `.env` file).
+The following variables are required for the project to run:
 
-    DJANGO_SETTINGS_MODULE=prs2.settings
-    DEBUG=True
-    PORT=8080
     DATABASE_URL="postgis://USER:PASSWORD@HOST:PORT/DATABASE_NAME"
     SECRET_KEY="ThisIsASecretKey"
+
+Variables below may also need to be defined (context-dependent):
+
+    DEBUG=True
+    CSRF_COOKIE_SECURE=False
+    SESSION_COOKIE_SECURE=False
     EMAIL_HOST="email.host"
     EMAIL_PORT=25
     SITE_URL="prs.dpaw.wa.gov.au"

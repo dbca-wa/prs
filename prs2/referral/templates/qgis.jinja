@@ -9,10 +9,10 @@
     <layer-tree-layer expanded="1" checked="Qt::Unchecked" id="dpaw_prs_locations20160125083338710" name="PRS locations (all)">
       <customproperties/>
     </layer-tree-layer>
-    <layer-tree-layer expanded="0" checked="Qt::Unchecked" id="cadastre_prs20151217112305468" name="Cadastre">
+    <layer-tree-layer expanded="0" checked="Qt::Unchecked" id="cadastre20151217112305468" name="Cadastre">
       <customproperties/>
     </layer-tree-layer>
-    <layer-tree-layer expanded="0" checked="Qt::Unchecked" id="Virtual_Mosaic__LGATE_V001_20151217112414064" name="Landgate Orthomosaic">
+    <layer-tree-layer expanded="0" checked="Qt::Unchecked" id="Virtual_Mosaic__LGATE_V001_20151217112414064" name="Virtual mosaic (LGATE-V001)">
       <customproperties/>
     </layer-tree-layer>
   </layer-tree-group>
@@ -42,7 +42,7 @@
     <layer_coordinate_transform_info>
       <layer_coordinate_transform destAuthId="EPSG:4283" srcAuthId="EPSG:4283" srcDatumTransform="-1" destDatumTransform="-1" layerid="prs_prs_locations20150820132925873"/>
       <layer_coordinate_transform destAuthId="EPSG:4283" srcAuthId="EPSG:4283" srcDatumTransform="-1" destDatumTransform="-1" layerid="dpaw_prs_locations20160125083338710"/>
-      <layer_coordinate_transform destAuthId="EPSG:4283" srcAuthId="EPSG:4283" srcDatumTransform="-1" destDatumTransform="-1" layerid="cadastre_prs20151217112305468"/>
+      <layer_coordinate_transform destAuthId="EPSG:4283" srcAuthId="EPSG:4283" srcDatumTransform="-1" destDatumTransform="-1" layerid="cadastre20151217112305468"/>
       <layer_coordinate_transform destAuthId="EPSG:4283" srcAuthId="EPSG:4283" srcDatumTransform="-1" destDatumTransform="-1" layerid="Virtual_Mosaic__LGATE_V001_20151217112414064"/>
     </layer_coordinate_transform_info>
   </mapcanvas>
@@ -50,7 +50,7 @@
   <layer-tree-canvas>
     <custom-order enabled="0">
       <item>prs_prs_locations20150820132925873</item>
-      <item>cadastre_prs20151217112305468</item>
+      <item>cadastre20151217112305468</item>
       <item>Virtual_Mosaic__LGATE_V001_20151217112414064</item>
       <item>dpaw_prs_locations20160125083338710</item>
     </custom-order>
@@ -68,10 +68,10 @@
     </legendlayer>
     <legendlayer drawingOrder="-1" open="true" checked="Qt::Unchecked" name="Cadastre" showFeatureCount="0">
       <filegroup open="true" hidden="false">
-        <legendlayerfile isInOverview="0" layerid="cadastre_prs20151217112305468" visible="0"/>
+        <legendlayerfile isInOverview="0" layerid="cadastre20151217112305468" visible="0"/>
       </filegroup>
     </legendlayer>
-    <legendlayer drawingOrder="-1" open="true" checked="Qt::Unchecked" name="Landgate Orthomosaic" showFeatureCount="0">
+    <legendlayer drawingOrder="-1" open="true" checked="Qt::Unchecked" name="Virtual mosaic (LGATE-V001)" showFeatureCount="0">
       <filegroup open="true" hidden="false">
         <legendlayerfile isInOverview="0" layerid="Virtual_Mosaic__LGATE_V001_20151217112414064" visible="0"/>
       </filegroup>
@@ -623,8 +623,8 @@
       </edittypes>
     </maplayer>
     <maplayer minimumScale="0" maximumScale="1e+08" type="raster" hasScaleBasedVisibilityFlag="0">
-      <id>cadastre_prs20151217112305468</id>
-      <datasource>contextualWMSLegend=0&amp;crs=EPSG:4283&amp;dpiMode=7&amp;featureCount=10&amp;format=image/png&amp;layers=cddp:cadastre_prs&amp;styles=&amp;url={{ GEOSERVER_WFS_URL }}</datasource>
+      <id>cadastre20151217112305468</id>
+      <datasource>contextualWMSLegend=0&amp;crs=EPSG:4283&amp;dpiMode=7&amp;featureCount=10&amp;format=image/png&amp;layers=cddp:cadastre&amp;styles=&amp;url={{ GEOSERVER_WFS_URL }}</datasource>
       <title></title>
       <abstract></abstract>
       <keywordList>
@@ -671,7 +671,7 @@
       <keywordList>
         <value></value>
       </keywordList>
-      <layername>Landgate Orthomosaic</layername>
+      <layername>Virtual mosaic (LGATE-V001)</layername>
       <srs>
         <spatialrefsys>
           <proj4>+proj=longlat +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +no_defs</proj4>
