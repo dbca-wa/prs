@@ -42,7 +42,7 @@ var cadastre = L.tileLayer.wms(
     {
         // "PRS styled" internal version of cadastre below.
         crs: L.CRS.EPSG4326,
-        layers: 'cddp:cadastre_prs',
+        layers: 'landgate:LGATE-001',
         tileSize: 1024,
         format: 'image/png',
         tiled: true,
