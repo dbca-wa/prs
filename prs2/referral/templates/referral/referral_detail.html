@@ -35,9 +35,9 @@
         <li class="is_prs_user"><a href="{% url 'referral_relate' pk=referral.pk %}" title="Add related">Add a related referral</a></li>
         <li class="is_prs_user"><a href="{% url 'prs_object_update' model='referral' pk=referral.pk %}" title="Edit referral">Edit this referral</a></li>
         {% if geojson_locations %}
-        <li><a href="{% url 'referral_detail' pk=referral.pk %}?generate_qgis=true" title="Generate QGIS project">Generate QGIS project</a></li>
+        <li><a href="{% url 'referral_detail' pk=referral.pk %}?generate_qgis=true" title="Generate QGIS layer">Generate QGIS layer</a></li>
         {% else %}
-        <li class="disabled"><a href="#">Generate QGIS project</a></li>
+        <li class="disabled"><a href="#">Generate QGIS layer</a></li>
         {% endif %}
         {% if prs_power_user %}
         <li><a href="{% url 'referral_delete' pk=referral.pk %}" title="Delete referral">Delete referral</a></li>
