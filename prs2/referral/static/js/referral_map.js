@@ -100,7 +100,7 @@ map.addControl(new L.Control.Search({
     //url: geocoder_url + '?q={s}&limit=5',
     //propertyName: 'address',
     // OSM Noninatum geocoder URL:
-    url: 'http://nominatim.openstreetmap.org/search?format=json&q={s}',
+    url: '//nominatim.openstreetmap.org/search?format=json&q={s}',
     propertyName: 'display_name',
     propertyLoc: ['lat','lon'],
     // Other variables.
