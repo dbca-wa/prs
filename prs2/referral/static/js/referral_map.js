@@ -40,9 +40,12 @@ var mapboxStreets = L.tileLayer.wms(
 var cadastre = L.tileLayer.wms(
     geoserver_wms_url,
     {
-        // "PRS styled" internal version of cadastre below.
         crs: L.CRS.EPSG4326,
+        // Landgate-published cadastre:
         layers: 'landgate:LGATE-001',
+        // "PRS styled" internal version of cadastre:
+        //layers: 'cddp:cadastre',
+        //styles: 'cadastre_prs',
         tileSize: 1024,
         format: 'image/png',
         tiled: true,
@@ -93,13 +96,14 @@ L.control.scale({maxWidth: 500, imperial: false}).addTo(map);
 
 // Define geocoder search input.
 map.addControl(new L.Control.Search({
-    // Internal DPaW geocoding service.
-    url: geocoder_url + '?q={s}&limit=5',
-    propertyName: 'address',
-    // Below is the OSM Noninatum geocoder URL.
-    //url: 'http://nominatim.openstreetmap.org/search?format=json&q={s}',
-    //propertyName: 'display_name',
+    // Internal DPaW geocoding service (caddy):
+    //url: geocoder_url + '?q={s}&limit=5',
+    //propertyName: 'address',
+    // OSM Noninatum geocoder URL:
+    url: 'http://nominatim.openstreetmap.org/search?format=json&q={s}',
+    propertyName: 'display_name',
     propertyLoc: ['lat','lon'],
+    // Other variables.
     delayType: 1000,
     textErr: '',
     zoom: 17,
