@@ -238,7 +238,8 @@
     var removeFormFieldset = function(featureId) {
         var fid = "fieldset_{fid}".replace("{fid}", featureId);
         // Use getElementById because fid messes with jQuery regex.
-        var fs = $(document.getElementById(fid)).get(0).remove();
+        var thing = $(document.getElementById(fid)).get(0);
+        $(thing).remove();  // Because IE11 :/
     };
 
     // Click event for dynamically-generated "Remove" buttons.
@@ -247,7 +248,7 @@
         removeFeature(locationsLayer, featureId);
         // Remove the visible list element.
         var li = $(this).parent().get(0);
-        li.remove();
+        $(li).remove();  // Because IE11 :/
         // Remove the hidden form fieldset.
         removeFormFieldset(featureId);
     });
