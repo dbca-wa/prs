@@ -2,6 +2,7 @@
 
 // NOTE: the following global variables need to be set prior to loading this script:
 // * geoserver_wms_url
+// * geoserver_wfs_url
 // * geocoder_url
 // Define tile layers.
 var landgateOrthomosaic = L.tileLayer.wms(
@@ -42,10 +43,10 @@ var cadastre = L.tileLayer.wms(
     {
         crs: L.CRS.EPSG4326,
         // Landgate-published cadastre:
-        layers: 'landgate:LGATE-001',
+        //layers: 'landgate:LGATE-001',
         // "PRS styled" internal version of cadastre:
-        //layers: 'cddp:cadastre',
-        //styles: 'cadastre_prs',
+        layers: 'cddp:cadastre',
+        styles: 'cddp:cadastre.cadastre_prs',
         tileSize: 1024,
         format: 'image/png',
         tiled: true,
