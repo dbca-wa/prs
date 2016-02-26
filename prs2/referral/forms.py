@@ -489,17 +489,22 @@ class TaskStopForm(BaseForm):
     * Stop date
     * Description
     * Save/Cancel buttons
+
+    NOTE: we instantiate a "stopped_date" field (instead of using the model
+    field) to avoid interference by existing values in stop_date.
     '''
+    stopped_date = forms.DateField(
+        initial=datetime.today().strftime('%d/%m/%Y'), required=True,
+        input_formats=settings.DATE_INPUT_FORMATS,
+        help_text='Date on which this task was stopped.')
 
     def __init__(self, *args, **kwargs):
         super(TaskStopForm, self).__init__(*args, **kwargs)
-        self.fields['stop_date'].input_formats = settings.DATE_INPUT_FORMATS
-        self.fields['stop_date'].required = True
         self.fields['description'].required = True
         self.fields['description'].help_text = '''Please describe why the
             task was stopped.'''
         layout = Layout(
-            'stop_date', 'description',
+            'stopped_date', 'description',
             Div(
                 self.save_button, self.cancel_button,
                 css_class='col-sm-offset-4 col-md-offset-3 col-lg-offset-2')
