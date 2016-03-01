@@ -111,3 +111,32 @@ map.addControl(new L.Control.Search({
     circleLocation: true,
     autoCollapse: true
 }));
+
+var lotsearchresults = L.featureGroup();
+lotsearchresults.addTo(map);
+
+var findLot = function(lotname) {
+    $.get("//kmi.dpaw.wa.gov.au/geoserver/ows?" + $.param({
+            service: "WFS",
+            version: "2.0.0",
+            request: "GetFeature",
+            typeName: "cddp:cadastre",
+            outputFormat: "application/json",
+            cql_filter: "survey_lot like '%"+lotname+"%' AND BBOX(wkb_geometry," + map.getBounds().toBBoxString() + ",'EPSG:4326')"
+        }), function(data) {
+            if (data.totalFeatures == 0 && map.getMinZoom() < map.getZoom() && confirm("Couldn't find survey_lot containing '" + lotname + "' in viewport, zoom out and try again?")) {
+                map.zoomOut();
+                findLot(lotname);
+            }
+            if (data.totalFeatures > 0) {
+                lotsearchresults.clearLayers();
+                lotsearchresults.addLayer(L.geoJson(data, {
+                    onEachFeature: function(feature, layer) {
+                        layer.bindPopup(JSON.stringify(feature.properties).replace('","', '"<br>"'));
+                    }
+                }));
+                map.fitBounds(lotsearchresults.getBounds());
+            }
+        }
+    );
+}
