@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import models, migrations
+from django.db import migrations, models
 import taggit.managers
 import django.contrib.gis.db.models.fields
-import storages.backends.overwrite
 import autoslug.fields
-import referral.base
 import django.utils.timezone
 from django.conf import settings
 import django.core.validators
@@ -15,7 +13,7 @@ import django.core.validators
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('taggit', '0001_initial'),
+        ('taggit', '0002_auto_20150616_2121'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
@@ -36,6 +34,8 @@ class Migration(migrations.Migration):
                 ('modifier', models.ForeignKey(related_name='referral_agency_modified', editable=False, to=settings.AUTH_USER_MODEL)),
             ],
             options={
+                'ordering': ['name'],
+                'abstract': False,
                 'verbose_name_plural': 'agencies',
             },
         ),
@@ -51,6 +51,7 @@ class Migration(migrations.Migration):
                 ('modifier', models.ForeignKey(related_name='referral_bookmark_modified', editable=False, to=settings.AUTH_USER_MODEL)),
             ],
             options={
+                'ordering': ['-created'],
                 'abstract': False,
             },
         ),
@@ -69,14 +70,35 @@ class Migration(migrations.Migration):
                 ('created', models.DateTimeField(default=django.utils.timezone.now, editable=False)),
                 ('modified', models.DateTimeField(auto_now=True)),
                 ('effective_to', models.DateTimeField(null=True, blank=True)),
-                ('condition', models.TextField(editable=False)),
-                ('condition_html', models.TextField()),
+                ('condition', models.TextField(null=True, editable=False, blank=True)),
+                ('condition_html', models.TextField(help_text="Insert words exactly as in the decision-maker's letter\n        of approval, and add any advice notes relating to DPaW.", null=True, verbose_name='approved condition', blank=True)),
                 ('proposed_condition', models.TextField(null=True, editable=False, blank=True)),
-                ('proposed_condition_html', models.TextField(null=True, blank=True)),
+                ('proposed_condition_html', models.TextField(help_text='Condition text proposed by DPaW.', null=True, verbose_name='proposed condition', blank=True)),
                 ('identifier', models.CharField(blank=True, max_length=100, null=True, help_text="The decision-making authority's identifying number or code for this condition.", validators=[django.core.validators.MaxLengthValidator(100)])),
             ],
             options={
+                'ordering': ['-created'],
                 'abstract': False,
+            },
+        ),
+        migrations.CreateModel(
+            name='ConditionCategory',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('created', models.DateTimeField(default=django.utils.timezone.now, editable=False)),
+                ('modified', models.DateTimeField(auto_now=True)),
+                ('effective_to', models.DateTimeField(null=True, blank=True)),
+                ('name', models.CharField(max_length=200)),
+                ('description', models.CharField(blank=True, max_length=200, null=True, validators=[django.core.validators.MaxLengthValidator(200)])),
+                ('slug', autoslug.fields.AutoSlugField(editable=False, populate_from='name', help_text='Must be unique. Automatically generated from name.', unique=True)),
+                ('public', models.BooleanField(default=True, help_text='Is this lookup selection available to all users?')),
+                ('creator', models.ForeignKey(related_name='referral_conditioncategory_created', editable=False, to=settings.AUTH_USER_MODEL)),
+                ('modifier', models.ForeignKey(related_name='referral_conditioncategory_modified', editable=False, to=settings.AUTH_USER_MODEL)),
+            ],
+            options={
+                'ordering': ['name'],
+                'abstract': False,
+                'verbose_name_plural': 'condition categories',
             },
         ),
         migrations.CreateModel(
@@ -94,6 +116,8 @@ class Migration(migrations.Migration):
                 ('modifier', models.ForeignKey(related_name='referral_doptrigger_modified', editable=False, to=settings.AUTH_USER_MODEL)),
             ],
             options={
+                'ordering': ['name'],
+                'abstract': False,
                 'verbose_name': 'DoP trigger',
             },
         ),
@@ -123,6 +147,25 @@ class Migration(migrations.Migration):
                 ('modifier', models.ForeignKey(related_name='referral_location_modified', editable=False, to=settings.AUTH_USER_MODEL)),
             ],
             options={
+                'ordering': ['-created'],
+                'abstract': False,
+            },
+        ),
+        migrations.CreateModel(
+            name='ModelCondition',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('created', models.DateTimeField(default=django.utils.timezone.now, editable=False)),
+                ('modified', models.DateTimeField(auto_now=True)),
+                ('effective_to', models.DateTimeField(null=True, blank=True)),
+                ('condition', models.TextField(help_text='Model condition')),
+                ('identifier', models.CharField(blank=True, max_length=100, null=True, help_text="The decision-making authority's identifying number or code for this condition.", validators=[django.core.validators.MaxLengthValidator(100)])),
+                ('category', models.ForeignKey(blank=True, to='referral.ConditionCategory', null=True)),
+                ('creator', models.ForeignKey(related_name='referral_modelcondition_created', editable=False, to=settings.AUTH_USER_MODEL)),
+                ('modifier', models.ForeignKey(related_name='referral_modelcondition_modified', editable=False, to=settings.AUTH_USER_MODEL)),
+            ],
+            options={
+                'ordering': ['-created'],
                 'abstract': False,
             },
         ),
@@ -133,14 +176,14 @@ class Migration(migrations.Migration):
                 ('created', models.DateTimeField(default=django.utils.timezone.now, editable=False)),
                 ('modified', models.DateTimeField(auto_now=True)),
                 ('effective_to', models.DateTimeField(null=True, blank=True)),
-                ('note_html', models.TextField()),
+                ('note_html', models.TextField(verbose_name='note')),
                 ('note', models.TextField(editable=False)),
-                ('order_date', models.DateField(null=True, blank=True)),
+                ('order_date', models.DateField(help_text='Optional date (for sorting purposes).', null=True, verbose_name='date', blank=True)),
                 ('creator', models.ForeignKey(related_name='referral_note_created', editable=False, to=settings.AUTH_USER_MODEL)),
                 ('modifier', models.ForeignKey(related_name='referral_note_modified', editable=False, to=settings.AUTH_USER_MODEL)),
             ],
             options={
-                'ordering': ['order_date', 'id'],
+                'ordering': ['order_date'],
             },
         ),
         migrations.CreateModel(
@@ -218,15 +261,16 @@ class Migration(migrations.Migration):
                 ('modified', models.DateTimeField(auto_now=True)),
                 ('effective_to', models.DateTimeField(null=True, blank=True)),
                 ('name', models.CharField(help_text='The name/description of the record (max 200 characters).', max_length=200, validators=[django.core.validators.MaxLengthValidator(200)])),
-                ('uploaded_file', referral.base.ContentTypeRestrictedFileField(upload_to='uploads/%Y/%m/%d', storage=storages.backends.overwrite.OverwriteStorage(), max_length=255, blank=True, help_text='Allowed file types: TIF,JPG,GIF,PNG,DOC,DOCX,XLS,XLSX,CSV,PDF or ZIP (max 20mb).', null=True)),
-                ('infobase_id', models.SlugField(blank=True, help_text='Infobase object ID. Optional.', null=True, verbose_name='Infobase ID')),
-                ('description', models.TextField(help_text='Optional.', null=True, blank=True)),
-                ('order_date', models.DateField(null=True, blank=True)),
+                ('uploaded_file', models.FileField(help_text='Allowed file types: TIF,JPG,GIF,PNG,DOC,DOCX,XLS,XLSX,CSV,PDF,TXT,ZIP,MSG,QGS', max_length=255, null=True, upload_to='uploads/%Y/%m/%d', blank=True)),
+                ('infobase_id', models.SlugField(blank=True, help_text='Infobase object ID (optional).', null=True, verbose_name='Infobase ID')),
+                ('description', models.TextField(null=True, blank=True)),
+                ('order_date', models.DateField(help_text='Optional date (for sorting purposes).', null=True, verbose_name='date', blank=True)),
                 ('creator', models.ForeignKey(related_name='referral_record_created', editable=False, to=settings.AUTH_USER_MODEL)),
                 ('modifier', models.ForeignKey(related_name='referral_record_modified', editable=False, to=settings.AUTH_USER_MODEL)),
                 ('notes', models.ManyToManyField(to='referral.Note', blank=True)),
             ],
             options={
+                'ordering': ['-created'],
                 'abstract': False,
             },
         ),
@@ -238,7 +282,7 @@ class Migration(migrations.Migration):
                 ('modified', models.DateTimeField(auto_now=True)),
                 ('effective_to', models.DateTimeField(null=True, blank=True)),
                 ('reference', models.CharField(help_text="[Searchable] Referrer's reference no. Maximum 100 characters.", max_length=100, validators=[django.core.validators.MaxLengthValidator(100)])),
-                ('file_no', models.CharField(blank=True, max_length=100, null=True, help_text='[Searchable] The DEC file this referral is filed within. Maximum 100 characters.', validators=[django.core.validators.MaxLengthValidator(100)])),
+                ('file_no', models.CharField(blank=True, max_length=100, null=True, help_text='[Searchable] The DPaW file this referral is filed within. Maximum 100 characters.', validators=[django.core.validators.MaxLengthValidator(100)])),
                 ('description', models.TextField(help_text='[Searchable] Optional.', null=True, blank=True)),
                 ('referral_date', models.DateField(help_text='Date that the referral was received.', verbose_name='received date')),
                 ('address', models.CharField(blank=True, max_length=200, null=True, help_text='[Searchable] Physical address of the planning proposal. Maximum 200 characters.', validators=[django.core.validators.MaxLengthValidator(200)])),
@@ -250,6 +294,7 @@ class Migration(migrations.Migration):
                 ('referring_org', models.ForeignKey(verbose_name='referring organisation', to='referral.Organisation', help_text='[Searchable] The referring organisation or individual.')),
             ],
             options={
+                'ordering': ['-created'],
                 'abstract': False,
             },
         ),
@@ -306,10 +351,10 @@ class Migration(migrations.Migration):
                 ('created', models.DateTimeField(default=django.utils.timezone.now, editable=False)),
                 ('modified', models.DateTimeField(auto_now=True)),
                 ('effective_to', models.DateTimeField(null=True, blank=True)),
-                ('description', models.TextField(help_text='Please describe the task requirements (optional).', null=True, blank=True)),
+                ('description', models.TextField(help_text='Description of the task requirements.', null=True, blank=True)),
                 ('start_date', models.DateField(help_text='Date on which this task was started.', null=True, blank=True)),
                 ('due_date', models.DateField(help_text='Date by which the task must be completed.', null=True, blank=True)),
-                ('complete_date', models.DateField(help_text='Date that the task was completed.', null=True, blank=True)),
+                ('complete_date', models.DateField(help_text='Date that the task was completed.', null=True, verbose_name='completed date', blank=True)),
                 ('stop_date', models.DateField(help_text='Date that the task was stopped.', null=True, blank=True)),
                 ('restart_date', models.DateField(help_text='Date that a stopped task was restarted.', null=True, blank=True)),
                 ('stop_time', models.IntegerField(default=0, help_text='Cumulative time stopped in days.', editable=False)),
@@ -321,7 +366,7 @@ class Migration(migrations.Migration):
                 ('referral', models.ForeignKey(to='referral.Referral')),
             ],
             options={
-                'ordering': ['due_date'],
+                'ordering': ['-pk', 'due_date'],
             },
         ),
         migrations.CreateModel(
@@ -384,7 +429,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='task',
             name='state',
-            field=models.ForeignKey(verbose_name='task state', to='referral.TaskState', help_text='The status of the task.'),
+            field=models.ForeignKey(verbose_name='status', to='referral.TaskState', help_text='The status of the task.'),
         ),
         migrations.AddField(
             model_name='task',
@@ -414,7 +459,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='referral',
             name='tags',
-            field=taggit.managers.TaggableManager(to='taggit.Tag', through='taggit.TaggedItem', blank=True, help_text='A comma-separated list of tags.', verbose_name='Tags'),
+            field=taggit.managers.TaggableManager(to='taggit.Tag', through='taggit.TaggedItem', blank=True, help_text='[Searchable] A list of issues or tags.', verbose_name='Issues/tags'),
         ),
         migrations.AddField(
             model_name='referral',
@@ -453,6 +498,11 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name='condition',
+            name='category',
+            field=models.ForeignKey(blank=True, to='referral.ConditionCategory', null=True),
+        ),
+        migrations.AddField(
+            model_name='condition',
             name='clearance_tasks',
             field=models.ManyToManyField(related_name='clearance_requests', editable=False, through='referral.Clearance', to='referral.Task'),
         ),
@@ -460,6 +510,11 @@ class Migration(migrations.Migration):
             model_name='condition',
             name='creator',
             field=models.ForeignKey(related_name='referral_condition_created', editable=False, to=settings.AUTH_USER_MODEL),
+        ),
+        migrations.AddField(
+            model_name='condition',
+            name='model_condition',
+            field=models.ForeignKey(related_name='model_condition', blank=True, to='referral.ModelCondition', help_text='Model text on which this condition is based', null=True),
         ),
         migrations.AddField(
             model_name='condition',
