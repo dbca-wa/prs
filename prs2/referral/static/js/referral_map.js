@@ -165,7 +165,7 @@ var findLot = function(lotname) {
         success: function(data) {
             if (data.totalFeatures === 0 && map.getMinZoom() < map.getZoom() && confirm("Couldn't find Survey Lot containing '" + lotname + "' in viewport, zoom out and try again?")) {
                 map.zoomOut();
-                findLot(lotname);
+                findLot(lotname.toUpperCase());
             }
             if (data.totalFeatures > 0) {
                 lotsearchresults.clearLayers();
