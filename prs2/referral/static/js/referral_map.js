@@ -3,7 +3,6 @@
 // NOTE: the following global variables need to be set prior to loading this script:
 // * geoserver_wms_url
 // * geoserver_wfs_url
-// * geocoder_url
 // Define tile layers.
 var landgateOrthomosaic = L.tileLayer.wms(
     geoserver_wms_url,
@@ -97,9 +96,6 @@ L.control.scale({maxWidth: 500, imperial: false}).addTo(map);
 
 // Define geocoder search input.
 map.addControl(new L.Control.Search({
-    // Internal DPaW geocoding service (caddy):
-    //url: geocoder_url + '?q={s}&limit=5',
-    //propertyName: 'address',
     // OSM Noninatum geocoder URL:
     url: '//nominatim.openstreetmap.org/search?format=json&countrycodes=au&q={s}',
     propertyName: 'display_name',

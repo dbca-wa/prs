@@ -36,7 +36,6 @@ ROOT_URLCONF = 'prs2.urls'
 WSGI_APPLICATION = 'prs2.wsgi.application'
 GEOSERVER_WMS_URL = env('GEOSERVER_WMS_URL', '')
 GEOSERVER_WFS_URL = env('GEOSERVER_WFS_URL', '')
-GEOCODER_URL = env('GEOCODER_URL', '')
 INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.auth',

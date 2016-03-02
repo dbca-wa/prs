@@ -26,7 +26,6 @@ DEPLOY_EMAIL_PORT = os.environ['DEPLOY_EMAIL_PORT']
 DEPLOY_SITE_URL = os.environ['SITE_URL']
 GEOSERVER_WMS_URL = os.environ['GEOSERVER_WMS_URL']
 GEOSERVER_WFS_URL = os.environ['GEOSERVER_WFS_URL']
-GEOCODER_URL = os.environ['GEOCODER_URL']
 
 
 def _get_latest_source():
@@ -72,7 +71,6 @@ def _setup_env():
             'DEPLOY_SITE_URL': DEPLOY_SITE_URL,
             'GEOSERVER_WMS_URL': GEOSERVER_WMS_URL,
             'GEOSERVER_WFS_URL': GEOSERVER_WFS_URL,
-            'GEOCODER_URL': GEOCODER_URL,
         }
         upload_template('prs2/templates/env.jinja', '.env', context, use_jinja=True, backup=False)
 

@@ -1,5 +1,10 @@
 # Planning Referral System
 
+[![Build
+Status](https://travis-ci.org/parksandwildlife/prs.svg?branch=master)](https://travis-ci.org/parksandwildlife/prs)
+[![Coverage
+Status](https://coveralls.io/repos/github/parksandwildlife/prs/badge.svg?branch=master)](https://coveralls.io/github/parksandwildlife/prs?branch=master)
+
 This project consists of a redesign and reorganisation of the [Planning
 Referral System](https://confluence.dec.wa.gov.au/display/prs/Home)
 corporate application.
@@ -26,11 +31,12 @@ Variables below may also need to be defined (context-dependent):
     EMAIL_HOST="email.host"
     EMAIL_PORT=25
     SITE_URL="prs.dpaw.wa.gov.au"
-    GEOSERVER_WMS_URL="https://kmi.dpaw.wa.gov.au/geoserver/gwc/service/wms"
-    GEOSERVER_WFS_URL="https://kmi.dpaw.wa.gov.au/geoserver/ows"
-    GEOCODER_URL="https://caddy-dev.dpaw.wa.gov.au/api/v1/address/geocode/"
+    GEOSERVER_WMS_URL="//kmi.dpaw.wa.gov.au/geoserver/gwc/service/wms"
+    GEOSERVER_WFS_URL="//kmi.dpaw.wa.gov.au/geoserver/ows"
     PRS_USER_GROUP="PRS user"
     PRS_PWUSER_GROUP="PRS power user"
+    # debug-toolbar settings:
+    INTERNAL_IP="x.x.x.x"
 
 # Running
 

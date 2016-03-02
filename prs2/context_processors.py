@@ -10,7 +10,6 @@ def template_context(request):
         'version_no': settings.APPLICATION_VERSION_NO,
         'geoserver_wms_url': settings.GEOSERVER_WMS_URL,
         'geoserver_wfs_url': settings.GEOSERVER_WFS_URL,
-        'geocoder_url': settings.GEOCODER_URL,
         'prs_user_group': settings.PRS_USER_GROUP,
         'managers': settings.MANAGERS,
     }
