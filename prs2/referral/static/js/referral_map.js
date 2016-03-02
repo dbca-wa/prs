@@ -143,7 +143,7 @@ map.addControl(new L.Control.LotFilter({}));
 $("input#id_lotSearch").change(function() {
     var lotNo = $(this).val();
     if (lotNo) {
-        findLot(lotNo);
+        findLot(lotNo.toUpperCase());
     }
 });
 
@@ -165,7 +165,7 @@ var findLot = function(lotname) {
         success: function(data) {
             if (data.totalFeatures === 0 && map.getMinZoom() < map.getZoom() && confirm("Couldn't find Survey Lot containing '" + lotname + "' in viewport, zoom out and try again?")) {
                 map.zoomOut();
-                findLot(lotname.toUpperCase());
+                findLot(lotname);
             }
             if (data.totalFeatures > 0) {
                 lotsearchresults.clearLayers();
