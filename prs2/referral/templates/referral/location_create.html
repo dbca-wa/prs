@@ -21,6 +21,7 @@
     <input type="submit" name="save" value="Save" class="btn btn-primary btn-lg" id="submit-id-save">
     <input type="submit" name="cancel" value="Cancel" class="btn btn-primary" id="submit-id-cancel">
 </form>
+<input name="lotSearch" class="textinput textInput form-control" id="id_lotSearch" type="text" placeholder="Search Lot #">
 
 {% endblock %}
 
@@ -251,6 +252,10 @@
         $(li).remove();  // Because IE11 :/
         // Remove the hidden form fieldset.
         removeFormFieldset(featureId);
+    });
+    $("input#id_lotSearch").change(function() {
+        var lotNo = $(this).val();
+        findLot(lotNo);
     });
 </script>
 {% endblock %}

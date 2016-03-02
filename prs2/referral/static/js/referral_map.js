@@ -116,14 +116,17 @@ var lotsearchresults = L.featureGroup();
 lotsearchresults.addTo(map);
 
 var findLot = function(lotname) {
-    $.get("//kmi.dpaw.wa.gov.au/geoserver/ows?" + $.param({
+    $.ajax({
+        url: geoserver_wfs_url,
+        data: {
             service: "WFS",
             version: "2.0.0",
             request: "GetFeature",
             typeName: "cddp:cadastre",
             outputFormat: "application/json",
             cql_filter: "survey_lot like '%"+lotname+"%' AND BBOX(wkb_geometry," + map.getBounds().toBBoxString() + ",'EPSG:4326')"
-        }), function(data) {
+        },
+        success: function(data) {
             if (data.totalFeatures == 0 && map.getMinZoom() < map.getZoom() && confirm("Couldn't find survey_lot containing '" + lotname + "' in viewport, zoom out and try again?")) {
                 map.zoomOut();
                 findLot(lotname);
@@ -138,5 +141,5 @@ var findLot = function(lotname) {
                 map.fitBounds(lotsearchresults.getBounds());
             }
         }
-    );
+    });
 }
