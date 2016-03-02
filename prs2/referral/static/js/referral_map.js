@@ -101,7 +101,7 @@ map.addControl(new L.Control.Search({
     //url: geocoder_url + '?q={s}&limit=5',
     //propertyName: 'address',
     // OSM Noninatum geocoder URL:
-    url: '//nominatim.openstreetmap.org/search?format=json&q={s}',
+    url: '//nominatim.openstreetmap.org/search?format=json&countrycodes=au&q={s}',
     propertyName: 'display_name',
     propertyLoc: ['lat','lon'],
     // Other variables.
@@ -112,31 +112,73 @@ map.addControl(new L.Control.Search({
     autoCollapse: true
 }));
 
-var lotsearchresults = L.featureGroup();
-lotsearchresults.addTo(map);
+// Define a custom lot filtering form Control
+L.Control.LotFilter = L.Control.extend({
+    options: {
+        position: "topleft",
+        placeholder: "Highlight Lots in view"
+    },
+    initialize: function (options) {
+        L.Util.setOptions(this, options);
+    },
+    onAdd: function (map) {
+        // happens after added to map
+        var container = L.DomUtil.create('div', 'search-container');
+        this.form = L.DomUtil.create('form', 'form', container);
+        var group = L.DomUtil.create('div', 'form-group', this.form);
+        this.input = L.DomUtil.create('input', 'form-control input-sm', group);
+        this.input.type = 'text';
+        this.input.placeholder = this.options.placeholder;
+        this.input.id = 'id_lotSearch';
+        this.results = L.DomUtil.create('div', 'list-group', group);
+        L.DomEvent.addListener(this.form, 'submit', this.submit, this);
+        L.DomEvent.disableClickPropagation(container);
+        return container;
+    },
+    submit: function(e) {
+        L.DomEvent.preventDefault(e);
+    }
+});
+L.control.lotfilter = function(id, options) {
+    return new L.Control.LotFilter(id, options);
+}
+// Add the custom control to the map, then set a change() event listener on it
+map.addControl(new L.Control.LotFilter({}));
+$("input#id_lotSearch").change(function() {
+    var lotNo = $(this).val();
+    if (lotNo) {
+        findLot(lotNo);
+    }
+});
+
+// Add a feature group to the map to contain filtered Lot boundaries.
+var lotsearchresults = new L.featureGroup();
+map.addLayer(lotsearchresults);
 
 var findLot = function(lotname) {
-    $.get("//kmi.dpaw.wa.gov.au/geoserver/ows?" + $.param({
+    $.ajax({
+        url: geoserver_wfs_url,
+        data: {
             service: "WFS",
             version: "2.0.0",
             request: "GetFeature",
             typeName: "cddp:cadastre",
             outputFormat: "application/json",
             cql_filter: "survey_lot like '%"+lotname+"%' AND BBOX(wkb_geometry," + map.getBounds().toBBoxString() + ",'EPSG:4326')"
-        }), function(data) {
-            if (data.totalFeatures == 0 && map.getMinZoom() < map.getZoom() && confirm("Couldn't find survey_lot containing '" + lotname + "' in viewport, zoom out and try again?")) {
+        },
+        success: function(data) {
+            if (data.totalFeatures == 0 && map.getMinZoom() < map.getZoom() && confirm("Couldn't find Survey Lot containing '" + lotname + "' in viewport, zoom out and try again?")) {
                 map.zoomOut();
                 findLot(lotname);
             }
             if (data.totalFeatures > 0) {
                 lotsearchresults.clearLayers();
                 lotsearchresults.addLayer(L.geoJson(data, {
-                    onEachFeature: function(feature, layer) {
-                        layer.bindPopup(JSON.stringify(feature.properties).replace('","', '"<br>"'));
-                    }
+                    color: '#fa00ff',
+                    clickable: false
                 }));
                 map.fitBounds(lotsearchresults.getBounds());
             }
         }
-    );
+    });
 }
