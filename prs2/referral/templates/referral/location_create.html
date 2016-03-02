@@ -251,5 +251,9 @@
         // Remove the hidden form fieldset.
         removeFormFieldset(featureId);
     });
+    $("input#id_lotSearch").change(function() {
+        var lotNo = $(this).val();
+        findLot(lotNo);
+    });
 </script>
 {% endblock %}

@@ -42,6 +42,8 @@ class PrsObjectList(LoginRequiredMixin, ListView):
         By default, the queryset return recently-modified ones objects first.
         '''
         qs = super(PrsObjectList, self).get_queryset()
+        if 'effective_to' in self.model._meta.get_all_field_names():
+            qs = qs.filter(effective_to=None)
         # Did we pass in a search string? If so, filter the queryset and
         # return it.
         if 'q' in self.request.GET and self.request.GET['q']:

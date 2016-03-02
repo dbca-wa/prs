@@ -452,7 +452,9 @@ class TagListTest(PrsViewsTestCase):
     def setUp(self):
         super(TagListTest, self).setUp()
         # Create a bunch of additional Tags.
-        mixer.cycle(10).blend(Tag)
+        tags = (tag for tag in ['tag1', 'tag2', 'tag3', 'tag4', 'tag5'])
+        for counter in range(5):
+            mixer.blend(Tag, name=tags)
 
     def test_get(self):
         """Test that the rendered response contains text of all tags

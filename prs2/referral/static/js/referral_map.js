@@ -141,7 +141,7 @@ L.Control.LotFilter = L.Control.extend({
 });
 L.control.lotfilter = function(id, options) {
     return new L.Control.LotFilter(id, options);
-}
+};
 // Add the custom control to the map, then set a change() event listener on it
 map.addControl(new L.Control.LotFilter({}));
 $("input#id_lotSearch").change(function() {
@@ -167,7 +167,7 @@ var findLot = function(lotname) {
             cql_filter: "survey_lot like '%"+lotname+"%' AND BBOX(wkb_geometry," + map.getBounds().toBBoxString() + ",'EPSG:4326')"
         },
         success: function(data) {
-            if (data.totalFeatures == 0 && map.getMinZoom() < map.getZoom() && confirm("Couldn't find Survey Lot containing '" + lotname + "' in viewport, zoom out and try again?")) {
+            if (data.totalFeatures === 0 && map.getMinZoom() < map.getZoom() && confirm("Couldn't find Survey Lot containing '" + lotname + "' in viewport, zoom out and try again?")) {
                 map.zoomOut();
                 findLot(lotname);
             }
@@ -181,4 +181,4 @@ var findLot = function(lotname) {
             }
         }
     });
-}
+};

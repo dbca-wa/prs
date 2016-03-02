@@ -928,15 +928,16 @@ class TaskAction(PrsObjectUpdate):
     def form_valid(self, form):
         action = self.kwargs['action']
         obj = form.save(commit=False)
+        d = form.cleaned_data
 
         # This is where custom logic for the different actions takes place (if required).
         if action == 'stop':
+            obj.stop_date = d['stopped_date']
             obj.state = TaskState.objects.all().get(name='Stopped')
             obj.restart_date = None
-            obj.stop_time = 0
         elif action == 'start':
             obj.state = obj.type.initial_state
-            obj.stop_time = (obj.restart_date - obj.stop_date).days
+            obj.stop_time = obj.stop_time + (obj.restart_date - obj.stop_date).days
         elif action == 'inherit':
             user_task_history(
                 self.request.user, obj, 'Inherited from {0} by {1}'.format(
