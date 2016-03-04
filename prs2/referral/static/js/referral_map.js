@@ -96,8 +96,9 @@ L.control.scale({maxWidth: 500, imperial: false}).addTo(map);
 
 // Define geocoder search input.
 map.addControl(new L.Control.Search({
-    // OSM Noninatum geocoder URL:
-    url: '//nominatim.openstreetmap.org/search?format=json&countrycodes=au&q={s}',
+    // OSM Noninatum geocoder URL
+    // Limit searches to AU, and append "WA" to the end of every search :)
+    url: '//nominatim.openstreetmap.org/search?format=json&countrycodes=au&q={s}%20western%20australia',
     propertyName: 'display_name',
     propertyLoc: ['lat','lon'],
     // Other variables.
@@ -130,13 +131,13 @@ L.Control.LotFilter = L.Control.extend({
         input.placeholder = text;
         input.role = 'search';
         input.id = 'id_input_lotSearch';
-        // Prevent click progration (handled differently in IE11) 
+        // Prevent click progration (handled differently in IE11)
         if (!(window.ActiveXObject) && "ActiveXObject" in window) {
             input.MSPointerDown = input.onmousedown = input.ondblclick = input.onpointerdown = L.DomEvent.stopPropagation;
         } else {
             L.DomEvent.disableClickPropagation(input);  // Prevents input selection in IE11.
         };
-        
+
         return input;
     },
     submit: function(e) {
