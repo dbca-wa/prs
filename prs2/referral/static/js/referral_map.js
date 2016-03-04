@@ -117,19 +117,27 @@ L.Control.LotFilter = L.Control.extend({
     initialize: function (options) {
         L.Util.setOptions(this, options);
     },
-    onAdd: function (map) {
-        // happens after added to map
-        var container = L.DomUtil.create('div', 'search-container');
-        this.form = L.DomUtil.create('form', 'form', container);
-        var group = L.DomUtil.create('div', 'form-group', this.form);
-        this.input = L.DomUtil.create('input', 'form-control input-sm', group);
-        this.input.type = 'text';
-        this.input.placeholder = this.options.placeholder;
-        this.input.id = 'id_lotSearch';
-        this.results = L.DomUtil.create('div', 'list-group', group);
-        L.DomEvent.addListener(this.form, 'submit', this.submit, this);
-        L.DomEvent.disableClickPropagation(container);
-        return container;
+    onAdd: function(map) {
+        this._map = map;
+        this._container = L.DomUtil.create('div', 'lotsearch-container');
+        this._input = this._createInput(this.options.placeholder, 'form-control input-sm');
+        return this._container;
+    },
+    _createInput: function (text, className) {
+        var input = L.DomUtil.create('input', className, this._container);
+        input.type = 'text';
+        input.value = '';
+        input.placeholder = text;
+        input.role = 'search';
+        input.id = 'id_input_lotSearch';
+        // Prevent click progration (handled differently in IE11) 
+        if (!(window.ActiveXObject) && "ActiveXObject" in window) {
+            input.MSPointerDown = input.onmousedown = input.ondblclick = input.onpointerdown = L.DomEvent.stopPropagation;
+        } else {
+            L.DomEvent.disableClickPropagation(input);  // Prevents input selection in IE11.
+        };
+        
+        return input;
     },
     submit: function(e) {
         L.DomEvent.preventDefault(e);
@@ -140,10 +148,10 @@ L.control.lotfilter = function(id, options) {
 };
 // Add the custom control to the map, then set a change() event listener on it
 map.addControl(new L.Control.LotFilter({}));
-$("input#id_lotSearch").change(function() {
-    var lotNo = $(this).val();
-    if (lotNo) {
-        findLot(lotNo.toUpperCase());
+$("input#id_input_lotSearch").change(function() {
+    var lotname = $(this).val().toUpperCase();
+    if (lotname) {
+        findLot(lotname);
     }
 });
 
@@ -165,7 +173,7 @@ var findLot = function(lotname) {
         success: function(data) {
             if (data.totalFeatures === 0 && map.getMinZoom() < map.getZoom() && confirm("Couldn't find Survey Lot containing '" + lotname + "' in viewport, zoom out and try again?")) {
                 map.zoomOut();
-                findLot(lotname.toUpperCase());
+                findLot(lotname);
             }
             if (data.totalFeatures > 0) {
                 lotsearchresults.clearLayers();
