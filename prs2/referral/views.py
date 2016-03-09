@@ -311,20 +311,59 @@ class ReferralDetail(PrsObjectDetail):
 
 class ReferralCreateChild(PrsObjectCreate):
 
+    def get_child_name(self, **kwargs):
+        """ Returns the Referral child model name
+        """
+        if not self.model:
+            model = self.kwargs['model'].capitalize()
+        else:
+            model = self.model
+        form_model = kwargs['form'].Meta.model._meta.model_name.capitalize()
+        if 'clearance' in self.kwargs.values():
+            child_name = 'Clearance Request'
+        elif any(x in ['addnewrecord', 'addnewnote'] for x in self.kwargs.values()):
+            child_name = '{} to this {}'.format(form_model, model)
+        elif any(x in ['addrecord', 'addnote'] for x in self.kwargs.values()):
+            child_name = 'Existing {}(s) to this {}'.format(form_model, model)
+        else:
+            child_name = form_model
+        return child_name
+
     def get_context_data(self, **kwargs):
         context = super(ReferralCreateChild, self).get_context_data(**kwargs)
         referral_id = self.parent_referral.id
         child_name = self.get_child_name(**kwargs)
-
+        if 'addnote' in self.kwargs.values():
+            task = Task.objects.get(pk=self.kwargs['id'])
+            context['title'] = 'ADD EXISTING NOTE(S) TO {} ({})'.format(task, task.type.name).upper()
+            context['page_title'] = 'PRS | Add note(s) to task {}'.format(task.pk)
+            last_breadcrumb = 'Add note(s) to task {}'.format(task.pk)
+        elif 'addrecord' in self.kwargs.values():
+            task = Task.objects.get(pk=self.kwargs['id'])
+            context['title'] = 'ADD EXISTING RECORD(S) TO {} ({})'.format(task, task.type.name).upper()
+            context['page_title'] = 'PRS | Add record(s) to task {}'.format(task.pk)
+            last_breadcrumb = 'Add record(s) to task {}'.format(task.pk)
+        elif 'addnewnote' in self.kwargs.values():
+            task = Task.objects.get(pk=self.kwargs['id'])
+            context['title'] = 'ADD NOTE TO {} ({})'.format(task, task.type.name).upper()
+            context['page_title'] = 'PRS | Add note to task {}'.format(task.pk)
+            last_breadcrumb = 'Add note to task {}'.format(task.pk)
+        elif 'addnewrecord' in self.kwargs.values():
+            task = Task.objects.get(pk=self.kwargs['id'])
+            context['title'] = 'ADD RECORD TO {} ({})'.format(task, task.type.name).upper()
+            context['page_title'] = 'PRS | Add record to task {}'.format(task.pk)
+            last_breadcrumb = 'Add record to task {}'.format(task.pk)
+        else:
+            context['title'] = 'CREATE A NEW {}'.format(child_name.upper())
+            context['page_title'] = 'PRS | Create {}'.format(child_name)
+            last_breadcrumb = 'Create {}'.format(child_name)
         links = [
             (reverse('site_home'), 'Home'),
             (reverse('prs_object_list', kwargs={'model': 'referrals'}), 'Referrals'),
             (reverse('referral_detail', kwargs={'pk': referral_id}), referral_id),
-            (None, 'Create {}'.format(child_name))
+            (None, last_breadcrumb)
         ]
         context['breadcrumb_trail'] = breadcrumbs_li(links)
-        context['title'] = 'CREATE A NEW {}'.format(child_name.upper())
-        context['page_title'] = 'PRS | Create {}'.format(child_name)
         if child_name == 'Location':
             context['include_map'] = True
         return context
@@ -360,25 +399,6 @@ class ReferralCreateChild(PrsObjectCreate):
             pass
         return kwargs
 
-    def get_child_name(self, **kwargs):
-        """ Returns the Referral child model name
-        """
-        if not self.model:
-            model = self.kwargs['model'].capitalize()
-        else:
-            model = self.model
-        form_model = kwargs['form'].Meta.model._meta.model_name.capitalize()
-        if 'clearance' in self.kwargs.values():
-            child_name = 'Clearance Request'
-        elif any(x in ['addnewrecord', 'addnewnote'] for x in self.kwargs.values()):
-            child_name = '{} to this {}'.format(form_model, model)
-        elif any(x in ['addrecord', 'addnote'] for x in self.kwargs.values()):
-            child_name = 'Existing {}(s) to this {}'.format(form_model, model)
-        else:
-            child_name = form_model
-
-        return child_name
-
     @property
     def parent_referral(self):
         return Referral.objects.get(pk=self.kwargs['pk'])
@@ -392,7 +412,6 @@ class ReferralCreateChild(PrsObjectCreate):
     def form_valid(self, form):
         self.object = form.save(commit=False)
         self.object.referral = self.parent_referral
-
         self.object.user = self.request.user
         self.object.creator, self.object.modifier = self.request.user, self.request.user
         redirect_url = None
@@ -410,7 +429,6 @@ class ReferralCreateChild(PrsObjectCreate):
                 self.create_existing_record(form)
             elif 'type' not in self.kwargs:
                 self.object.save()
-
         elif form.Meta.model._meta.model_name == 'note':
             if 'type' in self.kwargs and self.kwargs['type'] == 'addnewnote':
                 redirect_url = self.create_new_note(form)
@@ -418,10 +436,8 @@ class ReferralCreateChild(PrsObjectCreate):
                 self.create_existing_note(form)
             elif 'type' not in self.kwargs:
                 self.object.save()
-
         elif form.Meta.model._meta.model_name == 'condition':
             self.create_condition(self.object)
-
         else:
             self.object.save()
 
@@ -432,6 +448,9 @@ class ReferralCreateChild(PrsObjectCreate):
         return HttpResponseRedirect(redirect_url)
 
     def get_success_url(self):
+        if any(x in ['addrecord', 'addnewrecord', 'addnote', 'addnewnote'] for x in self.kwargs.values()):
+            task = Task.objects.get(pk=self.kwargs['id'])
+            return task.get_absolute_url()
         return self.parent_referral.get_absolute_url()
 
     def create_existing_note(self, form):
