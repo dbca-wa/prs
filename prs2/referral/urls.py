@@ -18,6 +18,7 @@ urlpatterns = patterns(
     url(r'^referrals/(?P<pk>\d+)/tag/$', views.PrsObjectTag.as_view(model=Referral), name='referral_tag'),
     url(r'^referrals/(?P<pk>\d+)/(?P<related_model>\w+)/$', views.ReferralDetail.as_view(), name='referral_detail'),
     url(r'^referrals/(?P<pk>\d+)/(?P<model>\w+)/create/$', views.ReferralCreateChild.as_view(), name='referral_create_child'),
+    # The following URL allows us to specify the 'type' of child object created (e.g. a clearance request Task)
     url(r'^referrals/(?P<pk>\d+)/(?P<model>\w+)/create/(?P<type>\w+)/$', views.ReferralCreateChild.as_view(), name='referral_create_child_type'),
     url(r'^referrals/(?P<pk>\d+)/(?P<model>\w+)/(?P<id>\d+)/(?P<type>\w+)/$', views.ReferralCreateChild.as_view(), name='referral_create_child_related'),
     url(r'^referrals/(?P<pk>\d+)/locations/intersecting/(?P<loc_ids>\w+)/$', views.LocationIntersects.as_view(), name='referral_intersecting_locations'),

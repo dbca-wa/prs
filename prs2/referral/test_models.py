@@ -498,14 +498,14 @@ class RecordTest(PrsTestCase):
         """Test the Record mode as_tbody() method.
         """
         body = self.r.as_tbody()
-        self.assertIsNot(body.find(self.r.__unicode__()), -1)
+        self.assertIsNot(body.find(self.r.name), -1)
         # Add some field values, for coverage.
         self.r.order_date = date.today()
         self.r.infobase_id = 'foo'
         self.r.uploaded_file = self.tmp_f.name
         self.r.save()
         body = self.r.as_tbody()
-        # Body will contain the Infobase ID.
+        # as_tbody will now contain the Infobase ID.
         self.assertIsNot(body.find('foo'), -1)
 
 
