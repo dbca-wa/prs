@@ -152,6 +152,10 @@ map.addControl(new L.Control.LotFilter({}));
 $("input#id_input_lotSearch").change(function() {
     var lotname = $(this).val().toUpperCase();
     if (lotname) {
+        // Test if the search term starts with 'LOT'; if not, append this.
+        if (!lotname.startsWith('LOT')) {
+            lotname = 'LOT ' + lotname;
+        }
         findLot(lotname);
     }
 });

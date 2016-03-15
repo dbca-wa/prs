@@ -1,5 +1,6 @@
 {% extends "webtemplate_dpaw/base.html" %}
 {% load cache %}
+{% load static from staticfiles %}
 
 {% block extra_style %}
 {{ block.super }}
@@ -104,6 +105,7 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'js/startswith.js' %}"></script>
 {{ block.super }}
 <script type="text/javascript">
     // disable url links if user has readonly access (returns true if user is_superuser!)
