@@ -46,7 +46,7 @@ def is_model_or_string(model):
     return model
 
 
-def smart_truncate(content, length=100, suffix='....(continued)'):
+def smart_truncate(content, length=100, suffix='....(more)'):
     """Small function to truncate a string in a sensible way, sourced from:
     http://stackoverflow.com/questions/250357/smart-truncate-in-python
     """

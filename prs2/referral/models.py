@@ -814,7 +814,7 @@ class Record(ReferralBaseModel):
     tools_template = 'referral/record_tools.html'
 
     def __unicode__(self):
-        return unicode(self.name)
+        return unicode('Record: {}'.format(smart_truncate(self.name, length=40)))
 
     @property
     def filename(self):

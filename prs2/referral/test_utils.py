@@ -29,7 +29,7 @@ class UtilsTest(TestCase):
             brooklyn butcher. Iphone fap banksy next level put a bird on it,
             letterpress photo booth thundercats biodiesel fanny pack."""
         trunc = smart_truncate(s)
-        self.assertTrue(trunc.endswith('(continued)'), s)
+        self.assertTrue(trunc.endswith('(more)'), s)
 
     def test_smart_truncate_new_suffix(self):
         s = """Cosby sweater iphone artisan, squid trust fund photo booth twee
