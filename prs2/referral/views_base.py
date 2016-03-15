@@ -190,6 +190,10 @@ class PrsObjectDetail(LoginRequiredMixin, DetailView):
                 kwargs={'model': self.model._meta.object_name.lower()}),
                 self.model._meta.verbose_name_plural.capitalize()),
             (None, unicode(obj.pk))])
+        # Related model table headers.
+        context['note_headers'] = Note.headers
+        context['record_headers'] = Record.headers
+        context['task_headers'] = Task.headers
         # Additional context for specific model types.
         if self.model == Task:
             if obj.records.current():  # Related records.

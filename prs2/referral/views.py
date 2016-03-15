@@ -437,9 +437,10 @@ class ReferralCreateChild(PrsObjectCreate):
         return HttpResponseRedirect(redirect_url)
 
     def get_success_url(self):
-        if any(x in ['addrecord', 'addnewrecord', 'addnote', 'addnewnote'] for x in self.kwargs.values()):
-            task = Task.objects.get(pk=self.kwargs['id'])
-            return task.get_absolute_url()
+        if 'id' in self.kwargs:  # Relating to existing object.
+            child_model = is_model_or_string(self.kwargs['model'].capitalize())
+            child_obj = child_model.objects.get(pk=self.kwargs['id'])
+            return child_obj.get_absolute_url()
         return self.parent_referral.get_absolute_url()
 
     def create_existing_note(self, form):
