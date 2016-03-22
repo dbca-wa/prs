@@ -1,2 +1,7 @@
 [report]
-omit = */migrations/*
+omit =
+    */migrations/*
+    */test_*
+    */referral/management/commands/update_v2.py
+    prs/wsgi.py
+    fabfile.py
