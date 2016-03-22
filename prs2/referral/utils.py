@@ -1,9 +1,9 @@
 # Django imports
-from django.db.models import get_model, Q
+from django.apps import apps
+from django.db.models import Q
 from django.db.models.base import ModelBase
 from django.utils.safestring import mark_safe
 from django.contrib import admin
-from django.contrib import messages
 import re
 from django.utils.encoding import smart_str
 from datetime import datetime
@@ -40,7 +40,7 @@ def is_model_or_string(model):
         if model[x] == 's':
             model = model[0:x]
         try:
-            model = get_model('referral', model)
+            model = apps.get_model('referral', model)
         except LookupError:
             model = None
     return model
@@ -206,13 +206,13 @@ def filter_queryset(request, model, queryset):
 
 
 def is_prs_user(request):
-    if not 'PRS user' in [group.name for group in  request.user.groups.all()]:
+    if 'PRS user' not in [group.name for group in request.user.groups.all()]:
         return False
     return True
 
 
 def is_prs_power_user(request):
-    if not 'PRS power user' in [group.name for group in  request.user.groups.all()]:
+    if 'PRS power user' not in [group.name for group in request.user.groups.all()]:
         return False
     return True
 

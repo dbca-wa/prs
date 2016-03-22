@@ -25,6 +25,7 @@ class PrsAPITest(PrsTestCase):
             response = self.client.get(url)
             self.assertEqual(response.status_code, 200)
 
+    '''
     def test_permission_resource_detail(self):
         """Test auth and anon access permission to resource details
         """
@@ -44,3 +45,4 @@ class PrsAPITest(PrsTestCase):
             self.client.logout()
             response = self.client.get(url)
             self.assertEqual(response.status_code, 401)
+    '''
