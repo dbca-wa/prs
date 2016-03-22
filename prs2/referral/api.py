@@ -29,6 +29,7 @@ def generate_meta(klass, overrides={}):
         'resource_name': klass._meta.model_name,
         'filtering': generate_filtering(klass),
         'cache': SimpleCache(),
+        'allowed_methods': ['get'],
     }
     metaitems.update(overrides)
     return type('Meta', (object,), metaitems)

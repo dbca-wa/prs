@@ -13,7 +13,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import (
     View, ListView, DetailView, CreateView, UpdateView, DeleteView)
 import json
-import reversion
+from reversion import revisions
 from taggit.models import Tag
 
 from .forms import FORMS_MAP, ReferralForm
@@ -320,7 +320,7 @@ class PrsObjectHistory(PrsObjectDetail):
             (obj.get_absolute_url(), str(obj.pk)),
             (None, 'History')])
         # Get all object versions
-        versions = reversion.get_for_object(obj).order_by('-id')
+        versions = revisions.get_for_object(obj).order_by('-id')
         context['obj_versions'] = versions
         context['multi_versions'] = len(versions) > 1  # True/False
         return context

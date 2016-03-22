@@ -250,4 +250,5 @@ TASTYPIE_DEFAULT_FORMATS = ['json']
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
 # django-sql-explorer settings
+# Requires user is_staff==True and membership in 'PRS power user' group.
 EXPLORER_PERMISSION_VIEW = lambda u: u.is_staff and u.userprofile.is_power_user()

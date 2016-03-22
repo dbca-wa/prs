@@ -3,7 +3,7 @@ from __future__ import (division, print_function, unicode_literals,
 
 import logging
 import magic  # File MIME-type identification
-import reversion
+from reversion import revisions
 import threading
 
 from django.conf import settings
@@ -114,16 +114,16 @@ class Audit(models.Model):
         super(Audit, self).save(*args, **kwargs)
 
         if created:
-            with reversion.create_revision():
-                reversion.set_comment('Initial version.')
+            with revisions.create_revision():
+                revisions.set_comment('Initial version.')
         else:
             if self.has_changed():
                 comment = 'Changed ' + ', '.join(self.changed_data) + '.'
-                with reversion.create_revision():
-                    reversion.set_comment(comment)
+                with revisions.create_revision():
+                    revisions.set_comment(comment)
             else:
-                with reversion.create_revision():
-                    reversion.set_comment('Nothing changed.')
+                with revisions.create_revision():
+                    revisions.set_comment('Nothing changed.')
 
     def __str__(self):
         return str(self.pk)
