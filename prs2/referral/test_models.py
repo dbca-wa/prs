@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.gis.geos import Polygon
 from django.core import mail
 from django.core.urlresolvers import reverse
 from django.test import TestCase
@@ -11,7 +12,8 @@ from taggit.models import Tag
 from referral.models import (
     DopTrigger, Region, OrganisationType, Organisation, TaskType, TaskState,
     NoteType, ReferralType, Referral, Task, Record, Note, Condition, Location,
-    Bookmark, Clearance, Agency, ConditionCategory, UserProfile, ModelCondition)
+    Bookmark, Clearance, Agency, ConditionCategory, UserProfile, ModelCondition,
+    RelatedReferral)
 User = get_user_model()
 
 
@@ -72,10 +74,15 @@ class PrsTestCase(TestCase):
             mixer.cycle(2).blend(ModelCondition, category=mixer.SELECT)
             mixer.cycle(2).blend(
                 Condition, referral=mixer.SELECT, category=mixer.SELECT,
-                condition=mixer.RANDOM, model_condition=mixer.SELECT)
+                condition=mixer.RANDOM, model_condition=mixer.SELECT,
+                proposed_condition=mixer.RANDOM)
             mixer.cycle(2).blend(
                 Clearance, condition=mixer.SELECT, task=mixer.SELECT)
             mixer.cycle(2).blend(Location, referral=mixer.SELECT)
+            # Generate some geometry in one Location.
+            l = Location.objects.all()[0]
+            l.poly = Polygon(((0.0, 0.0), (0.0, 50.0), (50.0, 50.0), (50.0, 0.0), (0.0, 0.0)))
+            l.save()
             mixer.cycle(2).blend(Bookmark, referral=mixer.SELECT, user=mixer.SELECT)
 
 
@@ -200,6 +207,19 @@ class ReferralTest(PrsTestCase):
         for r in Referral.objects.all():
             self.assertEqual(r.has_location, r.location_set.current().exists())
 
+    def test_has_condition(self):
+        """Test the Referral model has_condition property
+        """
+        for r in Referral.objects.all():
+            self.assertEqual(r.has_condition, r.condition_set.current().exists())
+
+    def test_has_proposed_condition(self):
+        """Test the Referral model has_proposed_condition property
+        """
+        for r in Referral.objects.all():
+            result = r.has_condition and any(c.proposed_condition for c in r.condition_set.current())
+            self.assertEqual(r.has_proposed_condition, result)
+
     def test_as_row(self):
         """Test the Referral model as_row() method
         """
@@ -247,6 +267,18 @@ class ReferralTest(PrsTestCase):
         # The remove_relationship method returns True.
         self.assertTrue(ref1.remove_relationship(ref2))
         self.assertEqual(ref1.related_referrals.count(), 0)
+        # Trying remove_relationship a second time returns False.
+        self.assertFalse(ref1.remove_relationship(ref2))
+
+    def test_generate_qgis_layer(self):
+        """Test the Referral model generate_qgis_layer() method
+        """
+        for r in Referral.objects.all():
+            if r.location_set.current().filter(poly__isnull=False).exists():
+                # The method will return a unicode string.
+                self.assertIsInstance(r.generate_qgis_layer(), unicode)
+            else:
+                self.assertIsNone(r.generate_qgis_layer())
 
 
 class TaskTest(PrsTestCase):
@@ -665,6 +697,14 @@ class ConditionTest(PrsTestCase):
         body = c.as_tbody()
         self.assertIs(body.find(url), -1)
 
+    def test_add_clearance(self):
+        """
+        """
+        c = Condition.objects.all()[0]
+        t = mixer.blend(Task, type=mixer.SELECT, referral=mixer.SELECT, state=mixer.SELECT)
+        clear = c.add_clearance(t)
+        self.assertIsInstance(clear, Clearance)
+
 
 class ClearanceTest(PrsTestCase):
     """Unit tests specific to the ``Clearance`` model class.
@@ -755,3 +795,25 @@ class BookmarkTest(PrsTestCase):
         b = Bookmark.objects.all()[0]
         row = b.as_row()
         self.assertIsNot(row.find(b.referral.get_absolute_url()), -1)
+
+    def test_as_tbody(self):
+        """Test the Bookmark mode as_tbody() method.
+        """
+        b = Bookmark.objects.all()[0]
+        body = b.as_tbody()
+        self.assertIsNot(body.find(b.referral.get_absolute_url()), -1)
+
+
+class RelatedReferralTest(PrsTestCase):
+
+    def setUp(self):
+        super(RelatedReferralTest, self).setUp()
+        q = Referral.objects.all().order_by('pk')
+        ref1, ref2 = q[0], q[1]
+        ref1.add_relationship(ref2)
+        self.obj = RelatedReferral.objects.all()[0]
+
+    def test_unicode(self):
+        """Test ReferralLookupModel __unicode__() method returns None or unicode.
+        """
+        self.assertIsInstance(self.obj.__unicode__(), unicode)

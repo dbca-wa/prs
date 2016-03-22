@@ -451,7 +451,7 @@ class Referral(ReferralBaseModel):
         """Generates and returns the content for a QGIS layer definition.
         """
         # Only return a value for a referral with child locations.
-        if not self.location_set.current().exists():
+        if not self.location_set.current().filter(poly__isnull=False).exists():
             return None
         # Read in the base Jinja template.
         t = Template(open('prs2/referral/templates/qgis_layer.jinja', 'r').read())
@@ -1233,6 +1233,8 @@ class Condition(ReferralBaseModel):
         return mark_safe(template.format(**d).strip())
 
     def add_clearance(self, task, deposited_plan=None):
+        """Get or create a Clearance object on this Condition.
+        """
         clearance, created = Clearance.objects.get_or_create(
             condition=self,
             task=task,
