@@ -1,2 +1,4 @@
 [report]
-omit = */migrations/*
+omit =
+    */migrations/*
+    */test_*

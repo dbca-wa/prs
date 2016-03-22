@@ -194,6 +194,12 @@ class ReferralTest(PrsTestCase):
             # String contains the trigger name.
             self.assertIsNot(s.find(trigger.name), -1)
 
+    def test_has_location(self):
+        """Test the Referral model has_location property
+        """
+        for r in Referral.objects.all():
+            self.assertEqual(r.has_location, r.location_set.current().exists())
+
     def test_as_row(self):
         """Test the Referral model as_row() method
         """
