@@ -371,7 +371,7 @@ class RecordForm(BaseForm):
     def clean(self):
         cleaned_data = super(RecordForm, self).clean()
         u = cleaned_data.get('uploaded_file')
-        if u and u.content_type not in settings.ALLOWED_UPLOAD_TYPES:
+        if u and hasattr(u, 'content_type') and u.content_type not in settings.ALLOWED_UPLOAD_TYPES:
             self._errors['uploaded_file'] = self.error_class(['File type is not permitted.'])
         return cleaned_data
 
