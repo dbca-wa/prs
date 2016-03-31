@@ -56,7 +56,7 @@ class PrsObjectList(LoginRequiredMixin, ListView):
                 search_fields = site._registry[self.model].search_fields
                 entry_query = get_query(query_str, search_fields)
                 qs = qs.filter(entry_query)
-        return qs
+        return qs.distinct()
 
     def get_context_data(self, **kwargs):
         context = super(PrsObjectList, self).get_context_data(**kwargs)
