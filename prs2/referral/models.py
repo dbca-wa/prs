@@ -71,30 +71,30 @@ class ReferralLookup(ActiveModel, Audit):
         Returns a string of HTML that renders the object details as table row cells.
         Remember to enclose output of this function in <tr> tags.
         '''
-        template = u'<td><a href="{url}">{name}</a></td><td>{description}</td><td>{modified}</td>'
+        template = '<td><a href="{url}">{name}</a></td><td>{description}</td><td>{modified}</td>'.encode('utf-8')
         d = copy(self.__dict__)
         d['url'] = self.get_absolute_url()
         d['description'] = self.description or ''
         d['modified'] = self.modified.strftime("%d %b %Y")
-        return mark_safe(template.format(**d))
+        return unicode(mark_safe(template.format(**d)))
 
     def as_tbody(self):
         '''
         Returns a string of HTML to render the object details inside <tbody> tags.
         '''
-        template = u'''<tr><th>ID</th><td>{id}</td></tr>
+        template = '''<tr><th>ID</th><td>{id}</td></tr>
             <tr><th>Name</th><td>{name}</td></tr>
             <tr><th>Description</th><td>{description}</td></tr>
             <tr><th>Date created</th><td>{created}</td></tr>
             <tr><th>Created by</th><td>{creator}</td</tr>
             <tr><th>Last modified</th><td>{modified}</td></tr>
-            <tr><th>Last changed by</th><td>{modifier}</td></tr>'''
+            <tr><th>Last changed by</th><td>{modifier}</td></tr>'''.encode('utf-8')
         d = copy(self.__dict__)
         d['created'] = self.created.strftime("%d-%b-%Y")
         d['creator'] = self.creator.get_full_name()
         d['modified'] = self.modified.strftime("%d-%b-%Y")
         d['modifier'] = self.modifier.get_full_name()
-        return mark_safe(template.format(**d))
+        return unicode(mark_safe(template.format(**d)))
 
 
 class DopTrigger(ReferralLookup):
@@ -171,7 +171,7 @@ class Organisation(ReferralLookup):
             <tr><th>Date created</th><td>{created}</td></tr>
             <tr><th>Created by</th><td>{creator}</td</tr>
             <tr><th>Last modified</th><td>{modified}</td></tr>
-            <tr><th>Last changed by</th><td>{modifier}</td></tr>'''
+            <tr><th>Last changed by</th><td>{modifier}</td></tr>'''.encode('utf-8')
         d = copy(self.__dict__)
         d['type'] = self.type
         d['created'] = self.created.strftime("%d-%b-%Y")
@@ -383,7 +383,7 @@ class Referral(ReferralBaseModel):
             <td>{reference}</td>
             <td>{referring_org}</td>
             <td>{region}</td>
-            <td>{type}</td>'''
+            <td>{type}</td>'''.encode('utf-8')
         d = copy(self.__dict__)
         d['url'] = self.get_absolute_url()
         d['type'] = self.type
@@ -407,7 +407,7 @@ class Referral(ReferralBaseModel):
             <tr><th>Type</th><td>{type}</td></tr>
             <tr><th>Region(s)</th><td>{region}</td></tr>
             <tr><th>DoP Trigger(s)</th><td>{dop_triggers}</td></tr>
-            <tr><th>File no.</th><td>{file_no}</td></tr>'''
+            <tr><th>File no.</th><td>{file_no}</td></tr>'''.encode('utf-8')
         d = copy(self.__dict__)
         d['url'] = self.get_absolute_url()
         d['type'] = self.type
@@ -542,7 +542,7 @@ class Task(ReferralBaseModel):
             <td>{start_date}</td>
             <td>{due_date}</td>
             <td>{complete_date}</td>
-            <td>{state}</td>'''
+            <td>{state}</td>'''.encode('utf-8')
         d = copy(self.__dict__)
         d['url'] = self.get_absolute_url()
         d['type'] = self.type
@@ -579,10 +579,10 @@ class Task(ReferralBaseModel):
         '''
         d = copy(self.__dict__)
         if self.state.name == 'Stopped':
-            template = '''<td><a class="is_prs_user_action" href="{start_url}" title="Start"><i class="fa fa-play"></i></a></td>'''
+            template = '''<td><a class="is_prs_user_action" href="{start_url}" title="Start"><i class="fa fa-play"></i></a></td>'''.encode('utf-8')
             d['start_url'] = reverse('task_action', kwargs={'pk': self.pk, 'action': 'start'})
         elif not self.complete_date:
-            template = '''<td><a class="is_prs_user_action" href="{edit_url}" title="Edit"><i class="fa fa-pencil"></i></a>'''
+            template = '''<td><a class="is_prs_user_action" href="{edit_url}" title="Edit"><i class="fa fa-pencil"></i></a>'''.encode('utf-8')
             template += ''' <a class="is_prs_user_action" href="{complete_url}" title="Complete"><i class="fa fa-check-square-o"></i></a>'''
             template += '''
                 <a class="is_prs_user_action" href="{stop_url}" title="Stop"><i class="fa fa-stop"></i></a>
@@ -600,7 +600,7 @@ class Task(ReferralBaseModel):
             d['cancel_url'] = reverse('task_action', kwargs={'pk': self.pk, 'action': 'cancel'})
             d['delete_url'] = reverse('prs_object_delete', kwargs={'pk': self.pk, 'model': 'task'})
         else:
-            template = '<td></td>'
+            template = '<td></td>'.encode('utf-8')
         return mark_safe(template.format(**d))
 
     def as_row_minus_referral(self):
@@ -637,7 +637,7 @@ class Task(ReferralBaseModel):
         html attr class="is_prs_user_action" is used by javascript in the template to
         check prs_user permissions and disables Actions for readonly users.
         '''
-        template = '''<td>{type}</td>'''
+        template = '''<td>{type}</td>'''.encode('utf-8')
         if self.referral.address:  # If the referral has an address, include it in the description field.
             template += '''<td>{description}<br><b>Address: </b>{address}</td>'''
         else:
@@ -682,7 +682,7 @@ class Task(ReferralBaseModel):
         '''
         As above, minus the column for icons.
         '''
-        template = '''<td>{type}</td>'''
+        template = '''<td>{type}</td>'''.encode('utf-8')
         # If the task referral has an address, combine it into the next cell.
         if self.referral.address:
             template += '<td>{description}<br><b>Address: </b>{address}</td>'
@@ -722,7 +722,7 @@ class Task(ReferralBaseModel):
             <tr><th>Completion date</th><td>{complete_date}</td></tr>
             <tr><th>Stop date</th><td>{stop_date}</td></tr>
             <tr><th>Restart date</th><td>{restart_date}</td></tr>
-            <tr><th>Stop time (days)</th><td>{stop_time}</td></tr>'''
+            <tr><th>Stop time (days)</th><td>{stop_time}</td></tr>'''.encode('utf-8')
         d = copy(self.__dict__)
         d['type'] = self.type
         d['referral_url'] = reverse(
@@ -859,7 +859,7 @@ class Record(ReferralBaseModel):
             <td><a href="{infobase_url}">{infobase_id}</a></td>
             <td class="referral-id-cell"><a href="{referral_url}">{referral}</a></td>
             <td><a href="{download_url}">{filetype}</a></td>
-            <td>{filesize}</td>'''
+            <td>{filesize}</td>'''.encode('utf-8')
         d = copy(self.__dict__)
         d['url'] = self.get_absolute_url()
         if self.order_date:
@@ -893,7 +893,7 @@ class Record(ReferralBaseModel):
         check prs_user permissions and disables Actions for readonly users.
         '''
         template = '''<td><a class="is_prs_user_action" href="{edit_url}" title="Edit"><i class="fa fa-pencil"></i></a>
-            <a class="is_prs_user_action" href="{delete_url}" title="Delete"><i class="fa fa-trash-o"></i></a></td>'''
+            <a class="is_prs_user_action" href="{delete_url}" title="Delete"><i class="fa fa-trash-o"></i></a></td>'''.encode('utf-8')
         d = copy(self.__dict__)
         d['edit_url'] = reverse('prs_object_update', kwargs={'pk': self.pk, 'model': 'records'})
         d['delete_url'] = reverse('prs_object_delete', kwargs={'pk': self.pk, 'model': 'records'})
@@ -916,7 +916,7 @@ class Record(ReferralBaseModel):
             <tr><th>Description</th><td>{description}</td></tr>
             <tr><th>File type</th><td><a href="{download_url}">{filetype}</a></td></tr>
             <tr><th>File size</th><td>{filesize}</td></tr>
-            <tr><th>Date</th><td>{order_date}</td</tr>'''
+            <tr><th>Date</th><td>{order_date}</td</tr>'''.encode('utf-8')
         d = copy(self.__dict__)
         d['referral_url'] = reverse(
             'referral_detail',
@@ -1002,7 +1002,7 @@ class Note(ReferralBaseModel):
             <td>{creator}</td>
             <td>{order_date}</td>
             <td>{note}</td>
-            <td class="referral-id-cell"><a href="{referral_url}">{referral}</a></td>'''
+            <td class="referral-id-cell"><a href="{referral_url}">{referral}</a></td>'''.encode('utf-8')
         d = copy(self.__dict__)
         d['url'] = self.get_absolute_url()
         if self.type:
@@ -1028,7 +1028,7 @@ class Note(ReferralBaseModel):
         check prs_user permissions and disables Actions for readonly users.
         '''
         template = '''<td><a class="is_prs_user_action" href="{edit_url}" title="Edit"><i class="fa fa-pencil"></i></a>
-            <a class="is_prs_user_action" href="{delete_url}" title="Delete"><i class="fa fa-trash-o"></i></a></td>'''
+            <a class="is_prs_user_action" href="{delete_url}" title="Delete"><i class="fa fa-trash-o"></i></a></td>'''.encode('utf-8')
         d = copy(self.__dict__)
         d['edit_url'] = reverse('prs_object_update', kwargs={'pk': self.pk, 'model': 'notes'})
         d['delete_url'] = reverse('prs_object_delete', kwargs={'pk': self.pk, 'model': 'notes'})
@@ -1049,7 +1049,7 @@ class Note(ReferralBaseModel):
             <tr><th>Type</th><td>{type}</td></tr>
             <tr><th>Created by</th><td>{creator}</td</tr>
             <tr><th>Date</th><td>{order_date}</td</tr>
-            <tr class="highlight"><th>Note</th><td>{note_html}</td></tr>'''
+            <tr class="highlight"><th>Note</th><td>{note_html}</td></tr>'''.encode('utf-8')
         d = copy(self.__dict__)
         d['referral_url'] = reverse(
             'referral_detail',
@@ -1148,7 +1148,7 @@ class Condition(ReferralBaseModel):
             <td>{proposed_condition}</td>
             <td>{condition}</td>
             <td>{category}</td>
-            <td class="referral-id-cell"><a href="{referral_url}">{referral}</a></td>'''
+            <td class="referral-id-cell"><a href="{referral_url}">{referral}</a></td>'''.encode('utf-8')
         d = copy(self.__dict__)
         d['url'] = self.get_absolute_url()
         d['identifier'] = self.identifier or ''
@@ -1182,7 +1182,7 @@ class Condition(ReferralBaseModel):
         '''
         template = '''<td><a class="is_prs_user_action" href="{add_clearance_url}" title="Add clearance"><i class="fa fa-plus"></i></a>
             <a class="is_prs_user_action" href="{edit_url}" title="Edit"><i class="fa fa-pencil"></i></a>
-            <a class="is_prs_user_action" href="{delete_url}" title="Delete"><i class="fa fa-trash-o"></i></a></td>'''
+            <a class="is_prs_user_action" href="{delete_url}" title="Delete"><i class="fa fa-trash-o"></i></a></td>'''.encode('utf-8')
         d = copy(self.__dict__)
         d['add_clearance_url'] = reverse('condition_clearance_add', kwargs={'pk': self.pk})
         d['edit_url'] = reverse('prs_object_update', kwargs={'pk': self.pk, 'model': 'conditions'})
@@ -1207,7 +1207,7 @@ class Condition(ReferralBaseModel):
             <tr><th>Model condition</th><td>{model_condition}</td></tr>
             <tr><th>Proposed condition text</th><td>{proposed_condition_html}</td></tr>
             <tr><th>Approved condition text</th><td>{condition_html}</td></tr>
-            <tr><th>Category</th><td>{category}</td></tr>'''
+            <tr><th>Category</th><td>{category}</td></tr>'''.encode('utf-8')
         d = copy(self.__dict__)
         if self.referral:
             d['referral_url'] = reverse(
@@ -1291,7 +1291,7 @@ class Clearance(models.Model):
             <td>{category}</td>
             <td>{task}</td>
             <td>{deposited_plan}</td>
-            <td class="referral-id-cell"><a href="{referral_url}">{referral}</a></td>'''
+            <td class="referral-id-cell"><a href="{referral_url}">{referral}</a></td>'''.encode('utf-8')
         d = copy(self.__dict__)
         d['url'] = self.get_absolute_url()
         d['identifier'] = self.condition.identifier or ''
@@ -1321,7 +1321,7 @@ class Clearance(models.Model):
             <tr><th>Approved condition text</th><td>{condition_html}</td></tr>
             <tr><th>Task ID</th><td><a href="{task_url}">{task}</a></td></tr>
             <tr><th>Task description</th><td>{task_desc}</td></tr>
-            <tr><th>Deposited plan</th><td>{deposited_plan}</td></tr>'''
+            <tr><th>Deposited plan</th><td>{deposited_plan}</td></tr>'''.encode('utf-8')
         d = copy(self.__dict__)
         d['referral'] = self.task.referral
         d['referral_url'] = self.task.referral.get_absolute_url()
@@ -1404,7 +1404,7 @@ class Location(ReferralBaseModel):
         template = '''<td><a href="{url}">Open</a></td>
             <td>{address}</td>
             <td>{polygon}</td>
-            <td class="referral-id-cell"><a href="{referral_url}">{referral}</a></td>'''
+            <td class="referral-id-cell"><a href="{referral_url}">{referral}</a></td>'''.encode('utf-8')
         d = copy(self.__dict__)
         d['url'] = reverse('prs_object_detail', kwargs={'pk': self.pk, 'model': 'locations'})
         d['address'] = self.nice_address or 'none'
@@ -1428,7 +1428,7 @@ class Location(ReferralBaseModel):
         check prs_user permissions and disables Actions for readonly users.
         '''
         template = '''<td><a class="is_prs_user_action" href="{edit_url}" title="Edit"><i class="fa fa-pencil"></i></a>
-            <a class="is_prs_user_action" href="{delete_url}" title="Delete"><i class="fa fa-trash-o"></i></a></td>'''
+            <a class="is_prs_user_action" href="{delete_url}" title="Delete"><i class="fa fa-trash-o"></i></a></td>'''.encode('utf-8')
         d = copy(self.__dict__)
         d['edit_url'] = reverse('prs_object_update', kwargs={'pk': self.pk, 'model': 'locations'})
         d['delete_url'] = reverse(
@@ -1455,7 +1455,7 @@ class Location(ReferralBaseModel):
             <tr><th>Road name</th><td>{road_name}</td></tr>
             <tr><th>Road suffix</th><td>{road_suffix}</td></tr>
             <tr><th>Locality</th><td>{locality}</td></tr>
-            <tr><th>Postcode</th><td>{postcode}</td></tr>'''
+            <tr><th>Postcode</th><td>{postcode}</td></tr>'''.encode('utf-8')
         d = copy(self.__dict__)
         d['url'] = self.get_absolute_url()
         d['referral_url'] = reverse(
@@ -1500,7 +1500,7 @@ class Bookmark(ReferralBaseModel):
         '''
         template = '''<td><a href="{referral_url}">{referral}</a></td>
             <td>{description}</td>
-            <td><a class="is_prs_user_action" href="{delete_url}" title="Delete"><i class="fa fa-trash-o"></i></a></td>'''
+            <td><a class="is_prs_user_action" href="{delete_url}" title="Delete"><i class="fa fa-trash-o"></i></a></td>'''.encode('utf-8')
         d = copy(self.__dict__)
         d['referral_url'] = self.referral.get_absolute_url()
         d['referral'] = self.referral
@@ -1517,7 +1517,7 @@ class Bookmark(ReferralBaseModel):
         template = '''<tr><th>Referral</th><td><a href="{referral_url}">{referral}</a></td></tr>
             <tr><th>Referrer's reference</th><td>{reference}</td></tr>
             <tr><th>User</th><td>{user}</td></tr>
-            <tr><th>Description</th><td>{description}</td></tr>'''
+            <tr><th>Description</th><td>{description}</td></tr>'''.encode('utf-8')
         d = copy(self.__dict__)
         d['referral_url'] = reverse('referral_detail', kwargs={'pk': self.referral.pk})
         d['referral'] = self.referral
