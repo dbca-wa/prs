@@ -124,7 +124,8 @@ class Organisation(ReferralLookup):
     '''
     Lookup table of Organisations that send planning referrals to DPaW.
     '''
-    type = models.ForeignKey(OrganisationType, help_text='The organisation type.')
+    type = models.ForeignKey(
+        OrganisationType, on_delete=models.PROTECT, help_text='The organisation type.')
     list_name = models.CharField(
         max_length=100,
         help_text='''Name as it will appear in the alphabetised selection lists (e.g. "Broome,
@@ -200,7 +201,7 @@ class TaskState(ReferralLookup):
       objection)
     '''
     task_type = models.ForeignKey(
-        'TaskType', null=True, blank=True,
+        'TaskType', on_delete=models.PROTECT, null=True, blank=True,
         help_text='Optional - does this state relate to a single task type only?')
     is_ongoing = models.BooleanField(
         default=True,
@@ -219,7 +220,7 @@ class TaskType(ReferralLookup):
     for each type.
     '''
     initial_state = models.ForeignKey(
-        TaskState, limit_choices_to=Q(effective_to__isnull=True),
+        TaskState, on_delete=models.PROTECT, limit_choices_to=Q(effective_to__isnull=True),
         help_text='The initial state for this task type.')
     target_days = models.IntegerField(
         default=35,
@@ -233,7 +234,7 @@ class ReferralType(ReferralLookup):
     Having a "default" task type is not essential, though highly recommended.
     '''
     initial_task = models.ForeignKey(
-        TaskType,
+        TaskType, on_delete=models.PROTECT,
         limit_choices_to=Q(effective_to__isnull=True), null=True, blank=True,
         help_text='Optional, but highly recommended.')
 
@@ -284,17 +285,17 @@ class Referral(ReferralBaseModel):
     A planning referral which has been sent to DPaW for comment.
     '''
     type = models.ForeignKey(
-        ReferralType, verbose_name='referral type',
+        ReferralType, on_delete=models.PROTECT, verbose_name='referral type',
         help_text='''[Searchable] The referral type; explanation of these categories is also found
             in the <a href="/help/">PRS User documentation</a>.''')
     agency = models.ForeignKey(
-        Agency, blank=True, null=True,
+        Agency, on_delete=models.PROTECT, blank=True, null=True,
         help_text='[Searchable] The agency to which this referral relates.')
     region = models.ManyToManyField(
         Region, related_name='regions', blank=True,
         help_text='[Searchable] The region(s) in which this referral belongs.')
     referring_org = models.ForeignKey(
-        Organisation, verbose_name='referring organisation',
+        Organisation, on_delete=models.PROTECT, verbose_name='referring organisation',
         help_text='[Searchable] The referring organisation or individual.')
     reference = models.CharField(
         max_length=100, validators=[MaxLengthValidator(100)],
@@ -327,6 +328,13 @@ class Referral(ReferralBaseModel):
         'Referral ID', 'Received date', 'Description', 'Address',
         "Referrer's reference", 'Referred by', 'Region(s)', 'Type']
     tools_template = 'referral/referral_tools.html'
+
+    def save(self, force_insert=False, force_update=False, *args, **kwargs):
+        '''Overide save() to cleanse text input to the description field.
+        '''
+        if self.description:
+            self.description = unidecode(self.description)
+        super(Referral, self).save(force_insert, force_update)
 
     def get_absolute_url(self):
         return unicode(reverse('referral_detail', kwargs={'pk': self.pk}))
@@ -468,8 +476,10 @@ class RelatedReferral(models.Model):
     Trying to create this relationship without the intermediate class generated
     some really odd recursion errors.
     '''
-    from_referral = models.ForeignKey(Referral, related_name='from_referral')
-    to_referral = models.ForeignKey(Referral, related_name='to_referral')
+    from_referral = models.ForeignKey(
+        Referral, on_delete=models.PROTECT, related_name='from_referral')
+    to_referral = models.ForeignKey(
+        Referral, on_delete=models.PROTECT, related_name='to_referral')
 
     def __unicode__(self):
         return unicode(
@@ -486,10 +496,12 @@ class Task(ReferralBaseModel):
     This is how we record and manage our workflow.
     '''
     type = models.ForeignKey(
-        TaskType, verbose_name='task type', help_text='The task type.')
+        TaskType, on_delete=models.PROTECT, verbose_name='task type',
+        help_text='The task type.')
     referral = models.ForeignKey(Referral)
     assigned_user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, related_name='refer_task_assigned_user',
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT,
+        related_name='refer_task_assigned_user',
         help_text='The officer responsible for completing the task.')
     description = models.TextField(
         blank=True, null=True, help_text='Description of the task requirements.')
@@ -507,7 +519,8 @@ class Task(ReferralBaseModel):
     stop_time = models.IntegerField(
         default=0, editable=False, help_text='Cumulative time stopped in days.')
     state = models.ForeignKey(
-        TaskState, verbose_name='status', help_text='The status of the task.')
+        TaskState, on_delete=models.PROTECT, verbose_name='status',
+        help_text='The status of the task.')
     headers = [
         'Task', 'Type', 'Task description', 'Address', 'Referral ID', 'Assigned',
         'Start', 'Due', 'Completed', 'Status']
@@ -793,7 +806,7 @@ class Record(ReferralBaseModel):
         max_length=200,
         help_text='The name/description of the record (max 200 characters).',
         validators=[MaxLengthValidator(200)])
-    referral = models.ForeignKey(Referral)
+    referral = models.ForeignKey(Referral, on_delete=models.PROTECT)
     uploaded_file = models.FileField(
         blank=True,
         null=True,
@@ -815,6 +828,13 @@ class Record(ReferralBaseModel):
 
     def __unicode__(self):
         return unicode('Record: {}'.format(smart_truncate(self.name, length=40)))
+
+    def save(self, force_insert=False, force_update=False, *args, **kwargs):
+        '''Overide save() to cleanse text input to the description field.
+        '''
+        if self.description:
+            self.description = unidecode(self.description)
+        super(Record, self).save(force_insert, force_update)
 
     @property
     def filename(self):
@@ -953,10 +973,10 @@ class Note(ReferralBaseModel):
     A note or comment about a referral. These notes are meant to supplement
     formal record-keeping procedures only. HTML-formatted text is allowed.
     '''
-    referral = models.ForeignKey(Referral)
+    referral = models.ForeignKey(Referral, on_delete=models.PROTECT)
     type = models.ForeignKey(
-        NoteType, blank=True, null=True, verbose_name='note type',
-        help_text='The type of note (optional).')
+        NoteType, on_delete=models.PROTECT, blank=True, null=True,
+        verbose_name='note type', help_text='The type of note (optional).')
     note_html = models.TextField(verbose_name='note')
     note = models.TextField(editable=False)
     order_date = models.DateField(
@@ -1077,7 +1097,8 @@ class ConditionCategory(ReferralLookup):
 class ModelCondition(ReferralBaseModel):
     """Represents a 'model condition' with standard text.
     """
-    category = models.ForeignKey(ConditionCategory, blank=True, null=True)
+    category = models.ForeignKey(
+        ConditionCategory, on_delete=models.PROTECT, blank=True, null=True)
     condition = models.TextField(help_text="Model condition")
     identifier = models.CharField(
         max_length=100, blank=True, null=True,
@@ -1089,7 +1110,8 @@ class Condition(ReferralBaseModel):
     """Model type to handle proposed & approved conditions on referrals.
     Note that referral may be blank; this denotes a "standard" model condition.
     """
-    referral = models.ForeignKey(Referral, blank=True, null=True)
+    referral = models.ForeignKey(
+        Referral, on_delete=models.PROTECT, blank=True, null=True)
     condition = models.TextField(editable=False, blank=True, null=True)
     condition_html = models.TextField(
         blank=True, null=True, verbose_name='approved condition',
@@ -1107,9 +1129,11 @@ class Condition(ReferralBaseModel):
     clearance_tasks = models.ManyToManyField(
         Task, through='Clearance', editable=False, symmetrical=True,
         related_name='clearance_requests')
-    category = models.ForeignKey(ConditionCategory, blank=True, null=True)
+    category = models.ForeignKey(
+        ConditionCategory, on_delete=models.PROTECT, blank=True, null=True)
     model_condition = models.ForeignKey(
-        ModelCondition, blank=True, null=True, related_name='model_condition',
+        ModelCondition, on_delete=models.PROTECT, blank=True, null=True,
+        related_name='model_condition',
         help_text='Model text on which this condition is based')
     headers = [
         'Condition', 'No.', 'Proposed condition', 'Approved condition',
@@ -1118,7 +1142,7 @@ class Condition(ReferralBaseModel):
 
     def save(self, force_insert=False, force_update=False, *args, **kwargs):
         '''
-        Overide the models's save() to cleanse the HTML input.
+        Overide the Condition models's save() to cleanse the HTML input.
         '''
         if self.condition_html:
             self.condition_html = unidecode(dewordify_text(self.condition_html))
@@ -1261,8 +1285,8 @@ class Clearance(models.Model):
     '''
     Intermediate class for relationships between Condition and Task objects.
     '''
-    condition = models.ForeignKey(Condition)
-    task = models.ForeignKey(Task)
+    condition = models.ForeignKey(Condition, on_delete=models.PROTECT)
+    task = models.ForeignKey(Task, on_delete=models.PROTECT)
     date_created = models.DateField(auto_now_add=True)
     deposited_plan = models.CharField(
         max_length=200, null=True, blank=True,
@@ -1362,7 +1386,7 @@ class Location(ReferralBaseModel):
     strata_lot_desc = models.TextField(null=True, blank=True)
     reserve = models.TextField(null=True, blank=True)
     cadastre_obj_id = models.IntegerField(null=True, blank=True)
-    referral = models.ForeignKey(Referral)
+    referral = models.ForeignKey(Referral, on_delete=models.PROTECT)
     poly = models.PolygonField(srid=4283, null=True, blank=True, help_text='Optional.')
     address_string = models.TextField(null=True, blank=True, editable=True)
     headers = ['Location', 'Address', 'Polygon', 'Referral ID']
@@ -1481,9 +1505,10 @@ class Bookmark(ReferralBaseModel):
     Inherits from the abstract model class ReferralBaseModel.
     Users are able to bookmark referrals for faster access.
     '''
-    referral = models.ForeignKey(Referral)
+    referral = models.ForeignKey(Referral, on_delete=models.PROTECT)
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, related_name='referral_user_bookmark')
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT,
+        related_name='referral_user_bookmark')
     description = models.CharField(
         max_length=200, blank=True, null=True,
         help_text='Maximum 200 characters.',
@@ -1532,7 +1557,7 @@ class UserProfile(models.Model):
     An extension of the Django auth model, to add additional fields to each User
     '''
     user = models.OneToOneField(settings.AUTH_USER_MODEL)
-    agency = models.ForeignKey(Agency, blank=True, null=True)
+    agency = models.ForeignKey(Agency, on_delete=models.PROTECT, blank=True, null=True)
     # Referral history is a list of 2-tuples: (referral pk, datetime)
     referral_history = models.TextField(blank=True, null=True)
     task_history = models.TextField(blank=True, null=True)
