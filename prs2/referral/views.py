@@ -142,7 +142,7 @@ class ReferralCreate(PrsObjectCreate):
         context['title'] = 'CREATE A NEW REFERRAL'
         context['page_title'] = 'PRS | Referrals | Create'
         # Pass in a serialised list of tag names.
-        context['tags'] = json.dumps([t.name for t in Tag.objects.all()])
+        context['tags'] = json.dumps([t.name for t in Tag.objects.all().order_by('name')])
         return context
 
     def get_initial(self):
@@ -922,7 +922,7 @@ class TaskAction(PrsObjectUpdate):
         context['breadcrumb_trail'] = breadcrumbs_li(links)
         context['title'] = action.upper() + ' TASK'
         # Pass in a serialised list of tag names.
-        context['tags'] = json.dumps([t.name for t in Tag.objects.all()])
+        context['tags'] = json.dumps([t.name for t in Tag.objects.all().order_by('name')])
         return context
 
     def get_success_url(self):
