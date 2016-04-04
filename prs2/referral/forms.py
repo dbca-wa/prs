@@ -636,6 +636,7 @@ class TaskForm(BaseForm):
         self.fields['due_date'].widget = forms.DateInput(format='%d/%m/%Y')
         self.fields['due_date'].input_formats = settings.DATE_INPUT_FORMATS
         self.fields['complete_date'].widget = forms.DateInput(format='%d/%m/%Y')
+        self.fields['complete_date'].input_formats = settings.DATE_INPUT_FORMATS
         self.fields['stop_date'].widget = forms.DateInput(format='%d/%m/%Y')
         self.fields['stop_date'].input_formats = settings.DATE_INPUT_FORMATS
         self.fields['restart_date'].widget = forms.DateInput(format='%d/%m/%Y')
@@ -655,25 +656,26 @@ class TaskForm(BaseForm):
         self.helper.add_layout(layout)
 
     def clean(self):
-        '''
-        Validate the complete_date field; cannot have a complete_date and a stop_date.
+        """Validate the complete_date field; cannot have a complete_date and a stop_date.
         Edge case only: users shouldn't be able to edit a stopped task.
-        '''
-        if self.cleaned_data['complete_date'] and self.cleaned_data['stop_date']:
-            msg = 'You cannot save the task with both a completed date AND a stop date!'
-            self._errors["complete_date"] = self.error_class([msg])
-            self._errors["stop_date"] = self.error_class([msg])
-        # Start date can't be later than complete date.
-        if self.cleaned_data['complete_date']:
-            if self.cleaned_data['start_date'] > self.cleaned_data['complete_date']:
+        """
+        d = self.cleaned_data
+        if 'complete_date' in d and d['complete_date']:
+            # Can't have a complete date and a stop date.
+            if 'stop_date' in d and d['stop_date']:
+                msg = 'You cannot save the task with both a completed date AND a stop date!'
+                self._errors['complete_date'] = self.error_class([msg])
+                self._errors['stop_date'] = self.error_class([msg])
+            # Start date can't be later than complete date.
+            if 'start_date' in d and d['start_date'] and d['start_date'] > d['complete_date']:
                 self._errors['start_date'] = self.error_class(['Cannot be after complete date!'])
                 self._errors['complete_date'] = self.error_class(['Cannot be before start date!'])
-        # Can't record a complete date and leave the task state "In progress".
-        if self.cleaned_data['complete_date'] and self.cleaned_data['state'].is_ongoing:
-            self._errors['complete_date'] = self.error_class(
-                ['Cannot record a complete date for an ongoing task!'])
-            self._errors['state'] = self.error_class(
-                ['Cannot record a complete date for an ongoing task!'])
+            # Can't record a complete date and leave the task state "In progress".
+            if 'state' in d and d['state'].is_ongoing:
+                self._errors['complete_date'] = self.error_class(
+                    ['Cannot record a complete date for an ongoing task!'])
+                self._errors['state'] = self.error_class(
+                    ['Cannot record a complete date for an ongoing task!'])
 
         return self.cleaned_data
 
