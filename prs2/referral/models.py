@@ -985,7 +985,8 @@ class Note(ReferralBaseModel):
 
     @property
     def short_note(self, x=12):
-        text = self.note.replace('\n', ' ').replace('\r', ' ')  # Replace newlines.
+        text = unidecode(self.note)
+        text = text.replace('\n', ' ').replace('\r', ' ')  # Replace newlines.
         words = text.split(' ')
         if len(words) > x:
             return '{}...'.format(' '.join(words[:x]))
@@ -1015,7 +1016,7 @@ class Note(ReferralBaseModel):
             d['order_date'] = self.order_date.strftime('%d %b %Y')
         else:
             d['order_date'] = ''
-        d['note'] = smart_truncate(self.note, length=400)
+        d['note'] = smart_truncate(unidecode(self.note), length=400)
         d['referral_url'] = self.referral.get_absolute_url()
         d['referral'] = self.referral
         return mark_safe(template.format(**d))
@@ -1064,6 +1065,7 @@ class Note(ReferralBaseModel):
             d['order_date'] = self.order_date.strftime('%d-%b-%Y')
         else:
             d['order_date'] = ''
+        d['note_html'] = unidecode(self.note_html)
         return mark_safe(template.format(**d).strip())
 
 
