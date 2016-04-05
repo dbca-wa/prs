@@ -59,6 +59,13 @@ class ReferralLookup(ActiveModel, Audit):
     def __unicode__(self):
         return unicode(self.name)
 
+    def save(self, force_insert=False, force_update=False, *args, **kwargs):
+        '''Overide save() to cleanse text input to the description field.
+        '''
+        if self.description:
+            self.description = unidecode(self.description)
+        super(ReferralLookup, self).save(force_insert, force_update)
+
     def get_absolute_url(self):
         return unicode(reverse(
             'prs_object_detail',
@@ -71,10 +78,10 @@ class ReferralLookup(ActiveModel, Audit):
         Returns a string of HTML that renders the object details as table row cells.
         Remember to enclose output of this function in <tr> tags.
         '''
-        template = '<td><a href="{url}">{name}</a></td><td>{description}</td><td>{modified}</td>'.encode('utf-8')
+        template = '<td><a href="{url}">{name}</a></td><td>{description}</td><td>{modified}</td>'
         d = copy(self.__dict__)
         d['url'] = self.get_absolute_url()
-        d['description'] = self.description or ''
+        d['description'] = unidecode(self.description) or ''
         d['modified'] = self.modified.strftime("%d %b %Y")
         return unicode(mark_safe(template.format(**d)))
 
@@ -328,6 +335,15 @@ class Referral(ReferralBaseModel):
         "Referrer's reference", 'Referred by', 'Region(s)', 'Type']
     tools_template = 'referral/referral_tools.html'
 
+    def save(self, force_insert=False, force_update=False, *args, **kwargs):
+        '''Overide save to cleanse text input to the description, address fields.
+        '''
+        if self.description:
+            self.description = unidecode(self.description)
+        if self.address:
+            self.address = unidecode(self.address)
+        super(Referral, self).save(force_insert, force_update)
+
     def get_absolute_url(self):
         return unicode(reverse('referral_detail', kwargs={'pk': self.pk}))
 
@@ -383,15 +399,15 @@ class Referral(ReferralBaseModel):
             <td>{reference}</td>
             <td>{referring_org}</td>
             <td>{region}</td>
-            <td>{type}</td>'''.encode('utf-8')
+            <td>{type}</td>'''
         d = copy(self.__dict__)
         d['url'] = self.get_absolute_url()
         d['type'] = self.type
         d['region'] = self.regions_str
         d['referring_org'] = self.referring_org
         d['referral_date'] = self.referral_date.strftime('%d %b %Y') or ''
-        d['address'] = self.address or ''
-        d['description'] = self.description or ''
+        d['address'] = unidecode(self.address) or ''
+        d['description'] = unidecode(self.description) or ''
         return mark_safe(template.format(**d))
 
     def as_tbody(self):
@@ -407,7 +423,7 @@ class Referral(ReferralBaseModel):
             <tr><th>Type</th><td>{type}</td></tr>
             <tr><th>Region(s)</th><td>{region}</td></tr>
             <tr><th>DoP Trigger(s)</th><td>{dop_triggers}</td></tr>
-            <tr><th>File no.</th><td>{file_no}</td></tr>'''.encode('utf-8')
+            <tr><th>File no.</th><td>{file_no}</td></tr>'''
         d = copy(self.__dict__)
         d['url'] = self.get_absolute_url()
         d['type'] = self.type
@@ -415,9 +431,9 @@ class Referral(ReferralBaseModel):
         d['dop_triggers'] = self.dop_triggers_str
         d['referring_org'] = self.referring_org
         d['file_no'] = self.file_no or ''
-        d['description'] = self.description or ''
+        d['description'] = unidecode(self.description) or ''
         d['referral_date'] = self.referral_date.strftime('%d-%b-%Y')
-        d['address'] = self.address or ''
+        d['address'] = unidecode(self.address) or ''
         return mark_safe(template.format(**d).strip())
 
     def add_relationship(self, referral):
@@ -661,12 +677,12 @@ class Task(ReferralBaseModel):
             template += '<td class="action-icons-cell"></td>'
         d = copy(self.__dict__)
         d['type'] = self.type
-        d['description'] = self.description or ''
+        d['description'] = unidecode(self.description) or ''
         d['referral_url'] = self.referral.get_absolute_url()
         d['referral_pk'] = self.referral.pk
         d['referring_org'] = self.referral.referring_org
         d['reference'] = self.referral.reference
-        d['address'] = self.referral.address or ''
+        d['address'] = unidecode(self.referral.address) or ''
         if self.due_date:
             d['due_date'] = self.due_date.strftime('%d %b %Y')
         else:
@@ -695,12 +711,12 @@ class Task(ReferralBaseModel):
             <td>{due_date}</td>'''
         d = copy(self.__dict__)
         d['type'] = self.type
-        d['description'] = self.description or ''
+        d['description'] = unidecode(self.description) or ''
         d['referral_pk'] = self.referral.pk
         d['referring_org'] = self.referral.referring_org
         d['type'] = self.referral.type
         d['reference'] = self.referral.reference
-        d['address'] = self.referral.address or ''
+        d['address'] = unidecode(self.referral.address) or ''
         if self.due_date:
             d['due_date'] = self.due_date.strftime("%d %b %Y")
         else:
@@ -754,6 +770,7 @@ class Task(ReferralBaseModel):
             d['restart_date'] = ''
         if d['stop_time'] == 0:
             d['stop_time'] = ''
+        d['description'] = unidecode(self.description) or ''
         return mark_safe(template.format(**d).strip())
 
     def email_user(self, from_email=None):
@@ -815,6 +832,13 @@ class Record(ReferralBaseModel):
 
     def __unicode__(self):
         return unicode('Record: {}'.format(smart_truncate(self.name, length=40)))
+
+    def save(self, force_insert=False, force_update=False, *args, **kwargs):
+        '''Overide save() to cleanse text input to the description field.
+        '''
+        if self.description:
+            self.description = unidecode(self.description)
+        super(Record, self).save(force_insert, force_update)
 
     @property
     def filename(self):
@@ -1304,7 +1328,7 @@ class Clearance(models.Model):
         else:
             d['category'] = ''
         if self.task.description:
-            d['task'] = smart_truncate(self.task.description, length=400)
+            d['task'] = smart_truncate(unidecode(self.task.description), length=400)
         else:
             d['task'] = self.task.type.name
         d['deposited_plan'] = self.deposited_plan or ''
@@ -1328,14 +1352,14 @@ class Clearance(models.Model):
         d['referral'] = self.task.referral
         d['referral_url'] = self.task.referral.get_absolute_url()
         d['reference'] = self.task.referral.reference
-        d['referral_desc'] = self.task.referral.description or ''
+        d['referral_desc'] = unidecode(self.task.referral.description) or ''
         d['condition_url'] = reverse(
             'prs_object_detail', kwargs={'pk': self.condition.pk, 'model': 'conditions'})
         d['condition'] = self.condition
         d['condition_html'] = self.condition.condition_html
         d['task_url'] = reverse('prs_object_detail', kwargs={'pk': self.task.pk, 'model': 'tasks'})
         d['task'] = self.task
-        d['task_desc'] = self.task.description
+        d['task_desc'] = unidecode(self.task.description)
         d['deposited_plan'] = self.deposited_plan or ''
         return mark_safe(template.format(**d).strip())
 
