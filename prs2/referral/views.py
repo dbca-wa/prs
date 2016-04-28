@@ -12,7 +12,6 @@ from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
-from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View, ListView, TemplateView, FormView
@@ -30,7 +29,7 @@ from referral.forms import (
     ReferralCreateForm, NoteForm, NoteAddExistingForm,
     RecordCreateForm, RecordAddExistingForm, TaskCreateForm,
     ConditionCreateForm,
-    ClearancesCreateForm, ClearanceCreateForm, LocationForm,
+    TaskClearanceCreateForm, ClearanceCreateForm, LocationForm,
     BookmarkForm, ConditionForm, RecordForm, FORMS_MAP,
     TaskForm, TaskCompleteForm, TaskStopForm, TaskStartForm,
     TaskReassignForm, TaskCancelForm, TaskInheritForm,
@@ -293,7 +292,7 @@ class ReferralDetail(PrsObjectDetail):
                 obj_tab_html = table.format(thead, tbody)
                 if m == Location:  # Append a div for the map viewer.
                     obj_tab_html += '<div id="ref_locations"></div>'
-                context[obj_tab] = format_html(obj_tab_html)
+                context[obj_tab] = mark_safe(obj_tab_html)
                 context[obj_list] = obj_qs
             else:
                 context[obj_tab] = 'No {} found for this referral'.format(
@@ -426,7 +425,7 @@ class ReferralCreateChild(PrsObjectCreate):
             elif 'type' not in self.kwargs:
                 self.object.save()
         elif form.Meta.model._meta.model_name == 'condition':
-            self.create_condition(self.object)
+            redirect_url = self.create_condition(self.object)
         else:
             self.object.save()
 
@@ -534,9 +533,11 @@ class ReferralCreateChild(PrsObjectCreate):
         return redirect_url
 
     def get_condition_choices(self):
-        condition_qs = Condition.objects.current().filter(referral=self.parent_referral)
+        """Return conditions with 'approved' text only.
+        """
+        condition_qs = Condition.objects.current().filter(referral=self.parent_referral).exclude(condition='')
         if not condition_qs:
-            messages.error(self.request, "This referral has no approval conditions!")
+            messages.error(self.request, 'This referral has no approval conditions!')
             return HttpResponseRedirect(self.get_success_url())
         condition_choices = []
         for i in condition_qs:
@@ -596,6 +597,7 @@ class ReferralCreateChild(PrsObjectCreate):
 
     def create_condition(self, obj):
         obj.save()
+        messages.success(self.request, '{} has been created.'.format(obj))
         # If no model condition was chosen, email users in the 'PRS power user' group.
         pu_group = Group.objects.get(name=settings.PRS_POWER_USER_GROUP)
         users = pu_group.user_set.filter(is_active=True)
@@ -619,6 +621,11 @@ class ReferralCreateChild(PrsObjectCreate):
             msg.attach_alternative(html_content, 'text/html')
             # Email should fail gracefully - ie no Exception raised on failure.
             msg.send(fail_silently=True)
+        redirect_url = None
+        if self.request.POST.get('save-another'):
+            referral = obj.referral
+            redirect_url = reverse('referral_create_child', kwargs={'pk': referral.pk, 'model': 'condition'})
+        return redirect_url
 
     def create_task(self, obj):
         # Set the default initial state for the task type.
@@ -1371,14 +1378,15 @@ class ConditionClearanceCreate(PrsObjectCreate):
         initial = super(ConditionClearanceCreate, self).get_initial()
         obj = self.get_object()
         initial['assigned_user'] = self.request.user
-        initial['description'] = obj.condition_html
+        initial['description'] = obj.condition
         return initial
 
     def post(self, request, *args, **kwargs):
         # On Cancel, redirect to the Condition URL.
         if request.POST.get('cancel'):
             obj = self.get_object()
-            return HttpResponseRedirect(reverse('condition_detail', kwargs={'pk': obj.pk}))
+            return HttpResponseRedirect(
+                reverse('prs_object_detail', kwargs={'pk': obj.pk, 'model': 'conditions'}))
         return super(ConditionClearanceCreate, self).post(request, *args, **kwargs)
 
     def form_valid(self, form):
