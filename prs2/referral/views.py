@@ -425,7 +425,7 @@ class ReferralCreateChild(PrsObjectCreate):
             elif 'type' not in self.kwargs:
                 self.object.save()
         elif form.Meta.model._meta.model_name == 'condition':
-            self.create_condition(self.object)
+            redirect_url = self.create_condition(self.object)
         else:
             self.object.save()
 
@@ -597,6 +597,7 @@ class ReferralCreateChild(PrsObjectCreate):
 
     def create_condition(self, obj):
         obj.save()
+        messages.success(self.request, '{} has been created.'.format(obj))
         # If no model condition was chosen, email users in the 'PRS power user' group.
         pu_group = Group.objects.get(name=settings.PRS_POWER_USER_GROUP)
         users = pu_group.user_set.filter(is_active=True)
@@ -620,6 +621,11 @@ class ReferralCreateChild(PrsObjectCreate):
             msg.attach_alternative(html_content, 'text/html')
             # Email should fail gracefully - ie no Exception raised on failure.
             msg.send(fail_silently=True)
+        redirect_url = None
+        if self.request.POST.get('save-another'):
+            referral = obj.referral
+            redirect_url = reverse('referral_create_child', kwargs={'pk': referral.pk, 'model': 'condition'})
+        return redirect_url
 
     def create_task(self, obj):
         # Set the default initial state for the task type.
