@@ -72,7 +72,6 @@ class PrsObjectList(LoginRequiredMixin, ListView):
         context['page_title'] = ' | '.join([settings.APPLICATION_ACRONYM, title])
         links = [(reverse('site_home'), 'Home'), (None, title)]
         context['breadcrumb_trail'] = breadcrumbs_li(links)
-        context['queryset_count'] = self.get_queryset().count()
         return context
 
 
