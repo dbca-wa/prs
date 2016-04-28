@@ -12,7 +12,6 @@ from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
-from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View, ListView, TemplateView, FormView
@@ -293,7 +292,7 @@ class ReferralDetail(PrsObjectDetail):
                 obj_tab_html = table.format(thead, tbody)
                 if m == Location:  # Append a div for the map viewer.
                     obj_tab_html += '<div id="ref_locations"></div>'
-                context[obj_tab] = format_html(obj_tab_html)
+                context[obj_tab] = mark_safe(obj_tab_html)
                 context[obj_list] = obj_qs
             else:
                 context[obj_tab] = 'No {} found for this referral'.format(
