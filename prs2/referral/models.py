@@ -60,8 +60,9 @@ class ReferralLookup(ActiveModel, Audit):
         return unicode(self.name)
 
     def save(self, force_insert=False, force_update=False, *args, **kwargs):
-        '''Overide save() to cleanse text input to the description field.
+        '''Overide save() to cleanse text input fields.
         '''
+        self.name = unidecode(self.name)
         if self.description:
             self.description = unidecode(self.description)
         super(ReferralLookup, self).save(force_insert, force_update)
@@ -834,8 +835,9 @@ class Record(ReferralBaseModel):
         return unicode('Record: {}'.format(smart_truncate(self.name, length=40)))
 
     def save(self, force_insert=False, force_update=False, *args, **kwargs):
-        '''Overide save() to cleanse text input to the description field.
+        '''Overide save() to cleanse text input fields.
         '''
+        self.name = unidecode(self.name)
         if self.description:
             self.description = unidecode(self.description)
         super(Record, self).save(force_insert, force_update)
