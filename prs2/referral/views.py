@@ -29,7 +29,7 @@ from referral.forms import (
     ReferralCreateForm, NoteForm, NoteAddExistingForm,
     RecordCreateForm, RecordAddExistingForm, TaskCreateForm,
     ConditionCreateForm,
-    ClearancesCreateForm, ClearanceCreateForm, LocationForm,
+    TaskClearanceCreateForm, ClearanceCreateForm, LocationForm,
     BookmarkForm, ConditionForm, RecordForm, FORMS_MAP,
     TaskForm, TaskCompleteForm, TaskStopForm, TaskStartForm,
     TaskReassignForm, TaskCancelForm, TaskInheritForm,
@@ -533,9 +533,11 @@ class ReferralCreateChild(PrsObjectCreate):
         return redirect_url
 
     def get_condition_choices(self):
-        condition_qs = Condition.objects.current().filter(referral=self.parent_referral)
+        """Return conditions with 'approved' text only.
+        """
+        condition_qs = Condition.objects.current().filter(referral=self.parent_referral).exclude(condition='')
         if not condition_qs:
-            messages.error(self.request, "This referral has no approval conditions!")
+            messages.error(self.request, 'This referral has no approval conditions!')
             return HttpResponseRedirect(self.get_success_url())
         condition_choices = []
         for i in condition_qs:
@@ -1370,14 +1372,15 @@ class ConditionClearanceCreate(PrsObjectCreate):
         initial = super(ConditionClearanceCreate, self).get_initial()
         obj = self.get_object()
         initial['assigned_user'] = self.request.user
-        initial['description'] = obj.condition_html
+        initial['description'] = obj.condition
         return initial
 
     def post(self, request, *args, **kwargs):
         # On Cancel, redirect to the Condition URL.
         if request.POST.get('cancel'):
             obj = self.get_object()
-            return HttpResponseRedirect(reverse('condition_detail', kwargs={'pk': obj.pk}))
+            return HttpResponseRedirect(
+                reverse('prs_object_detail', kwargs={'pk': obj.pk, 'model': 'conditions'}))
         return super(ConditionClearanceCreate, self).post(request, *args, **kwargs)
 
     def form_valid(self, form):

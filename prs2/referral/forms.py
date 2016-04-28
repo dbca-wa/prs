@@ -837,9 +837,9 @@ class ConditionCreateForm(ConditionForm):
         self.helper.add_layout(layout)
 
 
-class ClearancesCreateForm(BaseForm):
+class TaskClearanceCreateForm(BaseForm):
     '''
-    Form to create clearance requests on multiple conditions at once.
+    Form to create a|several clearance request task(s).
 
     * Condition(s) checkboxes
     * Assigned user
@@ -863,12 +863,12 @@ class ClearancesCreateForm(BaseForm):
         input_formats=settings.DATE_INPUT_FORMATS,
         help_text='Date on which this clearance request was received.')
     due_date = forms.DateField(
-        input_formats=settings.DATE_INPUT_FORMATS,
+        input_formats=settings.DATE_INPUT_FORMATS, required=False,
         help_text='''Optional date by which the clearance(s) are required.
             Will default to 45 days from today if no date is specifed.''')
 
     def __init__(self, condition_choices, *args, **kwargs):
-        super(ClearancesCreateForm, self).__init__(*args, **kwargs)
+        super(TaskClearanceCreateForm, self).__init__(*args, **kwargs)
         self.fields['conditions'].choices = condition_choices
         self.fields['assigned_user'] = PRSUserChoiceField()
         self.fields['assigned_user'].help_text = 'User to which to assign the clearance task(s).'
@@ -915,7 +915,7 @@ class ClearanceCreateForm(BaseForm):
         input_formats=settings.DATE_INPUT_FORMATS,
         help_text='Date on which this clearance request was received.')
     due_date = forms.DateField(
-        input_formats=settings.DATE_INPUT_FORMATS,
+        input_formats=settings.DATE_INPUT_FORMATS, required=False,
         help_text='''Optional date by which the clearance is required.
             Will default to 45 days from today if no date is specifed.''')
 
@@ -1060,7 +1060,7 @@ FORMS_MAP = {
         'addnewnote': NoteForm,
         'edit': TaskForm,
         'inherit': TaskInheritForm,
-        'clearance': ClearancesCreateForm,
+        'clearance': TaskClearanceCreateForm,
         'has_file_field': False
     },
     Location: {'update': LocationForm},
