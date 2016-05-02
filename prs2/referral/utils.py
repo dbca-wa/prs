@@ -8,6 +8,7 @@ import re
 from django.utils.encoding import smart_str
 from datetime import datetime
 import json
+from reversion.models import Version
 
 
 def is_model_or_string(model):
@@ -223,3 +224,31 @@ def is_superuser(request):
 
 def prs_user(request):
     return is_prs_user(request) or is_prs_power_user(request) or is_superuser(request)
+
+
+def update_revision_history(app_model):
+    """Function to bulk-update Version objects where the data model
+    is changed. This function is for reference, as these change will tend to
+    be one-off and customised.
+
+    Example: the order_date field was added the the Record model, then later
+    changed from DateTime to Date. This change caused the deserialisation step
+    to fail for Record versions with a serialised DateTime.
+    """
+    for v in Version.objects.all():
+        # Deserialise the object version.
+        data = json.loads(v.serialized_data)[0]
+        if data['model'] == app_model:  # Example: referral.record
+            pass
+            """
+            # Do something to the deserialised data here, e.g.:
+            if 'order_date' in data['fields']:
+                if data['fields']['order_date']:
+                    data['fields']['order_date'] = data['fields']['order_date'][:10]
+                    v.serialized_data = json.dumps([data])
+                    v.save()
+            else:
+                data['fields']['order_date'] = ''
+                v.serialized_data = json.dumps([data])
+                v.save()
+            """
