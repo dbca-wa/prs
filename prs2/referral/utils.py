@@ -218,12 +218,8 @@ def is_prs_power_user(request):
     return True
 
 
-def is_superuser(request):
-    return request.user.is_superuser
-
-
 def prs_user(request):
-    return is_prs_user(request) or is_prs_power_user(request) or is_superuser(request)
+    return is_prs_user(request) or is_prs_power_user(request) or request.user.is_superuser
 
 
 def update_revision_history(app_model):
