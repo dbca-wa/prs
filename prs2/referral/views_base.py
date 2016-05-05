@@ -346,7 +346,7 @@ class PrsObjectDelete(LoginRequiredMixin, DeleteView):
         context = super(PrsObjectDelete, self).get_context_data(**kwargs)
         context['object_type'] = self.model._meta.verbose_name
         obj = self.get_object()
-        context['title'] = 'DELETE: {}'.format(obj)
+        context['title'] = 'DELETE {}'.format(obj._meta.object_name.upper())
         context['page_title'] = ' | '.join([
             settings.APPLICATION_ACRONYM,
             'Delete {}'.format(self.get_object().__unicode__())])

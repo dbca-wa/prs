@@ -121,19 +121,19 @@
             <!-- Navigation tabs -->
             <ul class="nav nav-tabs" role="tablist">
                 <li role="presentation"{% if rel_model == 'tasks' %} class="active"{% endif %}>
-                    <a href="#tab_task" aria-controls="tab_task" role="tab" data-toggle="tab">Tasks</a>
+                <a href="#tab_task" aria-controls="tab_task" role="tab" data-toggle="tab">{% if has_task %}<strong>Tasks</strong>{% else %}Tasks{% endif %}</a>
                 </li>
                 <li role="presentation"{% if rel_model == 'notes' %} class="active"{% endif %}>
-                    <a href="#tab_note" aria-controls="tab_note" role="tab" data-toggle="tab">Notes</a>
+                <a href="#tab_note" aria-controls="tab_note" role="tab" data-toggle="tab">{% if has_note %}<strong>Notes</strong>{% else %}Notes{% endif %}</a>
                 </li>
                 <li role="presentation"{% if rel_model == 'records' %} class="active"{% endif %}>
-                    <a href="#tab_record" aria-controls="tab_record" role="tab" data-toggle="tab">Records</a>
+                <a href="#tab_record" aria-controls="tab_record" role="tab" data-toggle="tab">{% if has_record %}<strong>Records</strong>{% else %}Records{% endif %}</a>
                 </li>
                 <li role="presentation"{% if rel_model == 'locations' %} class="active"{% endif %}>
-                    <a href="#tab_location" aria-controls="tab_location" role="tab" data-toggle="tab">Locations</a>
+                <a href="#tab_location" aria-controls="tab_location" role="tab" data-toggle="tab">{% if has_location %}<strong>Locations</strong>{% else %}Locations{% endif %}</a>
                 </li>
                 <li role="presentation"{% if rel_model == 'conditions' %} class="active"{% endif %}>
-                    <a href="#tab_condition" aria-controls="tab_condition" role="tab" data-toggle="tab">Conditions</a>
+                <a href="#tab_condition" aria-controls="tab_condition" role="tab" data-toggle="tab">{% if has_condition %}<strong>Conditions</strong>{% else %}Conditions{% endif %}</a>
                 </li>
             </ul>
             <div class="tab-content">
@@ -186,13 +186,6 @@
     map.fitBounds(locationsLayer.getBounds());
     locationsLayer.addTo(map);
 </script>
-{% comment %}
-<script src="https://static.dpaw.wa.gov.au/static/brocket/plugin/prs2/dist/bundle.v0_1_6.js"></script>
-<script>
-    var plugin = Object.create(BrocketPlugin);
-    plugin.init();
-</script>
-{% endcomment %}
 {% endif %}
 <script src="//static.dpaw.wa.gov.au/static/libs/dropzone/4.2.0/min/dropzone.min.js"></script>
 <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.9/js/jquery.dataTables.min.js"></script>
@@ -231,6 +224,5 @@
     // Hide the map viewer by default.
     $("#id_collapseMap").collapse("hide");
     {% endif %}
-
 </script>
 {% endblock extra_js %}

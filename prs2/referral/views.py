@@ -279,6 +279,7 @@ class ReferralDetail(PrsObjectDetail):
             obj_tab = 'tab_{}'.format(m._meta.model_name)
             obj_list = '{}_list'.format(m._meta.model_name)
             if m.objects.current().filter(referral=ref):
+                context['has_{}'.format(m._meta.object_name.lower())] = True
                 obj_qs = m.objects.current().filter(referral=ref)
                 headers = copy(m.headers)
                 headers.remove('Referral ID')
@@ -293,6 +294,7 @@ class ReferralDetail(PrsObjectDetail):
                 context[obj_tab] = mark_safe(obj_tab_html)
                 context[obj_list] = obj_qs
             else:
+                context['has_{}'.format(m._meta.object_name.lower())] = False
                 context[obj_tab] = 'No {} found for this referral'.format(
                     m._meta.verbose_name_plural)
                 context[obj_list] = None
