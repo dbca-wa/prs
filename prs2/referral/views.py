@@ -140,8 +140,6 @@ class ReferralCreate(PrsObjectCreate):
         context['breadcrumb_trail'] = breadcrumbs_li(links)
         context['title'] = 'CREATE A NEW REFERRAL'
         context['page_title'] = 'PRS | Referrals | Create'
-        # Pass in a serialised list of tag names.
-        context['tags'] = json.dumps([t.name for t in Tag.objects.all().order_by('name')])
         return context
 
     def get_initial(self):
@@ -281,6 +279,7 @@ class ReferralDetail(PrsObjectDetail):
             obj_tab = 'tab_{}'.format(m._meta.model_name)
             obj_list = '{}_list'.format(m._meta.model_name)
             if m.objects.current().filter(referral=ref):
+                context['has_{}'.format(m._meta.object_name.lower())] = True
                 obj_qs = m.objects.current().filter(referral=ref)
                 headers = copy(m.headers)
                 headers.remove('Referral ID')
@@ -295,6 +294,7 @@ class ReferralDetail(PrsObjectDetail):
                 context[obj_tab] = mark_safe(obj_tab_html)
                 context[obj_list] = obj_qs
             else:
+                context['has_{}'.format(m._meta.object_name.lower())] = False
                 context[obj_tab] = 'No {} found for this referral'.format(
                     m._meta.verbose_name_plural)
                 context[obj_list] = None
@@ -690,6 +690,7 @@ class LocationCreate(ReferralCreateChild):
         ]
         context['breadcrumb_trail'] = breadcrumbs_li(links)
         context['title'] = 'CREATE LOCATION(S)'
+        context['address'] = ref.address
         # Add any existing referral locations serialised as GeoJSON.
         if any([l.poly for l in ref.location_set.current()]):
             context['geojson_locations'] = serialize(
@@ -856,7 +857,7 @@ class RecordUpload(LoginRequiredMixin, View):
 class TaskAction(PrsObjectUpdate):
     '''
     A customised view is used for editing Tasks because of the additional business logic.
-    ``action`` includes add, stop, start, reassign, complete, cancel, inherit, edit,
+    ``action`` includes add, stop, start, reassign, complete, cancel, inherit, update,
     addrecord, addnewrecord, addnote, addnewnote
     NOTE: does not include the 'delete' action (handled by separate view).
     '''
@@ -874,7 +875,7 @@ class TaskAction(PrsObjectUpdate):
         action = self.kwargs['action']
         task = self.get_object()
 
-        if action == 'edit' and task.stop_date and not task.restart_date:
+        if action == 'update' and task.stop_date and not task.restart_date:
             messages.error(request, "You can't edit a stopped task - restart the task first!")
             return redirect(task.get_absolute_url())
         if action == 'stop' and task.complete_date:
@@ -928,8 +929,6 @@ class TaskAction(PrsObjectUpdate):
         ]
         context['breadcrumb_trail'] = breadcrumbs_li(links)
         context['title'] = action.upper() + ' TASK'
-        # Pass in a serialised list of tag names.
-        context['tags'] = json.dumps([t.name for t in Tag.objects.all().order_by('name')])
         return context
 
     def get_success_url(self):
@@ -975,7 +974,7 @@ class TaskAction(PrsObjectUpdate):
                 )
             if self.request.POST.get('email_user'):
                 obj.email_user(self.request.user.email)
-        elif action == 'edit':
+        elif action == 'update':
             if obj.restart_date and obj.stop_date:
                 obj.stop_time = (obj.restart_date - obj.stop_date).days
         elif action == 'complete':
@@ -1037,10 +1036,9 @@ class TaskAction(PrsObjectUpdate):
                     messages.warning(self.request, msg)
                     return self.form_invalid(form)
                 elif obj.state in trigger_outcome and form_data['tags']:
-                    tag_names = form_data['tags'].split(',')
                     # Save tags on the parent referral.
-                    for name in tag_names:
-                        obj.referral.tags.add(name)
+                    for tag in form_data['tags']:
+                        obj.referral.tags.add(tag)
 
         obj.modifier = self.request.user
         obj.save()

@@ -12,6 +12,7 @@
 
 {% block page_content_inner %}
 <h1>{{ title }}</h1>
+{% if address %}<p><strong>Referral address: {{ address }}</strong></p>{% endif %}
 <p>Choose location(s) from cadastre to add to this referral, or draw location(s):
 <div id="map"></div><br>
 <p>Selected locations from cadastre:</p>
