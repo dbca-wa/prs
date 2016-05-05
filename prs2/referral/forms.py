@@ -445,6 +445,12 @@ class RecordAddExistingForm(BaseForm):
         fields = ['records']
 
 
+class TagMultipleChoiceField(forms.ModelMultipleChoiceField):
+    def __init__(self, *args, **kwargs):
+        kwargs['queryset'] = Tag.objects.all().order_by('name')
+        super(TagMultipleChoiceField, self).__init__(*args, **kwargs)
+
+
 class TaskCompleteForm(BaseForm):
     '''
     * Task outcome
@@ -452,7 +458,7 @@ class TaskCompleteForm(BaseForm):
     * Description
     * Tags
     '''
-    tags = forms.CharField(
+    tags = TagMultipleChoiceField(
         required=False,
         help_text='''Select all tags relevant to the advice supplied (required
         for response with advice / condition / objection).''')

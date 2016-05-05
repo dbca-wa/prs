@@ -137,7 +137,7 @@ class DownloadView(TemplateView):
                 'Referral type', 'Reference', 'Referral received', 'Task type',
                 'Task status', 'Assigned user', 'Task start', 'Task due',
                 'Task complete', 'Stop date', 'Restart date', 'Total stop days',
-                'File no.', 'DoP triggers', 'Referral description']
+                'File no.', 'DoP triggers', 'Referral description', 'Referral address']
             for col, value in enumerate(headers, 1):
                 cell = ws.cell(row=1, column=col)
                 cell.value = value
@@ -186,6 +186,8 @@ class DownloadView(TemplateView):
                 cell.value = ', '.join([i.name for i in t.referral.dop_triggers.all()])
                 cell = ws.cell(row=row, column=19)
                 cell.value = t.referral.description
+                cell = ws.cell(row=row, column=20)
+                cell.value = t.referral.address
 
         wb.save(response)  # Save the workbook contents to the response.
         return response
