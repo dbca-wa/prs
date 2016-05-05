@@ -206,6 +206,12 @@
         Dropzone.options.idReferralDropzone = {
             paramName: "file",
             acceptedFiles: ".tif,.jpg,.gif,.png,.doc,.docx,.xls,.xlsx,.csv,.pdf,.txt,.zip,.msg,.qgs",
+            init: function() {
+                this.on("queuecomplete", function(file) {
+                    // Reload the current page on completed upload(s).
+                    location.reload();
+                });
+            },
         };
         // Initialise all DataTables.
         $.fn.dataTable.moment("dd MMM YYYY", "en-AU");
