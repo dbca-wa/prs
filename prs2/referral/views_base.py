@@ -256,7 +256,7 @@ class PrsObjectUpdate(LoginRequiredMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super(PrsObjectUpdate, self).get_context_data(**kwargs)
         obj = self.get_object()
-        context['title'] = 'UPDATE {}'.format(self.get_object().__unicode__()).upper()
+        context['title'] = 'UPDATE {}'.format(obj._meta.object_name).upper()
         context['page_title'] = 'PRS | {} | {} | Update'.format(
             obj._meta.verbose_name_plural.capitalize(),
             obj.pk)

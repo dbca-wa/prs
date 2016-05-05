@@ -855,7 +855,7 @@ class RecordUpload(LoginRequiredMixin, View):
 class TaskAction(PrsObjectUpdate):
     '''
     A customised view is used for editing Tasks because of the additional business logic.
-    ``action`` includes add, stop, start, reassign, complete, cancel, inherit, edit,
+    ``action`` includes add, stop, start, reassign, complete, cancel, inherit, update,
     addrecord, addnewrecord, addnote, addnewnote
     NOTE: does not include the 'delete' action (handled by separate view).
     '''
@@ -873,7 +873,7 @@ class TaskAction(PrsObjectUpdate):
         action = self.kwargs['action']
         task = self.get_object()
 
-        if action == 'edit' and task.stop_date and not task.restart_date:
+        if action == 'update' and task.stop_date and not task.restart_date:
             messages.error(request, "You can't edit a stopped task - restart the task first!")
             return redirect(task.get_absolute_url())
         if action == 'stop' and task.complete_date:
@@ -972,7 +972,7 @@ class TaskAction(PrsObjectUpdate):
                 )
             if self.request.POST.get('email_user'):
                 obj.email_user(self.request.user.email)
-        elif action == 'edit':
+        elif action == 'update':
             if obj.restart_date and obj.stop_date:
                 obj.stop_time = (obj.restart_date - obj.stop_date).days
         elif action == 'complete':

@@ -612,7 +612,7 @@ class Task(ReferralBaseModel):
                 <a class="is_prs_user_action" href="{reassign_url}" title="Reassign"><i class="fa fa-share"></i></a>
                 <a class="is_prs_user_action" href="{cancel_url}" title="Cancel"><i class="fa fa-ban"></i></a>
                 <a class="is_prs_user_action" href="{delete_url}" title="Delete"><i class="fa fa-trash-o"></i></a></td>'''
-            d['edit_url'] = reverse('task_action', kwargs={'pk': self.pk, 'action': 'edit'})
+            d['edit_url'] = reverse('task_action', kwargs={'pk': self.pk, 'action': 'update'})
             d['reassign_url'] = reverse(
                 'task_action', kwargs={
                     'pk': self.pk, 'action': 'reassign'})
