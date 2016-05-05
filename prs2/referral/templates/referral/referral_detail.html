@@ -6,7 +6,8 @@
 {% block extra_style %}
 {{ block.super }}
 {% if geojson_locations %}
-<link rel="stylesheet" type="text/css" href="//api.mapbox.com/mapbox.js/v2.2.1/mapbox.css" />
+<link rel="stylesheet" type="text/css" href="//api.mapbox.com/mapbox.js/v2.4.0/mapbox.css" />
+<link rel="stylesheet" href="//api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/leaflet.fullscreen.css" />
 <link rel="stylesheet" type="text/css" href="{% static 'leaflet-search/leaflet-search.css' %}" />
 {% endif %}
 <link rel="stylesheet" type="text/css" href="//static.dpaw.wa.gov.au/static/libs/dropzone/4.2.0/min/dropzone.min.css">
@@ -166,7 +167,8 @@
 {% block extra_js %}
 {{ block.super }}
 {% if geojson_locations %}
-<script src="//api.mapbox.com/mapbox.js/v2.2.2/mapbox.js"></script>
+<script src="//api.mapbox.com/mapbox.js/v2.4.0/mapbox.js"></script>
+<script src="//api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/Leaflet.fullscreen.min.js"></script>
 <script src="{% static 'leaflet-search/leaflet-search.min.js' %}"></script>
 <script>
     // Set global variables (needs to happen before loading referral_map.js)
