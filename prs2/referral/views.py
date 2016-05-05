@@ -140,8 +140,6 @@ class ReferralCreate(PrsObjectCreate):
         context['breadcrumb_trail'] = breadcrumbs_li(links)
         context['title'] = 'CREATE A NEW REFERRAL'
         context['page_title'] = 'PRS | Referrals | Create'
-        # Pass in a serialised list of tag names.
-        context['tags'] = json.dumps([t.name for t in Tag.objects.all().order_by('name')])
         return context
 
     def get_initial(self):
@@ -929,8 +927,6 @@ class TaskAction(PrsObjectUpdate):
         ]
         context['breadcrumb_trail'] = breadcrumbs_li(links)
         context['title'] = action.upper() + ' TASK'
-        # Pass in a serialised list of tag names.
-        context['tags'] = json.dumps([t.name for t in Tag.objects.all().order_by('name')])
         return context
 
     def get_success_url(self):
@@ -1038,10 +1034,9 @@ class TaskAction(PrsObjectUpdate):
                     messages.warning(self.request, msg)
                     return self.form_invalid(form)
                 elif obj.state in trigger_outcome and form_data['tags']:
-                    tag_names = form_data['tags'].split(',')
                     # Save tags on the parent referral.
-                    for name in tag_names:
-                        obj.referral.tags.add(name)
+                    for tag in form_data['tags']:
+                        obj.referral.tags.add(tag)
 
         obj.modifier = self.request.user
         obj.save()
