@@ -690,6 +690,7 @@ class LocationCreate(ReferralCreateChild):
         ]
         context['breadcrumb_trail'] = breadcrumbs_li(links)
         context['title'] = 'CREATE LOCATION(S)'
+        context['address'] = ref.address
         # Add any existing referral locations serialised as GeoJSON.
         if any([l.poly for l in ref.location_set.current()]):
             context['geojson_locations'] = serialize(
