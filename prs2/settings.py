@@ -188,7 +188,7 @@ LOGGING = {
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(BASE_DIR, 'logs', 'prs.log'),
             'formatter': 'verbose',
-            'maxBytes': '16777216'
+            'maxBytes': 1024 * 1024 * 5
         },
     },
     'loggers': {
@@ -215,7 +215,7 @@ DEBUG_LOGGING = {
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(BASE_DIR, 'logs', 'debug-prs.log'),
             'formatter': 'verbose',
-            'maxBytes': '16777216'
+            'maxBytes': 1024 * 1024 * 5
         },
     },
     'loggers': {
