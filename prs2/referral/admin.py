@@ -4,10 +4,11 @@ from django.contrib.gis.admin import ModelAdmin
 # Third-party app imports
 from reversion.admin import VersionAdmin
 # PRS project imports
-from .models import (DopTrigger, Region, OrganisationType, Organisation, TaskType,
-                     TaskState, NoteType, ReferralType, Referral, Task, Record,
-                     Note, Condition, Location, Bookmark, Clearance, Agency,
-                     ConditionCategory, ModelCondition, UserProfile)
+from referral.models import (
+    DopTrigger, Region, OrganisationType, Organisation, TaskType,
+    TaskState, NoteType, ReferralType, Referral, Task, Record,
+    Note, Condition, Location, Bookmark, Clearance, Agency,
+    ConditionCategory, ModelCondition, UserProfile)
 
 
 class AuditAdmin(VersionAdmin, ModelAdmin):

@@ -16,8 +16,8 @@ import json
 from reversion import revisions
 from taggit.models import Tag
 
-from .forms import FORMS_MAP, ReferralForm
-from .utils import is_model_or_string, breadcrumbs_li, get_query, prs_user
+from referral.forms import FORMS_MAP, ReferralForm
+from referral.utils import is_model_or_string, breadcrumbs_li, get_query, prs_user
 
 
 class PrsObjectList(LoginRequiredMixin, ListView):
