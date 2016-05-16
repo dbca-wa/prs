@@ -13,7 +13,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import (
     View, ListView, DetailView, CreateView, UpdateView, DeleteView)
 import json
-from reversion import get_for_object
+from reversion.revisions import get_for_object
 from taggit.models import Tag
 
 from referral.forms import FORMS_MAP, ReferralForm
