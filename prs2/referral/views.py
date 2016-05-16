@@ -16,6 +16,7 @@ from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View, ListView, TemplateView, FormView
 import json
+import re
 
 from referral.models import (
     Task, Clearance, Referral, Condition, Note, Record, Location,
@@ -708,8 +709,8 @@ class LocationCreate(ReferralCreateChild):
         forms = {}
         for key, val in request.POST.iteritems():
             if key.startswith('form-'):
-                form = key[0:6]
-                field = key[7:]
+                form = re.findall('^form-[0-9]+', key)[0]
+                field = re.sub('^form-[0-9]+-', '', key)
                 if form in forms:  # Form dict already started.
                     pass
                 else:  # Start a new form dict.
