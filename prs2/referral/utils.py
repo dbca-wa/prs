@@ -1,13 +1,15 @@
-# Django imports
+from confy import env
+from datetime import datetime
 from django.apps import apps
 from django.db.models import Q
 from django.db.models.base import ModelBase
 from django.utils.safestring import mark_safe
 from django.contrib import admin
-import re
 from django.utils.encoding import smart_str
-from datetime import datetime
 import json
+import re
+
+from dpaw_utils.requests.api import post as post_sso
 
 
 def is_model_or_string(model):
@@ -223,3 +225,15 @@ def is_superuser(request):
 
 def prs_user(request):
     return is_prs_user(request) or is_prs_power_user(request) or is_superuser(request)
+
+
+def borgcollector_harvest(request, publishes=['prs_locations']):
+    """Convenience function to manually run a Borg Collector harvest
+    job for the PRS locations layer.
+
+    Docs: https://github.com/parksandwildlife/borgcollector
+    """
+    api_url = env('BORGCOLLECTOR_API') + 'jobs/'
+    # Send a POST request to the API endpoint.
+    r = post_sso(request, api_url, data=json.dumps({'publishes': publishes}))
+    return r

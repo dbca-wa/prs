@@ -16,6 +16,7 @@ from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View, ListView, TemplateView, FormView
 import json
+import logging
 import re
 
 from referral.models import (
@@ -25,7 +26,7 @@ from referral.models import (
 from referral.utils import (
     is_model_or_string, breadcrumbs_li, smart_truncate, get_query,
     user_task_history, user_referral_history, filter_queryset,
-    prs_user, is_prs_power_user)
+    prs_user, is_prs_power_user, borgcollector_harvest)
 from referral.forms import (
     ReferralCreateForm, NoteForm, NoteAddExistingForm,
     RecordCreateForm, RecordAddExistingForm, TaskCreateForm,
@@ -40,6 +41,8 @@ from referral.views_base import (
     PrsObjectUpdate, PrsObjectDelete, PrsObjectHistory, PrsObjectTag)
 from django_downloadview import ObjectDownloadView
 from taggit.models import Tag
+
+logger = logging.getLogger('prs.log')
 
 
 class SiteHome(LoginRequiredMixin, ListView):
@@ -737,6 +740,13 @@ class LocationCreate(ReferralCreateChild):
             locations.append(l)
 
         messages.success(request, '{} location(s) created.'.format(len(forms)))
+
+        # Call the Borg Collector publish API endpoint to create a manual job
+        # to update the prs_locations layer.
+        resp = borgcollector_harvest(self.request)
+        logger.info('Borg Collector API response status was {}'.format(resp.status_code))
+
+        # Test for intersecting locations.
         intersecting_locations = self.polygon_intersects(locations)
         if intersecting_locations:
             # Redirect to a view where users can create relationships between referrals.
@@ -1278,6 +1288,10 @@ class ReferralDelete(PrsObjectDelete):
             i.delete()
         ref.delete()
         messages.success(request, '{0} deleted.'.format(self.model._meta.object_name))
+        # Call the Borg Collector publish API endpoint to create a manual job
+        # to update the prs_locations layer.
+        resp = borgcollector_harvest(self.request)
+        logger.info('Borg Collector API response status was {}'.format(resp.status_code))
         return redirect('site_home')
 
 

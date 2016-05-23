@@ -35,6 +35,7 @@ Variables below may also need to be defined (context-dependent):
     GEOSERVER_WFS_URL="//kmi.dpaw.wa.gov.au/geoserver/ows"
     PRS_USER_GROUP="PRS user"
     PRS_PWUSER_GROUP="PRS power user"
+    BORGCOLLECTOR_API="https://borg.dpaw.wa.gov.au/api/"
     # debug-toolbar settings:
     INTERNAL_IP="x.x.x.x"
 

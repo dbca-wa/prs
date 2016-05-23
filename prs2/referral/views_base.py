@@ -13,11 +13,16 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import (
     View, ListView, DetailView, CreateView, UpdateView, DeleteView)
 import json
+import logging
 from reversion.revisions import get_for_object
 from taggit.models import Tag
 
 from referral.forms import FORMS_MAP, ReferralForm
-from referral.utils import is_model_or_string, breadcrumbs_li, get_query, prs_user
+from referral.utils import (
+    is_model_or_string, breadcrumbs_li, get_query, prs_user,
+    borgcollector_harvest)
+
+logger = logging.getLogger('prs.log')
 
 
 class PrsObjectList(LoginRequiredMixin, ListView):
@@ -389,6 +394,14 @@ class PrsObjectDelete(LoginRequiredMixin, DeleteView):
         else:
             success_url = self.get_success_url()
         obj.delete()
+
+        # For Location objects:
+        # Call the Borg Collector publish API endpoint to create a manual job
+        # to update the prs_locations layer.
+        if obj._meta.object_name == 'Location':
+            resp = borgcollector_harvest(self.request)
+            logger.info('Borg Collector API response status was {}'.format(resp.status_code))
+
         messages.success(self.request, '{0} has been deleted.'.format(obj))
         return HttpResponseRedirect(success_url)
 
