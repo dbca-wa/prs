@@ -1151,8 +1151,7 @@ class TagList(PrsObjectList):
         return super(TagList, self).get(request, *args, **kwargs)
 
     def get_queryset(self):
-        qs = super(TagList, self).get_queryset()
-        return qs.order_by('name')
+        return Tag.objects.all().order_by('name')
 
 
 class TagReplace(LoginRequiredMixin, FormView):

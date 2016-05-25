@@ -62,9 +62,9 @@ class ReferralLookup(ActiveModel, Audit):
     def save(self, force_insert=False, force_update=False, *args, **kwargs):
         '''Overide save() to cleanse text input fields.
         '''
-        self.name = unidecode(self.name)
+        self.name = unidecode(unicode(self.name))
         if self.description:
-            self.description = unidecode(self.description)
+            self.description = unidecode(unicode(self.description))
         super(ReferralLookup, self).save(force_insert, force_update)
 
     def get_absolute_url(self):
@@ -82,7 +82,7 @@ class ReferralLookup(ActiveModel, Audit):
         template = '<td><a href="{url}">{name}</a></td><td>{description}</td><td>{modified}</td>'
         d = copy(self.__dict__)
         d['url'] = self.get_absolute_url()
-        d['description'] = unidecode(self.description or '')
+        d['description'] = unidecode(unicode(self.description) or u'')
         d['modified'] = self.modified.strftime("%d %b %Y")
         return unicode(mark_safe(template.format(**d)))
 
@@ -341,9 +341,9 @@ class Referral(ReferralBaseModel):
         '''Overide save to cleanse text input to the description, address fields.
         '''
         if self.description:
-            self.description = unidecode(self.description)
+            self.description = unidecode(unicode(self.description))
         if self.address:
-            self.address = unidecode(self.address)
+            self.address = unidecode(unicode(self.address))
         super(Referral, self).save(force_insert, force_update)
 
     def get_absolute_url(self):
@@ -408,8 +408,8 @@ class Referral(ReferralBaseModel):
         d['region'] = self.regions_str
         d['referring_org'] = self.referring_org
         d['referral_date'] = self.referral_date.strftime('%d %b %Y') or ''
-        d['address'] = unidecode(self.address or '')
-        d['description'] = unidecode(self.description or '')
+        d['address'] = unidecode(unicode(self.address) or u'')
+        d['description'] = unidecode(unicode(self.description) or u'')
         return mark_safe(template.format(**d))
 
     def as_tbody(self):
@@ -433,9 +433,9 @@ class Referral(ReferralBaseModel):
         d['dop_triggers'] = self.dop_triggers_str
         d['referring_org'] = self.referring_org
         d['file_no'] = self.file_no or ''
-        d['description'] = unidecode(self.description or '')
+        d['description'] = unidecode(unicode(self.description) or u'')
         d['referral_date'] = self.referral_date.strftime('%d-%b-%Y')
-        d['address'] = unidecode(self.address or '')
+        d['address'] = unidecode(unicode(self.address) or u'')
         return mark_safe(template.format(**d).strip())
 
     def add_relationship(self, referral):
@@ -474,7 +474,8 @@ class Referral(ReferralBaseModel):
         # Read in the base Jinja template.
         t = Template(open('prs2/referral/templates/qgis_layer.jinja', 'r').read())
         # Build geographical extent of associated locations.
-        xmin, ymin, xmax, ymax = self.location_set.current().filter(poly__isnull=False).extent()
+        qs = self.location_set.current().filter(poly__isnull=False).aggregate(models.Extent('poly'))
+        xmin, ymin, xmax, ymax = qs['poly__extent']
         d = {
             'REFERRAL_PK': self.pk}
         return t.render(**d)
@@ -548,7 +549,7 @@ class Task(ReferralBaseModel):
         '''Overide save() to cleanse text input to the description field.
         '''
         if self.description:
-            self.description = unidecode(self.description)
+            self.description = unidecode(unicode(self.description))
         super(Task, self).save(force_insert, force_update)
 
     def as_row(self):
@@ -684,12 +685,12 @@ class Task(ReferralBaseModel):
             template += '<td class="action-icons-cell"></td>'
         d = copy(self.__dict__)
         d['type'] = self.type
-        d['description'] = unidecode(self.description or '')
+        d['description'] = unidecode(unicode(self.description) or u'')
         d['referral_url'] = self.referral.get_absolute_url()
         d['referral_pk'] = self.referral.pk
         d['referring_org'] = self.referral.referring_org
         d['reference'] = self.referral.reference
-        d['address'] = unidecode(self.referral.address or '')
+        d['address'] = unidecode(unicode(self.referral.address) or u'')
         if self.due_date:
             d['due_date'] = self.due_date.strftime('%d %b %Y')
         else:
@@ -718,12 +719,12 @@ class Task(ReferralBaseModel):
             <td>{due_date}</td>'''
         d = copy(self.__dict__)
         d['type'] = self.type
-        d['description'] = unidecode(self.description or '')
+        d['description'] = unidecode(unicode(self.description) or u'')
         d['referral_pk'] = self.referral.pk
         d['referring_org'] = self.referral.referring_org
         d['type'] = self.referral.type
         d['reference'] = self.referral.reference
-        d['address'] = unidecode(self.referral.address or '')
+        d['address'] = unidecode(unicode(self.referral.address) or u'')
         if self.due_date:
             d['due_date'] = self.due_date.strftime("%d %b %Y")
         else:
@@ -777,7 +778,7 @@ class Task(ReferralBaseModel):
             d['restart_date'] = ''
         if d['stop_time'] == 0:
             d['stop_time'] = ''
-        d['description'] = unidecode(self.description or '')
+        d['description'] = unidecode(unicode(self.description) or u'')
         return mark_safe(template.format(**d).strip())
 
     def email_user(self, from_email=None):
@@ -843,9 +844,9 @@ class Record(ReferralBaseModel):
     def save(self, force_insert=False, force_update=False, *args, **kwargs):
         '''Overide save() to cleanse text input fields.
         '''
-        self.name = unidecode(self.name)
+        self.name = unidecode(unicode(self.name))
         if self.description:
-            self.description = unidecode(self.description)
+            self.description = unidecode(unicode(self.description))
         super(Record, self).save(force_insert, force_update)
 
     @property
@@ -1008,7 +1009,7 @@ class Note(ReferralBaseModel):
         '''
         Overide the Note model save() to cleanse the HTML used.
         '''
-        self.note_html = unidecode(dewordify_text(self.note_html))
+        self.note_html = unidecode(unicode(dewordify_text(self.note_html)))
         self.note_html = clean.clean_html(self.note_html)
         # Strip HTML tags and save as plain text.
         t = fromstring(self.note_html)
@@ -1017,7 +1018,7 @@ class Note(ReferralBaseModel):
 
     @property
     def short_note(self, x=12):
-        text = unidecode(self.note)
+        text = unidecode(unicode(self.note))
         text = text.replace('\n', ' ').replace('\r', ' ')  # Replace newlines.
         words = text.split(' ')
         if len(words) > x:
@@ -1048,7 +1049,7 @@ class Note(ReferralBaseModel):
             d['order_date'] = self.order_date.strftime('%d %b %Y')
         else:
             d['order_date'] = ''
-        d['note'] = smart_truncate(unidecode(self.note), length=400)
+        d['note'] = smart_truncate(unicode(unidecode(self.note)), length=400)
         d['referral_url'] = self.referral.get_absolute_url()
         d['referral'] = self.referral
         return mark_safe(template.format(**d))
@@ -1097,7 +1098,7 @@ class Note(ReferralBaseModel):
             d['order_date'] = self.order_date.strftime('%d-%b-%Y')
         else:
             d['order_date'] = ''
-        d['note_html'] = unidecode(self.note_html)
+        d['note_html'] = unidecode(unicode(self.note_html))
         return mark_safe(template.format(**d).strip())
 
 
@@ -1159,7 +1160,7 @@ class Condition(ReferralBaseModel):
         Overide the Condition models's save() to cleanse the HTML input.
         '''
         if self.condition_html:
-            self.condition_html = unidecode(dewordify_text(self.condition_html))
+            self.condition_html = unidecode(unicode(dewordify_text(self.condition_html)))
             self.condition_html = clean.clean_html(self.condition_html)
             t = fromstring(self.condition_html)
             self.condition = unicode(t.text_content())
@@ -1167,7 +1168,7 @@ class Condition(ReferralBaseModel):
             self.condition_html = ''
             self.condition = ''
         if self.proposed_condition_html:
-            self.proposed_condition_html = unidecode(dewordify_text(self.proposed_condition_html))
+            self.proposed_condition_html = unidecode(unicode(dewordify_text(self.proposed_condition_html)))
             self.proposed_condition_html = clean.clean_html(self.proposed_condition_html)
             t = fromstring(self.proposed_condition_html)
             self.proposed_condition = unicode(t.text_content())
@@ -1340,7 +1341,7 @@ class Clearance(models.Model):
         else:
             d['category'] = ''
         if self.task.description:
-            d['task'] = smart_truncate(unidecode(self.task.description), length=400)
+            d['task'] = smart_truncate(unidecode(unicode(self.task.description)), length=400)
         else:
             d['task'] = self.task.type.name
         d['deposited_plan'] = self.deposited_plan or ''
@@ -1364,14 +1365,14 @@ class Clearance(models.Model):
         d['referral'] = self.task.referral
         d['referral_url'] = self.task.referral.get_absolute_url()
         d['reference'] = self.task.referral.reference
-        d['referral_desc'] = unidecode(self.task.referral.description or '')
+        d['referral_desc'] = unidecode(unicode(self.task.referral.description) or u'')
         d['condition_url'] = reverse(
             'prs_object_detail', kwargs={'pk': self.condition.pk, 'model': 'conditions'})
         d['condition'] = self.condition
         d['condition_html'] = self.condition.condition_html
         d['task_url'] = reverse('prs_object_detail', kwargs={'pk': self.task.pk, 'model': 'tasks'})
         d['task'] = self.task
-        d['task_desc'] = unidecode(self.task.description or '')
+        d['task_desc'] = unidecode(unicode(self.task.description) or u'')
         d['deposited_plan'] = self.deposited_plan or ''
         return mark_safe(template.format(**d).strip())
 
@@ -1533,7 +1534,7 @@ class Bookmark(ReferralBaseModel):
         '''Overide save() to cleanse text input to the description field.
         '''
         if self.description:
-            self.description = unidecode(self.description)
+            self.description = unidecode(unicode(self.description))
         super(Bookmark, self).save(force_insert, force_update)
 
     def as_row(self):

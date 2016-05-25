@@ -47,7 +47,7 @@ class PrsObjectList(LoginRequiredMixin, ListView):
         By default, the queryset return recently-modified ones objects first.
         '''
         qs = super(PrsObjectList, self).get_queryset()
-        if 'effective_to' in self.model._meta.get_all_field_names():
+        if 'effective_to' in [f.name for f in self.model._meta.get_fields()]:
             qs = qs.filter(effective_to=None)
         # Did we pass in a search string? If so, filter the queryset and
         # return it.
@@ -139,7 +139,7 @@ class PrsObjectCreate(LoginRequiredMixin, CreateView):
         # and redirects to get_success_url().
         self.object = form.save(commit=False)
         # Handle models that inherit from Audit abstract model.
-        f = self.model._meta.get_all_field_names()
+        f = [field.name for field in self.model._meta.get_fields()]
         if 'creator' in f and 'modifier' in f:
             self.object.creator, self.object.modifier = self.request.user, self.request.user
         # Handle slug fields.
