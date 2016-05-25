@@ -202,7 +202,7 @@
             init: function() {
                 this.on("queuecomplete", function(file) {
                     // Reload the current page on completed upload(s).
-                    location.reload();
+                    location.assign("{% url 'referral_detail' pk=referral.pk related_model='records' %}");
                 });
             },
         };
