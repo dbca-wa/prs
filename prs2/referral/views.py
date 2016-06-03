@@ -745,6 +745,7 @@ class LocationCreate(ReferralCreateChild):
         # to update the prs_locations layer.
         resp = borgcollector_harvest(self.request)
         logger.info('Borg Collector API response status was {}'.format(resp.status_code))
+        logger.info('Borg Collector API response: {}'.format(resp.content))
 
         # Test for intersecting locations.
         intersecting_locations = self.polygon_intersects(locations)
@@ -1291,6 +1292,7 @@ class ReferralDelete(PrsObjectDelete):
         # to update the prs_locations layer.
         resp = borgcollector_harvest(self.request)
         logger.info('Borg Collector API response status was {}'.format(resp.status_code))
+        logger.info('Borg Collector API response: {}'.format(resp.content))
         return redirect('site_home')
 
 

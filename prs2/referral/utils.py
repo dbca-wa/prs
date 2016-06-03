@@ -235,5 +235,5 @@ def borgcollector_harvest(request, publishes=['prs_locations']):
     """
     api_url = env('BORGCOLLECTOR_API', 'https://borg.dpaw.wa.gov.au/api/') + 'jobs/'
     # Send a POST request to the API endpoint.
-    r = post_sso(request, api_url, data=json.dumps({'publishes': publishes}))
+    r = post_sso(user_request=request, url=api_url, data=json.dumps({'publishes': publishes}))
     return r
