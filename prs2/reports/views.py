@@ -4,7 +4,7 @@ from django.http import HttpResponse
 from django.views.generic import TemplateView
 from openpyxl import Workbook
 from openpyxl.styles import Font
-from referral.models import Referral, Clearance, Task
+from referral.models import Referral, Clearance, Task, TaskType
 from referral.utils import breadcrumbs_li, is_model_or_string, prs_user
 
 
@@ -178,6 +178,9 @@ class DownloadView(TemplateView):
             response['Content-Disposition'] = 'attachment; filename=prs_tasks.xlsx'
             # Filter task objects according to the parameters.
             tasks = Task.objects.current().filter(**query_params)
+            # Business rule: filter out 'Condition clearance' task types.
+            cr = TaskType.objects.get(name='Conditions clearance request')
+            tasks = tasks.exclude(type=cr)
             # Write the column headers to the new worksheet.
             headers = [
                 'Task ID', 'Region(s)', 'Referral ID', 'Referred by',
