@@ -44,6 +44,8 @@ class DownloadView(TemplateView):
         ws = wb.active  # The worksheet
         # Default font for all cells.
         arial = Font(name='Arial', size=10)
+        # Define a date style.
+        date_style = 'dd/mm/yyyy'
 
         # Generate a HTTPResponse object to write to.
         response = HttpResponse(
@@ -81,8 +83,8 @@ class DownloadView(TemplateView):
                 cell.font = arial
                 cell = ws.cell(row=row, column=6)
                 cell.value = r.referral_date
+                cell.number_format = date_style
                 cell.font = arial
-                cell.number_format = 'dd-mm-yyyy'
                 cell = ws.cell(row=row, column=7)
                 cell.value = r.description
                 cell.font = arial
@@ -147,30 +149,25 @@ class DownloadView(TemplateView):
                 cell.value = c.task.state.name
                 cell.font = arial
                 cell = ws.cell(row=row, column=11)
+                cell.value = c.task.start_date
+                cell.number_format = date_style
                 cell.font = arial
-                cell.number_format = 'dd-mm-yyyy'
-                if c.task.start_date:
-                    cell.value = c.task.start_date
                 cell = ws.cell(row=row, column=12)
+                cell.value = c.task.due_date
+                cell.number_format = date_style
                 cell.font = arial
-                cell.number_format = 'dd-mm-yyyy'
-                if c.task.due_date:
-                    cell.value = c.task.due_date
                 cell = ws.cell(row=row, column=13)
+                cell.value = c.task.complete_date
+                cell.number_format = date_style
                 cell.font = arial
-                cell.number_format = 'dd-mm-yyyy'
-                if c.task.complete_date:
-                    cell.value = c.task.complete_date
                 cell = ws.cell(row=row, column=14)
+                cell.value = c.task.stop_date
+                cell.number_format = date_style
                 cell.font = arial
-                cell.number_format = 'dd-mm-yyyy'
-                if c.task.stop_date:
-                    cell.value = c.task.stop_date
                 cell = ws.cell(row=row, column=15)
+                cell.value = c.task.restart_date
+                cell.number_format = date_style
                 cell.font = arial
-                cell.number_format = 'dd-mm-yyyy'
-                if c.task.restart_date:
-                    cell.value = c.task.restart_date
                 cell = ws.cell(row=row, column=16)
                 cell.value = c.task.stop_time
                 cell.font = arial
@@ -213,8 +210,8 @@ class DownloadView(TemplateView):
                 cell.value = t.referral.reference
                 cell.font = arial
                 cell = ws.cell(row=row, column=7)
-                cell.number_format = 'dd-mm-yyyy'
                 cell.value = t.referral.referral_date
+                cell.number_format = date_style
                 cell.font = arial
                 cell = ws.cell(row=row, column=8)
                 cell.value = t.type.name
@@ -226,30 +223,25 @@ class DownloadView(TemplateView):
                 cell.value = t.assigned_user.get_full_name()
                 cell.font = arial
                 cell = ws.cell(row=row, column=11)
+                cell.value = t.start_date
+                cell.number_format = date_style
                 cell.font = arial
-                cell.number_format = 'dd-mm-yyyy'
-                if t.start_date:
-                    cell.value = t.start_date
                 cell = ws.cell(row=row, column=12)
+                cell.value = t.due_date
+                cell.number_format = date_style
                 cell.font = arial
-                cell.number_format = 'dd-mm-yyyy'
-                if t.due_date:
-                    cell.value = t.due_date
                 cell = ws.cell(row=row, column=13)
+                cell.value = t.complete_date
+                cell.number_format = date_style
                 cell.font = arial
-                cell.number_format = 'dd-mm-yyyy'
-                if t.complete_date:
-                    cell.value = t.complete_date
                 cell = ws.cell(row=row, column=14)
+                cell.value = t.stop_date
+                cell.number_format = date_style
                 cell.font = arial
-                cell.number_format = 'dd-mm-yyyy'
-                if t.stop_date:
-                    cell.value = t.stop_date
                 cell = ws.cell(row=row, column=15)
+                cell.value = t.restart_date
+                cell.number_format = date_style
                 cell.font = arial
-                cell.number_format = 'dd-mm-yyyy'
-                if t.restart_date:
-                    cell.value = t.restart_date
                 cell = ws.cell(row=row, column=16)
                 cell.value = t.stop_time
                 cell.font = arial
