@@ -897,10 +897,10 @@ class TaskAction(PrsObjectUpdate):
             messages.error(request, "You can't restart a non-stopped task!")
             return redirect(task.get_absolute_url())
         if action == 'inherit' and task.assigned_user == request.user:
+            messages.info(request, 'That task is already assigned to you.')
             return redirect(task.get_absolute_url())
-        if action == 'complete' and task.complete_date:
-            return redirect(task.get_absolute_url())
-        if action == 'cancel' and task.complete_date:
+        if action in ['complete', 'cancel'] and task.complete_date:
+            messages.info(request, 'That task is already completed.')
             return redirect(task.get_absolute_url())
         # We can't (yet) add a task to a task.
         if action == 'add':

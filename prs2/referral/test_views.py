@@ -1,4 +1,5 @@
 from __future__ import absolute_import, print_function, unicode_literals
+from datetime import date
 from django.contrib.auth import get_user_model
 from django.core.urlresolvers import reverse
 from django.test import Client
@@ -561,3 +562,93 @@ class ReferralTaggedTest(PrsViewsTestCase):
         self.assertEquals(response.status_code, 200)
         self.assertTrue(self.ref_tagged in response.context['object_list'])
         self.assertFalse(self.ref_untagged in response.context['object_list'])
+
+
+class TaskActionTest(PrsViewsTestCase):
+
+    def setUp(self):
+        super(TaskActionTest, self).setUp()
+        self.task = Task.objects.all()[0]
+
+    def test_get_update(self):
+        """Test the Task update view responds
+        """
+        url = reverse('task_action', kwargs={'pk': self.task.pk, 'action': 'update'})
+        response = self.client.get(url)
+        self.assertEquals(response.status_code, 200)
+
+    def test_cant_update_stopped_task(self):
+        """Test that a stopped task can't be updated
+        """
+        self.task.stop_date = date.today()
+        self.task.save()
+        url = reverse('task_action', kwargs={'pk': self.task.pk, 'action': 'update'})
+        response = self.client.get(url)
+        # Response should be a redirect to the object URL.
+        self.assertRedirects(response, self.task.get_absolute_url())
+        # Test that the redirected response contains an error message.
+        response = self.client.get(url, follow=True)
+        messages = response.context['messages']._get()[0]
+        self.assertIsNot(messages[0].message.find("You can't edit a stopped task"), -1)
+
+    def test_cant_stop_completed_task(self):
+        """Test that a completed task can't be stopped
+        """
+        self.task.complete_date = date.today()
+        self.task.save()
+        url = reverse('task_action', kwargs={'pk': self.task.pk, 'action': 'stop'})
+        response = self.client.get(url)
+        # Response should be a redirect to the object URL.
+        self.assertRedirects(response, self.task.get_absolute_url())
+        # Test that the redirected response contains an error message.
+        response = self.client.get(url, follow=True)
+        messages = response.context['messages']._get()[0]
+        self.assertIsNot(messages[0].message.find("You can't stop a completed task"), -1)
+
+    def test_cant_restart_unstopped_task(self):
+        """Test that a non-stopped task can't be started
+        """
+        url = reverse('task_action', kwargs={'pk': self.task.pk, 'action': 'start'})
+        response = self.client.get(url)
+        # Response should be a redirect to the object URL.
+        self.assertRedirects(response, self.task.get_absolute_url())
+        # Test that the redirected response contains an error message.
+        response = self.client.get(url, follow=True)
+        messages = response.context['messages']._get()[0]
+        self.assertIsNot(messages[0].message.find("You can't restart a non-stopped task"), -1)
+
+    def test_cant_inherit_owned_task_task(self):
+        """Test that you can't inherit a task assigned to you
+        """
+        self.task.assigned_user = self.n_user
+        self.task.save()
+        url = reverse('task_action', kwargs={'pk': self.task.pk, 'action': 'inherit'})
+        response = self.client.get(url)
+        # Response should be a redirect to the object URL.
+        self.assertRedirects(response, self.task.get_absolute_url())
+        # Test that the redirected response contains an error message.
+        response = self.client.get(url, follow=True)
+        messages = response.context['messages']._get()[0]
+        self.assertIsNot(messages[0].message.find("That task is already assigned to you"), -1)
+
+    def test_cant_cancel_completed_task(self):
+        """Test that a completed task can't be cancelled
+        """
+        self.task.complete_date = date.today()
+        self.task.save()
+        url = reverse('task_action', kwargs={'pk': self.task.pk, 'action': 'cancel'})
+        response = self.client.get(url)
+        # Response should be a redirect to the object URL.
+        self.assertRedirects(response, self.task.get_absolute_url())
+        # Test that the redirected response contains an error message.
+        response = self.client.get(url, follow=True)
+        messages = response.context['messages']._get()[0]
+        self.assertIsNot(messages[0].message.find('That task is already completed'), -1)
+
+    def test_cant_add_task_to_task(self):
+        """Test that a task can't be added to another task
+        """
+        url = reverse('task_action', kwargs={'pk': self.task.pk, 'action': 'add'})
+        response = self.client.get(url)
+        # Response should be a redirect to the object URL.
+        self.assertRedirects(response, self.task.get_absolute_url())
