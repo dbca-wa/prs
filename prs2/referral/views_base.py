@@ -13,11 +13,16 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import (
     View, ListView, DetailView, CreateView, UpdateView, DeleteView)
 import json
-from reversion import get_for_object
+import logging
+from reversion.revisions import get_for_object
 from taggit.models import Tag
 
-from .forms import FORMS_MAP, ReferralForm
-from .utils import is_model_or_string, breadcrumbs_li, get_query, prs_user
+from referral.forms import FORMS_MAP, ReferralForm
+from referral.utils import (
+    is_model_or_string, breadcrumbs_li, get_query, prs_user,
+    borgcollector_harvest)
+
+logger = logging.getLogger('prs.log')
 
 
 class PrsObjectList(LoginRequiredMixin, ListView):
@@ -42,7 +47,7 @@ class PrsObjectList(LoginRequiredMixin, ListView):
         By default, the queryset return recently-modified ones objects first.
         '''
         qs = super(PrsObjectList, self).get_queryset()
-        if 'effective_to' in self.model._meta.get_all_field_names():
+        if 'effective_to' in [f.name for f in self.model._meta.get_fields()]:
             qs = qs.filter(effective_to=None)
         # Did we pass in a search string? If so, filter the queryset and
         # return it.
@@ -72,7 +77,6 @@ class PrsObjectList(LoginRequiredMixin, ListView):
         context['page_title'] = ' | '.join([settings.APPLICATION_ACRONYM, title])
         links = [(reverse('site_home'), 'Home'), (None, title)]
         context['breadcrumb_trail'] = breadcrumbs_li(links)
-        context['queryset_count'] = self.get_queryset().count()
         return context
 
 
@@ -135,7 +139,7 @@ class PrsObjectCreate(LoginRequiredMixin, CreateView):
         # and redirects to get_success_url().
         self.object = form.save(commit=False)
         # Handle models that inherit from Audit abstract model.
-        f = self.model._meta.get_all_field_names()
+        f = [field.name for field in self.model._meta.get_fields()]
         if 'creator' in f and 'modifier' in f:
             self.object.creator, self.object.modifier = self.request.user, self.request.user
         # Handle slug fields.
@@ -257,7 +261,7 @@ class PrsObjectUpdate(LoginRequiredMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super(PrsObjectUpdate, self).get_context_data(**kwargs)
         obj = self.get_object()
-        context['title'] = 'UPDATE {}'.format(self.get_object().__unicode__()).upper()
+        context['title'] = 'UPDATE {}'.format(obj._meta.object_name).upper()
         context['page_title'] = 'PRS | {} | {} | Update'.format(
             obj._meta.verbose_name_plural.capitalize(),
             obj.pk)
@@ -347,7 +351,7 @@ class PrsObjectDelete(LoginRequiredMixin, DeleteView):
         context = super(PrsObjectDelete, self).get_context_data(**kwargs)
         context['object_type'] = self.model._meta.verbose_name
         obj = self.get_object()
-        context['title'] = 'DELETE: {}'.format(obj)
+        context['title'] = 'DELETE {}'.format(obj._meta.object_name.upper())
         context['page_title'] = ' | '.join([
             settings.APPLICATION_ACRONYM,
             'Delete {}'.format(self.get_object().__unicode__())])
@@ -390,6 +394,15 @@ class PrsObjectDelete(LoginRequiredMixin, DeleteView):
         else:
             success_url = self.get_success_url()
         obj.delete()
+
+        # For Location objects:
+        # Call the Borg Collector publish API endpoint to create a manual job
+        # to update the prs_locations layer.
+        if obj._meta.object_name == 'Location':
+            resp = borgcollector_harvest(self.request)
+            logger.info('Borg Collector API response status was {}'.format(resp.status_code))
+            logger.info('Borg Collector API response: {}'.format(resp.content))
+
         messages.success(self.request, '{0} has been deleted.'.format(obj))
         return HttpResponseRedirect(success_url)
 

@@ -24,7 +24,7 @@
 <li class="dropdown">
     <a id="id-menu-task" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Task <span class="caret"></span></a>
     <ul class="dropdown-menu" role="menu">
-        <li class="is_prs_user"><a href="{% url 'task_action' pk=object.pk action='edit' %}">Edit task</a></li>
+        <li class="is_prs_user"><a href="{% url 'task_action' pk=object.pk action='update' %}">Update task</a></li>
         {% if task_stopped %}
         <li class="is_prs_user"><a href="{% url 'task_action' pk=object.pk action='start' %}">Start task</a></li>
         {% else %}

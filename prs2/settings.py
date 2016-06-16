@@ -97,10 +97,9 @@ MANAGERS = (
     ('Cho Lamb', 'cho.lamb@dpaw.wa.gov.au', '9442 0309'),
 )
 LOGIN_URL = '/login/'
-#LOGIN_REDIRECT_URL = '/'
 APPLICATION_TITLE = 'Planning Referral System'
 APPLICATION_ACRONYM = 'PRS'
-APPLICATION_VERSION_NO = '2.0.3'
+APPLICATION_VERSION_NO = '2.1'
 APPLICATION_ALERTS_EMAIL = 'PRS-Alerts@dpaw.wa.gov.au'
 SITE_URL = env('SITE_URL', 'localhost')
 PRS_USER_GROUP = env('PRS_USER_GROUP', 'PRS user')
@@ -177,9 +176,10 @@ if not os.path.exists(os.path.join(BASE_DIR, 'logs')):
     os.mkdir(os.path.join(BASE_DIR, 'logs'))
 LOGGING = {
     'version': 1,
+    'disable_existing_loggers': False,
     'formatters': {
-        'verbose': {
-            'format': '%(levelname)s %(asctime)s %(module)s %(message)s'
+        'simple': {
+            'format': '%(levelname)s %(message)s'
         },
     },
     'handlers': {
@@ -187,8 +187,8 @@ LOGGING = {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(BASE_DIR, 'logs', 'prs.log'),
-            'formatter': 'verbose',
-            'maxBytes': '16777216'
+            'formatter': 'simple',
+            'maxBytes': 1024 * 1024 * 5
         },
     },
     'loggers': {
@@ -196,7 +196,7 @@ LOGGING = {
             'handlers': ['file'],
             'level': 'INFO'
         },
-        'log': {
+        'prs.log': {
             'handlers': ['file'],
             'level': 'INFO'
         },
@@ -204,9 +204,10 @@ LOGGING = {
 }
 DEBUG_LOGGING = {
     'version': 1,
+    'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+            'format': '%(levelname)s %(asctime)s %(module)s %(message)s'
         },
     },
     'handlers': {
@@ -215,7 +216,7 @@ DEBUG_LOGGING = {
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(BASE_DIR, 'logs', 'debug-prs.log'),
             'formatter': 'verbose',
-            'maxBytes': '16777216'
+            'maxBytes': 1024 * 1024 * 5
         },
     },
     'loggers': {
@@ -223,7 +224,7 @@ DEBUG_LOGGING = {
             'handlers': ['file'],
             'level': 'DEBUG'
         },
-        'log': {
+        'prs.log': {
             'handlers': ['file'],
             'level': 'DEBUG'
         },

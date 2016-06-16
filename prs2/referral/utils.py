@@ -1,13 +1,15 @@
-# Django imports
+from confy import env
+from datetime import datetime
 from django.apps import apps
 from django.db.models import Q
 from django.db.models.base import ModelBase
 from django.utils.safestring import mark_safe
 from django.contrib import admin
-import re
 from django.utils.encoding import smart_str
-from datetime import datetime
+from dpaw_utils.requests.api import post as post_sso
 import json
+from reversion.models import Version
+import re
 
 
 def is_model_or_string(model):
@@ -217,9 +219,45 @@ def is_prs_power_user(request):
     return True
 
 
-def is_superuser(request):
-    return request.user.is_superuser
-
-
 def prs_user(request):
-    return is_prs_user(request) or is_prs_power_user(request) or is_superuser(request)
+    return is_prs_user(request) or is_prs_power_user(request) or request.user.is_superuser
+
+
+def update_revision_history(app_model):
+    """Function to bulk-update Version objects where the data model
+    is changed. This function is for reference, as these change will tend to
+    be one-off and customised.
+
+    Example: the order_date field was added the the Record model, then later
+    changed from DateTime to Date. This change caused the deserialisation step
+    to fail for Record versions with a serialised DateTime.
+    """
+    for v in Version.objects.all():
+        # Deserialise the object version.
+        data = json.loads(v.serialized_data)[0]
+        if data['model'] == app_model:  # Example: referral.record
+            pass
+            """
+            # Do something to the deserialised data here, e.g.:
+            if 'order_date' in data['fields']:
+                if data['fields']['order_date']:
+                    data['fields']['order_date'] = data['fields']['order_date'][:10]
+                    v.serialized_data = json.dumps([data])
+                    v.save()
+            else:
+                data['fields']['order_date'] = ''
+                v.serialized_data = json.dumps([data])
+                v.save()
+            """
+
+
+def borgcollector_harvest(request, publishes=['prs_locations']):
+    """Convenience function to manually run a Borg Collector harvest
+    job for the PRS locations layer.
+
+    Docs: https://github.com/parksandwildlife/borgcollector
+    """
+    api_url = env('BORGCOLLECTOR_API', 'https://borg.dpaw.wa.gov.au/api/') + 'jobs/'
+    # Send a POST request to the API endpoint.
+    r = post_sso(user_request=request, url=api_url, data=json.dumps({'publishes': publishes}))
+    return r

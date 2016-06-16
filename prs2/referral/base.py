@@ -3,7 +3,7 @@ from __future__ import (division, print_function, unicode_literals,
 
 import logging
 import magic  # File MIME-type identification
-from reversion import create_revision, set_comment
+from reversion.revisions import create_revision, set_comment
 import threading
 
 from django.conf import settings

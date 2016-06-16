@@ -6,7 +6,8 @@
 {% block extra_style %}
 {{ block.super }}
 {% if geojson_locations %}
-<link rel="stylesheet" type="text/css" href="//api.mapbox.com/mapbox.js/v2.2.1/mapbox.css" />
+<link rel="stylesheet" type="text/css" href="//api.mapbox.com/mapbox.js/v2.4.0/mapbox.css" />
+<link rel="stylesheet" type="text/css" href="//api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/leaflet.fullscreen.css" />
 <link rel="stylesheet" type="text/css" href="{% static 'leaflet-search/leaflet-search.css' %}" />
 {% endif %}
 <link rel="stylesheet" type="text/css" href="//static.dpaw.wa.gov.au/static/libs/dropzone/4.2.0/min/dropzone.min.css">
@@ -26,7 +27,7 @@
         <li class="is_prs_user"><a href="{% url 'referral_create_child' pk=referral.pk model='record' %}" title="Add record">Add a record</a></li>
         <li class="is_prs_user"><a href="{% url 'referral_create_child' pk=referral.pk model='task' %}" title="Add task">Add a task</a></li>
         <li class="is_prs_user"><a href="{% url 'referral_create_child' pk=referral.pk model='condition' %}" title="Add condition">Add a condition</a></li>
-        {% if has_conditions %}
+        {% if condition_count %}
         <li class="is_prs_user"><a href="{% url 'referral_create_child_type' pk=referral.pk model='task' type='clearance' %}" title="Add request">Add a clearance request</a></li>
         {% else %}
         <li class="disabled"><a href="#">Add a clearance request</a></li>
@@ -120,19 +121,19 @@
             <!-- Navigation tabs -->
             <ul class="nav nav-tabs" role="tablist">
                 <li role="presentation"{% if rel_model == 'tasks' %} class="active"{% endif %}>
-                    <a href="#tab_task" aria-controls="tab_task" role="tab" data-toggle="tab">Tasks</a>
+                <a href="#tab_task" aria-controls="tab_task" role="tab" data-toggle="tab">{% if task_count %}<strong>Tasks ({{ task_count }})</strong>{% else %}Tasks{% endif %}</a>
                 </li>
                 <li role="presentation"{% if rel_model == 'notes' %} class="active"{% endif %}>
-                    <a href="#tab_note" aria-controls="tab_note" role="tab" data-toggle="tab">Notes</a>
+                <a href="#tab_note" aria-controls="tab_note" role="tab" data-toggle="tab">{% if note_count %}<strong>Notes ({{ note_count }})</strong>{% else %}Notes{% endif %}</a>
                 </li>
                 <li role="presentation"{% if rel_model == 'records' %} class="active"{% endif %}>
-                    <a href="#tab_record" aria-controls="tab_record" role="tab" data-toggle="tab">Records</a>
+                <a href="#tab_record" aria-controls="tab_record" role="tab" data-toggle="tab">{% if record_count %}<strong>Records ({{ record_count }})</strong>{% else %}Records{% endif %}</a>
                 </li>
                 <li role="presentation"{% if rel_model == 'locations' %} class="active"{% endif %}>
-                    <a href="#tab_location" aria-controls="tab_location" role="tab" data-toggle="tab">Locations</a>
+                <a href="#tab_location" aria-controls="tab_location" role="tab" data-toggle="tab">{% if location_count %}<strong>Locations ({{ location_count }})</strong>{% else %}Locations{% endif %}</a>
                 </li>
                 <li role="presentation"{% if rel_model == 'conditions' %} class="active"{% endif %}>
-                    <a href="#tab_condition" aria-controls="tab_condition" role="tab" data-toggle="tab">Conditions</a>
+                <a href="#tab_condition" aria-controls="tab_condition" role="tab" data-toggle="tab">{% if condition_count %}<strong>Conditions ({{ condition_count }})</strong>{% else %}Conditions{% endif %}</a>
                 </li>
             </ul>
             <div class="tab-content">
@@ -166,7 +167,8 @@
 {% block extra_js %}
 {{ block.super }}
 {% if geojson_locations %}
-<script src="//api.mapbox.com/mapbox.js/v2.2.2/mapbox.js"></script>
+<script src="//api.mapbox.com/mapbox.js/v2.4.0/mapbox.js"></script>
+<script src="//api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/Leaflet.fullscreen.min.js"></script>
 <script src="{% static 'leaflet-search/leaflet-search.min.js' %}"></script>
 <script>
     // Set global variables (needs to happen before loading referral_map.js)
@@ -184,13 +186,6 @@
     map.fitBounds(locationsLayer.getBounds());
     locationsLayer.addTo(map);
 </script>
-{% comment %}
-<script src="https://static.dpaw.wa.gov.au/static/brocket/plugin/prs2/dist/bundle.v0_1_6.js"></script>
-<script>
-    var plugin = Object.create(BrocketPlugin);
-    plugin.init();
-</script>
-{% endcomment %}
 {% endif %}
 <script src="//static.dpaw.wa.gov.au/static/libs/dropzone/4.2.0/min/dropzone.min.js"></script>
 <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.9/js/jquery.dataTables.min.js"></script>
@@ -203,7 +198,13 @@
         // Configure file upload Dropzone element.
         Dropzone.options.idReferralDropzone = {
             paramName: "file",
-            acceptedFiles: ".tif,.jpg,.gif,.png,.doc,.docx,.xls,.xlsx,.csv,.pdf,.txt,.zip,.msg,.qgs",
+            acceptedFiles: ".tif,.jpg,.jpeg,.gif,.png,.doc,.docx,.xls,.xlsx,.csv,.pdf,.txt,.zip,.msg,.qgs",
+            init: function() {
+                this.on("queuecomplete", function(file) {
+                    // Reload the current page on completed upload(s).
+                    location.assign("{% url 'referral_detail' pk=referral.pk related_model='records' %}");
+                });
+            },
         };
         // Initialise all DataTables.
         $.fn.dataTable.moment("dd MMM YYYY", "en-AU");
@@ -223,6 +224,5 @@
     // Hide the map viewer by default.
     $("#id_collapseMap").collapse("hide");
     {% endif %}
-
 </script>
 {% endblock extra_js %}
