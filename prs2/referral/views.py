@@ -15,8 +15,10 @@ from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View, ListView, TemplateView, FormView
+from django_downloadview import ObjectDownloadView
 import json
 import re
+from taggit.models import Tag
 
 from referral.models import (
     Task, Clearance, Referral, Condition, Note, Record, Location,
@@ -25,7 +27,7 @@ from referral.models import (
 from referral.utils import (
     is_model_or_string, breadcrumbs_li, smart_truncate, get_query,
     user_task_history, user_referral_history, filter_queryset,
-    prs_user, is_prs_power_user)
+    prs_user, is_prs_power_user, borgcollector_harvest)
 from referral.forms import (
     ReferralCreateForm, NoteForm, NoteAddExistingForm,
     RecordCreateForm, RecordAddExistingForm, TaskCreateForm,
@@ -38,8 +40,6 @@ from referral.forms import (
 from referral.views_base import (
     PrsObjectDetail, PrsObjectList, PrsObjectCreate,
     PrsObjectUpdate, PrsObjectDelete, PrsObjectHistory, PrsObjectTag)
-from django_downloadview import ObjectDownloadView
-from taggit.models import Tag
 
 
 class SiteHome(LoginRequiredMixin, ListView):
@@ -282,6 +282,7 @@ class ReferralDetail(PrsObjectDetail):
             obj_tab = 'tab_{}'.format(m._meta.model_name)
             obj_list = '{}_list'.format(m._meta.model_name)
             if m.objects.current().filter(referral=ref):
+                context['{}_count'.format(m._meta.object_name.lower())] = m.objects.current().filter(referral=ref).count()
                 obj_qs = m.objects.current().filter(referral=ref)
                 headers = copy(m.headers)
                 headers.remove('Referral ID')
@@ -296,6 +297,7 @@ class ReferralDetail(PrsObjectDetail):
                 context[obj_tab] = mark_safe(obj_tab_html)
                 context[obj_list] = obj_qs
             else:
+                context['{}_count'.format(m._meta.object_name.lower())] = 0
                 context[obj_tab] = 'No {} found for this referral'.format(
                     m._meta.verbose_name_plural)
                 context[obj_list] = None
@@ -691,6 +693,7 @@ class LocationCreate(ReferralCreateChild):
         ]
         context['breadcrumb_trail'] = breadcrumbs_li(links)
         context['title'] = 'CREATE LOCATION(S)'
+        context['address'] = ref.address
         # Add any existing referral locations serialised as GeoJSON.
         if any([l.poly for l in ref.location_set.current()]):
             context['geojson_locations'] = serialize(
@@ -736,6 +739,14 @@ class LocationCreate(ReferralCreateChild):
             locations.append(l)
 
         messages.success(request, '{} location(s) created.'.format(len(forms)))
+
+        # Call the Borg Collector publish API endpoint to create a manual job
+        # to update the prs_locations layer.
+        resp = borgcollector_harvest(self.request)
+        logger.info('Borg Collector API response status was {}'.format(resp.status_code))
+        logger.info('Borg Collector API response: {}'.format(resp.content))
+
+        # Test for intersecting locations.
         intersecting_locations = self.polygon_intersects(locations)
         if intersecting_locations:
             # Redirect to a view where users can create relationships between referrals.
@@ -857,7 +868,7 @@ class RecordUpload(LoginRequiredMixin, View):
 class TaskAction(PrsObjectUpdate):
     '''
     A customised view is used for editing Tasks because of the additional business logic.
-    ``action`` includes add, stop, start, reassign, complete, cancel, inherit, edit,
+    ``action`` includes add, stop, start, reassign, complete, cancel, inherit, update,
     addrecord, addnewrecord, addnote, addnewnote
     NOTE: does not include the 'delete' action (handled by separate view).
     '''
@@ -875,7 +886,7 @@ class TaskAction(PrsObjectUpdate):
         action = self.kwargs['action']
         task = self.get_object()
 
-        if action == 'edit' and task.stop_date and not task.restart_date:
+        if action == 'update' and task.stop_date and not task.restart_date:
             messages.error(request, "You can't edit a stopped task - restart the task first!")
             return redirect(task.get_absolute_url())
         if action == 'stop' and task.complete_date:
@@ -885,10 +896,10 @@ class TaskAction(PrsObjectUpdate):
             messages.error(request, "You can't restart a non-stopped task!")
             return redirect(task.get_absolute_url())
         if action == 'inherit' and task.assigned_user == request.user:
+            messages.info(request, 'That task is already assigned to you.')
             return redirect(task.get_absolute_url())
-        if action == 'complete' and task.complete_date:
-            return redirect(task.get_absolute_url())
-        if action == 'cancel' and task.complete_date:
+        if action in ['complete', 'cancel'] and task.complete_date:
+            messages.info(request, 'That task is already completed.')
             return redirect(task.get_absolute_url())
         # We can't (yet) add a task to a task.
         if action == 'add':
@@ -976,7 +987,7 @@ class TaskAction(PrsObjectUpdate):
                 )
             if self.request.POST.get('email_user'):
                 obj.email_user(self.request.user.email)
-        elif action == 'edit':
+        elif action == 'update':
             if obj.restart_date and obj.stop_date:
                 obj.stop_time = (obj.restart_date - obj.stop_date).days
         elif action == 'complete':
@@ -1038,10 +1049,9 @@ class TaskAction(PrsObjectUpdate):
                     messages.warning(self.request, msg)
                     return self.form_invalid(form)
                 elif obj.state in trigger_outcome and form_data['tags']:
-                    tag_names = form_data['tags'].split(',')
                     # Save tags on the parent referral.
-                    for name in tag_names:
-                        obj.referral.tags.add(name)
+                    for tag in form_data['tags']:
+                        obj.referral.tags.add(tag)
 
         obj.modifier = self.request.user
         obj.save()
@@ -1143,8 +1153,7 @@ class TagList(PrsObjectList):
         return super(TagList, self).get(request, *args, **kwargs)
 
     def get_queryset(self):
-        qs = super(TagList, self).get_queryset()
-        return qs.order_by('name')
+        return Tag.objects.all().order_by('name')
 
 
 class TagReplace(LoginRequiredMixin, FormView):
@@ -1280,6 +1289,11 @@ class ReferralDelete(PrsObjectDelete):
             i.delete()
         ref.delete()
         messages.success(request, '{0} deleted.'.format(self.model._meta.object_name))
+        # Call the Borg Collector publish API endpoint to create a manual job
+        # to update the prs_locations layer.
+        resp = borgcollector_harvest(self.request)
+        logger.info('Borg Collector API response status was {}'.format(resp.status_code))
+        logger.info('Borg Collector API response: {}'.format(resp.content))
         return redirect('site_home')
 
 

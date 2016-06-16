@@ -1,14 +1,15 @@
-# Django imports
+from confy import env
+from datetime import datetime
 from django.apps import apps
 from django.db.models import Q
 from django.db.models.base import ModelBase
 from django.utils.safestring import mark_safe
 from django.contrib import admin
-import re
 from django.utils.encoding import smart_str
-from datetime import datetime
+from dpaw_utils.requests.api import post as post_sso
 import json
 from reversion.models import Version
+import re
 
 
 def is_model_or_string(model):
@@ -248,3 +249,15 @@ def update_revision_history(app_model):
                 v.serialized_data = json.dumps([data])
                 v.save()
             """
+
+
+def borgcollector_harvest(request, publishes=['prs_locations']):
+    """Convenience function to manually run a Borg Collector harvest
+    job for the PRS locations layer.
+
+    Docs: https://github.com/parksandwildlife/borgcollector
+    """
+    api_url = env('BORGCOLLECTOR_API', 'https://borg.dpaw.wa.gov.au/api/') + 'jobs/'
+    # Send a POST request to the API endpoint.
+    r = post_sso(user_request=request, url=api_url, data=json.dumps({'publishes': publishes}))
+    return r

@@ -7,7 +7,6 @@
 {{ form.media }}
 <link rel="stylesheet" href="{% static 'css/jquery-ui/jquery-ui.css' %}" />
 <link rel="stylesheet" type="text/css" href="//static.dpaw.wa.gov.au/static/libs/bootstrap-datepicker/1.4.1/css/bootstrap-datepicker.min.css">
-<link rel="stylesheet" type="text/css" href="//static.dpaw.wa.gov.au/static/libs/bootstrap-tokenfield/0.12.0/css/bootstrap-tokenfield.min.css">
 {% endblock %}
 
 {% block page_content_inner %}
@@ -18,7 +17,6 @@
 {% block extra_js %}
 {{ block.super }}
 <script type="text/javascript" src="{% static 'js/jquery-ui.js' %}"></script>
-<script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/bootstrap-tokenfield/0.12.0/bootstrap-tokenfield.min.js"></script>
 <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/bootstrap-datepicker/1.4.1/js/bootstrap-datepicker.min.js"></script>
 <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/tinymce/4.3.0/tinymce.min.js"></script>
 <script type="text/javascript">
@@ -30,16 +28,6 @@
             autoclose: true,
             todayHighlight: true
         });
-
-        {% if tags %}
-        // Initialise the tags widget.
-        $('#id_tags').tokenfield({
-            autocomplete: {
-                source: {{ tags|safe }}
-            },
-            showAutocompleteOnFocus: true
-        });
-        {% endif %}
     });
 
     $('#hint_id_proposed_condition_html').after('<button class="btn btn-primary" id="id-copy-proposed" type="button">Copy Proposed Condition</button>');

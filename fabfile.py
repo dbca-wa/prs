@@ -1,31 +1,31 @@
-import confy
+from confy import read_environment_file, env
 import os
 from fabric.api import cd, run, local, get, settings
 from fabric.contrib.files import exists, upload_template
 
-confy.read_environment_file()
-DEPLOY_REPO_URL = os.environ['DEPLOY_REPO_URL']
-DEPLOY_TARGET = os.environ['DEPLOY_TARGET']
-DEPLOY_VENV_PATH = os.environ['DEPLOY_VENV_PATH']
-DEPLOY_VENV_NAME = os.environ['DEPLOY_VENV_NAME']
-DEPLOY_DEBUG = os.environ['DEPLOY_DEBUG']
-DEPLOY_PORT = os.environ['DEPLOY_PORT']
-DEPLOY_DATABASE_URL = os.environ['DEPLOY_DATABASE_URL']
-DEPLOY_SECRET_KEY = os.environ['DEPLOY_SECRET_KEY']
-DEPLOY_CSRF_COOKIE_SECURE = os.environ['DEPLOY_CSRF_COOKIE_SECURE']
-DEPLOY_SESSION_COOKIE_SECURE = os.environ['DEPLOY_SESSION_COOKIE_SECURE']
-DEPLOY_USER = os.environ['DEPLOY_USER']
-DEPLOY_DB_NAME = os.environ['DEPLOY_DB_NAME']
-DEPLOY_DB_USER = os.environ['DEPLOY_DB_USER']
-DEPLOY_SUPERUSER_USERNAME = os.environ['DEPLOY_SUPERUSER_USERNAME']
-DEPLOY_SUPERUSER_EMAIL = os.environ['DEPLOY_SUPERUSER_EMAIL']
-DEPLOY_SUPERUSER_PASSWORD = os.environ['DEPLOY_SUPERUSER_PASSWORD']
-DEPLOY_SUPERVISOR_NAME = os.environ['DEPLOY_SUPERVISOR_NAME']
-DEPLOY_EMAIL_HOST = os.environ['DEPLOY_EMAIL_HOST']
-DEPLOY_EMAIL_PORT = os.environ['DEPLOY_EMAIL_PORT']
-DEPLOY_SITE_URL = os.environ['SITE_URL']
-GEOSERVER_WMS_URL = os.environ['GEOSERVER_WMS_URL']
-GEOSERVER_WFS_URL = os.environ['GEOSERVER_WFS_URL']
+read_environment_file()
+DEPLOY_REPO_URL = env('DEPLOY_REPO_URL', '')
+DEPLOY_TARGET = env('DEPLOY_TARGET', '')
+DEPLOY_VENV_PATH = env('DEPLOY_VENV_PATH', '')
+DEPLOY_VENV_NAME = env('DEPLOY_VENV_NAME', '')
+DEPLOY_DEBUG = env('DEPLOY_DEBUG', '')
+DEPLOY_PORT = env('DEPLOY_PORT', '')
+DEPLOY_DATABASE_URL = env('DEPLOY_DATABASE_URL', '')
+DEPLOY_SECRET_KEY = env('DEPLOY_SECRET_KEY', '')
+DEPLOY_CSRF_COOKIE_SECURE = env('DEPLOY_CSRF_COOKIE_SECURE', '')
+DEPLOY_SESSION_COOKIE_SECURE = env('DEPLOY_SESSION_COOKIE_SECURE', '')
+DEPLOY_USER = env('DEPLOY_USER', '')
+DEPLOY_DB_NAME = env('DEPLOY_DB_NAME', 'db')
+DEPLOY_DB_USER = env('DEPLOY_DB_USER', 'dbuser')
+DEPLOY_SUPERUSER_USERNAME = env('DEPLOY_SUPERUSER_USERNAME', 'superuser')
+DEPLOY_SUPERUSER_EMAIL = env('DEPLOY_SUPERUSER_EMAIL', 'test@email.com')
+DEPLOY_SUPERUSER_PASSWORD = env('DEPLOY_SUPERUSER_PASSWORD', 'pass')
+DEPLOY_SUPERVISOR_NAME = env('DEPLOY_SUPERVISOR_NAME', 'sv')
+DEPLOY_EMAIL_HOST = env('DEPLOY_EMAIL_HOST', 'email.host')
+DEPLOY_EMAIL_PORT = env('DEPLOY_EMAIL_PORT', '25')
+DEPLOY_SITE_URL = env('SITE_URL', 'url')
+GEOSERVER_WMS_URL = env('GEOSERVER_WMS_URL', 'url')
+GEOSERVER_WFS_URL = env('GEOSERVER_WFS_URL', 'url')
 
 
 def _get_latest_source():
@@ -109,8 +109,8 @@ def _create_db():
     """Creates a database on the deploy target. Assumes that PGHOST and PGUSER are set.
     """
     db = {
-        'NAME': os.environ['DEPLOY_DB_NAME'],
-        'USER': os.environ['DEPLOY_DB_USER'],
+        'NAME': DEPLOY_DB_NAME,
+        'USER': DEPLOY_DB_USER,
     }
     sql = '''CREATE DATABASE {NAME} OWNER {USER};
         \c {NAME}'''.format(**db)
@@ -126,11 +126,8 @@ def _migrate():
 
 
 def _create_superuser():
-    un = os.environ['DEPLOY_SUPERUSER_USERNAME']
-    em = os.environ['DEPLOY_SUPERUSER_EMAIL']
-    pw = os.environ['DEPLOY_SUPERUSER_PASSWORD']
     script = """from django.contrib.auth.models import User;
-User.objects.create_superuser('{}', '{}', '{}')""".format(un, em, pw)
+User.objects.create_superuser('{}', '{}', '{}')""".format(DEPLOY_SUPERUSER_USERNAME, DEPLOY_SUPERUSER_EMAIL, DEPLOY_SUPERUSER_PASSWORD)
     with cd(DEPLOY_TARGET):
         run_str = 'source {}/{}/bin/activate && echo "{}" | python manage.py shell'
         run(run_str.format(DEPLOY_VENV_PATH, DEPLOY_VENV_NAME, script), shell='/bin/bash')
@@ -175,9 +172,9 @@ def update_repo():
 def export_legacy_json():
     """Dump, compress and download legacy PRS data to JSON fixtures for import to PRS2.
     """
-    EXPORT_VENV_PATH = os.environ['EXPORT_VENV_PATH']
-    EXPORT_VENV_NAME = os.environ['EXPORT_VENV_NAME']
-    EXPORT_TARGET = os.environ['EXPORT_TARGET']
+    EXPORT_VENV_PATH = env('EXPORT_VENV_PATH', '')
+    EXPORT_VENV_NAME = env('EXPORT_VENV_NAME', 'venv')
+    EXPORT_TARGET = env('EXPORT_TARGET', '')
 
     models = [
         ('auth.Group', 'auth_group.json'),

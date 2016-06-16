@@ -35,6 +35,8 @@ Variables below may also need to be defined (context-dependent):
     GEOSERVER_WFS_URL="//kmi.dpaw.wa.gov.au/geoserver/ows"
     PRS_USER_GROUP="PRS user"
     PRS_PWUSER_GROUP="PRS power user"
+    BORGCOLLECTOR_API="https://borg.dpaw.wa.gov.au/api/"
+    SSO_COOKIE_NAME="oim_dpaw_wa_gov_au_sessionid"
     # debug-toolbar settings:
     INTERNAL_IP="x.x.x.x"
 
@@ -42,7 +44,7 @@ Variables below may also need to be defined (context-dependent):
 
 Use `runserver` to run a local copy of the application:
 
-    python manage.py runserver 0.0.0.0:8080
+    python manage.py runserver [::]:8080
 
 Run console commands manually:
 
