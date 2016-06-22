@@ -17,6 +17,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View, ListView, TemplateView, FormView
 from django_downloadview import ObjectDownloadView
 import json
+import logging
 import re
 from taggit.models import Tag
 
@@ -40,6 +41,8 @@ from referral.forms import (
 from referral.views_base import (
     PrsObjectDetail, PrsObjectList, PrsObjectCreate,
     PrsObjectUpdate, PrsObjectDelete, PrsObjectHistory, PrsObjectTag)
+
+logger = logging.getLogger('prs.log')
 
 
 class SiteHome(LoginRequiredMixin, ListView):
