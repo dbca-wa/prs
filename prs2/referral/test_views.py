@@ -327,10 +327,51 @@ class ReferralUpdateTest(PrsViewsTestCase, WebTest):
         self.assertNotEqual(ref.reference, 'New reference value')
 
 
+class ReferralCreateChildTest(PrsViewsTestCase):
+    """Test views related to creating child objects on a referral
+    """
+    def setUp(self):
+        super(ReferralCreateChildTest, self).setUp()
+        self.ref = Referral.objects.all()[0]
+
+    def test_create_get(self):
+        """Test get view for each of: task, record, note, condition
+        """
+        for i in ['task', 'record', 'note', 'condition']:
+            url = reverse('referral_create_child', kwargs={'pk': self.ref.pk, 'model': i})
+            r = self.client.get(url)
+            self.assertEqual(r.status_code, 200)
+
+    def test_create_related_get(self):
+        """Test get for relating 'child' objects together
+        """
+        # Relate existing record to note
+        n = Note.objects.first()
+        url = reverse('referral_create_child_related', kwargs={
+            'pk': self.ref.pk, 'model': 'note', 'id': n.pk, 'type': 'addrecord'})
+        r = self.client.get(url)
+        self.assertEqual(r.status_code, 200)
+        # Create new record on note
+        url = reverse('referral_create_child_related', kwargs={
+            'pk': self.ref.pk, 'model': 'note', 'id': n.pk, 'type': 'addnewrecord'})
+        r = self.client.get(url)
+        self.assertEqual(r.status_code, 200)
+        # Relate existing note to record
+        rec = Record.objects.first()
+        url = reverse('referral_create_child_related', kwargs={
+            'pk': self.ref.pk, 'model': 'record', 'id': rec.pk, 'type': 'addnote'})
+        r = self.client.get(url)
+        self.assertEqual(r.status_code, 200)
+        # Create new note on record
+        url = reverse('referral_create_child_related', kwargs={
+            'pk': self.ref.pk, 'model': 'record', 'id': rec.pk, 'type': 'addnewnote'})
+        r = self.client.get(url)
+        self.assertEqual(r.status_code, 200)
+
+
 class ReferralRecentTest(PrsViewsTestCase):
     """Test the custom 'recent referrals' view.
     """
-
     def test_get(self):
         url = reverse('referral_recent')
         response = self.client.get(url)
@@ -343,7 +384,6 @@ class LocationCreateTest(PrsViewsTestCase):
     """Test the custom LocationCreate view.
     TODO: test a POST request.
     """
-
     def test_get(self):
         """Test the location_create view
         """
