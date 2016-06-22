@@ -257,7 +257,7 @@ class ReferralDetail(PrsObjectDetail):
             content = ref.generate_qgis_layer()
             fn = 'prs_referral_{}.qlr'.format(ref.pk)
             resp = HttpResponse(content, content_type='application/x-qgis-project')
-            resp['Content-Disposition'] = 'attachement; filename="{}"'.format(fn)
+            resp['Content-Disposition'] = 'attachment; filename="{}"'.format(fn)
             return resp
 
         # Call user_referral_history with the current referral.
