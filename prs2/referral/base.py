@@ -73,9 +73,9 @@ class Audit(models.Model):
     changed_data = property(_get_changed_data)
 
     def save(self, *args, **kwargs):
-        '''
+        """
         This falls back on using an admin user if a thread request object wasn't found
-        '''
+        """
         User = get_user_model()
         _locals = threading.local()
 

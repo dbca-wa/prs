@@ -201,9 +201,18 @@ class ReferralDetailTest(PrsViewsTestCase):
         l.poly = Polygon(((0.0, 0.0), (0.0, 50.0), (50.0, 50.0), (50.0, 0.0), (0.0, 0.0)))
         l.save()
         url = self.ref.get_absolute_url()
-        response = self.client.get(url, {'generate_qgis': 'true'})
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response['content-type'], 'application/x-qgis-project')
+        r = self.client.get(url, {'generate_qgis': 'true'})
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r['content-type'], 'application/x-qgis-project')
+
+    def test_referral_deleted_redirect(self):
+        """Test the the detail page for a deleted referral redirects to home
+        """
+        url = self.ref.get_absolute_url()
+        self.ref.delete()
+        r = self.client.get(url)
+        self.assertEqual(r.status_code, 302)
+        self.assertRedirects(r, reverse('site_home'))
 
 
 class ReferralCreateTest(PrsViewsTestCase, WebTest):
