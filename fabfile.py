@@ -9,7 +9,6 @@ DEPLOY_TARGET = env('DEPLOY_TARGET', '')
 DEPLOY_VENV_PATH = env('DEPLOY_VENV_PATH', '')
 DEPLOY_VENV_NAME = env('DEPLOY_VENV_NAME', '')
 DEPLOY_DEBUG = env('DEPLOY_DEBUG', '')
-DEPLOY_PORT = env('DEPLOY_PORT', '')
 DEPLOY_DATABASE_URL = env('DEPLOY_DATABASE_URL', '')
 DEPLOY_SECRET_KEY = env('DEPLOY_SECRET_KEY', '')
 DEPLOY_CSRF_COOKIE_SECURE = env('DEPLOY_CSRF_COOKIE_SECURE', '')
@@ -26,6 +25,10 @@ DEPLOY_EMAIL_PORT = env('DEPLOY_EMAIL_PORT', '25')
 DEPLOY_SITE_URL = env('SITE_URL', 'url')
 GEOSERVER_WMS_URL = env('GEOSERVER_WMS_URL', 'url')
 GEOSERVER_WFS_URL = env('GEOSERVER_WFS_URL', 'url')
+BORGCOLLECTOR_API = env('BORGCOLLECTOR_API', 'url')
+SSO_COOKIE_NAME = env('SSO_COOKIE_NAME', 'oim_dpaw_wa_gov_au_sessionid')
+PRS_USER_GROUP = env('PRS_USER_GROUP', 'PRS user')
+PRS_PWUSER_GROUP = env('PRS_PWUSER_GROUP', 'PRS power user')
 
 
 def _get_latest_source():
@@ -61,7 +64,6 @@ def _setup_env():
     with cd(DEPLOY_TARGET):
         context = {
             'DEPLOY_DEBUG': DEPLOY_DEBUG,
-            'DEPLOY_PORT': DEPLOY_PORT,
             'DEPLOY_DATABASE_URL': DEPLOY_DATABASE_URL,
             'DEPLOY_SECRET_KEY': DEPLOY_SECRET_KEY,
             'DEPLOY_CSRF_COOKIE_SECURE': DEPLOY_CSRF_COOKIE_SECURE,
@@ -71,24 +73,12 @@ def _setup_env():
             'DEPLOY_SITE_URL': DEPLOY_SITE_URL,
             'GEOSERVER_WMS_URL': GEOSERVER_WMS_URL,
             'GEOSERVER_WFS_URL': GEOSERVER_WFS_URL,
+            'BORGCOLLECTOR_API': BORGCOLLECTOR_API,
+            'SSO_COOKIE_NAME': SSO_COOKIE_NAME,
+            'PRS_USER_GROUP': PRS_USER_GROUP,
+            'PRS_PWUSER_GROUP': PRS_PWUSER_GROUP,
         }
         upload_template('prs2/templates/env.jinja', '.env', context, use_jinja=True, backup=False)
-
-
-def _setup_supervisor_conf():
-    """Creates a 'typical' supervisor conf in the deployment directory.
-    """
-    with cd(DEPLOY_TARGET):
-        context = {
-            'DEPLOY_SUPERVISOR_NAME': DEPLOY_SUPERVISOR_NAME,
-            'DEPLOY_USER': DEPLOY_USER,
-            'DEPLOY_TARGET': DEPLOY_TARGET,
-            'DEPLOY_VENV_PATH': DEPLOY_VENV_PATH,
-            'DEPLOY_VENV_NAME': DEPLOY_VENV_NAME,
-        }
-        upload_template(
-            'prs2/templates/supervisor.jinja', '{}.conf'.format(DEPLOY_SUPERVISOR_NAME),
-            context, use_jinja=True, backup=False)
 
 
 def _chown():
@@ -141,7 +131,6 @@ def deploy_env():
     _update_venv()
     _setup_env()
     _chown()
-    _setup_supervisor_conf()  # After the _chown step.
     _collectstatic()
 
 
@@ -167,55 +156,6 @@ def update_repo():
     _get_latest_source()
     _migrate()
     _collectstatic()
-
-
-def export_legacy_json():
-    """Dump, compress and download legacy PRS data to JSON fixtures for import to PRS2.
-    """
-    EXPORT_VENV_PATH = env('EXPORT_VENV_PATH', '')
-    EXPORT_VENV_NAME = env('EXPORT_VENV_NAME', 'venv')
-    EXPORT_TARGET = env('EXPORT_TARGET', '')
-
-    models = [
-        ('auth.Group', 'auth_group.json'),
-        ('auth.User', 'auth_user.json'),
-        ('taggit', 'taggit.json'),
-        ('referral', 'referral.json'),
-        ('reversion', 'reversion.json'),
-    ]
-    dump = 'python manage.py dumpdata --format=json --indent=4 --natural {} > {}'
-
-    for model in models:
-        cmd = dump.format(model[0], model[1])
-        run_str = 'source {}/{}/bin/activate && cd {} && {}'
-        run(run_str.format(EXPORT_VENV_PATH, EXPORT_VENV_NAME, EXPORT_TARGET, cmd), shell='/bin/bash')
-
-    # Compress the JSON into a single file, then download it.
-    with cd(EXPORT_TARGET):
-        run('tar -cvzf data.tar.gz *.json')
-        get('data.tar.gz', '.')
-
-    # Decompress the archive locally.
-    local('tar -xvf data.tar.gz')
-
-
-def load_legacy_json():
-    """Load legacy PRS data from JSON fixtures.
-    """
-    models = [
-        # Order of loading is important.
-        ('auth.Group', 'auth_group.json'),
-        ('auth.User', 'auth_user.json'),
-        ('taggit', 'taggit.json'),
-        ('referral', 'referral.json'),
-        ('reversion', 'reversion.json'),
-    ]
-    load = 'python manage.py loaddata --ignorenonexistent {}'
-
-    for model in models:
-        cmd = load.format(model[1])
-        run_str = 'source {}/{}/bin/activate && cd {} && {}'
-        run(run_str.format(DEPLOY_VENV_PATH, DEPLOY_VENV_NAME, DEPLOY_TARGET, cmd), shell='/bin/bash')
 
 
 def test():
