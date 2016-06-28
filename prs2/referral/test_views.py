@@ -1,6 +1,7 @@
 from __future__ import absolute_import, print_function, unicode_literals
 from datetime import date
 from django.contrib.auth import get_user_model
+from django.contrib.gis.geos import Polygon
 from django.core.urlresolvers import reverse
 from django.test import Client
 from django.utils.http import urlencode
@@ -155,11 +156,14 @@ class ReferralDetailTest(PrsViewsTestCase):
     """Test the referral detail view.
     """
 
+    def setUp(self):
+        super(ReferralDetailTest, self).setUp()
+        self.ref = Referral.objects.all()[0]
+
     def test_get(self):
         """Test that the referral detail page renders
         """
-        ref = Referral.objects.all()[0]
-        url = ref.get_absolute_url()
+        url = self.ref.get_absolute_url()
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'referral/referral_detail.html')
@@ -167,17 +171,15 @@ class ReferralDetailTest(PrsViewsTestCase):
     def test_related(self):
         """Test that each of the referral related object types render
         """
-        ref = Referral.objects.all()[0]
         for m in ['tasks', 'notes', 'records', 'locations', 'conditions']:
-            url = reverse('referral_detail', kwargs={'pk': ref.pk, 'related_model': m})
+            url = reverse('referral_detail', kwargs={'pk': self.ref.pk, 'related_model': m})
             response = self.client.get(url)
             self.assertEqual(response.status_code, 200)
 
     def test_print_notes(self):
         """Test that the referral notes printable view renders
         """
-        ref = Referral.objects.all()[0]
-        url = reverse('referral_detail', kwargs={'pk': ref.pk})
+        url = reverse('referral_detail', kwargs={'pk': self.ref.pk})
         url += '?' + urlencode({'print': 'notes'})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
@@ -186,11 +188,31 @@ class ReferralDetailTest(PrsViewsTestCase):
     def test_referral_history(self):
         """Test that the referral history view renders
         """
-        ref = Referral.objects.all()[0]
-        url = reverse('prs_object_history', kwargs={'model': 'referral', 'pk': ref.pk})
+        url = reverse('prs_object_history', kwargs={'model': 'referral', 'pk': self.ref.pk})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'referral/prs_object_history.html')
+
+    def test_referral_generate_qgis(self):
+        """Test the the referral with locations can return a QGIS layer definition
+        """
+        l = Location.objects.all()[0]
+        l.referral = self.ref
+        l.poly = Polygon(((0.0, 0.0), (0.0, 50.0), (50.0, 50.0), (50.0, 0.0), (0.0, 0.0)))
+        l.save()
+        url = self.ref.get_absolute_url()
+        r = self.client.get(url, {'generate_qgis': 'true'})
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r['content-type'], 'application/x-qgis-project')
+
+    def test_referral_deleted_redirect(self):
+        """Test the the detail page for a deleted referral redirects to home
+        """
+        url = self.ref.get_absolute_url()
+        self.ref.delete()
+        r = self.client.get(url)
+        self.assertEqual(r.status_code, 302)
+        self.assertRedirects(r, reverse('site_home'))
 
 
 class ReferralCreateTest(PrsViewsTestCase, WebTest):
@@ -305,10 +327,51 @@ class ReferralUpdateTest(PrsViewsTestCase, WebTest):
         self.assertNotEqual(ref.reference, 'New reference value')
 
 
+class ReferralCreateChildTest(PrsViewsTestCase):
+    """Test views related to creating child objects on a referral
+    """
+    def setUp(self):
+        super(ReferralCreateChildTest, self).setUp()
+        self.ref = Referral.objects.all()[0]
+
+    def test_create_get(self):
+        """Test get view for each of: task, record, note, condition
+        """
+        for i in ['task', 'record', 'note', 'condition']:
+            url = reverse('referral_create_child', kwargs={'pk': self.ref.pk, 'model': i})
+            r = self.client.get(url)
+            self.assertEqual(r.status_code, 200)
+
+    def test_create_related_get(self):
+        """Test get for relating 'child' objects together
+        """
+        # Relate existing record to note
+        n = Note.objects.first()
+        url = reverse('referral_create_child_related', kwargs={
+            'pk': self.ref.pk, 'model': 'note', 'id': n.pk, 'type': 'addrecord'})
+        r = self.client.get(url)
+        self.assertEqual(r.status_code, 200)
+        # Create new record on note
+        url = reverse('referral_create_child_related', kwargs={
+            'pk': self.ref.pk, 'model': 'note', 'id': n.pk, 'type': 'addnewrecord'})
+        r = self.client.get(url)
+        self.assertEqual(r.status_code, 200)
+        # Relate existing note to record
+        rec = Record.objects.first()
+        url = reverse('referral_create_child_related', kwargs={
+            'pk': self.ref.pk, 'model': 'record', 'id': rec.pk, 'type': 'addnote'})
+        r = self.client.get(url)
+        self.assertEqual(r.status_code, 200)
+        # Create new note on record
+        url = reverse('referral_create_child_related', kwargs={
+            'pk': self.ref.pk, 'model': 'record', 'id': rec.pk, 'type': 'addnewnote'})
+        r = self.client.get(url)
+        self.assertEqual(r.status_code, 200)
+
+
 class ReferralRecentTest(PrsViewsTestCase):
     """Test the custom 'recent referrals' view.
     """
-
     def test_get(self):
         url = reverse('referral_recent')
         response = self.client.get(url)
@@ -321,7 +384,6 @@ class LocationCreateTest(PrsViewsTestCase):
     """Test the custom LocationCreate view.
     TODO: test a POST request.
     """
-
     def test_get(self):
         """Test the location_create view
         """

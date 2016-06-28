@@ -17,6 +17,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View, ListView, TemplateView, FormView
 from django_downloadview import ObjectDownloadView
 import json
+import logging
 import re
 from taggit.models import Tag
 
@@ -40,6 +41,8 @@ from referral.forms import (
 from referral.views_base import (
     PrsObjectDetail, PrsObjectList, PrsObjectCreate,
     PrsObjectUpdate, PrsObjectDelete, PrsObjectHistory, PrsObjectTag)
+
+logger = logging.getLogger('prs.log')
 
 
 class SiteHome(LoginRequiredMixin, ListView):
@@ -249,14 +252,17 @@ class ReferralDetail(PrsObjectDetail):
 
     def get(self, request, *args, **kwargs):
         ref = self.get_object()
+        # Deleted? Redirect home.
+        if ref.is_deleted():
+            messages.warning(self.request, 'Referral {} not found.'.format(ref.id))
+            return HttpResponseRedirect(reverse('site_home'))
         # Override the get() to optionally return a QGIS layer definition.
         if 'generate_qgis' in request.GET and ref.location_set.current().exists():
             content = ref.generate_qgis_layer()
             fn = 'prs_referral_{}.qlr'.format(ref.pk)
             resp = HttpResponse(content, content_type='application/x-qgis-project')
-            resp['Content-Disposition'] = 'attachement; filename="{}"'.format(fn)
+            resp['Content-Disposition'] = 'attachment; filename="{}"'.format(fn)
             return resp
-
         # Call user_referral_history with the current referral.
         user_referral_history(request.user, ref)
 
@@ -265,9 +271,6 @@ class ReferralDetail(PrsObjectDetail):
     def get_context_data(self, **kwargs):
         context = super(ReferralDetail, self).get_context_data(**kwargs)
         ref = self.get_object()
-        if ref.is_deleted():
-            messages.warning(self.request, 'Referral {} not found.'.format(ref.id))
-
         context['title'] = 'REFERRAL DETAILS: {}'.format(ref.pk)
         context['page_title'] = 'PRS | Referrals | {}'.format(ref.pk)
         context['rel_model'] = self.related_model
