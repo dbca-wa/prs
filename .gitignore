@@ -1,16 +1,10 @@
-# OS junk files
-[Tt]humbs.db
-*.DS_Store
 # Project files & directories
 venv/
 media/
 staticfiles/
-node_modules/
 logs/
 *.pyc
-*.swp
-*.swo
+*.sw[po]
 .env
 *.sqlite3
 .coverage
-prs2/settings/local.py
