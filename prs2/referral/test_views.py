@@ -714,3 +714,46 @@ class TaskActionTest(PrsViewsTestCase):
         response = self.client.get(url)
         # Response should be a redirect to the object URL.
         self.assertRedirects(response, self.task.get_absolute_url())
+
+
+class ReferralRelateTest(PrsViewsTestCase):
+    """Test view for relating a referral to another referral
+    """
+    def setUp(self):
+        super(ReferralRelateTest, self).setUp()
+        [self.ref1, self.ref2] = Referral.objects.all()[:2]
+
+    def test_get(self):
+        """Test GET for the referral_relate view
+        """
+        url = reverse('referral_relate', kwargs={'pk': self.ref1.pk})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'referral/referral_relate.html')
+
+    def test_post_create(self):
+        """Test post for the referral_relate create view
+        """
+        # First, prove that a relationship does not exist.
+        self.assertTrue(self.ref2 not in self.ref1.related_refs.all())
+        url = reverse('referral_relate', kwargs={'pk': self.ref1.pk})
+        # NOTE: setting the ``data`` dict in the post below form-encodes the parameters.
+        # We need them as query params instead, so manually build the query.
+        url += '?ref_pk={}&create=true'.format(self.ref2.pk)
+        response = self.client.post(url, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(self.ref2 in self.ref1.related_refs.all())
+
+    def test_post_delete(self):
+        """Test post for the referral_relate delete view
+        """
+        # First, prove that a relationship exists.
+        self.ref1.add_relationship(self.ref2)
+        self.assertTrue(self.ref2 in self.ref1.related_refs.all())
+        url = reverse('referral_relate', kwargs={'pk': self.ref1.pk})
+        # NOTE: setting the ``data`` dict in the post below form-encodes the parameters.
+        # We need them as query params instead, so manually build the query.
+        url += '?ref_pk={}&delete=true'.format(self.ref2.pk)
+        response = self.client.post(url, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(self.ref2 not in self.ref1.related_refs.all())

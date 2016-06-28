@@ -1331,9 +1331,6 @@ class ReferralRelate(PrsObjectList):
         ``create``: create a relationship
         ``delete``: delete the relationship
         """
-        if 'pk' not in self.kwargs:
-            raise AttributeError('Relate view {} must be called with a '
-                                 'referral pk.'.format(self.__class__.__name__))
         # NOTE: query parameters always live in request.GET.
         if not self.request.GET.get('ref_pk', None):
             raise AttributeError('Relate view {} must be called with a '
@@ -1349,10 +1346,10 @@ class ReferralRelate(PrsObjectList):
         ref2 = get_object_or_404(Referral, pk=self.request.GET.get('ref_pk'))
 
         if prs_user(request):
-            if 'create' in self.request.POST:
+            if 'create' in self.request.GET:
                 ref1.add_relationship(ref2)
                 messages.success(request, 'Referral relation created')
-            elif 'delete' in self.request.POST:
+            elif 'delete' in self.request.GET:
                 ref1.remove_relationship(ref2)
                 messages.success(request, 'Referral relation removed')
 
