@@ -94,9 +94,6 @@ L.control.layers(baseMaps, overlayMaps).addTo(map);
 // Define scale bar
 L.control.scale({maxWidth: 500, imperial: false}).addTo(map);
 
-// Add a fullscreen control.
-L.control.fullscreen().addTo(map);
-
 // Define geocoder search input.
 map.addControl(new L.Control.Search({
     // OSM Noninatum geocoder URL

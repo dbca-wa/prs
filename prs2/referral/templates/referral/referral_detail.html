@@ -177,6 +177,8 @@
 </script>
 <script src="{% static 'js/referral_map.js' %}"></script>
 <script>
+    // Add a fullscreen control to the map.
+    L.control.fullscreen().addTo(map);
     // Add Location polygons to the map display and zoom to their bounds.
     var geojsonFeatures = JSON.parse('{{ geojson_locations|escapejs }}');
     var locationsLayer = L.geoJson(null, {
