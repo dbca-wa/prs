@@ -1,6 +1,5 @@
 from tastypie import fields
 from tastypie.authentication import SessionAuthentication
-from tastypie.authorization import DjangoAuthorization
 from tastypie.cache import SimpleCache
 from tastypie.resources import ModelResource, ALL_WITH_RELATIONS
 
@@ -24,7 +23,6 @@ def generate_meta(klass, overrides={}):
     """
     metaitems = {
         'authentication': SessionAuthentication(),
-        'authorization': DjangoAuthorization(),
         'queryset': klass.objects.all(),
         'resource_name': klass._meta.model_name,
         'filtering': generate_filtering(klass),
