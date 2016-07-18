@@ -368,6 +368,31 @@ class ReferralCreateChildTest(PrsViewsTestCase):
         r = self.client.get(url)
         self.assertEqual(r.status_code, 200)
 
+    def test_create_clearance_redirect(self):
+        """Test redirect where no approved conditions on the referral
+        """
+        url = reverse('referral_create_child_type', kwargs={
+            'pk': self.ref.pk, 'model': 'task', 'type': 'clearance'})
+        r = self.client.get(url)
+        self.assertEqual(r.status_code, 302)
+
+    def test_create_child_type(self):
+        """Test get for creating a child object of defined type (clearance)
+        """
+        # Ensure that conditions with 'approved' text exist on the referral.
+        mixer.cycle(2).blend(
+            Condition, referral=self.ref, category=mixer.SELECT,
+            condition=mixer.RANDOM, model_condition=mixer.SELECT,
+            proposed_condition=mixer.RANDOM)
+        for i in Condition.objects.filter(referral=self.ref):
+            i.proposed_condition_html = '<p>Proposed condition</p>'
+            i.condition_html = '<p>Actual condition</p>'
+            i.save()
+        url = reverse('referral_create_child_type', kwargs={
+            'pk': self.ref.pk, 'model': 'task', 'type': 'clearance'})
+        r = self.client.get(url)
+        self.assertEqual(r.status_code, 200)
+
 
 class ReferralRecentTest(PrsViewsTestCase):
     """Test the custom 'recent referrals' view.
