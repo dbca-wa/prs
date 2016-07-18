@@ -179,7 +179,7 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'simple': {
-            'format': '%(levelname)s %(message)s'
+            'format': '%(levelname)s %(asctime)s %(message)s'
         },
     },
     'handlers': {
