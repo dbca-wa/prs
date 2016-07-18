@@ -370,20 +370,6 @@ class ReferralCreateChild(PrsObjectCreate):
     def get_form_kwargs(self):
         kwargs = super(ReferralCreateChild, self).get_form_kwargs()
         referral = self.parent_referral
-        if 'advice' in self.kwargs.values():
-            body_text = '''<h2>The proposal:</h2>
-                <p>Address: {0}</p>
-                <p>Type: {1}</p>
-                <p>Description: {2}</p>
-                <h2>Background:</h2>
-                <p>(context, critical issues, stage in the process, previous advice, relevant sections of enclosed documents)</p>
-                <h2>Advice requested:</h2>
-                <p>(Please be specific as possible about the advice you seek).</p>
-                '''.format(referral.address, referral.type, referral.description)
-            subject = 'Request for technical advice, PRS referral {0}'.format(referral.pk)
-
-            kwargs['referral'] = referral
-            kwargs['initial'] = {'subject': subject, 'body': body_text}
         if 'clearance' in self.kwargs.values():
             kwargs['condition_choices'] = self.get_condition_choices()
             kwargs['initial'] = {'assigned_user': self.request.user}
@@ -396,6 +382,14 @@ class ReferralCreateChild(PrsObjectCreate):
     @property
     def parent_referral(self):
         return Referral.objects.get(pk=self.kwargs['pk'])
+
+    def get(self, request, *args, **kwargs):
+        # Sanity check: disallow addition of clearance tasks where no approved
+        # conditions exist on the referral.
+        if 'clearance' in self.kwargs.values() and not self.get_condition_choices():
+            messages.error(self.request, 'This referral has no approval conditions!')
+            return HttpResponseRedirect(self.get_success_url())
+        return super(ReferralCreateChild, self).get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         # If the user clicked Cancel, redirect to the referral detail page.
@@ -542,9 +536,6 @@ class ReferralCreateChild(PrsObjectCreate):
         """Return conditions with 'approved' text only.
         """
         condition_qs = Condition.objects.current().filter(referral=self.parent_referral).exclude(condition='')
-        if not condition_qs:
-            messages.error(self.request, 'This referral has no approval conditions!')
-            return HttpResponseRedirect(self.get_success_url())
         condition_choices = []
         for i in condition_qs:
             condition_choices.append(
