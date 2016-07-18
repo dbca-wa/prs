@@ -370,20 +370,6 @@ class ReferralCreateChild(PrsObjectCreate):
     def get_form_kwargs(self):
         kwargs = super(ReferralCreateChild, self).get_form_kwargs()
         referral = self.parent_referral
-        if 'advice' in self.kwargs.values():
-            body_text = '''<h2>The proposal:</h2>
-                <p>Address: {0}</p>
-                <p>Type: {1}</p>
-                <p>Description: {2}</p>
-                <h2>Background:</h2>
-                <p>(context, critical issues, stage in the process, previous advice, relevant sections of enclosed documents)</p>
-                <h2>Advice requested:</h2>
-                <p>(Please be specific as possible about the advice you seek).</p>
-                '''.format(referral.address, referral.type, referral.description)
-            subject = 'Request for technical advice, PRS referral {0}'.format(referral.pk)
-
-            kwargs['referral'] = referral
-            kwargs['initial'] = {'subject': subject, 'body': body_text}
         if 'clearance' in self.kwargs.values():
             kwargs['condition_choices'] = self.get_condition_choices()
             kwargs['initial'] = {'assigned_user': self.request.user}
