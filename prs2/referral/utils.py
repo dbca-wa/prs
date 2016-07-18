@@ -10,6 +10,7 @@ from dpaw_utils.requests.api import post as post_sso
 import json
 from reversion.models import Version
 import re
+from unidecode import unidecode
 
 
 def is_model_or_string(model):
@@ -72,16 +73,17 @@ def replacer(m):
     return REPLACEMENTS[m.group(0)]
 
 
-def dewordify_text(x):
+def dewordify_text(txt):
     '''
     Function to strip some of the crufty HTML that results from copy-pasting from Word into the
     RTF text fields in this application.
     Source:
             http://stackoverflow.com/questions/1175540/iterative-find-replace-from-a-list-of-tuples-in-python
     '''
-    if x:
+    if txt:
+        txt = unidecode(unicode(txt))
         r = re.compile('|'.join(REPLACEMENTS.keys()))
-        return r.sub(replacer, x)
+        return r.sub(replacer, txt)
     else:
         return ''
 
