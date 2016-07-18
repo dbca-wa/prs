@@ -3,7 +3,6 @@ from taggit.models import Tag
 from tastypie import fields
 from tastypie.api import Api
 from tastypie.authentication import SessionAuthentication
-from tastypie.authorization import DjangoAuthorization
 from tastypie.cache import SimpleCache
 from tastypie.resources import ModelResource, ALL, ALL_WITH_RELATIONS
 from django.contrib.auth.models import User, Group
@@ -39,7 +38,6 @@ class GroupResource(ModelResource):
         cache = SimpleCache()
         filtering = {'id': ALL, 'name': ALL}
         authentication = SessionAuthentication()
-        authorization = DjangoAuthorization()
 
 v1_api.register(GroupResource())
 
@@ -69,7 +67,6 @@ class UserResource(ModelResource):
         }
         cache = SimpleCache()
         authentication = SessionAuthentication()
-        authorization = DjangoAuthorization()
 
 v1_api.register(UserResource())
 
@@ -81,6 +78,5 @@ class TagResource(ModelResource):
         filtering = {'id': ALL, 'name': ALL, 'slug': ALL}
         cache = SimpleCache()
         authentication = SessionAuthentication()
-        authorization = DjangoAuthorization()
 
 v1_api.register(TagResource())
