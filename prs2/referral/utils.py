@@ -81,7 +81,7 @@ def dewordify_text(txt):
             http://stackoverflow.com/questions/1175540/iterative-find-replace-from-a-list-of-tuples-in-python
     '''
     if txt:
-        txt = unidecode(unicode(txt))
+        txt = unidecode(txt)
         r = re.compile('|'.join(REPLACEMENTS.keys()))
         return r.sub(replacer, txt)
     else:
