@@ -1,5 +1,5 @@
 from __future__ import absolute_import, print_function, unicode_literals
-from datetime import date
+from datetime import date, timedelta
 from django.contrib.auth import get_user_model
 from django.contrib.gis.geos import Polygon
 from django.core.urlresolvers import reverse
@@ -782,3 +782,18 @@ class ReferralRelateTest(PrsViewsTestCase):
         response = self.client.post(url, follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(self.ref2 not in self.ref1.related_refs.all())
+
+
+class OverdueEmailTest(PrsViewsTestCase):
+    """Test view for sending emails about overdue tasks.
+    """
+    def test_get(self):
+        """Test GET for the overdue tasks email view
+        """
+        # Ensure that an incomplete Task is overdue.
+        for i in Task.objects.all():
+            i.due_date = date.today() - timedelta(days=1)
+            i.save()
+        url = reverse('overdue_tasks_email')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)

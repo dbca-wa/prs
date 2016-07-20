@@ -6,6 +6,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Font
 from referral.models import Referral, Clearance, Task, TaskType
 from referral.utils import breadcrumbs_li, is_model_or_string, prs_user
+from taggit.models import Tag
 
 
 class ReportView(TemplateView):
@@ -38,6 +39,13 @@ class DownloadView(TemplateView):
         query_params = dict(request.GET.iteritems())
         # Get the required model type from the query params.
         model = is_model_or_string(query_params.pop('model'))
+        # Special case: remove tag PKs from the query params.
+        tag_pks = query_params.pop('tags__id__in', None)
+        if tag_pks:
+            tag_pks = [int(i) for i in tag_pks.split(',')]
+            tags = Tag.objects.filter(pk__in=tag_pks)
+        else:
+            tags = None
 
         # Generate a blank Excel workbook.
         wb = Workbook()
@@ -55,6 +63,8 @@ class DownloadView(TemplateView):
             response['Content-Disposition'] = 'attachment; filename=prs_referrals.xlsx'
             # Filter referral objects according to the parameters.
             referrals = Referral.objects.current().filter(**query_params)
+            if tags:  # Optional: filter by tags.
+                referrals = referrals.filter(tags__in=tags).distinct()
             # Write the column headers to the new worksheet.
             headers = [
                 'Referral ID', 'Region(s)', 'Referrer', 'Type', 'Reference',
