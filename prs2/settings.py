@@ -54,6 +54,7 @@ INSTALLED_APPS = (
     'webtemplate_dpaw',
     'referral',
     'reports',
+    'harvester',
 )
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
@@ -131,6 +132,9 @@ ALLOWED_UPLOAD_TYPES = [
 ADMINS = ('asi@dpaw.wa.gov.au',)
 EMAIL_HOST = env('EMAIL_HOST', 'email.host')
 EMAIL_PORT = env('EMAIL_PORT', 25)
+REFERRAL_EMAIL_HOST = env('REFERRAL_EMAIL_HOST', 'host')
+REFERRAL_EMAIL_USER = env('REFERRAL_EMAIL_USER', 'referrals')
+REFERRAL_EMAIL_PASSWORD = env('REFERRAL_EMAIL_PASSWORD', 'password')
 
 # Database configuration
 DATABASES = {
