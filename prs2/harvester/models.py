@@ -1,9 +1,11 @@
 from __future__ import unicode_literals
 from django.db import models
+from django.utils.encoding import python_2_unicode_compatible
 
 from referral.models import Referral, Record
 
 
+@python_2_unicode_compatible
 class EmailedReferral(models.Model):
     """A model to record details about emailed planning referrals.
     """
@@ -17,7 +19,11 @@ class EmailedReferral(models.Model):
     referral = models.ForeignKey(
         Referral, null=True, blank=True, on_delete=models.PROTECT)
 
+    def __str__(self):
+        return self.subject
 
+
+@python_2_unicode_compatible
 class EmailAttachment(models.Model):
     """A saved email file attachment.
     """
@@ -27,3 +33,6 @@ class EmailAttachment(models.Model):
         max_length=255, upload_to='email_attachments/%Y/%m/%d')
     record = models.ForeignKey(
         Record, null=True, blank=True, on_delete=models.PROTECT)
+
+    def __str__(self):
+        return self.name

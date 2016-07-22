@@ -5,9 +5,13 @@ from django.conf import settings
 from django.core.files import File
 import email
 from imaplib import IMAP4_SSL
+import logging
 from StringIO import StringIO
 
 from .models import EmailedReferral, EmailAttachment
+
+
+logger = logging.getLogger('harvester.log')
 
 
 class DeferredIMAP():
@@ -59,69 +63,68 @@ dimap = DeferredIMAP(
     password=settings.REFERRAL_EMAIL_PASSWORD)
 
 
-def retrieve_emails(search, batch_size=10):
-    """Retrieve email from the IMAP server using the provided search term, e.g.
-    '(FROM "referrals@planning.wa.gov.au")'
-    1. Get unread emails & attachments.
-    2. Mark emails as read.
+def unread_from_email(from_email):
+    """Returns (status, list of UIDs) of unread emails from a sender.
     """
-    #to_email = settings.REFERRAL_EMAIL_USER
-    textids = dimap.search(None, search)[1][0].split(' ')
-    # If no emails, just return.
-    if textids == ['']:
-        return []
-    typ, responses = dimap.fetch(",".join(textids[-batch_size:]), '(BODY.PEEK[])')
-    # If protocol error, just return.
-    if typ != 'OK':
-        return []
-    messages = []
-    for response in responses:
-        if isinstance(response, tuple):
-            msgid = int(response[0].split(' ')[0])
-            msg = email.message_from_string(response[1])
-            messages.append((msgid, msg))
-    #logger.info("Fetched {}/{} messages for {}.".format(len(messages), len(textids), search))
-    return messages
+    search = '(UNSEEN FROM "{}")'.format(from_email)
+    status, response = dimap.search(None, search)
+    if status != 'OK':
+        return status, response
+    # Return status and list of unread email UIDs.
+    return status, response[0].split()
 
 
-def harvest_emailed_referrals(emails):
-    """Iterate through pass-in email messages:
-    1. Per email, create a new EmailedReferral object.
-    2. Per email attachment, create a new EmailAttachment object.
+def fetch_email(uid):
+    """Returns (status, message) for an email by UID.
+    Email is returned as an email.Message class object.
     """
-    # TODO: logging
-    for e in emails:
-        uid, message = e[0], e[1]
-        message_body = None
-        attachments = []
+    message = None
+    status, response = dimap.fetch(str(uid), '(BODY.PEEK[])')
 
-        if EmailedReferral.objects.filter(email_uid=uid).exists():
-            continue
-        if message.is_multipart():  # Should always be True.
-            parts = [i for i in message.walk()]
-        else:
-            continue  # TODO: log/handle this situation.
+    if status != 'OK':
+        return status, response
 
-        message = parts[0]  # Redefine, for sanity.
-        for p in parts[1:]:
-            # First part is the multipart email - ignore it.
-            # Second part is the HTML email body (probably).
-            # Subsequent parts are the attachments (probably)
-            if p.get_content_type() == 'text/html':
-                message_body = p
-            else:
-                attachments.append(p)
+    for i in response:
+        if isinstance(i, tuple):
+            message = email.message_from_string(i[1])
 
-        # Create an EmailedReferral from the email body (if found).
-        if message_body:
-            received = arrow.get(message.get('Received').split(';')[1].strip(), 'ddd, DD MMM YYYY hh:mm:ss Z')
+    return status, message
+
+
+def harvest_email(uid, message):
+    """Harvest a passed-in UID and email message.
+    Abort if UID exists in the database already.
+    """
+    if EmailedReferral.objects.filter(email_uid=str(uid)).exists():
+        logger.warning('Email UID {} already present; aborting'.format(uid))
+        return False
+    if message.is_multipart():  # Should always be True.
+        parts = [i for i in message.walk()]
+    else:
+        logger.error('Email UID {} is not of type multipart'.format(uid))
+        return False
+
+    message_body = None
+    attachments = []
+
+    for p in parts:
+        if p.get_content_type() == 'text/html':
+            message_body = p
+        if p.get_content_type() == 'application/octet-stream':
+            attachments.append(p)
+
+    # Create & return EmailedReferral from the email body (if found).
+    if message_body:
+        try:
+            received = arrow.get(message.get('Received').split(';')[1].strip(), 'ddd, D MMM YYYY hh:mm:ss')
             to_e = email.utils.parseaddr(message.get('To'))[1]
             from_e = email.utils.parseaddr(message.get('From'))[1]
             em_new = EmailedReferral(
-                received=received.datetime, email_uid=uid, to_email=to_e,
+                received=received.datetime, email_uid=str(uid), to_email=to_e,
                 from_email=from_e, subject=message.get('Subject'),
                 body=message_body.get_payload())
             em_new.save()
+            logger.info('Email UID {} harvested as EmailedReferral {}'.format(uid, em_new.pk))
             for a in attachments:
                 att_new = EmailAttachment(
                     emailed_referral=em_new, name=a.get_filename(),
@@ -130,4 +133,54 @@ def harvest_emailed_referrals(emails):
                 data = File(data)
                 att_new.attachment.save(a.get_filename(), data)
                 att_new.save()
+                logger.info('Email attachment created as EmailAttachment {}'.format(uid, att_new.pk))
                 data.close()
+        except Exception as e:
+            logger.error('Email UID {} generated exception during harvest'.format(uid))
+            logger.exception(e)
+            return None
+    else:
+        logger.error('Email UID {} had no message body'.format(uid))
+        return None
+
+    return em_new
+
+
+def email_mark_read(uid):
+    """Flag an email as 'Seen' based on passed-in UID.
+    """
+    status, response = dimap.store(str(uid), '+FLAGS', '\Seen')
+    return status, response
+
+
+def harvest_unread_emails(from_email='referrals@planning.wa.gov.au'):
+    """Download a list of unread email from the defined email address and
+    harvest each one.
+    """
+    logger.info('Requesting unread emails from {}'.format(from_email))
+    status, uids = unread_from_email(from_email)
+
+    if status != 'OK':
+        logger.error('Server response failure: {}'.status)
+        return False
+
+    logger.info('Server listed {} unread emails; harvesting'.format(len(uids)))
+
+    for uid in uids:
+        # Fetch email message.
+        if EmailedReferral.objects.filter(email_uid=str(uid)).exists():
+            logger.info('Email UID {} already present in database, skipping'.format(uid))
+            continue
+        logger.info('Fetching email UID {}'.format(uid))
+        status, message = fetch_email(uid)
+        if status != 'OK':
+            logger.error('Server response failure on fetching email UID {}: {}'.format(uid, status))
+            continue
+        logger.info('Harvesting email UID {}'.format(uid))
+        em = harvest_email(uid, message)
+        if em:  # Mark email as read.
+            status, response = email_mark_read(uid)
+            if status == 'OK':
+                logger.info('Email UID {} was marked as Read'.format(uid))
+
+    return True
