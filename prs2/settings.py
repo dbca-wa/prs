@@ -185,60 +185,50 @@ LOGGING = {
         'simple': {
             'format': '%(levelname)s %(asctime)s %(message)s'
         },
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(message)s'
+        },
     },
     'handlers': {
-        'file': {
+        'prs_log': {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(BASE_DIR, 'logs', 'prs.log'),
             'formatter': 'simple',
             'maxBytes': 1024 * 1024 * 5
         },
-    },
-    'loggers': {
-        'django.request': {
-            'handlers': ['file'],
-            'level': 'INFO'
-        },
-        'prs.log': {
-            'handlers': ['file'],
-            'level': 'INFO'
-        },
-    }
-}
-DEBUG_LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'verbose': {
-            'format': '%(levelname)s %(asctime)s %(module)s %(message)s'
-        },
-    },
-    'handlers': {
-        'file': {
-            'level': 'DEBUG',
+        'harvester_log': {
+            'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs', 'debug-prs.log'),
-            'formatter': 'verbose',
+            'filename': os.path.join(BASE_DIR, 'logs', 'harvester.log'),
+            'formatter': 'simple',
             'maxBytes': 1024 * 1024 * 5
         },
     },
     'loggers': {
         'django.request': {
-            'handlers': ['file'],
-            'level': 'DEBUG'
+            'handlers': ['prs_log'],
+            'level': 'INFO'
         },
         'prs.log': {
-            'handlers': ['file'],
-            'level': 'DEBUG'
+            'handlers': ['prs_log'],
+            'level': 'INFO'
+        },
+        'harvester.log': {
+            'handlers': ['harvester_log'],
+            'level': 'INFO'
         },
     }
 }
 
-
 # Supplement some settings when DEBUG is True.
 if DEBUG:
-    LOGGING = DEBUG_LOGGING
+    LOGGING['loggers']['django.request']['level'] = 'DEBUG'
+    LOGGING['handlers']['prs_log']['formatter'] = 'verbose'
+    LOGGING['loggers']['prs.log']['level'] = 'DEBUG'
+    LOGGING['handlers']['harvester_log']['formatter'] = 'verbose'
+    LOGGING['loggers']['harvester.log']['level'] = 'DEBUG'
+
     # Developer local IP may be required for debug_toolbar to work/
     if env('INTERNAL_IP', False):
         INTERNAL_IPS.append(env('INTERNAL_IP'))
