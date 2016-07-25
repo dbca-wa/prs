@@ -153,8 +153,8 @@ def email_mark_read(uid):
     return status, response
 
 
-def harvest_unread_emails(from_email='referrals@planning.wa.gov.au'):
-    """Download a list of unread email from the defined email address and
+def harvest_unread_emails(from_email=settings.DOP_EMAIL):
+    """Download a list of unread email from the specified email address and
     harvest each one.
     """
     logger.info('Requesting unread emails from {}'.format(from_email))
@@ -169,7 +169,8 @@ def harvest_unread_emails(from_email='referrals@planning.wa.gov.au'):
     for uid in uids:
         # Fetch email message.
         if EmailedReferral.objects.filter(email_uid=str(uid)).exists():
-            logger.info('Email UID {} already present in database, skipping'.format(uid))
+            logger.info('Email UID {} already present in database, marking as read'.format(uid))
+            status, response = email_mark_read(uid)
             continue
         logger.info('Fetching email UID {}'.format(uid))
         status, message = fetch_email(uid)
