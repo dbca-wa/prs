@@ -15,8 +15,7 @@ logger = logging.getLogger('harvester.log')
 
 
 class DeferredIMAP():
-    '''
-    Convenience class for maintaining a bit of state about an IMAP server
+    '''Convenience class for maintaining a bit of state about an IMAP server
     and handling logins/logouts. Note that instances aren't threadsafe.
     '''
     def __init__(self, host, user, password):
@@ -29,25 +28,13 @@ class DeferredIMAP():
     def login(self):
         self.imp = IMAP4_SSL(self.host)
         self.imp.login(settings.REFERRAL_EMAIL_USER, settings.REFERRAL_EMAIL_PASSWORD)
-        self.imp.select("INBOX")
+        self.imp.select('INBOX')
 
     def logout(self, expunge=False):
         if expunge:
             self.imp.expunge
         self.imp.close()
         self.imp.logout()
-
-    def flush(self):
-        self.login()
-        if self.flags:
-            #logger.info("Flagging {} unprocessable emails.".format(len(self.flags)))
-            self.imp.store(",".join(self.flags), '+FLAGS', r'(\Flagged)')
-        else:
-            self.logout()
-        self.flags, self.deletions = [], []
-
-    def flag(self, msgid):
-        self.flags.append(str(msgid))
 
     def __getattr__(self, name):
         def temp(*args, **kwargs):
@@ -150,6 +137,13 @@ def email_mark_read(uid):
     """Flag an email as 'Seen' based on passed-in UID.
     """
     status, response = dimap.store(str(uid), '+FLAGS', '\Seen')
+    return status, response
+
+
+def email_mark_unread(uid):
+    """Remove the 'Seen' flag from an email based on passed-in UID.
+    """
+    status, response = dimap.store(str(uid), '-FLAGS', '\Seen')
     return status, response
 
 

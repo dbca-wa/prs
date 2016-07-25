@@ -4,9 +4,14 @@ from harvester.models import EmailedReferral, EmailAttachment
 
 @admin.register(EmailedReferral)
 class EmailedReferralAdmin(admin.ModelAdmin):
-    pass
+    date_hierarchy = 'received'
+    list_display = (
+        'subject', 'received', 'harvested', 'attachments', 'referral')
+
+    def attachments(self, instance):
+        return instance.emailattachment_set.count()
 
 
 @admin.register(EmailAttachment)
 class EmailAttachmentAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('name', 'emailed_referral', 'record')
