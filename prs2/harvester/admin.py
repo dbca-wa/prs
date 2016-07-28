@@ -6,7 +6,7 @@ from harvester.models import EmailedReferral, EmailAttachment
 class EmailedReferralAdmin(admin.ModelAdmin):
     date_hierarchy = 'received'
     list_display = (
-        'subject', 'received', 'harvested', 'attachments', 'referral')
+        'subject', 'received', 'harvested', 'attachments', 'referral', 'processed')
     raw_id_fields = ('referral',)
     search_fields = ('subject',)
 

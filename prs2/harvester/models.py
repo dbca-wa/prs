@@ -18,6 +18,7 @@ class EmailedReferral(models.Model):
     body = models.TextField()
     referral = models.ForeignKey(
         Referral, null=True, blank=True, on_delete=models.PROTECT)
+    processed = models.BooleanField(default=False)
 
     def __str__(self):
         return self.subject

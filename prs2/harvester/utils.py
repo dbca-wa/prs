@@ -196,15 +196,20 @@ def import_harvested_refs():
     dpaw = Agency.objects.get(slug='dpaw')
     wapc = Organisation.objects.get(slug='wapc')
     assess_task = TaskType.objects.get(name='Assess a referral')
-    for er in EmailedReferral.objects.filter(referral__isnull=True):
+    # Process harvested refs that are unprocessed at present.
+    for er in EmailedReferral.objects.filter(referral__isnull=True, processed=False):
         attachments = er.emailattachment_set.all()
         # Emails without attachments are usually reminder notices.
         if not attachments.exists():
             logger.info('Skipping harvested referral {} (no attachments)'.format(er))
+            er.processed = True
+            er.save()
             continue
         # Must be an attachment named 'Application.xml' present to import.
         if not attachments.filter(name__istartswith='application.xml'):
             logger.info('Skipping harvested referral {} (no XML attachment)'.format(er))
+            er.processed = True
+            er.save()
             continue
         else:
             xml_file = attachments.get(name__istartswith='application.xml')
@@ -213,12 +218,16 @@ def import_harvested_refs():
         except Exception as e:
             logger.error('Parsing of application.xml failed')
             logger.exception(e)
+            er.processed = True
+            er.save()
             continue
         app = d['APPLICATION']
         ref = app['WAPC_APPLICATION_NO']
         if Referral.objects.current().filter(reference__icontains=ref):
             # Skip harvested referrals if the the reference no. exists.
             logger.info('Referral ref {} is already in database'.format(ref))
+            er.processed = True
+            er.save()
             continue
         else:
             # Import the harvested referral.
@@ -255,6 +264,7 @@ def import_harvested_refs():
             logger.info('New PRS referral generated: {}'.format(new_ref))
             # Link the harvested referral to the new, generated referral.
             er.referral = new_ref
+            er.processed = True
             er.save()
             # Add triggers to the new referral.
             triggers = [i.strip() for i in app['MRSZONE_TEXT'].split(',')]
