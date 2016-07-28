@@ -29,3 +29,5 @@ webtemplate-dpaw==0.4.2
 selenium==2.46.1
 openpyxl==2.2.6
 tqdm==3.4.0
+arrow==0.8.0
+xmltodict==0.10.2

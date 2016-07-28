@@ -30,6 +30,10 @@ Variables below may also need to be defined (context-dependent):
     SESSION_COOKIE_SECURE=False
     EMAIL_HOST="email.host"
     EMAIL_PORT=25
+    REFERRAL_EMAIL_HOST="outlook.office365.com"
+    REFERRAL_EMAIL_USER="referrals@email.address"
+    REFERRAL_EMAIL_PASSWORD="password"
+    DOP_EMAIL="referrals@planning.wa.gov.au"
     SITE_URL="prs.dpaw.wa.gov.au"
     GEOSERVER_WMS_URL="//kmi.dpaw.wa.gov.au/geoserver/gwc/service/wms"
     GEOSERVER_WFS_URL="//kmi.dpaw.wa.gov.au/geoserver/ows"
