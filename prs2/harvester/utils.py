@@ -1,16 +1,24 @@
 from __future__ import absolute_import
 import arrow
 import base64
+from datetime import datetime, timedelta
 from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.contrib.gis.geos import Point
 from django.core.files import File
 import email
 from imaplib import IMAP4_SSL
 import logging
 from StringIO import StringIO
+import xmltodict
 
+from referral.models import (
+    Region, Referral, ReferralType, Agency, Organisation, DopTrigger, Record,
+    TaskType, Task)
 from .models import EmailedReferral, EmailAttachment
 
 
+User = get_user_model()
 logger = logging.getLogger('harvester.log')
 
 
@@ -117,11 +125,11 @@ def harvest_email(uid, message):
                     emailed_referral=em_new, name=a.get_filename(),
                 )
                 data = StringIO(base64.decodestring(a.get_payload()))
-                data = File(data)
-                att_new.attachment.save(a.get_filename(), data)
+                new_file = File(data)
+                att_new.attachment.save(a.get_filename(), new_file)
                 att_new.save()
-                logger.info('Email attachment created as EmailAttachment {}'.format(uid, att_new.pk))
                 data.close()
+                logger.info('Email attachment created as EmailAttachment {}'.format(uid, att_new.pk))
         except Exception as e:
             logger.error('Email UID {} generated exception during harvest'.format(uid))
             logger.exception(e)
@@ -179,3 +187,101 @@ def harvest_unread_emails(from_email=settings.DOP_EMAIL):
                 logger.info('Email UID {} was marked as Read'.format(uid))
 
     return True
+
+
+def import_harvested_refs():
+    """Process harvested referrals and generate referrals & records within PRS
+    """
+    logger.info('Starting import of harvested referrals')
+    dpaw = Agency.objects.get(slug='dpaw')
+    wapc = Organisation.objects.get(slug='wapc')
+    assess_task = TaskType.objects.get(name='Assess a referral')
+    for er in EmailedReferral.objects.filter(referral__isnull=True):
+        attachments = er.emailattachment_set.all()
+        # Emails without attachments are usually reminder notices.
+        if not attachments.exists():
+            logger.info('Skipping harvested referral {} (no attachments)'.format(er))
+            continue
+        # Must be an attachment named 'Application.xml' present to import.
+        if not attachments.filter(name__istartswith='application.xml'):
+            logger.info('Skipping harvested referral {} (no XML attachment)'.format(er))
+            continue
+        else:
+            xml_file = attachments.get(name__istartswith='application.xml')
+        try:
+            d = xmltodict.parse(xml_file.attachment.read())
+        except Exception as e:
+            logger.error('Parsing of application.xml failed')
+            logger.exception(e)
+            continue
+        app = d['APPLICATION']
+        ref = app['WAPC_APPLICATION_NO']
+        if Referral.objects.current().filter(reference__icontains=ref):
+            # Skip harvested referrals if the the reference no. exists.
+            logger.info('Referral ref {} is already in database'.format(ref))
+            continue
+        else:
+            # Import the harvested referral.
+            logger.info('Importing harvested referral reference {}'.format(ref))
+            ref_type = ReferralType.objects.current().get(name__istartswith=app['APP_TYPE'])
+            # ADDRESS_DETAIL may or may not be a list :/
+            if not isinstance(app['ADDRESS_DETAIL']['DOP_ADDRESS_TYPE'], list):
+                addresses = [app['ADDRESS_DETAIL']['DOP_ADDRESS_TYPE']]
+            else:
+                addresses = app['ADDRESS_DETAIL']['DOP_ADDRESS_TYPE']
+            # Business rule cludge: for a referral with multiple addresses, just
+            # use the first one to assign the referral to a DPaW region.
+            p = Point(x=float(addresses[0]['LONGITUDE']), y=float(addresses[0]['LATITUDE']))
+            region = None
+            assigned = None
+            for reg in Region.objects.all():
+                if reg.region_mpoly and reg.region_mpoly.intersects(p):
+                    region = reg
+                    # TODO: determine the user to assign, by region.
+                    # assigned = <SOME USER>
+            # Didn't intersect a region? Might be bad geometry in the XML.
+            # Default to Swan Region and the designated fallback user.
+            if not region:
+                region = Region.objects.get(name='Swan')
+                # TODO: determine the fallback user.
+                # assigned = <FALLBACK USER>
+            # Create the referral in PRS.
+            new_ref = Referral.objects.create(
+                type=ref_type, agency=dpaw, referring_org=wapc,
+                reference=ref, description=app['DEVELOPMENT_DESCRIPTION'],
+                referral_date=er.received, address=app['LOCATION'], point=p)
+            # Assign to a region.
+            new_ref.region.add(region)
+            logger.info('New PRS referral generated: {}'.format(new_ref))
+            # Link the harvested referral to the new, generated referral.
+            er.referral = new_ref
+            er.save()
+            # Add triggers to the new referral.
+            triggers = [i.strip() for i in app['MRSZONE_TEXT'].split(',')]
+            for i in triggers:
+                if DopTrigger.objects.current().filter(name__istartswith=i).exists():
+                    new_ref.dop_triggers.add(DopTrigger.objects.current().get(name__istartswith=i))
+            # Add records to the new referral (one per attachment).
+            for i in attachments:
+                new_record = Record.objects.create(name=i.name, referral=new_ref)
+                # Duplicate the uploaded file.
+                data = StringIO(i.attachment.read())
+                new_file = File(data)
+                new_record.uploaded_file.save(i.name, new_file)
+                new_record.save()
+                logger.info('New PRS record generated: {}'.format(new_record))
+                # Link the attachment to the new, generated record.
+                i.record = new_record
+                i.save()
+            # Create an "Assess a referral" task and assign it to a user.
+            new_task = Task(
+                type=assess_task,
+                referral=new_ref,
+                start_date=new_ref.referral_date,
+                description=new_ref.description,
+                assigned_user=assigned
+            )
+            new_task.state = assess_task.initial_state
+            new_task.due_date = datetime.today() + timedelta(assess_task.target_days)
+            new_task.save()
+            logger.info('New PRS task generated: {}'.format(new_task))

@@ -7,6 +7,7 @@ class EmailedReferralAdmin(admin.ModelAdmin):
     date_hierarchy = 'received'
     list_display = (
         'subject', 'received', 'harvested', 'attachments', 'referral')
+    raw_id_fields = ('referral',)
     search_fields = ('subject',)
 
     def attachments(self, instance):
@@ -16,4 +17,5 @@ class EmailedReferralAdmin(admin.ModelAdmin):
 @admin.register(EmailAttachment)
 class EmailAttachmentAdmin(admin.ModelAdmin):
     list_display = ('name', 'emailed_referral', 'record')
+    raw_id_fields = ('record',)
     search_fields = ('name', 'emailed_referral__subject',)
