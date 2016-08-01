@@ -1,8 +1,9 @@
 from __future__ import unicode_literals
+from django.conf import settings
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 
-from referral.models import Referral, Record
+from referral.models import Referral, Record, Region
 
 
 @python_2_unicode_compatible
@@ -37,3 +38,18 @@ class EmailAttachment(models.Model):
 
     def __str__(self):
         return self.name
+
+
+@python_2_unicode_compatible
+class RegionAssignee(models.Model):
+    """A model to define which user will be assigned any generated referrals
+    for a region.
+    """
+    region = models.OneToOneField(Region)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT,
+        limit_choices_to={'groups__name__in': ['PRS user'], 'is_active': True},
+        help_text='Default assigned user for this region.')
+
+    def __str__(self):
+        return '{} -> {}'.format(self.region, self.user.get_full_name())

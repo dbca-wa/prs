@@ -1,5 +1,5 @@
 from django.contrib import admin
-from harvester.models import EmailedReferral, EmailAttachment
+from harvester.models import EmailedReferral, EmailAttachment, RegionAssignee
 
 
 @admin.register(EmailedReferral)
@@ -19,3 +19,9 @@ class EmailAttachmentAdmin(admin.ModelAdmin):
     list_display = ('name', 'emailed_referral', 'record')
     raw_id_fields = ('record',)
     search_fields = ('name', 'emailed_referral__subject',)
+
+
+@admin.register(RegionAssignee)
+class RegionAssigneeAdmin(admin.ModelAdmin):
+    list_display = ('region', 'user')
+    raw_id_fields = ('user',)
