@@ -40,6 +40,7 @@ class EmailAttachment(models.Model):
         return self.name
 
 
+@python_2_unicode_compatible
 class RegionAssignee(models.Model):
     """A model to define which user will be assigned any generated referrals
     for a region.
