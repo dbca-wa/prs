@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from harvester.harvest import harvest_unread_emails, import_harvested_refs
+from harvester.utils import harvest_unread_emails, import_harvested_refs
 
 
 class Command(BaseCommand):
