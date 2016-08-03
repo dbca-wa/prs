@@ -103,9 +103,11 @@ def harvest_email(uid, message):
     attachments = []
 
     for p in parts:
+        # 'text/html' content is the email body.
         if p.get_content_type() == 'text/html':
             message_body = p
-        if p.get_content_type() == 'application/octet-stream':
+        # Other content types (not multipart/mixed) are attachments.
+        elif p.get_content_type() != 'multipart/mixed':
             attachments.append(p)
 
     # Create & return EmailedReferral from the email body (if found).
