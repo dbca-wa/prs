@@ -1,11 +1,12 @@
 from __future__ import absolute_import
 import arrow
 import base64
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.gis.geos import Point
 from django.core.files import File
+from django.core.mail import EmailMultiAlternatives
 import email
 from imaplib import IMAP4_SSL
 import logging
@@ -161,14 +162,18 @@ def harvest_unread_emails(from_email=settings.DOP_EMAIL):
     """Download a list of unread email from the specified email address and
     harvest each one.
     """
+    actions = []
     logger.info('Requesting unread emails from {}'.format(from_email))
+    actions.append('{} Requesting unread emails from {}'.format(datetime.now().isoformat(), from_email))
     status, uids = unread_from_email(from_email)
 
     if status != 'OK':
         logger.error('Server response failure: {}'.status)
-        return False
+        actions.append('{} Server response failure: {}'.format(datetime.now().isoformat(), status))
+        return actions
 
-    logger.info('Server listed {} unread emails; harvesting'.format(len(uids)))
+    logger.info('Server lists {} unread emails; harvesting'.format(len(uids)))
+    actions.append('{} Server lists {} unread emails; harvesting'.format(datetime.now().isoformat(), len(uids)))
 
     for uid in uids:
         # Fetch email message.
@@ -182,19 +187,24 @@ def harvest_unread_emails(from_email=settings.DOP_EMAIL):
             logger.error('Server response failure on fetching email UID {}: {}'.format(uid, status))
             continue
         logger.info('Harvesting email UID {}'.format(uid))
+        actions.append('{} Harvesting email UID {}'.format(datetime.now().isoformat(), uid))
         em = harvest_email(uid, message)
         if em:  # Mark email as read.
             status, response = email_mark_read(uid)
             if status == 'OK':
-                logger.info('Email UID {} was marked as Read'.format(uid))
+                logger.info('Email UID {} was marked as "Read"'.format(uid))
 
-    return True
+    logger.info('Harvest process completed')
+    actions.append('{} Harvest process completed'.format(datetime.now().isoformat()))
+    return actions
 
 
 def import_harvested_refs():
     """Process harvested referrals and generate referrals & records within PRS
     """
+    actions = []
     logger.info('Starting import of harvested referrals')
+    actions.append('{} Starting import of harvested referrals'.format(datetime.now().isoformat()))
     dpaw = Agency.objects.get(slug='dpaw')
     wapc = Organisation.objects.get(slug='wapc')
     assess_task = TaskType.objects.get(name='Assess a referral')
@@ -205,12 +215,14 @@ def import_harvested_refs():
         # Emails without attachments are usually reminder notices.
         if not attachments.exists():
             logger.info('Skipping harvested referral {} (no attachments)'.format(er))
+            actions.append('{} Skipping harvested referral {} (no attachments)'.format(datetime.now().isoformat(), er))
             er.processed = True
             er.save()
             continue
         # Must be an attachment named 'Application.xml' present to import.
         if not attachments.filter(name__istartswith='application.xml'):
             logger.info('Skipping harvested referral {} (no XML attachment)'.format(er))
+            actions.append('{} Skipping harvested referral {} (no XML attachment)'.format(datetime.now().isoformat(), er))
             er.processed = True
             er.save()
             continue
@@ -219,8 +231,9 @@ def import_harvested_refs():
         try:
             d = xmltodict.parse(xml_file.attachment.read())
         except Exception as e:
-            logger.error('Parsing of application.xml failed')
+            logger.error('Harvested referral {} parsing of application.xml failed'.format(er))
             logger.exception(e)
+            actions.append('{} Harvested referral {} parsing of application.xml failed'.format(datetime.now().isoformat(), er))
             er.processed = True
             er.save()
             continue
@@ -228,17 +241,20 @@ def import_harvested_refs():
         ref = app['WAPC_APPLICATION_NO']
         if Referral.objects.current().filter(reference__icontains=ref):
             # Skip harvested referrals if the the reference no. exists.
-            logger.info('Referral ref {} is already in database'.format(ref))
+            logger.info('Referral ref {} is already in database, skipping'.format(ref))
+            actions.append('{} Referral ref {} is already in database, skipping'.format(datetime.now().isoformat(), ref))
             er.processed = True
             er.save()
             continue
         else:
             # Import the harvested referral.
             logger.info('Importing harvested referral ref {}'.format(ref))
+            actions.append('{} Importing harvested referral ref {}'.format(datetime.now().isoformat(), ref))
             try:
                 ref_type = ReferralType.objects.filter(name__istartswith=app['APP_TYPE'])[0]
             except:
-                logger.warning('Referral type {} is not recognised type; skipping import'.format(app['APP_TYPE']))
+                logger.warning('Referral type {} is not recognised type; skipping'.format(app['APP_TYPE']))
+                actions.append('{} Referral type {} is not recognised type; skipping'.format(datetime.now().isoformat(), app['APP_TYPE']))
                 er.processed = True
                 er.save()
                 continue
@@ -257,7 +273,8 @@ def import_harvested_refs():
                         if r.region_mpoly and r.region_mpoly.intersects(p):
                             regions.append(r)
                 except:
-                    logger.warning('Address long/lat could not be parsed({}, {})'.format(a['LONGITUDE'], a['LATITUDE']))
+                    logger.warning('Address long/lat could not be parsed ({}, {})'.format(a['LONGITUDE'], a['LATITUDE']))
+                    actions.append('{} Address long/lat could not be parsed ({}, {})'.format(datetime.now().isoformat(), a['LONGITUDE'], a['LATITUDE']))
             # Business rules:
             # Didn't intersect a region? Might be bad geometry in the XML.
             # Likewise if >1 region was intersected, default to Swan Region
@@ -271,6 +288,7 @@ def import_harvested_refs():
                     assigned = RegionAssignee.objects.get(region=region).user
                 except:
                     logger.warning('No default assignee set for {}, defaulting to {}'.format(region, assignee_default))
+                    actions.append('{} No default assignee set for {}, defaulting to {}'.format(datetime.now().isoformat(), region, assignee_default))
                     assigned = assignee_default
             # Create the referral in PRS.
             new_ref = Referral.objects.create(
@@ -280,6 +298,7 @@ def import_harvested_refs():
             # Assign to a region.
             new_ref.region.add(region)
             logger.info('New PRS referral generated: {}'.format(new_ref))
+            actions.append('{} New PRS referral generated: {}'.format(datetime.now().isoformat(), new_ref))
             # Link the harvested referral to the new, generated referral.
             er.referral = new_ref
             er.processed = True
@@ -298,6 +317,7 @@ def import_harvested_refs():
                 new_record.uploaded_file.save(i.name, new_file)
                 new_record.save()
                 logger.info('New PRS record generated: {}'.format(new_record))
+                actions.append('{} New PRS record generated: {}'.format(datetime.now().isoformat(), new_record))
                 # Link the attachment to the new, generated record.
                 i.record = new_record
                 i.save()
@@ -312,4 +332,30 @@ def import_harvested_refs():
             new_task.state = assess_task.initial_state
             new_task.due_date = datetime.today() + timedelta(assess_task.target_days)
             new_task.save()
-            logger.info('New PRS task generated: {}'.format(new_task))
+            logger.info('New PRS task generated: {} assigned to {}'.format(new_task, assigned))
+            actions.append('{} New PRS task generated: {} assigned to {}'.format(datetime.now().isoformat(), new_task, assigned))
+
+    logger.info('Import process completed')
+    actions.append('{} Import process completed'.format(datetime.now().isoformat()))
+    return actions
+
+
+def email_harvest_actions(to_emails, actions):
+    """Function to email a log of harvest actions to users.
+    Accepts a list of emails and list of actions to append.
+    """
+    subject = 'PRS emailed referral harvest log {}'.format(date.today().strftime('%x'))
+    from_email = 'PRS-Alerts@dpaw.wa.gov.au'
+    text_content = '''This is an automated message to summarise harvest
+    actions undertaken for emailed referrals.\n
+    Actions:\n'''
+    html_content = '''<p>This is an automated message to summarise harvest
+    actions undertaken for emailed referrals.</p>
+    <p>Actions:</p>'''
+    for l in actions:
+        text_content += '{}\n'.format(l)
+        html_content += '{}<br>'.format(l)
+    msg = EmailMultiAlternatives(subject, text_content, from_email, to_emails)
+    msg.attach_alternative(html_content, 'text/html')
+    # Email should fail gracefully (no Exception raised on failure).
+    msg.send(fail_silently=True)
