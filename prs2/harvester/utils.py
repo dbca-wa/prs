@@ -15,7 +15,7 @@ import xmltodict
 from referral.models import (
     Region, Referral, ReferralType, Agency, Organisation, DopTrigger, Record,
     TaskType, Task)
-from .models import EmailedReferral, EmailAttachment
+from .models import EmailedReferral, EmailAttachment, RegionAssignee
 
 
 User = get_user_model()
@@ -121,7 +121,7 @@ def harvest_email(uid, message):
                 from_email=from_e, subject=message.get('Subject'),
                 body=message_body.get_payload())
             em_new.save()
-            logger.info('Email UID {} harvested as EmailedReferral {}'.format(uid, em_new.pk))
+            logger.info('Email UID {} harvested: {}'.format(uid, em_new.subject))
             for a in attachments:
                 att_new = EmailAttachment(
                     emailed_referral=em_new, name=a.get_filename(),
@@ -131,7 +131,7 @@ def harvest_email(uid, message):
                 att_new.attachment.save(a.get_filename(), new_file)
                 att_new.save()
                 data.close()
-                logger.info('Email attachment created as EmailAttachment {}'.format(uid, att_new.pk))
+                logger.info('Email attachment created: {}'.format(att_new.name))
         except Exception as e:
             logger.error('Email UID {} generated exception during harvest'.format(uid))
             logger.exception(e)
@@ -198,6 +198,7 @@ def import_harvested_refs():
     dpaw = Agency.objects.get(slug='dpaw')
     wapc = Organisation.objects.get(slug='wapc')
     assess_task = TaskType.objects.get(name='Assess a referral')
+    assignee_default = User.objects.get(username=settings.REFERRAL_ASSIGNEE_FALLBACK)
     # Process harvested refs that are unprocessed at present.
     for er in EmailedReferral.objects.filter(referral__isnull=True, processed=False):
         attachments = er.emailattachment_set.all()
@@ -233,34 +234,49 @@ def import_harvested_refs():
             continue
         else:
             # Import the harvested referral.
-            logger.info('Importing harvested referral reference {}'.format(ref))
-            ref_type = ReferralType.objects.current().get(name__istartswith=app['APP_TYPE'])
+            logger.info('Importing harvested referral ref {}'.format(ref))
+            try:
+                ref_type = ReferralType.objects.filter(name__istartswith=app['APP_TYPE'])[0]
+            except:
+                logger.warning('Referral type {} is not recognised type; skipping import'.format(app['APP_TYPE']))
+                er.processed = True
+                er.save()
+                continue
+            # Determine the intersecting region(s).
+            regions = []
+            assigned = None
             # ADDRESS_DETAIL may or may not be a list :/
             if not isinstance(app['ADDRESS_DETAIL']['DOP_ADDRESS_TYPE'], list):
                 addresses = [app['ADDRESS_DETAIL']['DOP_ADDRESS_TYPE']]
             else:
                 addresses = app['ADDRESS_DETAIL']['DOP_ADDRESS_TYPE']
-            # Business rule cludge: for a referral with multiple addresses, just
-            # use the first one to assign the referral to a DPaW region.
-            p = Point(x=float(addresses[0]['LONGITUDE']), y=float(addresses[0]['LATITUDE']))
-            region = None
-            assigned = None
-            for reg in Region.objects.all():
-                if reg.region_mpoly and reg.region_mpoly.intersects(p):
-                    region = reg
-                    # TODO: determine the user to assign, by region.
-                    # assigned = <SOME USER>
+            for a in addresses:
+                try:
+                    p = Point(x=float(a['LONGITUDE']), y=float(a['LATITUDE']))
+                    for r in Region.objects.all():
+                        if r.region_mpoly and r.region_mpoly.intersects(p):
+                            regions.append(r)
+                except:
+                    logger.warning('Address long/lat could not be parsed({}, {})'.format(a['LONGITUDE'], a['LATITUDE']))
+            # Business rules:
             # Didn't intersect a region? Might be bad geometry in the XML.
-            # Default to Swan Region and the designated fallback user.
-            if not region:
+            # Likewise if >1 region was intersected, default to Swan Region
+            # and the designated fallback user.
+            if len(regions) == 0 or len(regions) > 1:
                 region = Region.objects.get(name='Swan')
-                # TODO: determine the fallback user.
-                # assigned = <FALLBACK USER>
+                assigned = assignee_default
+            else:
+                region = regions[0]
+                try:
+                    assigned = RegionAssignee.objects.get(region=region).user
+                except:
+                    logger.warning('No default assignee set for {}, defaulting to {}'.format(region, assignee_default))
+                    assigned = assignee_default
             # Create the referral in PRS.
             new_ref = Referral.objects.create(
                 type=ref_type, agency=dpaw, referring_org=wapc,
                 reference=ref, description=app['DEVELOPMENT_DESCRIPTION'],
-                referral_date=er.received, address=app['LOCATION'], point=p)
+                referral_date=er.received, address=app['LOCATION'])
             # Assign to a region.
             new_ref.region.add(region)
             logger.info('New PRS referral generated: {}'.format(new_ref))

@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 from django.conf import settings
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
+import xmltodict
 
 from referral.models import Referral, Record, Region
 
@@ -38,6 +39,16 @@ class EmailAttachment(models.Model):
 
     def __str__(self):
         return self.name
+
+    def get_xml_data(self):
+        """Convenience function to conditionally return XML data from the
+        attachment (returns None if not an XML file).
+        """
+        d = None
+        if self.name.startswith('Application.xml'):
+            self.attachment.seek(0)
+            d = xmltodict.parse(self.attachment.read())
+        return d
 
 
 @python_2_unicode_compatible
