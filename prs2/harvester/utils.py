@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 import arrow
 import base64
+from confy import env
 from datetime import date, datetime, timedelta
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -10,6 +11,7 @@ from django.core.mail import EmailMultiAlternatives
 import email
 from imaplib import IMAP4_SSL
 import logging
+import requests
 from StringIO import StringIO
 import xmltodict
 
@@ -266,7 +268,13 @@ def import_harvested_refs():
                 addresses = [app['ADDRESS_DETAIL']['DOP_ADDRESS_TYPE']]
             else:
                 addresses = app['ADDRESS_DETAIL']['DOP_ADDRESS_TYPE']
+            # Address geometry:
+            url = env('SLIP_WFS_URL', None)
+            auth = (env('SLIP_USERNAME', None), env('SLIP_PASSWORD', None))
+            type_name = env('SLIP_DATASET', '')
+            locations = []
             for a in addresses:
+                # Use the long/lat info to intersect DPaW regions.
                 try:
                     p = Point(x=float(a['LONGITUDE']), y=float(a['LATITUDE']))
                     for r in Region.objects.all():
@@ -275,6 +283,27 @@ def import_harvested_refs():
                 except:
                     logger.warning('Address long/lat could not be parsed ({}, {})'.format(a['LONGITUDE'], a['LATITUDE']))
                     actions.append('{} Address long/lat could not be parsed ({}, {})'.format(datetime.now().isoformat(), a['LONGITUDE'], a['LATITUDE']))
+                # Use the PIN field to try returning geometry from SLIP.
+                if 'PIN' in a:
+                    try:
+                        pin = int(a['PIN'])
+                        if pin > 0:
+                            params = {
+                                'service': 'WFS',
+                                'version': '1.0.0',
+                                'typeName': type_name,
+                                'request': 'getFeature',
+                                'outputFormat': 'json',
+                                'cql_filter': 'polygon_number={}'.format(pin)
+                            }
+                            resp = requests.get(url, auth=auth, params=params)
+                            if resp.json()['features']:  # GeoJSON
+                                a['FEATURES'] = resp.json()['features']
+                                locations.append(a)  # A dict for each address location.
+                    except:
+                        logger.warning('Address PIN could not be parsed ({})'.format(a['PIN']))
+                        actions.append('{} Address PIN could not be parsed ({})'.format(datetime.now().isoformat(), a['PIN']))
+
             # Business rules:
             # Didn't intersect a region? Might be bad geometry in the XML.
             # Likewise if >1 region was intersected, default to Swan Region

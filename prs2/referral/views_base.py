@@ -14,7 +14,7 @@ from django.views.generic import (
     View, ListView, DetailView, CreateView, UpdateView, DeleteView)
 import json
 import logging
-from reversion.revisions import get_for_object
+from reversion.models import Version
 from taggit.models import Tag
 
 from referral.forms import FORMS_MAP, ReferralForm
@@ -324,7 +324,7 @@ class PrsObjectHistory(PrsObjectDetail):
             (obj.get_absolute_url(), str(obj.pk)),
             (None, 'History')])
         # Get all object versions
-        versions = get_for_object(obj).order_by('-id')
+        versions = Version.objects.get_for_object(obj).order_by('-id')
         context['obj_versions'] = versions
         context['multi_versions'] = len(versions) > 1  # True/False
         return context
