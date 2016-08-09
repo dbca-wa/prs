@@ -1,21 +1,24 @@
 from __future__ import absolute_import
 import arrow
 import base64
+from confy import env
 from datetime import date, datetime, timedelta
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.gis.geos import Point
+from django.contrib.gis.geos import GEOSGeometry, Point
 from django.core.files import File
 from django.core.mail import EmailMultiAlternatives
 import email
 from imaplib import IMAP4_SSL
+import json
 import logging
+import requests
 from StringIO import StringIO
 import xmltodict
 
 from referral.models import (
     Region, Referral, ReferralType, Agency, Organisation, DopTrigger, Record,
-    TaskType, Task)
+    TaskType, Task, Location)
 from .models import EmailedReferral, EmailAttachment, RegionAssignee
 
 
@@ -266,7 +269,13 @@ def import_harvested_refs():
                 addresses = [app['ADDRESS_DETAIL']['DOP_ADDRESS_TYPE']]
             else:
                 addresses = app['ADDRESS_DETAIL']['DOP_ADDRESS_TYPE']
+            # Address geometry:
+            url = env('SLIP_WFS_URL', None)
+            auth = (env('SLIP_USERNAME', None), env('SLIP_PASSWORD', None))
+            type_name = env('SLIP_DATASET', '')
+            locations = []
             for a in addresses:
+                # Use the long/lat info to intersect DPaW regions.
                 try:
                     p = Point(x=float(a['LONGITUDE']), y=float(a['LATITUDE']))
                     for r in Region.objects.all():
@@ -275,6 +284,26 @@ def import_harvested_refs():
                 except:
                     logger.warning('Address long/lat could not be parsed ({}, {})'.format(a['LONGITUDE'], a['LATITUDE']))
                     actions.append('{} Address long/lat could not be parsed ({}, {})'.format(datetime.now().isoformat(), a['LONGITUDE'], a['LATITUDE']))
+                # Use the PIN field to try returning geometry from SLIP.
+                if 'PIN' in a:
+                    pin = int(a['PIN'])
+                    if pin > 0:
+                        params = {
+                            'service': 'WFS',
+                            'version': '1.0.0',
+                            'typeName': type_name,
+                            'request': 'getFeature',
+                            'outputFormat': 'json',
+                            'cql_filter': 'polygon_number={}'.format(pin)
+                        }
+                        resp = requests.get(url, auth=auth, params=params)
+                        if resp.json()['features']:  # Features are Multipolygons.
+                            a['FEATURES'] = resp.json()['features']  # List of MP features.
+                            locations.append(a)  # A dict for each address location.
+                        logger.info('Address PIN {} returned geometry from SLIP'.format(pin))
+                    else:
+                        logger.warning('Address PIN could not be parsed ({})'.format(a['PIN']))
+
             # Business rules:
             # Didn't intersect a region? Might be bad geometry in the XML.
             # Likewise if >1 region was intersected, default to Swan Region
@@ -321,6 +350,23 @@ def import_harvested_refs():
                 # Link the attachment to the new, generated record.
                 i.record = new_record
                 i.save()
+            # Add locations to the new referral (one per polygon in each MP geometry).
+            for l in locations:
+                for f in l['FEATURES']:
+                    geom = GEOSGeometry(json.dumps(f['geometry']))
+                    for p in geom:
+                        new_loc = Location.objects.create(
+                            address_no=int(a['NUMBER_FROM']) if a['NUMBER_FROM'] else None,
+                            address_suffix=a['NUMBER_FROM_SUFFIX'],
+                            road_name=a['STREET_NAME'],
+                            road_suffix=a['STREET_SUFFIX'],
+                            locality=a['SUBURB'],
+                            postcode=a['POSTCODE'],
+                            referral=new_ref,
+                            poly=p
+                        )
+                        logger.info('New PRS location generated: {}'.format(new_loc))
+                        actions.append('{} New PRS location generated: {}'.format(datetime.now().isoformat(), new_loc))
             # Create an "Assess a referral" task and assign it to a user.
             new_task = Task(
                 type=assess_task,

@@ -1265,6 +1265,8 @@ class Condition(ReferralBaseModel):
             d['model_condition'] = self.model_condition.condition
         else:
             d['model_condition'] = ''
+        d['proposed_condition_html'] = unidecode(unicode(self.proposed_condition_html))
+        d['condition_html'] = unidecode(unicode(self.condition_html))
         if self.category:
             d['category'] = self.category.name
         else:

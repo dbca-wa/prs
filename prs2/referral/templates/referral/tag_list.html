@@ -15,16 +15,6 @@
     </div>
 </form>
 <hr>
-<!-- Number of results returned -->
-{% if queryset_count = 0 %}
-    <h3>Search returned no results.</h3>
-{% else %}
-    {% if queryset_count > 500 %}
-        <h3>Search returned 500+ results:</h3>
-    {% else %}
-        <h3>Search returned {{ queryset_count }} results:</h3>
-    {% endif %}
-{% endif %}
 {% if object_list %}
     {% if page_obj.has_other_pages %}{% bootstrap_paginate page_obj range=10 show_prev_next="true" show_first_last="true" %}{% endif %}
     <div class="table-responsive">
