@@ -1,11 +1,12 @@
 from confy import env
 from datetime import datetime
 from django.apps import apps
+from django.contrib import admin
 from django.db.models import Q
 from django.db.models.base import ModelBase
-from django.utils.safestring import mark_safe
-from django.contrib import admin
+from django.template.defaultfilters import slugify as django_slugify
 from django.utils.encoding import smart_str
+from django.utils.safestring import mark_safe
 from dpaw_utils.requests.api import post as post_sso
 import json
 from reversion.models import Version
@@ -263,3 +264,9 @@ def borgcollector_harvest(request, publishes=['prs_locations']):
     # Send a POST request to the API endpoint.
     r = post_sso(user_request=request, url=api_url, data=json.dumps({'publishes': publishes}))
     return r
+
+
+def slugify(value):
+    """A (slightly) customised slugify function.
+    """
+    return django_slugify(unidecode(unicode(value)))

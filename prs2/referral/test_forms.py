@@ -1,6 +1,6 @@
 from datetime import date
 from referral.test_models import PrsTestCase
-from referral.forms import ReferralForm
+from referral.forms import ReferralForm, OrganisationForm
 from referral.models import Organisation, OrganisationType, ReferralType, TaskType, Region, DopTrigger
 
 
@@ -53,3 +53,30 @@ class ReferralFormTest(PrsTestCase):
         form_data['dop_triggers'] = list(DopTrigger.objects.all())
         form = ReferralForm(data=form_data)
         self.assertTrue(form.is_valid())
+
+
+class OrganisationFormTest(PrsTestCase):
+
+    def setUp(self):
+        super(OrganisationFormTest, self).setUp()
+        if not Organisation.objects.filter(slug='wapc'):
+            Organisation.objects.create(
+                name='Western Australian Planning Commission',
+                slug='wapc',
+                type=OrganisationType.objects.all()[0],
+                list_name='Western Australian Planning Commission (WAPC)',
+                public=True)
+        self.org = Organisation.objects.get(slug='wapc')
+
+    def test_form_clean(self):
+        """Test the OrganisationForm clean method
+        """
+        form_data = {
+            'name': self.org.name,
+            'type': self.org.type.pk,
+            'list_name': self.org.list_name,
+            'state': self.org.state
+        }
+        form = OrganisationForm(data=form_data)
+        # Validation should fail (duplicate name).
+        self.assertFalse(form.is_valid())
