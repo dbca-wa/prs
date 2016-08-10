@@ -184,21 +184,27 @@ class ReferralForm(BaseForm):
         exclude = BaseForm.Meta.exclude + ['point']
 
     def clean(self):
-        """Validate the "referral type" and "DoP trigger" fields; if the
-        referral type is "Subdivision" or "Development application" then at
-        least one DoP trigger must be input.
-        For other referral types, the Dop trigger field can be left blank.
+        """Business rule:
+        Validate the "referral type" and "DoP trigger" fields; if the
+        referral type is "Subdivision" or "Development application" and the
+        referring organisation is "WAPC", then at least one DoP trigger must
+        be input.
+        For other referral types, the DoP trigger field can be left blank.
         """
         if not self.cleaned_data['dop_triggers'] and self.cleaned_data.get('type', None):
             t = self.cleaned_data['type']
-            if t.slug == 'development-application' or t.slug == 'subdivision':
-                msg = '''Subdivision/development application: you must choose
+            org = self.cleaned_data['referring_org']
+            if (t.slug == 'development-application' or t.slug == 'subdivision') and org.slug == 'wapc':
+                msg = '''WAPC subdivision/development application: you must choose
                     applicable DoP triggers for this referral type.'''
                 self._errors['dop_triggers'] = self.error_class([msg])
         return self.cleaned_data
 
 
 class ReferralCreateForm(ReferralForm):
+    """Form class for creating a new referral object (inherits style and
+    validation rules from ReferralForm parent class).
+    """
     due_date = forms.DateField(
         required=False,
         help_text='''Optional. Date that the referral must be actioned by (
