@@ -461,7 +461,8 @@ class TaskCompleteForm(BaseForm):
     tags = TagMultipleChoiceField(
         required=False,
         help_text='''Select all tags relevant to the advice supplied (required
-        for response with advice / condition / objection).''')
+        for with advice / condition / objection). Hold control to select
+        multiple options.''')
 
     def __init__(self, *args, **kwargs):
         super(TaskCompleteForm, self).__init__(*args, **kwargs)
@@ -870,8 +871,8 @@ class TaskClearanceCreateForm(BaseForm):
         help_text='Date on which this clearance request was received.')
     due_date = forms.DateField(
         input_formats=settings.DATE_INPUT_FORMATS, required=False,
-        help_text='''Optional date by which the clearance(s) are required.
-            Will default to 45 days from today if no date is specifed.''')
+        help_text='''Optional date by which the clearance is required.
+            Will default to 42 days if no date is specified.''')
 
     def __init__(self, condition_choices, *args, **kwargs):
         super(TaskClearanceCreateForm, self).__init__(*args, **kwargs)
