@@ -59,7 +59,6 @@ class PrsTestCase(TestCase):
             mixer.cycle(2).blend(ReferralType, initial_task=mixer.SELECT)
             mixer.cycle(2).blend(NoteType)
             mixer.cycle(2).blend(Agency)
-            mixer.cycle(2).blend(Tag)
 
         if not Referral.objects.exists():
             # Create some referral data
@@ -710,6 +709,10 @@ class ClearanceTest(PrsTestCase):
     """Unit tests specific to the ``Clearance`` model class.
     """
 
+    def setUp(self):
+        super(ClearanceTest, self).setUp()
+        self.tag = Tag.objects.create(name='Test Tag')
+
     def test_as_row(self):
         """Test the Clearance model as_row() method.
         """
@@ -717,13 +720,12 @@ class ClearanceTest(PrsTestCase):
         row = c.as_row()
         self.assertIsNot(row.find(c.task.referral.get_absolute_url()), -1)
         # Change some field values, for coverage.
-        tag = Tag.objects.all()[0]
-        c.condition.tags.add(tag)
+        c.condition.tags.add(self.tag)
         c.task.description = 'test'
         c.task.save()
         row = c.as_row()
         self.assertIsNot(row.find(c.task.description), -1)
-        self.assertIsNot(row.find(tag.name), -1)
+        self.assertIsNot(row.find(self.tag.name), -1)
 
     def test_as_tbody(self):
         """Test the Clearance mode as_tbody() method.

@@ -37,11 +37,12 @@ class PrsAPITest(PrsTestCase):
             self.client.login(username='normaluser', password='pass')
             response = self.client.get(url)
             res_list = json.loads(response.content)
-            obj_id = res_list['objects'][0]['id']
-            url = reverse(
-                'api_dispatch_detail', kwargs={
-                    'resource_name': i, 'api_name': 'v1', 'pk': obj_id}
-            )
+            if res_list['objects']:  # Object(s) exist.
+                obj_id = res_list['objects'][0]['id']
+                url = reverse(
+                    'api_dispatch_detail', kwargs={
+                        'resource_name': i, 'api_name': 'v1', 'pk': obj_id}
+                )
             response = self.client.get(url)
             self.assertEqual(response.status_code, 200)
             self.client.logout()

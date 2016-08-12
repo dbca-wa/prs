@@ -362,11 +362,6 @@ class ReferralCreateChild(PrsObjectCreate):
             context['include_map'] = True
         return context
 
-    def update_context(self, context):
-        return context.update({
-            'related_records': self.obj.records.current() if self.obj.records.exists() else None
-        })
-
     def get_form_kwargs(self):
         kwargs = super(ReferralCreateChild, self).get_form_kwargs()
         referral = self.parent_referral
@@ -375,8 +370,6 @@ class ReferralCreateChild(PrsObjectCreate):
             kwargs['initial'] = {'assigned_user': self.request.user}
         if 'addrecord' in self.kwargs.values() or 'addnote' in self.kwargs.values():
             kwargs['referral'] = referral
-        elif 'model' in self.kwargs and self.kwargs['model'] == 'dummy_place_holder':
-            pass
         return kwargs
 
     @property

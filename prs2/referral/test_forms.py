@@ -1,7 +1,10 @@
 from datetime import date
+from django.core.files.uploadedfile import SimpleUploadedFile
 from referral.test_models import PrsTestCase
-from referral.forms import ReferralForm, OrganisationForm
-from referral.models import Organisation, OrganisationType, ReferralType, TaskType, Region, DopTrigger
+from referral.forms import ReferralForm, OrganisationForm, RecordForm, RecordCreateForm
+from referral.models import (
+    Organisation, OrganisationType, ReferralType, TaskType, Region, DopTrigger)
+from tempfile import NamedTemporaryFile
 
 
 class ReferralFormTest(PrsTestCase):
@@ -80,3 +83,62 @@ class OrganisationFormTest(PrsTestCase):
         form = OrganisationForm(data=form_data)
         # Validation should fail (duplicate name).
         self.assertFalse(form.is_valid())
+
+
+class RecordFormTest(PrsTestCase):
+
+    def test_form_clean(self):
+        """Test the RecordForm clean method
+        """
+        f1 = NamedTemporaryFile()
+        f1.write('Test data')
+        f1.seek(0)
+        f2 = NamedTemporaryFile()
+        f2.write('Test data')
+        f2.seek(0)
+        # An accepted file type.
+        up_file1 = SimpleUploadedFile(
+            name=f1.name, content=f1.read(), content_type='text/plain')
+        # Non-accepted file type.
+        up_file2 = SimpleUploadedFile(
+            name=f2.name, content=f2.read(), content_type='application/x-shockwave-flash')
+        file_data = {'uploaded_file': up_file1}
+        form_data = {'name': 'Test file', 'uploaded_file': up_file1.name}
+        form = RecordForm(data=form_data, files=file_data)
+        # Validation should pass (accepted file type).
+        self.assertTrue(form.is_valid())
+        file_data = {'uploaded_file': up_file2}
+        form = RecordForm(data=form_data, files=file_data)
+        # Validation should fail (non-accepted file type).
+        self.assertFalse(form.is_valid())
+
+
+class RecordCreateFormTest(PrsTestCase):
+
+    def test_form_clean(self):
+        """Test the RecordCreateForm clean method
+        """
+        f = NamedTemporaryFile()
+        f.write('Test data')
+        f.seek(0)
+        # An accepted file type.
+        up_file = SimpleUploadedFile(name=f.name, content=f.read())
+        file_data = {'uploaded_file': up_file}
+        form_data = {'name': 'Test file'}
+        form = RecordCreateForm(data=form_data)
+        # Validation should fail (no uploaded file or Infobase ID).
+        self.assertFalse(form.is_valid())
+        # Add both Infobase ID and uploaded file, validation passes.
+        form_data['uploaded_file'] = up_file.name
+        form_data['infobase_id'] = 'TestID'
+        form = RecordForm(data=form_data, files=file_data)
+        self.assertTrue(form.is_valid())
+        # Include just the file, validation passes.
+        form_data.pop('infobase_id')
+        form = RecordForm(data=form_data, files=file_data)
+        self.assertTrue(form.is_valid())
+        # Include just the Infobase ID, validation passes.
+        form_data.pop('uploaded_file')
+        form_data['infobase_id'] = 'TestID'
+        form = RecordForm(data=form_data)
+        self.assertTrue(form.is_valid())
