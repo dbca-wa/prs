@@ -194,7 +194,7 @@ class ReferralDetailTest(PrsViewsTestCase):
         self.assertTemplateUsed(response, 'referral/prs_object_history.html')
 
     def test_referral_generate_qgis(self):
-        """Test the the referral with locations can return a QGIS layer definition
+        """Test that the referral with locations can return a QGIS layer definition
         """
         l = Location.objects.all()[0]
         l.referral = self.ref
@@ -206,13 +206,24 @@ class ReferralDetailTest(PrsViewsTestCase):
         self.assertEqual(r['content-type'], 'application/x-qgis-project')
 
     def test_referral_deleted_redirect(self):
-        """Test the the detail page for a deleted referral redirects to home
+        """Test that the detail page for a deleted referral redirects to home
         """
         url = self.ref.get_absolute_url()
         self.ref.delete()
         r = self.client.get(url)
         self.assertEqual(r.status_code, 302)
         self.assertRedirects(r, reverse('site_home'))
+
+    def test_referral_bookmarked(self):
+        """Test the referral detail page renders differently if bookmarked
+        """
+        url = self.ref.get_absolute_url()
+        response = self.client.get(url)
+        self.assertContains(response, 'Bookmark this referral')
+        # Bookmark the referral.
+        Bookmark.objects.create(referral=self.ref, user=self.n_user)
+        response = self.client.get(url)
+        self.assertContains(response, 'Remove bookmark')
 
 
 class ReferralCreateTest(PrsViewsTestCase, WebTest):
@@ -341,6 +352,14 @@ class ReferralCreateChildTest(PrsViewsTestCase):
             url = reverse('referral_create_child', kwargs={'pk': self.ref.pk, 'model': i})
             r = self.client.get(url)
             self.assertEqual(r.status_code, 200)
+
+    def test_cancel(self):
+        """Test that cancelling the create view redirects correctly
+        """
+        for i in ['task', 'record', 'note', 'condition']:
+            url = reverse('referral_create_child', kwargs={'pk': self.ref.pk, 'model': i})
+            r = self.client.post(url, {'cancel': 'Cancel'})
+            self.assertRedirects(r, self.ref.get_absolute_url())
 
     def test_create_related_get(self):
         """Test get for relating 'child' objects together
@@ -476,7 +495,7 @@ class PrsObjectTagTest(PrsViewsTestCase):
 
     def setUp(self):
         super(PrsObjectTagTest, self).setUp()
-        self.tag = Tag.objects.get_or_create(name='TestTag')[0]
+        self.tag = Tag.objects.create(name='Test Tag')
 
     def test_get(self):
         """Test that a GET request to this view returns a 405.
@@ -635,7 +654,7 @@ class ReferralTaggedTest(PrsViewsTestCase):
 
     def setUp(self):
         super(ReferralTaggedTest, self).setUp()
-        self.tag = Tag.objects.get_or_create(name='TestTag')[0]
+        self.tag = Tag.objects.create(name='Test Tag')
         # Tag one referral only.
         self.ref_tagged = Referral.objects.all()[0]
         self.ref_tagged.tags.add(self.tag)
