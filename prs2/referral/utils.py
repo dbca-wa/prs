@@ -185,6 +185,8 @@ def user_referral_history(user, referral):
 
 
 def user_task_history(user, task, comment=None):
+    """Utility function to update the task history in a user's profile.
+    """
     profile = user.userprofile
     if not profile.task_history:
         task_history = []
