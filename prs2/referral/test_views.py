@@ -232,20 +232,9 @@ class ReferralCreateTest(PrsViewsTestCase, WebTest):
 
     def setUp(self):
         super(ReferralCreateTest, self).setUp()
-        # We need a couple of specific objects to exist:
-        if not Organisation.objects.filter(slug='wapc'):
-            Organisation.objects.create(
-                name='Western Australian Planning Commission',
-                slug='wapc',
-                type=OrganisationType.objects.first(),
-                list_name='Western Australian Planning Commission (WAPC)')
         self.org = Organisation.objects.get(slug='wapc')
-        if not TaskType.objects.filter(slug='assess-a-referral'):
-            TaskType.objects.create(
-                name='Assess a referral', slug='assess-a-referral',
-                initial_state=TaskState.objects.first())
-        self.task_type = TaskType.objects.get(slug='assess-a-referral')
-        self.ref_type = ReferralType.objects.get(slug='subdivision')
+        self.task_type = TaskType.objects.get(name='Assess a referral')
+        self.ref_type = ReferralType.objects.get(name='Subdivision')
         self.url = reverse('referral_create')
 
     def test_get(self):
@@ -340,9 +329,18 @@ class ReferralCreateChildTest(PrsViewsTestCase):
     def setUp(self):
         super(ReferralCreateChildTest, self).setUp()
         self.ref = Referral.objects.first()
+        # Ensure that conditions with 'approved' text exist on the referral.
+        mixer.cycle(3).blend(
+            Condition, referral=self.ref, category=mixer.SELECT,
+            condition=mixer.RANDOM, model_condition=mixer.SELECT,
+            proposed_condition=mixer.RANDOM)
+        for i in Condition.objects.filter(referral=self.ref):
+            i.proposed_condition_html = '<p>Proposed condition</p>'
+            i.condition_html = '<p>Actual condition</p>'
+            i.save()
 
     def test_create_get(self):
-        """Test get view for each of: task, record, note, condition
+        """Test GET request for each of: task, record, note, condition
         """
         for i in ['task', 'record', 'note', 'condition']:
             url = reverse('referral_create_child', kwargs={'pk': self.ref.pk, 'model': i})
@@ -358,7 +356,7 @@ class ReferralCreateChildTest(PrsViewsTestCase):
             self.assertRedirects(r, self.ref.get_absolute_url())
 
     def test_create_related_get(self):
-        """Test get for relating 'child' objects together
+        """Test GET for relating 'child' objects together
         """
         # Relate existing record to note
         n = Note.objects.first()
@@ -386,27 +384,57 @@ class ReferralCreateChildTest(PrsViewsTestCase):
     def test_create_clearance_redirect(self):
         """Test redirect where no approved conditions on the referral
         """
+        # Delete any existing conditions on the referral.
+        for i in Condition.objects.filter(referral=self.ref):
+            i.delete()
         url = reverse('referral_create_child_type', kwargs={
             'pk': self.ref.pk, 'model': 'task', 'type': 'clearance'})
         r = self.client.get(url)
         self.assertEqual(r.status_code, 302)
 
     def test_create_child_type(self):
-        """Test get for creating a child object of defined type (clearance)
+        """Test GET for creating a child object of defined type (clearance)
         """
-        # Ensure that conditions with 'approved' text exist on the referral.
-        mixer.cycle(2).blend(
-            Condition, referral=self.ref, category=mixer.SELECT,
-            condition=mixer.RANDOM, model_condition=mixer.SELECT,
-            proposed_condition=mixer.RANDOM)
-        for i in Condition.objects.filter(referral=self.ref):
-            i.proposed_condition_html = '<p>Proposed condition</p>'
-            i.condition_html = '<p>Actual condition</p>'
-            i.save()
         url = reverse('referral_create_child_type', kwargs={
             'pk': self.ref.pk, 'model': 'task', 'type': 'clearance'})
         r = self.client.get(url)
         self.assertEqual(r.status_code, 200)
+
+    def test_create_clearance_request(self):
+        """Test POST request for creating a clearance request on a referral
+        """
+        url = reverse('referral_create_child_type', kwargs={
+            'pk': self.ref.pk, 'model': 'task', 'type': 'clearance'})
+        cond = Condition.objects.filter(referral=self.ref).first()
+        # Test that no clearance tasks exist on the Condition.
+        self.assertEqual(cond.clearance_tasks.count(), 0)
+        resp = self.client.post(url, {
+            'conditions': [cond.pk],
+            'assigned_user': self.n_user.pk,
+            'start_date': date.strftime(date.today(), '%d/%m/%Y'),
+            'description': 'Test clearance',
+        })
+        # Response should be a redirect.
+        self.assertEqual(resp.status_code, 302)
+        # Test that a clearance task now exists on the Condition.
+        self.assertEqual(cond.clearance_tasks.count(), 1)
+
+    def test_create_task(self):
+        """Test POST request to create a new task on a referral
+        """
+        url = reverse('referral_create_child', kwargs={'pk': self.ref.pk, 'model': 'task'})
+        init_tasks = self.ref.task_set.count()
+        resp = self.client.post(url, {
+            'assigned_user': self.n_user.pk,
+            'type': TaskType.objects.first().pk,
+            'start_date': date.strftime(date.today(), '%d/%m/%Y'),
+            'due_date': date.strftime(date.today() + timedelta(days=30), '%d/%m/%Y'),
+            'description': 'Test clearance',
+        })
+        # Response should be a redirect.
+        self.assertEqual(resp.status_code, 302)
+        # Test that a new task now exists on the referral.
+        self.assertTrue(self.ref.task_set.count() > init_tasks)
 
 
 class ReferralRecentTest(PrsViewsTestCase):
@@ -759,7 +787,7 @@ class TaskActionTest(PrsViewsTestCase):
         """Test rule that some tasks can't be completed without a location on the referral
         """
         # First, ensure that the parent referral is a specific type.
-        self.task.referral.type = ReferralType.objects.get(slug='subdivision')
+        self.task.referral.type = ReferralType.objects.get(name='Subdivision')
         self.task.referral.save()
         # Ensure that no locations exist on the parent referral.
         for l in self.task.referral.location_set.all():

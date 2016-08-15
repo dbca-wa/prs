@@ -12,24 +12,8 @@ class ReferralFormTest(PrsTestCase):
     """
     def setUp(self):
         super(ReferralFormTest, self).setUp()
-        # We need a couple of specific objects to exist:
-        if not Organisation.objects.filter(slug='wapc'):
-            Organisation.objects.create(
-                name='Western Australian Planning Commission',
-                slug='wapc',
-                type=OrganisationType.objects.all()[0],
-                list_name='Western Australian Planning Commission (WAPC)',
-                public=True)
         self.org = Organisation.objects.get(slug='wapc')
-        if not ReferralType.objects.filter(slug='subdivision'):
-            ReferralType.objects.create(
-                name='Subdivision', slug='subdivision',
-                initial_task=TaskType.objects.all()[0])
-        self.ref_type = ReferralType.objects.get(slug='subdivision')
-        if not ReferralType.objects.filter(slug='development-application'):
-            ReferralType.objects.create(
-                name='Development application', slug='development-application',
-                initial_task=TaskType.objects.all()[0])
+        self.ref_type = ReferralType.objects.get(name='Subdivision')
 
     def test_form_clean(self):
         """Test the ReferralForm clean method rules
@@ -62,13 +46,6 @@ class OrganisationFormTest(PrsTestCase):
 
     def setUp(self):
         super(OrganisationFormTest, self).setUp()
-        if not Organisation.objects.filter(slug='wapc'):
-            Organisation.objects.create(
-                name='Western Australian Planning Commission',
-                slug='wapc',
-                type=OrganisationType.objects.all()[0],
-                list_name='Western Australian Planning Commission (WAPC)',
-                public=True)
         self.org = Organisation.objects.get(slug='wapc')
 
     def test_form_clean(self):
