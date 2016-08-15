@@ -340,9 +340,24 @@ class ReferralCreateChildTest(PrsViewsTestCase):
     def setUp(self):
         super(ReferralCreateChildTest, self).setUp()
         self.ref = Referral.objects.first()
+        # Ensure that conditions with 'approved' text exist on the referral.
+        mixer.cycle(3).blend(
+            Condition, referral=self.ref, category=mixer.SELECT,
+            condition=mixer.RANDOM, model_condition=mixer.SELECT,
+            proposed_condition=mixer.RANDOM)
+        for i in Condition.objects.filter(referral=self.ref):
+            i.proposed_condition_html = '<p>Proposed condition</p>'
+            i.condition_html = '<p>Actual condition</p>'
+            i.save()
+        # Ensure that a "Condition clearance request" TaskType exists.
+        if not TaskType.objects.filter(slug='conditions-clearance-request'):
+            TaskType.objects.create(
+                name='Conditions clearance request',
+                slug='conditions-clearance-request',
+                initial_state=TaskState.objects.first())
 
     def test_create_get(self):
-        """Test get view for each of: task, record, note, condition
+        """Test GET request for each of: task, record, note, condition
         """
         for i in ['task', 'record', 'note', 'condition']:
             url = reverse('referral_create_child', kwargs={'pk': self.ref.pk, 'model': i})
@@ -358,7 +373,7 @@ class ReferralCreateChildTest(PrsViewsTestCase):
             self.assertRedirects(r, self.ref.get_absolute_url())
 
     def test_create_related_get(self):
-        """Test get for relating 'child' objects together
+        """Test GET for relating 'child' objects together
         """
         # Relate existing record to note
         n = Note.objects.first()
@@ -386,27 +401,40 @@ class ReferralCreateChildTest(PrsViewsTestCase):
     def test_create_clearance_redirect(self):
         """Test redirect where no approved conditions on the referral
         """
+        # Delete any existing conditions on the referral.
+        for i in Condition.objects.filter(referral=self.ref):
+            i.delete()
         url = reverse('referral_create_child_type', kwargs={
             'pk': self.ref.pk, 'model': 'task', 'type': 'clearance'})
         r = self.client.get(url)
         self.assertEqual(r.status_code, 302)
 
     def test_create_child_type(self):
-        """Test get for creating a child object of defined type (clearance)
+        """Test GET for creating a child object of defined type (clearance)
         """
-        # Ensure that conditions with 'approved' text exist on the referral.
-        mixer.cycle(2).blend(
-            Condition, referral=self.ref, category=mixer.SELECT,
-            condition=mixer.RANDOM, model_condition=mixer.SELECT,
-            proposed_condition=mixer.RANDOM)
-        for i in Condition.objects.filter(referral=self.ref):
-            i.proposed_condition_html = '<p>Proposed condition</p>'
-            i.condition_html = '<p>Actual condition</p>'
-            i.save()
         url = reverse('referral_create_child_type', kwargs={
             'pk': self.ref.pk, 'model': 'task', 'type': 'clearance'})
         r = self.client.get(url)
         self.assertEqual(r.status_code, 200)
+
+    def test_create_clearance_request(self):
+        """Test POST request for creating a clearance request on a referral
+        """
+        url = reverse('referral_create_child_type', kwargs={
+            'pk': self.ref.pk, 'model': 'task', 'type': 'clearance'})
+        cond = Condition.objects.filter(referral=self.ref).first()
+        # Test that no clearance tasks exist on the Condition.
+        self.assertEqual(cond.clearance_tasks.count(), 0)
+        resp = self.client.post(url, {
+            'conditions': [cond.pk],
+            'assigned_user': self.n_user.pk,
+            'start_date': date.strftime(date.today(), '%d/%m/%Y'),
+            'description': 'Test clearance',
+        })
+        # Response should be a redirect.
+        self.assertEqual(resp.status_code, 302)
+        # Test that a clearance task now exists on the Condition.
+        self.assertEqual(cond.clearance_tasks.count(), 1)
 
 
 class ReferralRecentTest(PrsViewsTestCase):
