@@ -1,11 +1,14 @@
 from django.db.models.base import ModelBase
-from django.test import TestCase
+from django.db.models.query import QuerySet
+from django.test import RequestFactory
+from referral.models import Referral, Task
+from referral.test_models import PrsTestCase
+from referral.utils import (
+    is_model_or_string, smart_truncate, breadcrumbs_li, slugify,
+    update_revision_history, filter_queryset, user_task_history)
 
-from referral.models import Referral
-from referral.utils import is_model_or_string, smart_truncate, breadcrumbs_li, slugify
 
-
-class UtilsTest(TestCase):
+class UtilsTest(PrsTestCase):
 
     def test_is_model_or_string(self):
         """Test is_model_or_string with a string and a model class
@@ -62,3 +65,35 @@ class UtilsTest(TestCase):
         """
         self.assertEqual('test', slugify('Test'))
         self.assertEqual('test-value', slugify('Test Value'))
+
+    def test_update_revision_history(self):
+        """Test update_revision_history, for coverage :P
+        """
+        r = Referral.objects.first()
+        r.description = 'Update description'
+        r.save()
+        r.description = 'Update description again'
+        r.save()
+        update_revision_history(Referral)
+
+    def test_filter_queryset(self):
+        """Test that filter_queryset returns the correct things
+        """
+        r = RequestFactory()
+        get = r.get('/filter', {'q': "test filter  string  to 'normalise'"})
+        ret = filter_queryset(get, Referral, Referral.objects.all())
+        self.assertTrue(isinstance(ret[0], QuerySet))
+        self.assertTrue(isinstance(ret[1], unicode))
+
+    def test_user_task_history(self):
+        """Test the user_task_history inserts correct data to a user profile
+        """
+        # Ensure that normaluser has a task assigned.
+        task = Task.objects.first()
+        task.assigned_user = self.n_user
+        task.save()
+        user_task_history(self.n_user, task, 'Test task history')
+        self.assertTrue('Test task history' in self.n_user.userprofile.task_history)
+        self.assertTrue(str(task.pk) in self.n_user.userprofile.task_history)
+        user_task_history(self.n_user, task, 'More task history')
+        self.assertTrue('More task history' in self.n_user.userprofile.task_history)
