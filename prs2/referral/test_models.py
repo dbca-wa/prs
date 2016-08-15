@@ -42,28 +42,30 @@ class PrsTestCase(TestCase):
         self.ro_user.save()
         profile, c = UserProfile.objects.get_or_create(user=self.ro_user)
 
-        if not DopTrigger.objects.exists():
-            # Create some random lookup data
-            mixer.cycle(2).blend(DopTrigger)
-            mixer.cycle(2).blend(Region)
-            mixer.cycle(2).blend(OrganisationType)
-            mixer.cycle(2).blend(ConditionCategory)
-            mixer.cycle(2).blend(Organisation, type=mixer.SELECT)
-        if not TaskState.objects.exists():
-            # Ensure that required TaskState objects exist.
-            mixer.blend(TaskState, name='Stopped')
-            mixer.blend(TaskState, name='In progress')
-            mixer.blend(TaskState, name='Completed')
-        if not TaskType.objects.exists():
-            mixer.cycle(2).blend(TaskType, initial_state=mixer.SELECT)
-            mixer.cycle(2).blend(ReferralType, initial_task=mixer.SELECT)
-            mixer.cycle(2).blend(NoteType)
-            mixer.cycle(2).blend(Agency)
-        # Ensure that the 'Subdivision' referral type exists
-        if not ReferralType.objects.filter(slug='subdivision'):
-            ReferralType.objects.create(
-                name='Subdivision', slug='subdivision',
-                initial_task=TaskType.objects.first())
+        # Create some random lookup data
+        mixer.cycle(2).blend(DopTrigger)
+        mixer.cycle(2).blend(Region)
+        mixer.cycle(2).blend(OrganisationType)
+        mixer.cycle(2).blend(ConditionCategory)
+        mixer.blend(
+            Organisation, name='Western Australian Planning Commission',
+            slug='wapc')
+        mixer.cycle(2).blend(Organisation, type=mixer.SELECT)
+        # Ensure that required TaskState objects exist.
+        mixer.blend(TaskState, name='Stopped')
+        mixer.blend(TaskState, name='In progress')
+        mixer.blend(TaskState, name='Completed')
+        # Ensure that required TaskType objects exist.
+        mixer.blend(TaskType, name='Assess a referral')
+        mixer.blend(TaskType, name='Conditions clearance request')
+        # Ensure that required referral types exists.
+        mixer.blend(ReferralType, name='Subdivision', slug='subdivision')
+        mixer.blend(
+            ReferralType, name='Development application',
+            slug='development-application')
+        mixer.cycle(2).blend(ReferralType, initial_task=mixer.SELECT)
+        mixer.cycle(2).blend(NoteType)
+        mixer.cycle(2).blend(Agency)
 
         if not Referral.objects.exists():
             # Create some referral data
