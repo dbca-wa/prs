@@ -853,23 +853,22 @@ class RecordUpload(LoginRequiredMixin, View):
 
 
 class TaskAction(PrsObjectUpdate):
-    '''
+    """
     A customised view is used for editing Tasks because of the additional business logic.
     ``action`` includes add, stop, start, reassign, complete, cancel, inherit, update,
     addrecord, addnewrecord, addnote, addnewnote
     NOTE: does not include the 'delete' action (handled by separate view).
-    '''
+    """
     model = Task
     template_name = 'referral/change_form.html'
     action = None
 
     def get(self, request, *args, **kwargs):
-        '''
-        Only allow this view to be used for explicity-stated model types.
-        Otherwise return a HTTP 403 error (response forbidden).
-        '''
-        # Logic check: ensure that actions that shouldn't be able to occur, don't occur.
-        # E.g. we can't stop a task that is already stopped or already completed.
+        """Business rule/sanity check on task state (disallow some state
+        changes for tasks). Ensures that actions that shouldn't be able t
+        occur, don't occur. E.g. can't stop a task that is already stopped
+        or already completed.
+        """
         action = self.kwargs['action']
         task = self.get_object()
 
@@ -890,6 +889,29 @@ class TaskAction(PrsObjectUpdate):
             return redirect(task.get_absolute_url())
         # We can't (yet) add a task to a task.
         if action == 'add':
+            return redirect(task.get_absolute_url())
+        # Business rule: adding a location is mandatory before completing some
+        # 'Assess' tasks.
+        trigger_ref_type = ReferralType.objects.filter(name__in=[
+            'Development application',
+            'Drain/pump/take water, watercourse works',
+            'Extractive industry / mining',
+            'GBRS amendment',
+            'Land tenure change',
+            'Management plan / technical report',
+            'MRS amendment',
+            'Pastoral lease permit to diversify',
+            'Planning scheme /amendment',
+            'PRS amendment',
+            'Structure plan / planning strategy',
+            'Subdivision',
+            'Utilities infrastructure & roads'])
+        if task.referral.type in trigger_ref_type and not task.referral.has_location:
+            msg = '''You are unable to complete this task without first
+                recording location(s) on the referral.
+                <a href="{}">Click here to create location(s).</a>'''.format(
+                    reverse('referral_location_create', kwargs={'pk': task.referral.pk}))
+            messages.warning(self.request, msg)
             return redirect(task.get_absolute_url())
         return super(TaskAction, self).get(request, *args, **kwargs)
 
@@ -999,29 +1021,6 @@ class TaskAction(PrsObjectUpdate):
                             reverse('referral_create_child', kwargs={'pk': obj.referral.pk, 'model': 'condition'}))
                     messages.warning(self.request, mark_safe(msg))
                     return redirect(obj.get_absolute_url())
-                # Rule: location is mandatory before completing some 'Assess' tasks
-                # Ref PPRS-170.
-                trigger_ref_type = ReferralType.objects.filter(name__in=[
-                    'Development application',
-                    'Drain/pump/take water, watercourse works',
-                    'Extractive industry / mining',
-                    'GBRS amendment',
-                    'Land tenure change',
-                    'Management plan / technical report',
-                    'MRS amendment',
-                    'Pastoral lease permit to diversify',
-                    'Planning scheme /amendment',
-                    'PRS amendment',
-                    'Structure plan / planning strategy',
-                    'Subdivision',
-                    'Utilities infrastructure & roads'])
-                if obj.referral.type in trigger_ref_type and not obj.referral.has_location:
-                    msg = '''You are unable to complete this task without first
-                        recording location(s) on the referral.
-                        <a href="{}">Click here to create location(s).</a>'''.format(
-                            reverse('referral_location_create', kwargs={'pk': obj.referral.pk}))
-                    messages.warning(self.request, msg)
-                    return redirect(obj.get_absolute_url())
                 # Rule: >0 Tags are mandatory for some 'Assess' task outcomes.
                 # Ref PPRS-103.
                 trigger_outcome = TaskState.objects.filter(name__in=[
@@ -1035,10 +1034,10 @@ class TaskAction(PrsObjectUpdate):
                         recording tags that are relevant to advice provided.'''
                     messages.warning(self.request, msg)
                     return self.form_invalid(form)
-                elif obj.state in trigger_outcome and form_data['tags']:
-                    # Save tags on the parent referral.
-                    for tag in form_data['tags']:
-                        obj.referral.tags.add(tag)
+            # Save selected tags on the task's parent referral.
+            if form_data['tags']:
+                for tag in form_data['tags']:
+                    obj.referral.tags.add(tag)
 
         obj.modifier = self.request.user
         obj.save()

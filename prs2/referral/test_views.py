@@ -84,7 +84,7 @@ class SiteHomeTest(PrsViewsTestCase):
         """Test that site homepage view contains required elements
         """
         # Ensure normaluser has a task assigned.
-        task = Task.objects.all()[0]
+        task = Task.objects.first()
         task.assigned_user = self.n_user
         task.save()
         url = reverse('site_home')
@@ -158,7 +158,7 @@ class ReferralDetailTest(PrsViewsTestCase):
 
     def setUp(self):
         super(ReferralDetailTest, self).setUp()
-        self.ref = Referral.objects.all()[0]
+        self.ref = Referral.objects.first()
 
     def test_get(self):
         """Test that the referral detail page renders
@@ -196,7 +196,7 @@ class ReferralDetailTest(PrsViewsTestCase):
     def test_referral_generate_qgis(self):
         """Test that the referral with locations can return a QGIS layer definition
         """
-        l = Location.objects.all()[0]
+        l = Location.objects.first()
         l.referral = self.ref
         l.poly = Polygon(((0.0, 0.0), (0.0, 50.0), (50.0, 50.0), (50.0, 0.0), (0.0, 0.0)))
         l.save()
@@ -237,18 +237,14 @@ class ReferralCreateTest(PrsViewsTestCase, WebTest):
             Organisation.objects.create(
                 name='Western Australian Planning Commission',
                 slug='wapc',
-                type=OrganisationType.objects.all()[0],
+                type=OrganisationType.objects.first(),
                 list_name='Western Australian Planning Commission (WAPC)')
         self.org = Organisation.objects.get(slug='wapc')
         if not TaskType.objects.filter(slug='assess-a-referral'):
             TaskType.objects.create(
                 name='Assess a referral', slug='assess-a-referral',
-                initial_state=TaskState.objects.all()[0])
+                initial_state=TaskState.objects.first())
         self.task_type = TaskType.objects.get(slug='assess-a-referral')
-        if not ReferralType.objects.filter(slug='subdivision'):
-            ReferralType.objects.create(
-                name='Subdivision', slug='subdivision',
-                initial_task=TaskType.objects.all()[0])
         self.ref_type = ReferralType.objects.get(slug='subdivision')
         self.url = reverse('referral_create')
 
@@ -278,8 +274,8 @@ class ReferralCreateTest(PrsViewsTestCase, WebTest):
         form['referral_date'] = '21/12/2015'
         form['type'] = self.ref_type.pk
         form['assigned_user'] = self.n_user.pk
-        form['region'] = [Region.objects.all()[0].pk]
-        form['dop_triggers'] = [DopTrigger.objects.all()[0].pk]
+        form['region'] = [Region.objects.first().pk]
+        form['dop_triggers'] = [DopTrigger.objects.first().pk]
         r = form.submit('save').follow()
         self.assertEqual(r.status_code, 200)
         ref = Referral.objects.get(reference='Test reference 1')
@@ -297,8 +293,8 @@ class ReferralCreateTest(PrsViewsTestCase, WebTest):
         form['assigned_user'] = self.n_user.pk
         form['email_user'] = True
         form['due_date'] = '21/1/2016'
-        form['region'] = [Region.objects.all()[0].pk]
-        form['dop_triggers'] = [DopTrigger.objects.all()[0].pk]
+        form['region'] = [Region.objects.first().pk]
+        form['dop_triggers'] = [DopTrigger.objects.first().pk]
         r = form.submit().follow()
         self.assertEqual(r.status_code, 200)
         ref = Referral.objects.get(reference='Test reference 2')
@@ -310,7 +306,7 @@ class ReferralUpdateTest(PrsViewsTestCase, WebTest):
     """
     def setUp(self):
         super(ReferralUpdateTest, self).setUp()
-        self.ref = Referral.objects.all()[0]
+        self.ref = Referral.objects.first()
         self.url = reverse('prs_object_update', kwargs={'model': 'referral', 'pk': self.ref.pk})
 
     def test_get(self):
@@ -343,7 +339,7 @@ class ReferralCreateChildTest(PrsViewsTestCase):
     """
     def setUp(self):
         super(ReferralCreateChildTest, self).setUp()
-        self.ref = Referral.objects.all()[0]
+        self.ref = Referral.objects.first()
 
     def test_create_get(self):
         """Test get view for each of: task, record, note, condition
@@ -431,7 +427,7 @@ class LocationCreateTest(PrsViewsTestCase):
     def test_get(self):
         """Test the location_create view
         """
-        ref = Referral.objects.all()[0]
+        ref = Referral.objects.first()
         url = reverse('referral_location_create', kwargs={'pk': ref.pk})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200, 'Location create view failed: {0}'.format(url))
@@ -440,7 +436,7 @@ class LocationCreateTest(PrsViewsTestCase):
     def test_cancel(self):
         """Test that cancelling the referral update view redirects correctly
         """
-        ref = Referral.objects.all()[0]
+        ref = Referral.objects.first()
         url = reverse('referral_location_create', kwargs={'pk': ref.pk})
         response = self.client.post(url, {'cancel': 'Cancel'})
         self.assertRedirects(response, ref.get_absolute_url())
@@ -636,7 +632,7 @@ class TagReplaceTest(PrsViewsTestCase, WebTest):
     def test_post(self):
         """Test that replacing a tag works correctly
         """
-        ref = Referral.objects.all()[0]
+        ref = Referral.objects.first()
         ref.tags.add(self.old_tag)
         self.assertTrue(self.old_tag in ref.tags.all())
         self.assertFalse(self.new_tag in ref.tags.all())
@@ -656,7 +652,7 @@ class ReferralTaggedTest(PrsViewsTestCase):
         super(ReferralTaggedTest, self).setUp()
         self.tag = Tag.objects.create(name='Test Tag')
         # Tag one referral only.
-        self.ref_tagged = Referral.objects.all()[0]
+        self.ref_tagged = Referral.objects.first()
         self.ref_tagged.tags.add(self.tag)
         self.ref_untagged = Referral.objects.exclude(pk=self.ref_tagged.pk)[0]
 
@@ -674,7 +670,7 @@ class TaskActionTest(PrsViewsTestCase):
 
     def setUp(self):
         super(TaskActionTest, self).setUp()
-        self.task = Task.objects.all()[0]
+        self.task = Task.objects.first()
 
     def test_get_update(self):
         """Test the Task update view responds
@@ -757,6 +753,20 @@ class TaskActionTest(PrsViewsTestCase):
         url = reverse('task_action', kwargs={'pk': self.task.pk, 'action': 'add'})
         response = self.client.get(url)
         # Response should be a redirect to the object URL.
+        self.assertRedirects(response, self.task.get_absolute_url())
+
+    def test_cant_complete_task_without_location(self):
+        """Test rule that some tasks can't be completed without a location on the referral
+        """
+        # First, ensure that the parent referral is a specific type.
+        self.task.referral.type = ReferralType.objects.get(slug='subdivision')
+        self.task.referral.save()
+        # Ensure that no locations exist on the parent referral.
+        for l in self.task.referral.location_set.all():
+            l.delete()
+        url = reverse('task_action', kwargs={'pk': self.task.pk, 'action': 'complete'})
+        response = self.client.get(url)
+        # Response should be a redirect to the task URL.
         self.assertRedirects(response, self.task.get_absolute_url())
 
 

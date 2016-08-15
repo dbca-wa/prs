@@ -59,6 +59,11 @@ class PrsTestCase(TestCase):
             mixer.cycle(2).blend(ReferralType, initial_task=mixer.SELECT)
             mixer.cycle(2).blend(NoteType)
             mixer.cycle(2).blend(Agency)
+        # Ensure that the 'Subdivision' referral type exists
+        if not ReferralType.objects.filter(slug='subdivision'):
+            ReferralType.objects.create(
+                name='Subdivision', slug='subdivision',
+                initial_task=TaskType.objects.first())
 
         if not Referral.objects.exists():
             # Create some referral data
