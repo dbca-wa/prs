@@ -559,6 +559,24 @@ class LocationCreateTest(PrsViewsTestCase):
         response = self.client.post(url, {'cancel': 'Cancel'})
         self.assertRedirects(response, ref.get_absolute_url())
 
+    def test_post(self):
+        """Test POST request for the create location view.
+        """
+        ref = Referral.objects.first()
+        url = reverse('referral_location_create', kwargs={'pk': ref.pk})
+        init_locs = ref.location_set.count()
+        resp = self.client.post(url, {
+            'form-1-address_no': '1',
+            'form-1-address_suffix': 'A',
+            'form-1-road_name': 'TEST',
+            'form-1-road_suffix': 'STREET',
+            'form-1-locality': 'SUBURB',
+            'form-1-postcode': '1111',
+            'form-1-wkt': 'POLYGON ((0 0, 0 50, 50 50, 50 0, 0 0))',
+        })
+        self.assertEqual(resp.status_code, 302)
+        self.assertTrue(ref.location_set.count() > init_locs)
+
 
 class PrsObjectDeleteTest(PrsViewsTestCase):
     """
