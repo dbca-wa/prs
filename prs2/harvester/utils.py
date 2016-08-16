@@ -378,8 +378,8 @@ def import_harvested_refs():
             new_task.state = assess_task.initial_state
             new_task.due_date = datetime.today() + timedelta(assess_task.target_days)
             new_task.save()
-            logger.info('New PRS task generated: {} assigned to {}'.format(new_task, assigned))
-            actions.append('{} New PRS task generated: {} assigned to {}'.format(datetime.now().isoformat(), new_task, assigned))
+            logger.info('New PRS task generated: {} assigned to {}'.format(new_task, assigned.get_full_name()))
+            actions.append('{} New PRS task generated: {} assigned to {}'.format(datetime.now().isoformat(), new_task, assigned.get_full_name()))
 
     logger.info('Import process completed')
     actions.append('{} Import process completed'.format(datetime.now().isoformat()))
