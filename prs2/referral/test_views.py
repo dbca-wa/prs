@@ -413,6 +413,7 @@ class ReferralCreateChildTest(PrsViewsTestCase):
             'assigned_user': self.n_user.pk,
             'start_date': date.strftime(date.today(), '%d/%m/%Y'),
             'description': 'Test clearance',
+            'email_user': True,
         })
         # Response should be a redirect.
         self.assertEqual(resp.status_code, 302)
@@ -430,11 +431,100 @@ class ReferralCreateChildTest(PrsViewsTestCase):
             'start_date': date.strftime(date.today(), '%d/%m/%Y'),
             'due_date': date.strftime(date.today() + timedelta(days=30), '%d/%m/%Y'),
             'description': 'Test clearance',
+            'email_user': True,
         })
         # Response should be a redirect.
         self.assertEqual(resp.status_code, 302)
         # Test that a new task now exists on the referral.
         self.assertTrue(self.ref.task_set.count() > init_tasks)
+
+    def test_create_record(self):
+        """Test POST request to create a new record on a referral
+        """
+        url = reverse('referral_create_child', kwargs={'pk': self.ref.pk, 'model': 'record'})
+        init_records = self.ref.record_set.count()
+        resp = self.client.post(url, {
+            'name': 'Test record',
+            'infobase_id': 'test',
+        })
+        # Response should be a redirect.
+        self.assertEqual(resp.status_code, 302)
+        # Test that a new record now exists on the referral.
+        self.assertTrue(self.ref.record_set.count() > init_records)
+
+    def test_create_note(self):
+        """Test POST request to create a new note on a referral
+        """
+        url = reverse('referral_create_child', kwargs={'pk': self.ref.pk, 'model': 'note'})
+        init_notes = self.ref.note_set.count()
+        resp = self.client.post(url, {'note_html': '<p>Test note</p>'})
+        # Response should be a redirect.
+        self.assertEqual(resp.status_code, 302)
+        # Test that a new record now exists on the referral.
+        self.assertTrue(self.ref.note_set.count() > init_notes)
+
+    def test_create_condition(self):
+        """Test POST request to create a new condition on a referral
+        """
+        url = reverse('referral_create_child', kwargs={'pk': self.ref.pk, 'model': 'condition'})
+        init_conditions = self.ref.condition_set.count()
+        resp = self.client.post(url, {'proposed_condition_html': '<p>Test condition</p>'})
+        # Response should be a redirect.
+        self.assertEqual(resp.status_code, 302)
+        # Test that a new record now exists on the referral.
+        self.assertTrue(self.ref.condition_set.count() > init_conditions)
+
+    def test_relate_existing_object_to_task(self):
+        """Test POST to relate existing note/record to a task
+        """
+        # First, ensure that a task, record and note all exist.
+        task = mixer.blend(Task, referral=self.ref)
+        note = mixer.blend(Note, referral=self.ref)
+        record = mixer.blend(Record, referral=self.ref)
+        init_records = task.records.count()
+        init_notes = task.notes.count()
+        url = reverse('referral_create_child_related', kwargs={
+            'pk': self.ref.pk,
+            'model': 'task',
+            'id': task.pk,
+            'type': 'addrecord'})
+        resp = self.client.post(url, {'records': [record.pk]})
+        self.assertEqual(resp.status_code, 302)
+        self.assertTrue(task.records.count() > init_records)
+        url = reverse('referral_create_child_related', kwargs={
+            'pk': self.ref.pk,
+            'model': 'task',
+            'id': task.pk,
+            'type': 'addnote'})
+        resp = self.client.post(url, {'notes': [note.pk]})
+        self.assertEqual(resp.status_code, 302)
+        self.assertTrue(task.notes.count() > init_notes)
+
+    def test_relate_new_object_to_task(self):
+        """Test POST to relate new note/record to a task
+        """
+        task = mixer.blend(Task, referral=self.ref)
+        init_records = task.records.count()
+        init_notes = task.notes.count()
+        url = reverse('referral_create_child_related', kwargs={
+            'pk': self.ref.pk,
+            'model': 'task',
+            'id': task.pk,
+            'type': 'addnewrecord'})
+        resp = self.client.post(url, {
+            'name': 'Test record',
+            'infobase_id': 'test',
+        })
+        self.assertEqual(resp.status_code, 302)
+        self.assertTrue(task.records.count() > init_records)
+        url = reverse('referral_create_child_related', kwargs={
+            'pk': self.ref.pk,
+            'model': 'task',
+            'id': task.pk,
+            'type': 'addnewnote'})
+        resp = self.client.post(url, {'note_html': '<p>Test note</p>'})
+        self.assertEqual(resp.status_code, 302)
+        self.assertTrue(task.notes.count() > init_notes)
 
 
 class ReferralRecentTest(PrsViewsTestCase):

@@ -398,23 +398,30 @@ class ReferralCreateChild(PrsObjectCreate):
         redirect_url = None
 
         if form.Meta.model._meta.model_name == 'task':
-            # create sub-task within a task
+            # Create a clearance request task:
             if 'type' in self.kwargs and self.kwargs['type'] == 'clearance':
                 self.create_clearance(form)
+            # Create a task, type unspecified:
             elif 'type' not in self.kwargs:
                 self.create_task(self.object)
         elif form.Meta.model._meta.model_name == 'record':
+            # Creating a new record and relating it to another object:
             if 'type' in self.kwargs and self.kwargs['type'] == 'addnewrecord':
                 redirect_url = self.create_new_record(form)
+            # Using an existing record and relating it to another object:
             elif 'type' in self.kwargs and self.kwargs['type'] == 'addrecord':
                 self.create_existing_record(form)
+            # Creating a new record:
             elif 'type' not in self.kwargs:
                 self.object.save()
         elif form.Meta.model._meta.model_name == 'note':
+            # Creating a new note and relating it to another object:
             if 'type' in self.kwargs and self.kwargs['type'] == 'addnewnote':
                 redirect_url = self.create_new_note(form)
+            # Using an existing note and relating it to another object:
             elif 'type' in self.kwargs and self.kwargs['type'] == 'addnote':
                 self.create_existing_note(form)
+            # Creating a new note:
             elif 'type' not in self.kwargs:
                 self.object.save()
         elif form.Meta.model._meta.model_name == 'condition':
@@ -484,7 +491,7 @@ class ReferralCreateChild(PrsObjectCreate):
         model_name = self.model._meta.model_name  # same as self.kwargs['model']
         obj = get_object_or_404(self.model, pk=pk)  # task, note, record obj etc
 
-        # Relate existing record(s) to the task.
+        # Relate existing record(s) to the obj.
         d = form.cleaned_data
         for record in d['records']:
             obj.records.add(record)
@@ -503,7 +510,7 @@ class ReferralCreateChild(PrsObjectCreate):
         obj = get_object_or_404(self.model, pk=pk)  # task, note, record obj etc
         referral = obj.referral
         new_record = form.save(commit=False)
-        # Create a new record and relate it to the task.
+        # Create a new record and relate it to the obj.
         new_record.referral = referral  # Use the parent referral for the record.
         new_record.creator, new_record.modifier = request.user, request.user
         new_record.save()
