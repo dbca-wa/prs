@@ -98,6 +98,8 @@ ENV/
 *.dump
 *.db
 *.sqlite3
+*.json
+*.csv
 
 # Vim swap files
 [._]*.s[a-w][a-z]

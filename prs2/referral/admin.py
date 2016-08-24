@@ -8,7 +8,7 @@ from referral.models import (
     DopTrigger, Region, OrganisationType, Organisation, TaskType,
     TaskState, NoteType, ReferralType, Referral, Task, Record,
     Note, Condition, Location, Bookmark, Clearance, Agency,
-    ConditionCategory, ModelCondition, UserProfile)
+    ConditionCategory, ModelCondition, UserProfile, LocalGovernment)
 
 
 class AuditAdmin(VersionAdmin, ModelAdmin):
@@ -31,6 +31,7 @@ admin.site.register(DopTrigger, LookupAdmin)
 admin.site.register(TaskType, LookupAdmin)
 admin.site.register(NoteType, LookupAdmin)
 admin.site.register(ConditionCategory, LookupAdmin)
+admin.site.register(LocalGovernment, LookupAdmin)
 
 
 class OrganisationAdmin(LookupAdmin):
@@ -62,13 +63,13 @@ class ReferralAdmin(ReferralBaseModelAdmin):
     list_display = (
         'id', 'regions_display', 'type', 'reference', 'referring_org', 'creator',
         'created', 'modified', 'effective_to')
-    list_filter = ('type', 'referring_org', 'region')
+    list_filter = ('region',)
     date_hierarchy = 'referral_date'
     raw_id_fields = ReferralBaseModelAdmin.raw_id_fields + ['referring_org']
     search_fields = (
         'id', 'region__name', 'type__name', 'reference', 'file_no',
         'referring_org__name', 'creator__username', 'description', 'tags__name',
-        'address', 'dop_triggers__name')
+        'address', 'dop_triggers__name', 'lga__name')
 
     def regions_display(self, obj):
         return obj.regions_str
@@ -167,3 +168,5 @@ class UserProfileAdmin(admin.ModelAdmin):
     list_display = ('id', 'user')
     search_fields = ('user__username', 'user__first_name', 'user__last_name')
 admin.site.register(UserProfile, UserProfileAdmin)
+
+
