@@ -243,14 +243,16 @@ def import_harvested_refs():
         app = d['APPLICATION']
         ref = app['WAPC_APPLICATION_NO']
         if Referral.objects.current().filter(reference__icontains=ref):
-            # Skip harvested referrals if the the reference no. exists.
-            logger.info('Referral ref {} is already in database, skipping'.format(ref))
-            actions.append('{} Referral ref {} is already in database, skipping'.format(datetime.now().isoformat(), ref))
-            er.processed = True
-            er.save()
-            continue
+            # Note if the the reference no. exists in PRS already.
+            logger.info('Referral ref {} is already in database'.format(ref))
+            actions.append('{} Referral ref {} is already in database'.format(datetime.now().isoformat(), ref))
+            referral_preexists = True
+            new_ref = Referral.objects.current().filter(reference__icontains=ref).order_by('-pk').first()
         else:
-            # Import the harvested referral.
+            referral_preexists = False
+
+        if not referral_preexists:
+            # No match with existing references; import the harvested referral.
             logger.info('Importing harvested referral ref {}'.format(ref))
             actions.append('{} Importing harvested referral ref {}'.format(datetime.now().isoformat(), ref))
             try:
@@ -328,28 +330,11 @@ def import_harvested_refs():
             new_ref.region.add(region)
             logger.info('New PRS referral generated: {}'.format(new_ref))
             actions.append('{} New PRS referral generated: {}'.format(datetime.now().isoformat(), new_ref))
-            # Link the harvested referral to the new, generated referral.
-            er.referral = new_ref
-            er.processed = True
-            er.save()
             # Add triggers to the new referral.
             triggers = [i.strip() for i in app['MRSZONE_TEXT'].split(',')]
             for i in triggers:
                 if DopTrigger.objects.current().filter(name__istartswith=i).exists():
                     new_ref.dop_triggers.add(DopTrigger.objects.current().get(name__istartswith=i))
-            # Add records to the new referral (one per attachment).
-            for i in attachments:
-                new_record = Record.objects.create(name=i.name, referral=new_ref)
-                # Duplicate the uploaded file.
-                data = StringIO(i.attachment.read())
-                new_file = File(data)
-                new_record.uploaded_file.save(i.name, new_file)
-                new_record.save()
-                logger.info('New PRS record generated: {}'.format(new_record))
-                actions.append('{} New PRS record generated: {}'.format(datetime.now().isoformat(), new_record))
-                # Link the attachment to the new, generated record.
-                i.record = new_record
-                i.save()
             # Add locations to the new referral (one per polygon in each MP geometry).
             for l in locations:
                 for f in l['FEATURES']:
@@ -384,6 +369,34 @@ def import_harvested_refs():
             new_task.email_user()
             logger.info('Task assignment email sent to {}'.format(new_task, assigned.email))
             actions.append('Task assignment email sent to {}'.format(datetime.now().isoformat(), new_task, assigned.email))
+
+        # Save the EmailedReferral as a record on the referral.
+        new_record = Record.objects.create(name=er.subject, referral=new_ref)
+        file_name = 'emailed_referral_{}.html'.format(ref)
+        new_file = File(StringIO(er.body))
+        new_record.uploaded_file.save(file_name, new_file)
+        new_record.save()
+        logger.info('New PRS record generated: {}'.format(new_record))
+        actions.append('{} New PRS record generated: {}'.format(datetime.now().isoformat(), new_record))
+
+        # Add records to the referral (one per attachment).
+        for i in attachments:
+            new_record = Record.objects.create(name=i.name, referral=new_ref)
+            # Duplicate the uploaded file.
+            data = StringIO(i.attachment.read())
+            new_file = File(data)
+            new_record.uploaded_file.save(i.name, new_file)
+            new_record.save()
+            logger.info('New PRS record generated: {}'.format(new_record))
+            actions.append('{} New PRS record generated: {}'.format(datetime.now().isoformat(), new_record))
+            # Link the attachment to the new, generated record.
+            i.record = new_record
+            i.save()
+
+        # Link the emailed referral to the new or existing referral.
+        er.referral = new_ref
+        er.processed = True
+        er.save()
 
     logger.info('Import process completed')
     actions.append('{} Import process completed'.format(datetime.now().isoformat()))
