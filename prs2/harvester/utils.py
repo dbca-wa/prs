@@ -380,6 +380,10 @@ def import_harvested_refs():
             new_task.save()
             logger.info('New PRS task generated: {} assigned to {}'.format(new_task, assigned.get_full_name()))
             actions.append('{} New PRS task generated: {} assigned to {}'.format(datetime.now().isoformat(), new_task, assigned.get_full_name()))
+            # Email the assigned user about the new task.
+            new_task.email_user()
+            logger.info('Task assignment email sent to {}'.format(new_task, assigned.email))
+            actions.append('Task assignment email sent to {}'.format(datetime.now().isoformat(), new_task, assigned.email))
 
     logger.info('Import process completed')
     actions.append('{} Import process completed'.format(datetime.now().isoformat()))
