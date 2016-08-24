@@ -332,9 +332,17 @@ def import_harvested_refs():
             actions.append('{} New PRS referral generated: {}'.format(datetime.now().isoformat(), new_ref))
             # Add triggers to the new referral.
             triggers = [i.strip() for i in app['MRSZONE_TEXT'].split(',')]
+            added_trigger = False
             for i in triggers:
                 if DopTrigger.objects.current().filter(name__istartswith=i).exists():
+                    added_trigger = True
                     new_ref.dop_triggers.add(DopTrigger.objects.current().get(name__istartswith=i))
+                elif i.startswith('BUSH FOREVER SITE'):
+                    added_trigger = True
+                    new_ref.dop_triggers.add(DopTrigger.objects.get(name='Bush Forever site'))
+            # If we didn't link any DoP triggers, link the "No Parks and Wildlife trigger" tag.
+            if not added_trigger:
+                new_ref.dop_triggers.add(DopTrigger.objects.get(name='No Parks and Wildlife trigger'))
             # Add locations to the new referral (one per polygon in each MP geometry).
             for l in locations:
                 for f in l['FEATURES']:
