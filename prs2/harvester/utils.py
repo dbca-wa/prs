@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-import arrow
 import base64
 from confy import env
 from datetime import date, datetime, timedelta
@@ -12,8 +11,10 @@ import email
 from imaplib import IMAP4_SSL
 import json
 import logging
+from pytz import timezone
 import requests
 from StringIO import StringIO
+import time
 import xmltodict
 
 from referral.models import (
@@ -105,6 +106,14 @@ def harvest_email(uid, message):
 
     message_body = None
     attachments = []
+    # Build the whitelist of receiving mailboxes (we only harvest messages
+    # sent to these addresses).
+    # Whitelist should consist of a .txt file, one email per line.
+    try:
+        f = open('mailbox_whitelist.txt', 'r')
+        whitelist = [i.strip() for i in f.readlines()]
+    except:
+        whitelist = False
 
     for p in parts:
         # 'text/html' content is the email body.
@@ -117,19 +126,26 @@ def harvest_email(uid, message):
     # Create & return EmailedReferral from the email body (if found).
     if message_body:
         try:
-            received = arrow.get(message.get('Received').split(';')[1].strip(), 'ddd, D MMM YYYY hh:mm:ss')
+            # Check the 'To' address against the whitelist of mailboxes.
             to_e = email.utils.parseaddr(message.get('To'))[1]
+            if whitelist and not to_e.lower() in whitelist:
+                logger.info('Email UID {} to {} harvest was skipped'.format(uid, to_e))
+                return None  # Not in the whitelist; skip.
             from_e = email.utils.parseaddr(message.get('From'))[1]
+            # Parse the 'sent' date & time (assume WST).
+            wa_tz = timezone('Australia/Perth')
+            ts = time.mktime(email.utils.parsedate(message.get('Date')))
+            received = wa_tz.localize(datetime.fromtimestamp(ts))
+            # Generate an EmailedReferral object.
             em_new = EmailedReferral(
-                received=received.datetime, email_uid=str(uid), to_email=to_e,
+                received=received, email_uid=str(uid), to_email=to_e,
                 from_email=from_e, subject=message.get('Subject'),
                 body=message_body.get_payload())
             em_new.save()
             logger.info('Email UID {} harvested: {}'.format(uid, em_new.subject))
             for a in attachments:
                 att_new = EmailAttachment(
-                    emailed_referral=em_new, name=a.get_filename(),
-                )
+                    emailed_referral=em_new, name=a.get_filename())
                 data = StringIO(base64.decodestring(a.get_payload()))
                 new_file = File(data)
                 att_new.attachment.save(a.get_filename(), new_file)

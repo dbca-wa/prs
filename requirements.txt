@@ -28,5 +28,5 @@ django-downloadview==1.8
 webtemplate-dpaw==0.4.2
 selenium==2.46.1
 openpyxl==2.2.6
-arrow==0.8.0
+pytz==2016.6.1
 xmltodict==0.10.2
