@@ -55,6 +55,25 @@ class BaseViewTest(PrsViewsTestCase):
     """Test the generic object list view.
     """
 
+    def setUp(self):
+        super(BaseViewTest, self).setUp()
+        # Generate enough objects to paginate list views.
+        mixer.cycle(25).blend(
+            Referral, type=mixer.SELECT, agency=mixer.SELECT,
+            referring_org=mixer.SELECT, referral_date=date.today())
+        mixer.cycle(25).blend(
+            Task, type=mixer.SELECT, referral=mixer.SELECT, state=mixer.SELECT)
+        mixer.cycle(25).blend(
+            Note, referral=mixer.SELECT, type=mixer.SELECT, note=mixer.RANDOM)
+        mixer.cycle(25).blend(Record, referral=mixer.SELECT)
+        mixer.cycle(25).blend(
+            Condition, referral=mixer.SELECT, category=mixer.SELECT,
+            condition=mixer.RANDOM, model_condition=mixer.SELECT,
+            proposed_condition=mixer.RANDOM)
+        mixer.cycle(25).blend(
+            Clearance, condition=mixer.SELECT, task=mixer.SELECT)
+        mixer.cycle(25).blend(Location, referral=mixer.SELECT)
+
     def test_get(self):
         """Test prs_object_list view for each model type
         """
