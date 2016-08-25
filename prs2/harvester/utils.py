@@ -160,7 +160,7 @@ def harvest_email(uid, message):
         logger.error('Email UID {} had no message body'.format(uid))
         return None
 
-    return em_new
+    return True
 
 
 def email_mark_read(uid):
@@ -207,11 +207,11 @@ def harvest_unread_emails(from_email=settings.DOP_EMAIL):
             continue
         logger.info('Harvesting email UID {}'.format(uid))
         actions.append('{} Harvesting email UID {}'.format(datetime.now().isoformat(), uid))
-        em = harvest_email(uid, message)
-        if em:  # Mark email as read.
-            status, response = email_mark_read(uid)
-            if status == 'OK':
-                logger.info('Email UID {} was marked as "Read"'.format(uid))
+        harvest_email(uid, message)
+        # Mark email as read.
+        status, response = email_mark_read(uid)
+        if status == 'OK':
+            logger.info('Email UID {} was marked as "Read"'.format(uid))
 
     logger.info('Harvest process completed')
     actions.append('{} Harvest process completed'.format(datetime.now().isoformat()))

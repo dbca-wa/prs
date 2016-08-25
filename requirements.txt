@@ -12,7 +12,7 @@ django-crispy-forms==1.6.0
 django-sql-explorer==1.0
 django-model-utils==2.5
 django-storages==1.4
-django-bootstrap-pagination==1.6.1
+django-bootstrap-pagination==1.6.2
 dj-static==0.0.6
 Unipath==1.1
 Unidecode==0.04.18
