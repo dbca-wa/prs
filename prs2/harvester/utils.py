@@ -18,7 +18,7 @@ import xmltodict
 
 from referral.models import (
     Region, Referral, ReferralType, Agency, Organisation, DopTrigger, Record,
-    TaskType, Task, Location)
+    TaskType, Task, Location, LocalGovernment)
 from .models import EmailedReferral, EmailAttachment, RegionAssignee
 
 
@@ -243,14 +243,16 @@ def import_harvested_refs():
         app = d['APPLICATION']
         ref = app['WAPC_APPLICATION_NO']
         if Referral.objects.current().filter(reference__icontains=ref):
-            # Skip harvested referrals if the the reference no. exists.
-            logger.info('Referral ref {} is already in database, skipping'.format(ref))
-            actions.append('{} Referral ref {} is already in database, skipping'.format(datetime.now().isoformat(), ref))
-            er.processed = True
-            er.save()
-            continue
+            # Note if the the reference no. exists in PRS already.
+            logger.info('Referral ref {} is already in database'.format(ref))
+            actions.append('{} Referral ref {} is already in database'.format(datetime.now().isoformat(), ref))
+            referral_preexists = True
+            new_ref = Referral.objects.current().filter(reference__icontains=ref).order_by('-pk').first()
         else:
-            # Import the harvested referral.
+            referral_preexists = False
+
+        if not referral_preexists:
+            # No match with existing references; import the harvested referral.
             logger.info('Importing harvested referral ref {}'.format(ref))
             actions.append('{} Importing harvested referral ref {}'.format(datetime.now().isoformat(), ref))
             try:
@@ -303,7 +305,6 @@ def import_harvested_refs():
                         logger.info('Address PIN {} returned geometry from SLIP'.format(pin))
                     else:
                         logger.warning('Address PIN could not be parsed ({})'.format(a['PIN']))
-
             # Business rules:
             # Didn't intersect a region? Might be bad geometry in the XML.
             # Likewise if >1 region was intersected, default to Swan Region
@@ -324,33 +325,32 @@ def import_harvested_refs():
                 type=ref_type, agency=dpaw, referring_org=wapc,
                 reference=ref, description=app['DEVELOPMENT_DESCRIPTION'],
                 referral_date=er.received, address=app['LOCATION'])
-            # Assign to a region.
-            new_ref.region.add(region)
             logger.info('New PRS referral generated: {}'.format(new_ref))
             actions.append('{} New PRS referral generated: {}'.format(datetime.now().isoformat(), new_ref))
-            # Link the harvested referral to the new, generated referral.
-            er.referral = new_ref
-            er.processed = True
-            er.save()
+            # Assign to a region.
+            new_ref.region.add(region)
+            # Assign an LGA.
+            try:
+                new_ref.lga = LocalGovernment.objects.get(name=app['LOCAL_GOVERNMENT'])
+                new_ref.save()
+            except:
+                logger.warning('LGA {} was not recognised'.format(app['LOCAL_GOVERNMENT']))
+                actions.append('{} LGA {} was not recognised'.format(datetime.now().isoformat(), app['LOCAL_GOVERNMENT']))
             # Add triggers to the new referral.
             triggers = [i.strip() for i in app['MRSZONE_TEXT'].split(',')]
+            added_trigger = False
             for i in triggers:
                 if DopTrigger.objects.current().filter(name__istartswith=i).exists():
+                    added_trigger = True
                     new_ref.dop_triggers.add(DopTrigger.objects.current().get(name__istartswith=i))
-            # Add records to the new referral (one per attachment).
-            for i in attachments:
-                new_record = Record.objects.create(name=i.name, referral=new_ref)
-                # Duplicate the uploaded file.
-                data = StringIO(i.attachment.read())
-                new_file = File(data)
-                new_record.uploaded_file.save(i.name, new_file)
-                new_record.save()
-                logger.info('New PRS record generated: {}'.format(new_record))
-                actions.append('{} New PRS record generated: {}'.format(datetime.now().isoformat(), new_record))
-                # Link the attachment to the new, generated record.
-                i.record = new_record
-                i.save()
+                elif i.startswith('BUSH FOREVER SITE'):
+                    added_trigger = True
+                    new_ref.dop_triggers.add(DopTrigger.objects.get(name='Bush Forever site'))
+            # If we didn't link any DoP triggers, link the "No Parks and Wildlife trigger" tag.
+            if not added_trigger:
+                new_ref.dop_triggers.add(DopTrigger.objects.get(name='No Parks and Wildlife trigger'))
             # Add locations to the new referral (one per polygon in each MP geometry).
+            new_locations = []
             for l in locations:
                 for f in l['FEATURES']:
                     geom = GEOSGeometry(json.dumps(f['geometry']))
@@ -365,8 +365,20 @@ def import_harvested_refs():
                             referral=new_ref,
                             poly=p
                         )
+                        new_locations.append(new_loc)
                         logger.info('New PRS location generated: {}'.format(new_loc))
                         actions.append('{} New PRS location generated: {}'.format(datetime.now().isoformat(), new_loc))
+            # Check to see if new locations intersect with any existing locations.
+            intersecting = []
+            for l in new_locations:
+                other_l = Location.objects.current().exclude(pk=l.pk).filter(poly__isnull=False, poly__intersects=l.poly)
+                if other_l.exists():
+                    intersecting += list(other_l)
+            # For any intersecting locations, relate the new and existing referrals.
+            for l in intersecting:
+                new_ref.add_relationship(l.referral)
+                logger.info('New referral {} related to existing referral {}'.format(new_ref.pk, l.referral.pk))
+                actions.append('{} New referral {} related to existing referral {}'.format(datetime.now().isoformat(), new_ref.pk, l.referral.pk))
             # Create an "Assess a referral" task and assign it to a user.
             new_task = Task(
                 type=assess_task,
@@ -380,6 +392,38 @@ def import_harvested_refs():
             new_task.save()
             logger.info('New PRS task generated: {} assigned to {}'.format(new_task, assigned.get_full_name()))
             actions.append('{} New PRS task generated: {} assigned to {}'.format(datetime.now().isoformat(), new_task, assigned.get_full_name()))
+            # Email the assigned user about the new task.
+            new_task.email_user()
+            logger.info('Task assignment email sent to {}'.format(assigned.email))
+            actions.append('{} Task assignment email sent to {}'.format(datetime.now().isoformat(), assigned.email))
+
+        # Save the EmailedReferral as a record on the referral.
+        new_record = Record.objects.create(name=er.subject, referral=new_ref)
+        file_name = 'emailed_referral_{}.html'.format(ref)
+        new_file = File(StringIO(er.body))
+        new_record.uploaded_file.save(file_name, new_file)
+        new_record.save()
+        logger.info('New PRS record generated: {}'.format(new_record))
+        actions.append('{} New PRS record generated: {}'.format(datetime.now().isoformat(), new_record))
+
+        # Add records to the referral (one per attachment).
+        for i in attachments:
+            new_record = Record.objects.create(name=i.name, referral=new_ref)
+            # Duplicate the uploaded file.
+            data = StringIO(i.attachment.read())
+            new_file = File(data)
+            new_record.uploaded_file.save(i.name, new_file)
+            new_record.save()
+            logger.info('New PRS record generated: {}'.format(new_record))
+            actions.append('{} New PRS record generated: {}'.format(datetime.now().isoformat(), new_record))
+            # Link the attachment to the new, generated record.
+            i.record = new_record
+            i.save()
+
+        # Link the emailed referral to the new or existing referral.
+        er.referral = new_ref
+        er.processed = True
+        er.save()
 
     logger.info('Import process completed')
     actions.append('{} Import process completed'.format(datetime.now().isoformat()))

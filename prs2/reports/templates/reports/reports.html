@@ -19,7 +19,6 @@
 <div class="row">
     <div class="col-xs-12">
         <!-- Navigation tabs -->
-
         <ul class="nav nav-tabs" role="tablist">
             <li role="presentation" class="active">
                 <a id="id_referrals_tab" href="#tab_referrals" aria-controls="tab_referrals" role="tab" data-toggle="tab">Referrals</a>
@@ -32,6 +31,7 @@
             </li>
         </ul>
         <div class="tab-content">
+            <div id="modal-spinner"></div>
             <div role="tabpanel" class="tab-pane fade in active" id="tab_referrals">
             <!-- Referrals result panel -->
                 <!-- Filters row -->
@@ -320,6 +320,7 @@
 <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/moment.js/2.10.6/moment.min.js"></script>
 <script type="text/javascript">
     const refListUrl = '{% url 'prs_object_list' model='referrals' %}';
+    var spinner = new Spinner({scale: 3}).spin();
 
     function _updateSelectOptions(el, url, filters) {
         // Utility function to replace options in a DOM select element
@@ -501,6 +502,11 @@
         window.open("{% url 'reports_download' %}" + '?' + $.param(params), "_blank");
     }
 
+    function startSpinner() {
+        spinner.spin();
+        $("#modal-spinner").append(spinner.el);
+    }
+
     // DataTables configuration.
     const configRefTable = {
         autoWidth: false,
@@ -521,6 +527,7 @@
                 "{% url 'api_dispatch_list' api_name='v1' resource_name='referral' %}",
                 params,  // Query parameters for the API call.
                 function(resp) {
+                    spinner.stop();
                     // Map the API response to the DataTables format and pass it to DataTables callback.
                     callback({
                         recordsTotal: resp.meta.total_count,
@@ -583,6 +590,7 @@
                 "{% url 'api_dispatch_list' api_name='v1' resource_name='clearance' %}",
                 params,  // Query parameters for the API call.
                 function(resp) {
+                    spinner.stop();
                     // Map the API response to the DataTables format and pass it to DataTables callback.
                     callback({
                         recordsTotal: resp.meta.total_count,
@@ -654,6 +662,7 @@
                 "{% url 'api_dispatch_list' api_name='v1' resource_name='task' %}",
                 params,  // Query parameters for the API call.
                 function(resp) {
+                    spinner.stop();
                     // Map the API response to the DataTables format and pass it to DataTables callback.
                     callback({
                         recordsTotal: resp.meta.total_count,
@@ -714,8 +723,11 @@
         ],
     }
 
+
     // Document ready
     $(function () {
+        $("#modal-spinner").append(spinner.el);
+
         // Initialise the DataTables.
         var refDataTable = $("table#referralsTable").DataTable(configRefTable);
         var clearDataTable = $("table#clearancesTable").DataTable(configClearTable);
@@ -730,10 +742,13 @@
             // Onchange event for all datepickers (separate to below, because
             // the widget triggers multiple change events.
             if (e.target.id.indexOf("referral") > -1) {
+                startSpinner();
                 refDataTable.ajax.reload();
             } else if (e.target.id.indexOf("clearance") > -1) {
+                startSpinner();
                 clearDataTable.ajax.reload();
             } else if (e.target.id.indexOf("task") > -1) {
+                startSpinner();
                 taskDataTable.ajax.reload();
             }
         });
@@ -752,26 +767,32 @@
 
         // Onchange events for Referral filters.
         $("#filter-region-referral, #filter-organisation-referral, #filter-referralType, #filter-referralTags").change(function () {
+            startSpinner();
             refDataTable.ajax.reload();
         });
 
         // Onchange events for Clearance filters.
         $("#filter-region-clearance, #filter-organisation-clearance, #filter-taskState-clearance").change(function () {
+            startSpinner();
             clearDataTable.ajax.reload();
         });
         // Onchange events for Task filters.
         $("#filter-taskType, #filter-region-task, #filter-taskState-task, #filter-assigned").change(function () {
+            startSpinner();
             taskDataTable.ajax.reload();
         });
 
         // Click events for the 'Download' buttons.
         $("a#id_download_referrals").click(function () {
+            startSpinner();
             downloadData("referral");
         });
         $("a#id_download_clearances").click(function () {
+            startSpinner();
             downloadData("clearance");
         });
         $("a#id_download_tasks").click(function () {
+            startSpinner();
             downloadData("task");
         });
     });

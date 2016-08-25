@@ -246,7 +246,7 @@ class ReferralCreateForm(ReferralForm):
             on the referral detail page.'''
         # Define the form layout.
         self.helper.layout = Layout(
-            'referring_org', 'reference', 'description', 'address',
+            'referring_org', 'reference', 'description', 'address', 'lga',
             'referral_date', 'due_date', 'type', 'task_type', 'assigned_user',
             # Hack to make crispy_forms output proper HTML for Bootstrap 3:
             PrependedText('email_user', ''),
@@ -265,7 +265,7 @@ class ReferralUpdateForm(ReferralForm):
         super(ReferralUpdateForm, self).__init__(*args, **kwargs)
         # Define the form layout.
         self.helper.layout = Layout(
-            'referring_org', 'reference', 'description', 'address',
+            'referring_org', 'reference', 'description', 'address', 'lga',
             'referral_date', 'type', 'region', 'dop_triggers',
             'file_no',
             Div(

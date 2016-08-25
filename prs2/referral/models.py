@@ -121,6 +121,12 @@ class Region(ReferralLookup):
         srid=4283, null=True, blank=True, help_text='Optional.')
 
 
+class LocalGovernment(ReferralLookup):
+    """Lookup table of Local Government Authority name.
+    """
+    pass
+
+
 class OrganisationType(ReferralLookup):
     '''
     Lookup table for Organistion types.
@@ -332,6 +338,10 @@ class Referral(ReferralBaseModel):
     related_refs = models.ManyToManyField(
         'self', through='RelatedReferral', editable=False, symmetrical=False,
         related_name='related_referrals')
+    lga = models.ForeignKey(
+        LocalGovernment, on_delete=models.PROTECT, blank=True, null=True,
+        verbose_name='local government',
+        help_text='[Searchable] The LGA in which this referral resides.')
     headers = [
         'Referral ID', 'Received date', 'Description', 'Address',
         "Referrer's reference", 'Referred by', 'Region(s)', 'Type']

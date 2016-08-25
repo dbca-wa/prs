@@ -13,7 +13,7 @@ from referral.models import (
     DopTrigger, Region, OrganisationType, Organisation, TaskType, TaskState,
     NoteType, ReferralType, Referral, Task, Record, Note, Condition, Location,
     Bookmark, Clearance, Agency, ConditionCategory, UserProfile, ModelCondition,
-    RelatedReferral)
+    RelatedReferral, LocalGovernment)
 User = get_user_model()
 
 
@@ -47,6 +47,7 @@ class PrsTestCase(TestCase):
         mixer.cycle(2).blend(Region)
         mixer.cycle(2).blend(OrganisationType)
         mixer.cycle(2).blend(ConditionCategory)
+        mixer.cycle(2).blend(LocalGovernment)
         mixer.blend(
             Organisation, name='Western Australian Planning Commission',
             slug='wapc')

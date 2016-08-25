@@ -636,30 +636,9 @@ class ReferralCreateChild(PrsObjectCreate):
 
         obj.save()
 
-        # If we ticked email user, do so now.
+        # If "email user" was checked, do so now.
         if self.request.POST.get('email_user'):
-            subject = 'PRS task assignment notification (referral ID {})'.format(obj.referral.pk)
-            from_email = self.request.user.email
-            to_email = obj.assigned_user.email
-            referral_url = settings.SITE_URL + obj.referral.get_absolute_url()
-            address = obj.referral.address or '(not recorded)'
-            text_content = '''This is an automated message to let you know that you have been
-                assigned a PRS task ({}) by the sending user.\n
-                This task is attached to referral ID {}.\n
-                The referral reference is: {}\n
-                The referral address is: {}\n
-                '''.format(obj.type.name, obj.referral.pk, obj.referral.reference, address)
-            html_content = '''<p>This is an automated message to let you know that you have been
-                assigned a PRS task ({}) by the sending user.</p>
-                <p>This task is attached to referral ID {}, at this URL:</p>
-                <p>{}</p>
-                <p>The referral reference is: {}</p>
-                <p>The referral address is: {}</p>
-                '''.format(obj.type.name, obj.referral.pk, referral_url, obj.referral.reference, address)
-            msg = EmailMultiAlternatives(subject, text_content, from_email, [to_email])
-            msg.attach_alternative(html_content, 'text/html')
-            # Email should fail gracefully - ie no Exception raised on failure.
-            msg.send(fail_silently=True)
+            obj.email_user(from_email=self.request.user.email)
 
 
 class LocationCreate(ReferralCreateChild):
@@ -758,14 +737,11 @@ class LocationCreate(ReferralCreateChild):
         """ Check to see if the location polygon intersects with any other locations.
         """
         intersecting_locations = []
-        if locations:
-            for location in locations:
-                if location.poly:
-                    geom = location.poly.wkt
-                    locs = Location.objects.current().exclude(id=location.id).filter(poly__isnull=False)
-                    locs = locs.filter(poly__intersects=geom)
-                    if locs.exists():
-                        intersecting_locations.append(location.id)
+        for location in locations:
+            if location.poly:
+                other_locs = Location.objects.current().exclude(pk=location.pk).filter(poly__isnull=False, poly__intersects=location.poly)
+                if other_locs.exists():
+                    intersecting_locations.append(location.pk)
         return intersecting_locations
 
 
