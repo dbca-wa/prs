@@ -18,7 +18,7 @@ import xmltodict
 
 from referral.models import (
     Region, Referral, ReferralType, Agency, Organisation, DopTrigger, Record,
-    TaskType, Task, Location)
+    TaskType, Task, Location, LocalGovernment)
 from .models import EmailedReferral, EmailAttachment, RegionAssignee
 
 
@@ -305,7 +305,6 @@ def import_harvested_refs():
                         logger.info('Address PIN {} returned geometry from SLIP'.format(pin))
                     else:
                         logger.warning('Address PIN could not be parsed ({})'.format(a['PIN']))
-
             # Business rules:
             # Didn't intersect a region? Might be bad geometry in the XML.
             # Likewise if >1 region was intersected, default to Swan Region
@@ -326,10 +325,17 @@ def import_harvested_refs():
                 type=ref_type, agency=dpaw, referring_org=wapc,
                 reference=ref, description=app['DEVELOPMENT_DESCRIPTION'],
                 referral_date=er.received, address=app['LOCATION'])
-            # Assign to a region.
-            new_ref.region.add(region)
             logger.info('New PRS referral generated: {}'.format(new_ref))
             actions.append('{} New PRS referral generated: {}'.format(datetime.now().isoformat(), new_ref))
+            # Assign to a region.
+            new_ref.region.add(region)
+            # Assign an LGA.
+            try:
+                new_ref.lga = LocalGovernment.objects.get(name=app['LOCAL_GOVERNMENT'])
+                new_ref.save()
+            except:
+                logger.warning('LGA {} was not recognised'.format(app['LOCAL_GOVERNMENT']))
+                actions.append('{} LGA {} was not recognised'.format(datetime.now().isoformat(), app['LOCAL_GOVERNMENT']))
             # Add triggers to the new referral.
             triggers = [i.strip() for i in app['MRSZONE_TEXT'].split(',')]
             added_trigger = False
@@ -344,6 +350,7 @@ def import_harvested_refs():
             if not added_trigger:
                 new_ref.dop_triggers.add(DopTrigger.objects.get(name='No Parks and Wildlife trigger'))
             # Add locations to the new referral (one per polygon in each MP geometry).
+            new_locations = []
             for l in locations:
                 for f in l['FEATURES']:
                     geom = GEOSGeometry(json.dumps(f['geometry']))
@@ -358,8 +365,20 @@ def import_harvested_refs():
                             referral=new_ref,
                             poly=p
                         )
+                        new_locations.append(new_loc)
                         logger.info('New PRS location generated: {}'.format(new_loc))
                         actions.append('{} New PRS location generated: {}'.format(datetime.now().isoformat(), new_loc))
+            # Check to see if new locations intersect with any existing locations.
+            intersecting = []
+            for l in new_locations:
+                other_l = Location.objects.current().exclude(pk=l.pk).filter(poly__isnull=False, poly__intersects=l.poly)
+                if other_l.exists():
+                    intersecting += list(other_l)
+            # For any intersecting locations, relate the new and existing referrals.
+            for l in intersecting:
+                new_ref.add_relationship(l.referral)
+                logger.info('New referral {} related to existing referral {}'.format(new_ref.pk, l.referral.pk))
+                actions.append('{} New referral {} related to existing referral {}'.format(datetime.now().isoformat(), new_ref.pk, l.referral.pk))
             # Create an "Assess a referral" task and assign it to a user.
             new_task = Task(
                 type=assess_task,
@@ -375,8 +394,8 @@ def import_harvested_refs():
             actions.append('{} New PRS task generated: {} assigned to {}'.format(datetime.now().isoformat(), new_task, assigned.get_full_name()))
             # Email the assigned user about the new task.
             new_task.email_user()
-            logger.info('Task assignment email sent to {}'.format(new_task, assigned.email))
-            actions.append('Task assignment email sent to {}'.format(datetime.now().isoformat(), new_task, assigned.email))
+            logger.info('Task assignment email sent to {}'.format(assigned.email))
+            actions.append('{} Task assignment email sent to {}'.format(datetime.now().isoformat(), assigned.email))
 
         # Save the EmailedReferral as a record on the referral.
         new_record = Record.objects.create(name=er.subject, referral=new_ref)

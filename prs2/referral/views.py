@@ -737,14 +737,11 @@ class LocationCreate(ReferralCreateChild):
         """ Check to see if the location polygon intersects with any other locations.
         """
         intersecting_locations = []
-        if locations:
-            for location in locations:
-                if location.poly:
-                    geom = location.poly.wkt
-                    locs = Location.objects.current().exclude(id=location.id).filter(poly__isnull=False)
-                    locs = locs.filter(poly__intersects=geom)
-                    if locs.exists():
-                        intersecting_locations.append(location.id)
+        for location in locations:
+            if location.poly:
+                other_locs = Location.objects.current().exclude(pk=location.pk).filter(poly__isnull=False, poly__intersects=location.poly)
+                if other_locs.exists():
+                    intersecting_locations.append(location.pk)
         return intersecting_locations
 
 
