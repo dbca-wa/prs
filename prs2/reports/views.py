@@ -69,7 +69,7 @@ class DownloadView(TemplateView):
             headers = [
                 'Referral ID', 'Region(s)', 'Referrer', 'Type', 'Reference',
                 'Received', 'Description', 'Address', 'Triggers', 'Tags',
-                'File no.']
+                'File no.', 'LGA']
             for col, value in enumerate(headers, 1):
                 cell = ws.cell(row=1, column=col)
                 cell.value = value
@@ -109,6 +109,9 @@ class DownloadView(TemplateView):
                 cell.font = arial
                 cell = ws.cell(row=row, column=11)
                 cell.value = r.file_no
+                cell.font = arial
+                cell = ws.cell(row=row, column=12)
+                cell.value = r.lga.name if r.lga else ''
                 cell.font = arial
         elif model == Clearance:
             response['Content-Disposition'] = 'attachment; filename=prs_clearance_requests.xlsx'
