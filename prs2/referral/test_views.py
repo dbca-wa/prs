@@ -978,6 +978,9 @@ class OverdueEmailTest(PrsViewsTestCase):
         for i in Task.objects.all():
             i.due_date = date.today() - timedelta(days=1)
             i.save()
+            state = i.state
+            state.is_ongoing = True
+            state.save()
         url = reverse('overdue_tasks_email')
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
