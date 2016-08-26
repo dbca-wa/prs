@@ -74,7 +74,8 @@ class PrsTestCase(TestCase):
                 Referral, type=mixer.SELECT, agency=mixer.SELECT,
                 referring_org=mixer.SELECT, referral_date=date.today())
             mixer.cycle(2).blend(
-                Task, type=mixer.SELECT, referral=mixer.SELECT, state=mixer.SELECT)
+                Task, type=mixer.SELECT, referral=mixer.SELECT, state=mixer.SELECT,
+                assigned_user=self.n_user)
             mixer.cycle(2).blend(
                 Note, referral=mixer.SELECT, type=mixer.SELECT, note=mixer.RANDOM)
             mixer.cycle(2).blend(Record, referral=mixer.SELECT)
