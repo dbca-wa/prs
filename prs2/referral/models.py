@@ -430,6 +430,7 @@ class Referral(ReferralBaseModel):
             <tr><th>Referrer's reference</th><td>{reference}</td></tr>
             <tr><th>Description</th><td>{description}</td></tr>
             <tr><th>Address</th><td>{address}</td></tr>
+            <tr><th>Local Government</th><td>{lga}</td></tr>
             <tr><th>Referrer</th><td>{referring_org}</td></tr>
             <tr><th>Received date</th><td>{referral_date}</td></tr>
             <tr><th>Type</th><td>{type}</td></tr>
@@ -446,6 +447,7 @@ class Referral(ReferralBaseModel):
         d['description'] = unidecode(unicode(self.description) or u'')
         d['referral_date'] = self.referral_date.strftime('%d-%b-%Y')
         d['address'] = unidecode(unicode(self.address) or u'')
+        d['lga'] = self.lga.name if self.lga else ''
         return mark_safe(template.format(**d).strip())
 
     def add_relationship(self, referral):
