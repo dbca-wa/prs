@@ -165,7 +165,8 @@ admin.site.register(Agency, AgencyAdmin)
 
 
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user')
+    list_display = ('id', 'user', 'agency')
+    list_filter = ('agency',)
     search_fields = ('user__username', 'user__first_name', 'user__last_name')
 admin.site.register(UserProfile, UserProfileAdmin)
 

@@ -784,15 +784,12 @@
 
         // Click events for the 'Download' buttons.
         $("a#id_download_referrals").click(function () {
-            startSpinner();
             downloadData("referral");
         });
         $("a#id_download_clearances").click(function () {
-            startSpinner();
             downloadData("clearance");
         });
         $("a#id_download_tasks").click(function () {
-            startSpinner();
             downloadData("task");
         });
     });
