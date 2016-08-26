@@ -7,6 +7,7 @@ from django.test import Client
 from django.utils.http import urlencode
 from django_webtest import WebTest
 from mixer.backend.django import mixer
+import uuid
 
 from referral.models import (
     Agency, Organisation, OrganisationType, ReferralType, TaskType,
@@ -984,3 +985,30 @@ class OverdueEmailTest(PrsViewsTestCase):
         url = reverse('overdue_tasks_email')
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
+
+
+class InfobaseShortcutTest(PrsViewsTestCase):
+
+    def test_get_no_id(self):
+        """Test GET for the Infobase shortcut view with no ID
+        """
+        for i in Record.objects.all():
+            i.infobase_id = None
+            i.save()
+            url = reverse('infobase_shortcut', kwargs={'pk': i.pk})
+            response = self.client.get(url)
+            # View response shoud be 302 redirect.
+            self.assertEqual(response.status_code, 302)
+
+    def test_get_with_id(self):
+        """Test GET for the Infobase shortcut view with an ID
+        """
+        for i in Record.objects.all():
+            i.infobase_id = str(uuid.uuid4())[:8]
+            i.save()
+            url = reverse('infobase_shortcut', kwargs={'pk': i.pk})
+            response = self.client.get(url)
+            # View response shoud be file.
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.get('Content-Type'), 'application/octet-stream')
+            self.assertEqual(response.content, i.infobase_id)
