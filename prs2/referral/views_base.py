@@ -230,7 +230,7 @@ class PrsObjectDetail(LoginRequiredMixin, DetailView):
             # Add child locations serialised as GeoJSON (if geometry exists).
             if obj:
                 context['geojson_locations'] = serialize(
-                    'geojson', [obj], geometry_field='poly')
+                    'geojson', [obj], geometry_field='poly', srid=4283)
         return context
 
 

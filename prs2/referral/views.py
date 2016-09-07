@@ -308,7 +308,7 @@ class ReferralDetail(PrsObjectDetail):
         # Add child locations serialised as GeoJSON (if geometry exists).
         if any([l.poly for l in ref.location_set.current()]):
             context['geojson_locations'] = serialize(
-                'geojson', ref.location_set.current(), geometry_field='poly')
+                'geojson', ref.location_set.current(), geometry_field='poly', srid=4283)
 
         context['has_conditions'] = ref.condition_set.exists()
         return context
@@ -670,7 +670,7 @@ class LocationCreate(ReferralCreateChild):
         # Add any existing referral locations serialised as GeoJSON.
         if any([l.poly for l in ref.location_set.current()]):
             context['geojson_locations'] = serialize(
-                'geojson', ref.location_set.current(), geometry_field='poly')
+                'geojson', ref.location_set.current(), geometry_field='poly', srid=4283)
         return context
 
     def get_success_url(self):
