@@ -325,9 +325,14 @@ def import_harvested_refs():
             # Didn't intersect a region? Might be bad geometry in the XML.
             # Likewise if >1 region was intersected, default to Swan Region
             # and the designated fallback user.
-            if len(regions) == 0 or len(regions) > 1:
+            if len(regions) == 0:
                 region = Region.objects.get(name='Swan')
                 assigned = assignee_default
+                logger.warning('No regions were intersected, defaulting to {} ({})'.format(region, assigned))
+            elif len(regions) > 1:
+                region = Region.objects.get(name='Swan')
+                assigned = assignee_default
+                logger.warning('>1 regions were intersected ({}), defaulting to {} ({})'.format(regions, region, assigned))
             else:
                 region = regions[0]
                 try:
