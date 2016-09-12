@@ -1528,6 +1528,18 @@ class Location(ReferralBaseModel):
         d['postcode'] = self.postcode or ''
         return mark_safe(template.format(**d).strip())
 
+    def get_regions_intersected(self):
+        '''Returns a list of Regions whose geometry intersects this Location.
+        '''
+        regions = []
+        if not self.poly:
+            return regions
+        else:
+            for r in Region.objects.all():
+                if r.region_mpoly and r.region_mpoly.intersects(self.poly):
+                    regions.append(r)
+            return regions
+
 
 class Bookmark(ReferralBaseModel):
     '''
