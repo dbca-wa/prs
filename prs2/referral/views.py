@@ -1017,10 +1017,10 @@ class TaskAction(PrsObjectUpdate):
                         recording tags that are relevant to advice provided.'''
                     messages.warning(self.request, msg)
                     return self.form_invalid(form)
-            # Save selected tags on the task's parent referral.
-            if form_data['tags']:
-                for tag in form_data['tags']:
-                    obj.referral.tags.add(tag)
+                # Save selected tags on the task's parent referral.
+                if form_data['tags']:
+                    for tag in form_data['tags']:
+                        obj.referral.tags.add(tag)
 
         obj.modifier = self.request.user
         obj.save()

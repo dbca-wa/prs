@@ -308,6 +308,8 @@ class NoteForm(BaseForm):
 
     def __init__(self, *args, **kwargs):
         super(NoteForm, self).__init__(*args, **kwargs)
+        # Set note_html required = False so client-side validation doesn't fail.
+        self.fields['note_html'].required = False
         self.fields['order_date'].initial = datetime.today().strftime('%d/%m/%Y')
         self.fields['order_date'].widget = forms.DateInput(format='%d/%m/%Y')
         self.fields['order_date'].input_formats = settings.DATE_INPUT_FORMATS
