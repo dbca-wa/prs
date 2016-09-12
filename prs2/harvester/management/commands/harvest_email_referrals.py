@@ -19,7 +19,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         actions = []
-        actions += harvest_unread_emails()
+        for email in settings.PLANNING_EMAILS:
+            actions += harvest_unread_emails(email)
         actions += import_harvested_refs()
         if options['email']:
             # Send an email to users in the 'PRS power users' group.

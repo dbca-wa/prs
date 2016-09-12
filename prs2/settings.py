@@ -136,7 +136,7 @@ REFERRAL_EMAIL_HOST = env('REFERRAL_EMAIL_HOST', 'host')
 REFERRAL_EMAIL_USER = env('REFERRAL_EMAIL_USER', 'referrals')
 REFERRAL_EMAIL_PASSWORD = env('REFERRAL_EMAIL_PASSWORD', 'password')
 REFERRAL_ASSIGNEE_FALLBACK = env('REFERRAL_ASSIGNEE_FALLBACK', 'admin')
-DOP_EMAIL = env('DOP_EMAIL', 'referrals@planning.wa.gov.au')
+PLANNING_EMAILS = env('PLANNING_EMAILS', ['referrals@planning.wa.gov.au'])
 
 # Database configuration
 DATABASES = {
