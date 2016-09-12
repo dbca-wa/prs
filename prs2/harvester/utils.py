@@ -177,7 +177,7 @@ def email_mark_unread(uid):
     return status, response
 
 
-def harvest_unread_emails(from_email=settings.DOP_EMAIL):
+def harvest_unread_emails(from_email):
     """Download a list of unread email from the specified email address and
     harvest each one.
     """
@@ -213,8 +213,8 @@ def harvest_unread_emails(from_email=settings.DOP_EMAIL):
         if status == 'OK':
             logger.info('Email UID {} was marked as "Read"'.format(uid))
 
-    logger.info('Harvest process completed')
-    actions.append('{} Harvest process completed'.format(datetime.now().isoformat()))
+    logger.info('Harvest process completed ({})'.format(from_email))
+    actions.append('{} Harvest process completed ({})'.format(datetime.now().isoformat(), from_email))
     return actions
 
 

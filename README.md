@@ -33,7 +33,7 @@ Variables below may also need to be defined (context-dependent):
     REFERRAL_EMAIL_USER="referrals@email.address"
     REFERRAL_EMAIL_PASSWORD="password"
     REFERRAL_ASSIGNEE_FALLBACK="admin"
-    DOP_EMAIL="referrals@planning.wa.gov.au"
+    PLANNING_EMAILS=["referrals@planning.wa.gov.au","planning.referrals@planning.wa.gov.au"]
     SITE_URL="prs.dpaw.wa.gov.au"
     GEOSERVER_WMS_URL="//kmi.dpaw.wa.gov.au/geoserver/gwc/service/wms"
     GEOSERVER_WFS_URL="//kmi.dpaw.wa.gov.au/geoserver/ows"
