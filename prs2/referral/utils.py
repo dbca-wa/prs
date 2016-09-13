@@ -82,11 +82,13 @@ def dewordify_text(txt):
             http://stackoverflow.com/questions/1175540/iterative-find-replace-from-a-list-of-tuples-in-python
     '''
     if txt:
-        txt = unidecode(txt)
+        # Assume that we've been passed an ASCII string that needs to be
+        # decoded as Unicode.
+        txt = unidecode(txt.decode('utf-8'))  # Replaces odd characters.
         r = re.compile('|'.join(REPLACEMENTS.keys()))
         return r.sub(replacer, txt)
     else:
-        return ''
+        return u''
 
 
 def breadcrumbs_li(links):
