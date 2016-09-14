@@ -475,9 +475,33 @@ class ReferralCreateChildTest(PrsViewsTestCase):
     def test_create_note(self):
         """Test POST request to create a new note on a referral
         """
+        # The text below contains character(s) that have caused issues before.
+        note_html = u'''<div><p>Hello Paul</p>\r\n<p>I refer to your email below
+        and your request for clearance of conditions for WAPC 12345 Goodwood
+        Estate Stage 2.</p>\r\n<p> </p>\r\n<p>The attached email dated 16 August
+        2016 advised that a copy of the Deposited Plan was required for clearance
+        stamping purposes and also requested a copy of the <u>signed </u>documentation
+        for declared rare flora notification on titles when it is has been
+        finalised.</p>\r\n<p> </p>\r\n<p>Can you please forward a copy of the
+        draft deposited plan and the <u>signed </u>DRF notification documentation.
+        </p>\r\n<p> </p>\r\n<p>In addition, can you advise when clearing of native
+        vegetation for the subdivision works and building envelope locations is
+        expected to be undertaken.</p>\r\n<p>Regards</p>\r\n<p>Joe Smith</p>\r\n
+        <p><em>Planning Officer (Land Use)</em></p>\r\n<p><em>Department of Parks
+        and Wildlife</em></p>\r\n<p><em>South West Region</em></p>\r\n<p> </p>\r\n
+        <p><strong>From:</strong> John Snow [
+        <a href="mailto:john.snow@environmental.com.au">
+        mailto:john.snow@environmental.com.au</a>]
+        <br> <strong>Sent:</strong> Wednesday, 7 September 2016 1:30 PM<br>
+        <strong>To:</strong> Smith, Joe<br> <strong>Subject:</strong> RE: John Snow
+        shared "MPL12345 R001 Rev 2.pdf" with you</p>\r\n<p> </p>\r\n
+        <p>Hi Joe</p>\r\n<p>Just following up on the clearance of the remaining
+        conditions.  Did the additional information supplied recently meet the
+        Department\u2019s requirements?</p>\r\n<p>Regards</p>\r\n<p>John</p>\r\n
+        </div>'''
         url = reverse('referral_create_child', kwargs={'pk': self.ref.pk, 'model': 'note'})
         init_notes = self.ref.note_set.count()
-        resp = self.client.post(url, {'note_html': '<p>Test note</p>'})
+        resp = self.client.post(url, {'note_html': note_html})
         # Response should be a redirect.
         self.assertEqual(resp.status_code, 302)
         # Test that a new record now exists on the referral.
