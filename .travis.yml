@@ -10,7 +10,6 @@ services:
 branches:
     only:
         - master
-        - dev
 env:
     global:
         - SECRET_KEY=SecretKeyForTravis
