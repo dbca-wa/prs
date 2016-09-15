@@ -76,13 +76,16 @@ def replacer(m):
 
 def dewordify_text(txt):
     '''
-    Function to strip some of the crufty HTML that results from copy-pasting from Word into the
-    RTF text fields in this application.
+    Function to strip some of the crufty HTML that results from copy-pasting
+    MS Word documents/HTML emails into the RTF text fields in this application.
+
     Source:
-            http://stackoverflow.com/questions/1175540/iterative-find-replace-from-a-list-of-tuples-in-python
+    http://stackoverflow.com/questions/1175540/iterative-find-replace-from-a-list-of-tuples-in-python
     '''
     if txt:
-        txt = unidecode(txt)
+        # Whatever string encoding is passed in, cast it to unicode and then
+        # use unidecode to replace non-ASCII characters.
+        txt = unidecode(unicode(txt))  # Replaces odd characters.
         r = re.compile('|'.join(REPLACEMENTS.keys()))
         return r.sub(replacer, txt)
     else:

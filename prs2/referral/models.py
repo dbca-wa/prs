@@ -1021,7 +1021,7 @@ class Note(ReferralBaseModel):
         '''
         Overide the Note model save() to cleanse the HTML used.
         '''
-        self.note_html = dewordify_text(unicode(self.note_html))
+        self.note_html = dewordify_text(self.note_html)
         self.note_html = clean.clean_html(self.note_html)
         # Strip HTML tags and save as plain text.
         t = fromstring(self.note_html)
@@ -1172,7 +1172,7 @@ class Condition(ReferralBaseModel):
         Overide the Condition models's save() to cleanse the HTML input.
         '''
         if self.condition_html:
-            self.condition_html = dewordify_text(unicode(self.condition_html))
+            self.condition_html = dewordify_text(self.condition_html)
             self.condition_html = clean.clean_html(self.condition_html)
             t = fromstring(self.condition_html)
             self.condition = unicode(t.text_content())
@@ -1180,7 +1180,7 @@ class Condition(ReferralBaseModel):
             self.condition_html = ''
             self.condition = ''
         if self.proposed_condition_html:
-            self.proposed_condition_html = dewordify_text(unicode(self.proposed_condition_html))
+            self.proposed_condition_html = dewordify_text(self.proposed_condition_html)
             self.proposed_condition_html = clean.clean_html(self.proposed_condition_html)
             t = fromstring(self.proposed_condition_html)
             self.proposed_condition = unicode(t.text_content())
@@ -1527,6 +1527,18 @@ class Location(ReferralBaseModel):
         d['locality'] = self.locality or ''
         d['postcode'] = self.postcode or ''
         return mark_safe(template.format(**d).strip())
+
+    def get_regions_intersected(self):
+        '''Returns a list of Regions whose geometry intersects this Location.
+        '''
+        regions = []
+        if not self.poly:
+            return regions
+        else:
+            for r in Region.objects.all():
+                if r.region_mpoly and r.region_mpoly.intersects(self.poly):
+                    regions.append(r)
+            return regions
 
 
 class Bookmark(ReferralBaseModel):

@@ -867,7 +867,7 @@ class TaskAction(PrsObjectUpdate):
         if action == 'inherit' and task.assigned_user == request.user:
             messages.info(request, 'That task is already assigned to you.')
             return redirect(task.get_absolute_url())
-        if action in ['complete', 'cancel'] and task.complete_date:
+        if action in ['reassign', 'complete', 'cancel'] and task.complete_date:
             messages.info(request, 'That task is already completed.')
             return redirect(task.get_absolute_url())
         # We can't (yet) add a task to a task.
@@ -889,7 +889,7 @@ class TaskAction(PrsObjectUpdate):
             'Structure plan / planning strategy',
             'Subdivision',
             'Utilities infrastructure & roads'])
-        if task.referral.type in trigger_ref_type and not task.referral.has_location:
+        if action == 'complete' and task.referral.type in trigger_ref_type and not task.referral.has_location:
             msg = '''You are unable to complete this task without first
                 recording location(s) on the referral.
                 <a href="{}">Click here to create location(s).</a>'''.format(

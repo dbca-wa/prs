@@ -475,9 +475,33 @@ class ReferralCreateChildTest(PrsViewsTestCase):
     def test_create_note(self):
         """Test POST request to create a new note on a referral
         """
+        # The text below contains character(s) that have caused issues before.
+        note_html = u'''<div><p>Hello Paul</p>\r\n<p>I refer to your email below
+        and your request for clearance of conditions for WAPC 12345 Goodwood
+        Estate Stage 2.</p>\r\n<p> </p>\r\n<p>The attached email dated 16 August
+        2016 advised that a copy of the Deposited Plan was required for clearance
+        stamping purposes and also requested a copy of the <u>signed </u>documentation
+        for declared rare flora notification on titles when it is has been
+        finalised.</p>\r\n<p> </p>\r\n<p>Can you please forward a copy of the
+        draft deposited plan and the <u>signed </u>DRF notification documentation.
+        </p>\r\n<p> </p>\r\n<p>In addition, can you advise when clearing of native
+        vegetation for the subdivision works and building envelope locations is
+        expected to be undertaken.</p>\r\n<p>Regards</p>\r\n<p>Joe Smith</p>\r\n
+        <p><em>Planning Officer (Land Use)</em></p>\r\n<p><em>Department of Parks
+        and Wildlife</em></p>\r\n<p><em>South West Region</em></p>\r\n<p> </p>\r\n
+        <p><strong>From:</strong> John Snow [
+        <a href="mailto:john.snow@environmental.com.au">
+        mailto:john.snow@environmental.com.au</a>]
+        <br> <strong>Sent:</strong> Wednesday, 7 September 2016 1:30 PM<br>
+        <strong>To:</strong> Smith, Joe<br> <strong>Subject:</strong> RE: John Snow
+        shared "MPL12345 R001 Rev 2.pdf" with you</p>\r\n<p> </p>\r\n
+        <p>Hi Joe</p>\r\n<p>Just following up on the clearance of the remaining
+        conditions.  Did the additional information supplied recently meet the
+        Department\u2019s requirements?</p>\r\n<p>Regards</p>\r\n<p>John</p>\r\n
+        </div>'''
         url = reverse('referral_create_child', kwargs={'pk': self.ref.pk, 'model': 'note'})
         init_notes = self.ref.note_set.count()
-        resp = self.client.post(url, {'note_html': '<p>Test note</p>'})
+        resp = self.client.post(url, {'note_html': note_html})
         # Response should be a redirect.
         self.assertEqual(resp.status_code, 302)
         # Test that a new record now exists on the referral.
@@ -835,6 +859,13 @@ class TaskActionTest(PrsViewsTestCase):
         response = self.client.get(url)
         self.assertEquals(response.status_code, 200)
 
+    def test_can_reassign_incomplete_task(self):
+        """
+        """
+        url = reverse('task_action', kwargs={'pk': self.task.pk, 'action': 'reassign'})
+        response = self.client.get(url)
+        self.assertEquals(response.status_code, 200)
+
     def test_cant_update_stopped_task(self):
         """Test that a stopped task can't be updated
         """
@@ -889,19 +920,20 @@ class TaskActionTest(PrsViewsTestCase):
         messages = response.context['messages']._get()[0]
         self.assertIsNot(messages[0].message.find("That task is already assigned to you"), -1)
 
-    def test_cant_cancel_completed_task(self):
-        """Test that a completed task can't be cancelled
+    def test_cant_alter_completed_task(self):
+        """Test that a completed task can't be cancelled, reassigned or completed
         """
         self.task.complete_date = date.today()
         self.task.save()
-        url = reverse('task_action', kwargs={'pk': self.task.pk, 'action': 'cancel'})
-        response = self.client.get(url)
-        # Response should be a redirect to the object URL.
-        self.assertRedirects(response, self.task.get_absolute_url())
-        # Test that the redirected response contains an error message.
-        response = self.client.get(url, follow=True)
-        messages = response.context['messages']._get()[0]
-        self.assertIsNot(messages[0].message.find('That task is already completed'), -1)
+        for action in ['cancel', 'complete', 'reassign']:
+            url = reverse('task_action', kwargs={'pk': self.task.pk, 'action': action})
+            response = self.client.get(url)
+            # Response should be a redirect to the object URL.
+            self.assertRedirects(response, self.task.get_absolute_url())
+            # Test that the redirected response contains an error message.
+            response = self.client.get(url, follow=True)
+            messages = response.context['messages']._get()[0]
+            self.assertIsNot(messages[0].message.find('That task is already completed'), -1)
 
     def test_cant_add_task_to_task(self):
         """Test that a task can't be added to another task
