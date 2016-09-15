@@ -859,6 +859,13 @@ class TaskActionTest(PrsViewsTestCase):
         response = self.client.get(url)
         self.assertEquals(response.status_code, 200)
 
+    def test_can_reassign_incomplete_task(self):
+        """
+        """
+        url = reverse('task_action', kwargs={'pk': self.task.pk, 'action': 'reassign'})
+        response = self.client.get(url)
+        self.assertEquals(response.status_code, 200)
+
     def test_cant_update_stopped_task(self):
         """Test that a stopped task can't be updated
         """
@@ -913,19 +920,20 @@ class TaskActionTest(PrsViewsTestCase):
         messages = response.context['messages']._get()[0]
         self.assertIsNot(messages[0].message.find("That task is already assigned to you"), -1)
 
-    def test_cant_cancel_completed_task(self):
-        """Test that a completed task can't be cancelled
+    def test_cant_alter_completed_task(self):
+        """Test that a completed task can't be cancelled, reassigned or completed
         """
         self.task.complete_date = date.today()
         self.task.save()
-        url = reverse('task_action', kwargs={'pk': self.task.pk, 'action': 'cancel'})
-        response = self.client.get(url)
-        # Response should be a redirect to the object URL.
-        self.assertRedirects(response, self.task.get_absolute_url())
-        # Test that the redirected response contains an error message.
-        response = self.client.get(url, follow=True)
-        messages = response.context['messages']._get()[0]
-        self.assertIsNot(messages[0].message.find('That task is already completed'), -1)
+        for action in ['cancel', 'complete', 'reassign']:
+            url = reverse('task_action', kwargs={'pk': self.task.pk, 'action': action})
+            response = self.client.get(url)
+            # Response should be a redirect to the object URL.
+            self.assertRedirects(response, self.task.get_absolute_url())
+            # Test that the redirected response contains an error message.
+            response = self.client.get(url, follow=True)
+            messages = response.context['messages']._get()[0]
+            self.assertIsNot(messages[0].message.find('That task is already completed'), -1)
 
     def test_cant_add_task_to_task(self):
         """Test that a task can't be added to another task
