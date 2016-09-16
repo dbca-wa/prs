@@ -10,6 +10,7 @@ django-braces==1.9.0
 django-autoslug==1.9.3
 django-crispy-forms==1.6.0
 django-sql-explorer==1.0
+xlsxwriter==0.9.3  # Required for Excel export in django-sql-explorer
 django-model-utils==2.5
 django-storages==1.4
 django-bootstrap-pagination==1.6.2
