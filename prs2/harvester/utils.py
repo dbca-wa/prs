@@ -297,7 +297,7 @@ def import_harvested_refs():
                 try:
                     p = Point(x=float(a['LONGITUDE']), y=float(a['LATITUDE']))
                     for r in Region.objects.all():
-                        if r.region_mpoly and r.region_mpoly.intersects(p):
+                        if r.region_mpoly and r.region_mpoly.intersects(p) and r not in regions:
                             regions.append(r)
                 except:
                     logger.warning('Address long/lat could not be parsed ({}, {})'.format(a['LONGITUDE'], a['LATITUDE']))
