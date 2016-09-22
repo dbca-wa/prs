@@ -287,10 +287,10 @@ class PrsObjectUpdate(LoginRequiredMixin, UpdateView):
         return super(PrsObjectUpdate, self).post(request, *args, **kwargs)
 
     def form_valid(self, form):
-        form.save()
+        self.object = form.save()
         messages.success(
             self.request, '{0} has been updated.'.format(self.get_object()))
-        return super(PrsObjectUpdate, self).form_valid(form)
+        return HttpResponseRedirect(self.get_success_url())
 
 
 class PrsObjectHistory(PrsObjectDetail):

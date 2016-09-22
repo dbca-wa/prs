@@ -1,3 +1,4 @@
+from __future__ import absolute_import, unicode_literals
 from confy import env
 from datetime import datetime
 from django.apps import apps
@@ -78,6 +79,7 @@ def dewordify_text(txt):
     '''
     Function to strip some of the crufty HTML that results from copy-pasting
     MS Word documents/HTML emails into the RTF text fields in this application.
+    Should always return a unicode string.
 
     Source:
     http://stackoverflow.com/questions/1175540/iterative-find-replace-from-a-list-of-tuples-in-python
@@ -87,9 +89,10 @@ def dewordify_text(txt):
         # use unidecode to replace non-ASCII characters.
         txt = unidecode(unicode(txt))  # Replaces odd characters.
         r = re.compile('|'.join(REPLACEMENTS.keys()))
-        return r.sub(replacer, txt)
+        r = r.sub(replacer, txt)
+        return unicode(r)
     else:
-        return ''
+        return u''
 
 
 def breadcrumbs_li(links):

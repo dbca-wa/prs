@@ -1025,7 +1025,7 @@ class Note(ReferralBaseModel):
         self.note_html = clean.clean_html(self.note_html)
         # Strip HTML tags and save as plain text.
         t = fromstring(self.note_html)
-        self.note = unicode(t.text_content())
+        self.note = unicode(t.text_content()).strip()
         super(Note, self).save(force_insert, force_update)
 
     @property
@@ -1175,7 +1175,7 @@ class Condition(ReferralBaseModel):
             self.condition_html = dewordify_text(self.condition_html)
             self.condition_html = clean.clean_html(self.condition_html)
             t = fromstring(self.condition_html)
-            self.condition = unicode(t.text_content())
+            self.condition = unicode(t.text_content()).strip()
         else:
             self.condition_html = ''
             self.condition = ''
@@ -1183,7 +1183,7 @@ class Condition(ReferralBaseModel):
             self.proposed_condition_html = dewordify_text(self.proposed_condition_html)
             self.proposed_condition_html = clean.clean_html(self.proposed_condition_html)
             t = fromstring(self.proposed_condition_html)
-            self.proposed_condition = unicode(t.text_content())
+            self.proposed_condition = unicode(t.text_content()).strip()
         else:
             self.proposed_condition_html = ''
             self.proposed_condition = ''
