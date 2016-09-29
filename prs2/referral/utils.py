@@ -6,7 +6,7 @@ from django.contrib import admin
 from django.db.models import Q
 from django.db.models.base import ModelBase
 from django.template.defaultfilters import slugify as django_slugify
-from django.utils.encoding import smart_str
+from django.utils.encoding import smart_text
 from django.utils.safestring import mark_safe
 from dpaw_utils.requests.api import post as post_sso
 import json
@@ -55,7 +55,7 @@ def smart_truncate(content, length=100, suffix='....(more)'):
     """Small function to truncate a string in a sensible way, sourced from:
     http://stackoverflow.com/questions/250357/smart-truncate-in-python
     """
-    content = smart_str(content)
+    content = smart_text(content)
     if len(content) <= length:
         return content
     else:
