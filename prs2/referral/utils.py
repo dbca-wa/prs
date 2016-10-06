@@ -16,13 +16,10 @@ from unidecode import unidecode
 
 
 def is_model_or_string(model):
-    '''
-    This function checks if we passed in a Model, or the name of a model as a string
-    (case insensitive). The string may also be plural to some extent (i.e. ending with "s").
-    If we passed in a string, return the named Model instead using get_model().
-
-    Business rules::
-        No restrictions.
+    """This function checks if we passed in a Model, or the name of a model as
+    a case-insensitive string. The string may also be plural to some extent
+    (i.e. ending with "s"). If we passed in a string, return the named Model
+    instead using get_model().
 
     Example::
 
@@ -37,8 +34,7 @@ def is_model_or_string(model):
     True
     >>> isinstance(is_model_or_string(Region), ModelBase)
     True
-
-    '''
+    """
     if not isinstance(model, ModelBase):
         # Hack: if the last character is "s", remove it before calling get_model
         x = len(model) - 1
@@ -62,28 +58,26 @@ def smart_truncate(content, length=100, suffix=u'....(more)'):
         return u' '.join(content[:length + 1].split(' ')[0:-1]) + suffix
 
 
-REPLACEMENTS = dict([('&nbsp;', ' '),
-                     ('&lt;', '<'),
-                     ('&gt;', '>'),
-                     (' class="MsoNormal"', ''),
-                     ('<span lang="EN-AU">', ''),
-                     ('<span>', ''),
-                     ('</span>', '')])
-
-
-def replacer(m):
-    return REPLACEMENTS[m.group(0)]
-
-
 def dewordify_text(txt):
-    '''
-    Function to strip some of the crufty HTML that results from copy-pasting
+    """Function to strip some of the crufty HTML that results from copy-pasting
     MS Word documents/HTML emails into the RTF text fields in this application.
     Should always return a unicode string.
 
     Source:
     http://stackoverflow.com/questions/1175540/iterative-find-replace-from-a-list-of-tuples-in-python
-    '''
+    """
+    REPLACEMENTS = {
+        '&nbsp;': ' ',
+        '&lt;': '<',
+        '&gt;': '>',
+        ' class="MsoNormal"': '',
+        '<span lang="EN-AU">': '',
+        '<span>': '',
+        '</span>': ''}
+
+    def replacer(m):
+        return REPLACEMENTS[m.group(0)]
+
     if txt:
         # Whatever string encoding is passed in, cast it to unicode and then
         # use unidecode to replace non-ASCII characters.
