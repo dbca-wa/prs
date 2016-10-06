@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from braces.views import LoginRequiredMixin
 from copy import copy
 from datetime import date, datetime, timedelta
@@ -291,7 +292,7 @@ class ReferralDetail(PrsObjectDetail):
                 headers.remove('Referral ID')
                 headers.append('Actions')
                 thead = ''.join(['<th>{}</th>'.format(h) for h in headers])
-                rows = ['<tr>{}{}</tr>'.format(o.as_row_minus_referral(),
+                rows = [u'<tr>{}{}</tr>'.format(o.as_row_minus_referral(),
                                                o.as_row_actions()) for o in obj_qs]
                 tbody = ''.join(rows)
                 obj_tab_html = table.format(thead, tbody)
