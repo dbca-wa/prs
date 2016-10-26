@@ -1048,7 +1048,7 @@ class Note(ReferralBaseModel):
         d = copy(self.__dict__)
         d['url'] = self.get_absolute_url()
         if self.type:
-            d['type'] = '<img src="/static/{} title="{}" />'.format(
+            d['type'] = '<img src="/static/{}" title="{}" />'.format(
                 self.type.icon.__unicode__(), self.type.name)
         else:
             d['type'] = ''
