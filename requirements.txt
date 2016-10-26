@@ -1,9 +1,9 @@
 # Project requirements
-Django==1.10
+Django==1.10.2
 django-extensions==1.6.7
 https://static.dpaw.wa.gov.au/static/py/dpaw-utils/dist/dpaw-utils-0.3a11.tar.gz
 django-reversion==2.0.6
-django-debug-toolbar==1.5
+django-debug-toolbar==1.6
 django-tastypie==0.13.3
 django-taggit==0.20.2
 django-braces==1.9.0

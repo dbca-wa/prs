@@ -197,14 +197,16 @@ LOGGING = {
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(BASE_DIR, 'logs', 'prs.log'),
             'formatter': 'simple',
-            'maxBytes': 1024 * 1024 * 5
+            'maxBytes': 1024 * 1024 * 5,
+            'backupCount': 5,
         },
         'harvester_log': {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(BASE_DIR, 'logs', 'harvester.log'),
             'formatter': 'simple',
-            'maxBytes': 1024 * 1024 * 5
+            'maxBytes': 1024 * 1024 * 5,
+            'backupCount': 5,
         },
     },
     'loggers': {
