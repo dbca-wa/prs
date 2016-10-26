@@ -885,9 +885,9 @@ class TaskAction(PrsObjectUpdate):
             'Management plan / technical report',
             'MRS amendment',
             'Pastoral lease permit to diversify',
-            'Planning scheme /amendment',
+            'Planning scheme / amendment',
             'PRS amendment',
-            'Structure plan / planning strategy',
+            'Structure Plan',
             'Subdivision',
             'Utilities infrastructure & roads'])
         if action == 'complete' and task.referral.type in trigger_ref_type and not task.referral.has_location:
