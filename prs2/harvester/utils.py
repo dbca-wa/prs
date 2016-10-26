@@ -397,9 +397,10 @@ def import_harvested_refs():
                     intersecting += list(other_l)
             # For any intersecting locations, relate the new and existing referrals.
             for l in intersecting:
-                new_ref.add_relationship(l.referral)
-                logger.info('New referral {} related to existing referral {}'.format(new_ref.pk, l.referral.pk))
-                actions.append('{} New referral {} related to existing referral {}'.format(datetime.now().isoformat(), new_ref.pk, l.referral.pk))
+                if l.referral.pk != new_ref.pk:
+                    new_ref.add_relationship(l.referral)
+                    logger.info('New referral {} related to existing referral {}'.format(new_ref.pk, l.referral.pk))
+                    actions.append('{} New referral {} related to existing referral {}'.format(datetime.now().isoformat(), new_ref.pk, l.referral.pk))
             # Create an "Assess a referral" task and assign it to a user.
             new_task = Task(
                 type=assess_task,
@@ -419,7 +420,8 @@ def import_harvested_refs():
             actions.append('{} Task assignment email sent to {}'.format(datetime.now().isoformat(), assigned.email))
 
         # Save the EmailedReferral as a record on the referral.
-        new_record = Record.objects.create(name=er.subject, referral=new_ref)
+        new_record = Record.objects.create(
+            name=er.subject, referral=new_ref, order_date=datetime.today())
         file_name = 'emailed_referral_{}.html'.format(ref)
         new_file = File(StringIO(er.body))
         new_record.uploaded_file.save(file_name, new_file)
@@ -429,7 +431,8 @@ def import_harvested_refs():
 
         # Add records to the referral (one per attachment).
         for i in attachments:
-            new_record = Record.objects.create(name=i.name, referral=new_ref)
+            new_record = Record.objects.create(
+                name=i.name, referral=new_ref, order_date=datetime.today())
             # Duplicate the uploaded file.
             data = StringIO(i.attachment.read())
             new_file = File(data)
