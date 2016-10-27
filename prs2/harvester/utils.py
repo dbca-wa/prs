@@ -314,11 +314,14 @@ def import_harvested_refs():
                             'outputFormat': 'json',
                             'cql_filter': 'polygon_number={}'.format(pin)
                         }
-                        resp = requests.get(url, auth=auth, params=params)
-                        if resp.json()['features']:  # Features are Multipolygons.
-                            a['FEATURES'] = resp.json()['features']  # List of MP features.
-                            locations.append(a)  # A dict for each address location.
-                        logger.info('Address PIN {} returned geometry from SLIP'.format(pin))
+                        try:
+                            resp = requests.get(url, auth=auth, params=params)
+                            if resp.json()['features']:  # Features are Multipolygons.
+                                a['FEATURES'] = resp.json()['features']  # List of MP features.
+                                locations.append(a)  # A dict for each address location.
+                            logger.info('Address PIN {} returned geometry from SLIP'.format(pin))
+                        except:
+                            logger.error('Error querying Landgate SLIP for spatial data (referral ref {})'.format(ref))
                     else:
                         logger.warning('Address PIN could not be parsed ({})'.format(a['PIN']))
             # Business rules:
