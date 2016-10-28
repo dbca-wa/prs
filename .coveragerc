@@ -2,6 +2,6 @@
 omit =
     */migrations/*
     */test_*
-    */referral/management/commands/update_v2.py
+    */management/commands/*
     prs/wsgi.py
     fabfile.py
