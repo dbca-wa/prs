@@ -3,5 +3,7 @@ omit =
     */migrations/*
     */test_*
     */management/commands/*
-    prs/wsgi.py
+    */__init__.py
+    prs2/wsgi.py
+    prs2/settings.py
     fabfile.py
