@@ -29,7 +29,7 @@ class EmailedReferral(models.Model):
     email_uid = models.CharField(max_length=256)
     to_email = models.CharField(max_length=256)
     from_email = models.CharField(max_length=256)
-    subject = models.CharField(max_length=256)
+    subject = models.CharField(max_length=512)
     body = models.TextField()
     referral = models.ForeignKey(
         Referral, null=True, blank=True, on_delete=models.PROTECT)
@@ -278,7 +278,7 @@ class EmailAttachment(models.Model):
     """A saved email file attachment.
     """
     emailed_referral = models.ForeignKey(EmailedReferral, on_delete=models.PROTECT)
-    name = models.CharField(max_length=256)
+    name = models.CharField(max_length=512)
     attachment = models.FileField(
         max_length=255, upload_to='email_attachments/%Y/%m/%d')
     record = models.ForeignKey(
