@@ -1,29 +1,19 @@
 from __future__ import absolute_import
 import base64
-from confy import env
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from django.conf import settings
-from django.contrib.auth import get_user_model
-from django.contrib.gis.geos import GEOSGeometry, Point
 from django.core.files import File
 from django.core.mail import EmailMultiAlternatives
 import email
 from imaplib import IMAP4_SSL
-import json
 import logging
 from pytz import timezone
-import requests
 from StringIO import StringIO
 import time
-import xmltodict
 
-from referral.models import (
-    Region, Referral, ReferralType, Agency, Organisation, DopTrigger, Record,
-    TaskType, Task, Location, LocalGovernment)
-from .models import EmailedReferral, EmailAttachment, RegionAssignee
+from .models import EmailedReferral, EmailAttachment
 
 
-User = get_user_model()
 logger = logging.getLogger('harvester.log')
 
 
@@ -224,233 +214,9 @@ def import_harvested_refs():
     actions = []
     logger.info('Starting import of harvested referrals')
     actions.append('{} Starting import of harvested referrals'.format(datetime.now().isoformat()))
-    dpaw = Agency.objects.get(slug='dpaw')
-    wapc = Organisation.objects.get(slug='wapc')
-    assess_task = TaskType.objects.get(name='Assess a referral')
-    assignee_default = User.objects.get(username=settings.REFERRAL_ASSIGNEE_FALLBACK)
     # Process harvested refs that are unprocessed at present.
     for er in EmailedReferral.objects.filter(referral__isnull=True, processed=False):
-        attachments = er.emailattachment_set.all()
-        # Emails without attachments are usually reminder notices.
-        if not attachments.exists():
-            logger.info('Skipping harvested referral {} (no attachments)'.format(er))
-            actions.append('{} Skipping harvested referral {} (no attachments)'.format(datetime.now().isoformat(), er))
-            er.processed = True
-            er.save()
-            continue
-        # Must be an attachment named 'Application.xml' present to import.
-        if not attachments.filter(name__istartswith='application.xml'):
-            logger.info('Skipping harvested referral {} (no XML attachment)'.format(er))
-            actions.append('{} Skipping harvested referral {} (no XML attachment)'.format(datetime.now().isoformat(), er))
-            er.processed = True
-            er.save()
-            continue
-        else:
-            xml_file = attachments.get(name__istartswith='application.xml')
-        try:
-            d = xmltodict.parse(xml_file.attachment.read())
-        except Exception as e:
-            logger.error('Harvested referral {} parsing of application.xml failed'.format(er))
-            logger.exception(e)
-            actions.append('{} Harvested referral {} parsing of application.xml failed'.format(datetime.now().isoformat(), er))
-            er.processed = True
-            er.save()
-            continue
-        app = d['APPLICATION']
-        ref = app['WAPC_APPLICATION_NO']
-        if Referral.objects.current().filter(reference__icontains=ref):
-            # Note if the the reference no. exists in PRS already.
-            logger.info('Referral ref {} is already in database'.format(ref))
-            actions.append('{} Referral ref {} is already in database'.format(datetime.now().isoformat(), ref))
-            referral_preexists = True
-            new_ref = Referral.objects.current().filter(reference__icontains=ref).order_by('-pk').first()
-        else:
-            referral_preexists = False
-
-        if not referral_preexists:
-            # No match with existing references; import the harvested referral.
-            logger.info('Importing harvested referral ref {}'.format(ref))
-            actions.append('{} Importing harvested referral ref {}'.format(datetime.now().isoformat(), ref))
-            try:
-                ref_type = ReferralType.objects.filter(name__istartswith=app['APP_TYPE'])[0]
-            except:
-                logger.warning('Referral type {} is not recognised type; skipping'.format(app['APP_TYPE']))
-                actions.append('{} Referral type {} is not recognised type; skipping'.format(datetime.now().isoformat(), app['APP_TYPE']))
-                er.processed = True
-                er.save()
-                continue
-            # Determine the intersecting region(s).
-            regions = []
-            assigned = None
-            # ADDRESS_DETAIL may or may not be a list :/
-            if not isinstance(app['ADDRESS_DETAIL']['DOP_ADDRESS_TYPE'], list):
-                addresses = [app['ADDRESS_DETAIL']['DOP_ADDRESS_TYPE']]
-            else:
-                addresses = app['ADDRESS_DETAIL']['DOP_ADDRESS_TYPE']
-            # Address geometry:
-            url = env('SLIP_WFS_URL', None)
-            auth = (env('SLIP_USERNAME', None), env('SLIP_PASSWORD', None))
-            type_name = env('SLIP_DATASET', '')
-            locations = []
-            for a in addresses:
-                # Use the long/lat info to intersect DPaW regions.
-                try:
-                    p = Point(x=float(a['LONGITUDE']), y=float(a['LATITUDE']))
-                    for r in Region.objects.all():
-                        if r.region_mpoly and r.region_mpoly.intersects(p) and r not in regions:
-                            regions.append(r)
-                except:
-                    logger.warning('Address long/lat could not be parsed ({}, {})'.format(a['LONGITUDE'], a['LATITUDE']))
-                    actions.append('{} Address long/lat could not be parsed ({}, {})'.format(datetime.now().isoformat(), a['LONGITUDE'], a['LATITUDE']))
-                # Use the PIN field to try returning geometry from SLIP.
-                if 'PIN' in a:
-                    pin = int(a['PIN'])
-                    if pin > 0:
-                        params = {
-                            'service': 'WFS',
-                            'version': '1.0.0',
-                            'typeName': type_name,
-                            'request': 'getFeature',
-                            'outputFormat': 'json',
-                            'cql_filter': 'polygon_number={}'.format(pin)
-                        }
-                        try:
-                            resp = requests.get(url, auth=auth, params=params)
-                            if resp.json()['features']:  # Features are Multipolygons.
-                                a['FEATURES'] = resp.json()['features']  # List of MP features.
-                                locations.append(a)  # A dict for each address location.
-                            logger.info('Address PIN {} returned geometry from SLIP'.format(pin))
-                        except:
-                            logger.error('Error querying Landgate SLIP for spatial data (referral ref {})'.format(ref))
-                    else:
-                        logger.warning('Address PIN could not be parsed ({})'.format(a['PIN']))
-            # Business rules:
-            # Didn't intersect a region? Might be bad geometry in the XML.
-            # Likewise if >1 region was intersected, default to Swan Region
-            # and the designated fallback user.
-            if len(regions) == 0:
-                region = Region.objects.get(name='Swan')
-                assigned = assignee_default
-                logger.warning('No regions were intersected, defaulting to {} ({})'.format(region, assigned))
-            elif len(regions) > 1:
-                region = Region.objects.get(name='Swan')
-                assigned = assignee_default
-                logger.warning('>1 regions were intersected ({}), defaulting to {} ({})'.format(regions, region, assigned))
-            else:
-                region = regions[0]
-                try:
-                    assigned = RegionAssignee.objects.get(region=region).user
-                except:
-                    logger.warning('No default assignee set for {}, defaulting to {}'.format(region, assignee_default))
-                    actions.append('{} No default assignee set for {}, defaulting to {}'.format(datetime.now().isoformat(), region, assignee_default))
-                    assigned = assignee_default
-            # Create the referral in PRS.
-            new_ref = Referral.objects.create(
-                type=ref_type, agency=dpaw, referring_org=wapc,
-                reference=ref, description=app['DEVELOPMENT_DESCRIPTION'],
-                referral_date=er.received, address=app['LOCATION'])
-            logger.info('New PRS referral generated: {}'.format(new_ref))
-            actions.append('{} New PRS referral generated: {}'.format(datetime.now().isoformat(), new_ref))
-            # Assign to a region.
-            new_ref.region.add(region)
-            # Assign an LGA.
-            try:
-                new_ref.lga = LocalGovernment.objects.get(name=app['LOCAL_GOVERNMENT'])
-                new_ref.save()
-            except:
-                logger.warning('LGA {} was not recognised'.format(app['LOCAL_GOVERNMENT']))
-                actions.append('{} LGA {} was not recognised'.format(datetime.now().isoformat(), app['LOCAL_GOVERNMENT']))
-            # Add triggers to the new referral.
-            triggers = [i.strip() for i in app['MRSZONE_TEXT'].split(',')]
-            added_trigger = False
-            for i in triggers:
-                if DopTrigger.objects.current().filter(name__istartswith=i).exists():
-                    added_trigger = True
-                    new_ref.dop_triggers.add(DopTrigger.objects.current().get(name__istartswith=i))
-                elif i.startswith('BUSH FOREVER SITE'):
-                    added_trigger = True
-                    new_ref.dop_triggers.add(DopTrigger.objects.get(name='Bush Forever site'))
-            # If we didn't link any DoP triggers, link the "No Parks and Wildlife trigger" tag.
-            if not added_trigger:
-                new_ref.dop_triggers.add(DopTrigger.objects.get(name='No Parks and Wildlife trigger'))
-            # Add locations to the new referral (one per polygon in each MP geometry).
-            new_locations = []
-            for l in locations:
-                for f in l['FEATURES']:
-                    geom = GEOSGeometry(json.dumps(f['geometry']))
-                    for p in geom:
-                        new_loc = Location.objects.create(
-                            address_no=int(a['NUMBER_FROM']) if a['NUMBER_FROM'] else None,
-                            address_suffix=a['NUMBER_FROM_SUFFIX'],
-                            road_name=a['STREET_NAME'],
-                            road_suffix=a['STREET_SUFFIX'],
-                            locality=a['SUBURB'],
-                            postcode=a['POSTCODE'],
-                            referral=new_ref,
-                            poly=p
-                        )
-                        new_locations.append(new_loc)
-                        logger.info('New PRS location generated: {}'.format(new_loc))
-                        actions.append('{} New PRS location generated: {}'.format(datetime.now().isoformat(), new_loc))
-            # Check to see if new locations intersect with any existing locations.
-            intersecting = []
-            for l in new_locations:
-                other_l = Location.objects.current().exclude(pk=l.pk).filter(poly__isnull=False, poly__intersects=l.poly)
-                if other_l.exists():
-                    intersecting += list(other_l)
-            # For any intersecting locations, relate the new and existing referrals.
-            for l in intersecting:
-                if l.referral.pk != new_ref.pk:
-                    new_ref.add_relationship(l.referral)
-                    logger.info('New referral {} related to existing referral {}'.format(new_ref.pk, l.referral.pk))
-                    actions.append('{} New referral {} related to existing referral {}'.format(datetime.now().isoformat(), new_ref.pk, l.referral.pk))
-            # Create an "Assess a referral" task and assign it to a user.
-            new_task = Task(
-                type=assess_task,
-                referral=new_ref,
-                start_date=new_ref.referral_date,
-                description=new_ref.description,
-                assigned_user=assigned
-            )
-            new_task.state = assess_task.initial_state
-            new_task.due_date = datetime.today() + timedelta(assess_task.target_days)
-            new_task.save()
-            logger.info('New PRS task generated: {} assigned to {}'.format(new_task, assigned.get_full_name()))
-            actions.append('{} New PRS task generated: {} assigned to {}'.format(datetime.now().isoformat(), new_task, assigned.get_full_name()))
-            # Email the assigned user about the new task.
-            new_task.email_user()
-            logger.info('Task assignment email sent to {}'.format(assigned.email))
-            actions.append('{} Task assignment email sent to {}'.format(datetime.now().isoformat(), assigned.email))
-
-        # Save the EmailedReferral as a record on the referral.
-        new_record = Record.objects.create(
-            name=er.subject, referral=new_ref, order_date=datetime.today())
-        file_name = 'emailed_referral_{}.html'.format(ref)
-        new_file = File(StringIO(er.body))
-        new_record.uploaded_file.save(file_name, new_file)
-        new_record.save()
-        logger.info('New PRS record generated: {}'.format(new_record))
-        actions.append('{} New PRS record generated: {}'.format(datetime.now().isoformat(), new_record))
-
-        # Add records to the referral (one per attachment).
-        for i in attachments:
-            new_record = Record.objects.create(
-                name=i.name, referral=new_ref, order_date=datetime.today())
-            # Duplicate the uploaded file.
-            data = StringIO(i.attachment.read())
-            new_file = File(data)
-            new_record.uploaded_file.save(i.name, new_file)
-            new_record.save()
-            logger.info('New PRS record generated: {}'.format(new_record))
-            actions.append('{} New PRS record generated: {}'.format(datetime.now().isoformat(), new_record))
-            # Link the attachment to the new, generated record.
-            i.record = new_record
-            i.save()
-
-        # Link the emailed referral to the new or existing referral.
-        er.referral = new_ref
-        er.processed = True
-        er.save()
+        actions.append(er.harvest())
 
     logger.info('Import process completed')
     actions.append('{} Import process completed'.format(datetime.now().isoformat()))
