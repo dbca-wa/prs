@@ -1,8 +1,10 @@
 from __future__ import absolute_import, unicode_literals
 from confy import env
-from datetime import datetime
+from datetime import datetime, date
 from django.apps import apps
+from django.conf import settings
 from django.contrib import admin
+from django.core.mail import EmailMultiAlternatives
 from django.db.models import Q
 from django.db.models.base import ModelBase
 from django.template.defaultfilters import slugify as django_slugify
@@ -272,3 +274,46 @@ def slugify(value):
     """A (slightly) customised slugify function.
     """
     return django_slugify(unidecode(unicode(value)))
+
+
+def overdue_task_email():
+    """A utility function to send an email to each user with tasks that are
+    overdue.
+    """
+    from django.contrib.auth.models import Group
+    from .models import TaskState, Task
+
+    prs_grp = Group.objects.get(name=settings.PRS_USER_GROUP)
+    users = prs_grp.user_set.filter(is_active=True)
+    users = users.filter(username='AshleyF')
+    ongoing_states = TaskState.objects.current().filter(is_ongoing=True)
+
+    # For each user, send an email if they have any incomplete tasks that
+    # are in an 'ongoing' state (i.e. not stopped).
+    subject = 'PRS overdue task notification'
+    from_email = 'PRS-Alerts@dpaw.wa.gov.au'
+
+    for user in users:
+        ongoing_tasks = Task.objects.current().filter(
+            complete_date=None, state__in=ongoing_states,
+            due_date__lt=date.today(), assigned_user=user)
+        if ongoing_tasks.exists():
+            # Send a single email to this user containing the list of tasks
+            to_email = [user.email]
+            text_content = '''This is an automated message to let you know that the following tasks
+                assigned to you within PRS are currently overdue:\n'''
+            html_content = '''<p>This is an automated message to let you know that the following tasks
+                assigned to you within PRS are currently overdue:</p>
+                <ul>'''
+            for t in ongoing_tasks:
+                text_content += '* Referral ID {} - {}\n'.format(t.referral.pk, t.type.name)
+                html_content += '<li><a href="{}">Referral ID {} - {}</a></li>'.format(
+                    settings.SITE_URL + t.referral.get_absolute_url(), t.referral.pk, t.type.name)
+            text_content += 'This is an automatically-generated email - please do not reply.\n'
+            html_content += '</ul><p>This is an automatically-generated email - please do not reply.</p>'
+            msg = EmailMultiAlternatives(subject, text_content, from_email, to_email)
+            msg.attach_alternative(html_content, 'text/html')
+            # Email should fail gracefully - ie no Exception raised on failure.
+            msg.send(fail_silently=True)
+
+    return True

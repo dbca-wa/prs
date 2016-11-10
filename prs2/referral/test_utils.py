@@ -1,3 +1,4 @@
+from datetime import date, timedelta
 from django.db.models.base import ModelBase
 from django.db.models.query import QuerySet
 from django.test import RequestFactory
@@ -6,7 +7,7 @@ from referral.test_models import PrsTestCase
 from referral.utils import (
     is_model_or_string, smart_truncate, breadcrumbs_li, slugify,
     update_revision_history, filter_queryset, user_task_history,
-    dewordify_text)
+    dewordify_text, overdue_task_email)
 
 
 WORD_HTML_SAMPLE = '''<div class=Section1>
@@ -136,7 +137,7 @@ class UtilsTest(PrsTestCase):
         self.assertTrue('More task history' in self.n_user.userprofile.task_history)
 
     def test_dewordify_text(self):
-        """Test the dewordify_text utility function.
+        """Test the dewordify_text utility function
         """
         self.assertTrue(isinstance(dewordify_text(None), unicode))
         self.assertTrue(isinstance(dewordify_text(''), unicode))
@@ -145,3 +146,15 @@ class UtilsTest(PrsTestCase):
         self.assertTrue(isinstance(dewordify_text(u'Short test'), unicode))
         self.assertTrue(isinstance(dewordify_text(WORD_HTML_SAMPLE), unicode))
         self.assertTrue(isinstance(dewordify_text(unicode(WORD_HTML_SAMPLE)), unicode))
+
+    def test_overdue_task_email(self):
+        """Test the function for sending emails about overdue tasks
+        """
+        # Ensure that an incomplete Task is overdue.
+        for i in Task.objects.all():
+            i.due_date = date.today() - timedelta(days=1)
+            i.save()
+            state = i.state
+            state.is_ongoing = True
+            state.save()
+        self.assertTrue(overdue_task_email())
