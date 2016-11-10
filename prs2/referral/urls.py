@@ -41,7 +41,6 @@ urlpatterns += [
     url(r'^search/$', views.GeneralSearch.as_view(), name='prs_general_search'),
     url(r'^stopped-tasks/$', views.SiteHome.as_view(stopped_tasks=True), name='stopped_tasks_list'),
     url(r'^print/$', views.SiteHome.as_view(printable=True), name='site_home_print'),
-    url(r'^cronjobs/overdue-tasks-email/$', views.OverdueTasksEmail.as_view(), name='overdue_tasks_email'),
     url(r'^(?P<model>\w+)/$', views.PrsObjectList.as_view(), name='prs_object_list'),
     url(r'^(?P<model>\w+)/create/$', views.PrsObjectCreate.as_view(), name='prs_object_create'),
     url(r'^(?P<model>\w+)/(?P<pk>\d+)/$', views.PrsObjectDetail.as_view(), name='prs_object_detail'),

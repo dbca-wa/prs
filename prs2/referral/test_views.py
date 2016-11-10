@@ -1001,24 +1001,6 @@ class ReferralRelateTest(PrsViewsTestCase):
         self.assertTrue(self.ref2 not in self.ref1.related_refs.all())
 
 
-class OverdueEmailTest(PrsViewsTestCase):
-    """Test view for sending emails about overdue tasks.
-    """
-    def test_get(self):
-        """Test GET for the overdue tasks email view
-        """
-        # Ensure that an incomplete Task is overdue.
-        for i in Task.objects.all():
-            i.due_date = date.today() - timedelta(days=1)
-            i.save()
-            state = i.state
-            state.is_ongoing = True
-            state.save()
-        url = reverse('overdue_tasks_email')
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-
-
 class InfobaseShortcutTest(PrsViewsTestCase):
 
     def test_get_no_id(self):
