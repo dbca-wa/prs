@@ -824,9 +824,9 @@ class Record(ReferralBaseModel):
     Referral.
     '''
     name = models.CharField(
-        max_length=200,
-        help_text='The name/description of the record (max 200 characters).',
-        validators=[MaxLengthValidator(200)])
+        max_length=512,
+        help_text='The name/description of the record (max 512 characters).',
+        validators=[MaxLengthValidator(512)])
     referral = models.ForeignKey(Referral, on_delete=models.PROTECT)
     uploaded_file = models.FileField(
         blank=True,
