@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 import base64
+from confy import env
 from datetime import date, datetime
 from django.conf import settings
 from django.core.files import File
@@ -8,6 +9,7 @@ import email
 from imaplib import IMAP4_SSL
 import logging
 from pytz import timezone
+import requests
 from StringIO import StringIO
 import time
 
@@ -245,3 +247,21 @@ def email_harvest_actions(to_emails, actions):
     msg.attach_alternative(html_content, 'text/html')
     # Email should fail gracefully (no Exception raised on failure).
     msg.send(fail_silently=True)
+
+
+def query_slip(pin):
+    """Function to query the Landgate SLIP service for a cadastral location, by PIN.
+    """
+    url = env('SLIP_WFS_URL', None)
+    auth = (env('SLIP_USERNAME', None), env('SLIP_PASSWORD', None))
+    type_name = env('SLIP_DATASET', '')
+    params = {
+        'service': 'WFS',
+        'version': '1.0.0',
+        'typeName': type_name,
+        'request': 'getFeature',
+        'outputFormat': 'json',
+        'cql_filter': 'polygon_number={}'.format(pin)
+    }
+    resp = requests.get(url, auth=auth, params=params)
+    return resp
