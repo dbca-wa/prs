@@ -118,9 +118,11 @@ class EmailedReferral(models.Model):
                     for r in Region.objects.all():
                         if r.region_mpoly and r.region_mpoly.intersects(p) and r not in regions:
                             regions.append(r)
+                    intersected_region = True
                 except:
                     logger.warning('Address long/lat could not be parsed ({}, {})'.format(a['LONGITUDE'], a['LATITUDE']))
                     actions.append('{} Address long/lat could not be parsed ({}, {})'.format(datetime.now().isoformat(), a['LONGITUDE'], a['LATITUDE']))
+                    intersected_region = False
                 # Use the PIN field to try returning geometry from SLIP.
                 if 'PIN' in a:
                     pin = int(a['PIN'])
@@ -136,13 +138,24 @@ class EmailedReferral(models.Model):
                         try:
                             resp = requests.get(url, auth=auth, params=params)
                             if resp.json()['features']:  # Features are Multipolygons.
-                                a['FEATURES'] = resp.json()['features']  # List of MP features.
+                                features = resp.json()['features']  # List of MP features.
+                                a['FEATURES'] = features
                                 locations.append(a)  # A dict for each address location.
+                                # If we haven't yet, use the feature geom to intersect DPaW regions.
+                                if not intersected_region:
+                                    for f in features:
+                                        prop = f['properties']
+                                        if 'centroid_longitude' in prop and 'centroid_latitude' in prop:
+                                            p = Point(x=prop['centroid_longitude'], y=prop['centroid_latitude'])
+                                            for r in Region.objects.all():
+                                                if r.region_mpoly and r.region_mpoly.intersects(p) and r not in regions:
+                                                    regions.append(r)
                             logger.info('Address PIN {} returned geometry from SLIP'.format(pin))
                         except:
                             logger.error('Error querying Landgate SLIP for spatial data (referral ref {})'.format(ref))
                     else:
                         logger.warning('Address PIN could not be parsed ({})'.format(a['PIN']))
+            regions = set(regions)
             # Business rules:
             # Didn't intersect a region? Might be bad geometry in the XML.
             # Likewise if >1 region was intersected, default to Swan Region
@@ -186,9 +199,13 @@ class EmailedReferral(models.Model):
                 if DopTrigger.objects.current().filter(name__istartswith=i).exists():
                     added_trigger = True
                     new_ref.dop_triggers.add(DopTrigger.objects.current().get(name__istartswith=i))
+                # A couple of exceptions for DoP triggers follow (specific -> general trigger).
                 elif i.startswith('BUSH FOREVER SITE'):
                     added_trigger = True
                     new_ref.dop_triggers.add(DopTrigger.objects.get(name='Bush Forever site'))
+                elif i.find('REGIONAL PARK') > -1:
+                    added_trigger = True
+                    new_ref.dop_triggers.add(DopTrigger.objects.get(name='Regional Park'))
             # If we didn't link any DoP triggers, link the "No Parks and Wildlife trigger" tag.
             if not added_trigger:
                 new_ref.dop_triggers.add(DopTrigger.objects.get(name='No Parks and Wildlife trigger'))

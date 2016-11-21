@@ -4,6 +4,8 @@
 
 {% block extra_style %}
 {{ block.super }}
+<link rel="stylesheet" type="text/css" href="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.9/css/dataTables.bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="{% static 'css/prs_datatables.css' %}" />
 {% if geojson_locations %}
 <link rel="stylesheet" href="//api.mapbox.com/mapbox.js/v2.2.1/mapbox.css" />
 <link rel="stylesheet" href="{% static 'leaflet-search/leaflet-search.css' %}" />
@@ -114,8 +116,8 @@
 <!-- Object related items -->
 {% if related_items %}
 <div id="object-related-items">
-    <h1>{{ related_items_title }}</h1>
-    <table class="tablesorter table table-striped table-bordered table-condensed" id="referral-objects-table">
+    <h2>{{ related_items_title }}</h2>
+    <table class="table table-striped table-bordered table-condensed related-objects-table" id="related-objects-table">
         <thead>
             <tr>
             {% for header in related_items_headers %}
@@ -134,18 +136,19 @@
 <!-- Object related records -->
 {% if related_records %}
 <div id="object-related-records">
-    <h1>Related records:</h1>
-    <table class="tablesorter table table-striped table-bordered table-condensed" id="related-objects-table">
+    <h2>Related records:</h2>
+    <table class="table table-striped table-bordered table-condensed related-objects-table" id="related-records-table">
         <thead>
             <tr>
             {% for header in record_headers %}
                 <th>{{ header }}</th>
             {% endfor %}
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
             {% for record in related_records %}
-            <tr>{{ record.as_row|safe }}</tr>
+            <tr>{{ record.as_row }}{{ record.as_row_actions }}</tr>
             {% endfor %}
         </tbody>
     </table>
@@ -154,18 +157,19 @@
 <!-- Object related tasks -->
 {% if related_tasks %}
 <div id="object-related-tasks">
-    <h1>Related tasks:</h1>
-    <table class="tablesorter table table-striped table-bordered table-condensed" id="related-objects-table">
+    <h2>Related tasks:</h2>
+    <table class="table table-striped table-bordered table-condensed related-objects-table" id="related-tasks-table">
         <thead>
             <tr>
             {% for header in task_headers %}
                 <th>{{ header }}</th>
             {% endfor %}
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
             {% for task in related_tasks %}
-            <tr>{{ task.as_row|safe }}</tr>
+            <tr>{{ task.as_row }}{{ task.as_row_actions }}</tr>
             {% endfor %}
         </tbody>
     </table>
@@ -174,18 +178,19 @@
 <!-- Object related notes -->
 {% if related_notes %}
 <div id="object-related-notes">
-    <h1>Related notes:</h1>
-    <table class="tablesorter table table-striped table-bordered table-condensed" id="related-objects-table">
+    <h2>Related notes:</h2>
+    <table class="table table-striped table-bordered table-condensed related-objects-table" id="related-notes-table">
         <thead>
             <tr>
             {% for header in note_headers %}
                 <th>{{ header }}</th>
             {% endfor %}
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
             {% for note in related_notes %}
-            <tr>{{ note.as_row|safe }}</tr>
+            <tr>{{ note.as_row }}{{ note.as_row_actions }}</tr>
             {% endfor %}
         </tbody>
     </table>
@@ -203,6 +208,10 @@
 
 {% block extra_js %}
 {{ block.super }}
+<script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.9/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.9/js/dataTables.bootstrap.min.js"></script>
+<script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/moment.js/2.10.6/moment.min.js"></script>
+<script type="text/javascript" src="{% static 'js/datetime-moment.js' %}"></script>
 {% if geojson_locations %}
 <script src="//api.mapbox.com/mapbox.js/v2.2.2/mapbox.js"></script>
 <script src="{% static 'leaflet-search/leaflet-search.min.js' %}"></script>
@@ -223,10 +232,24 @@
     locationsLayer.addTo(map);
 </script>
 {% endif %}
-
 <script type="text/javascript" charset="utf-8">
     $("#id_complete").click(function() {
        $('#complete_msg').removeClass('hidden');
+    });
+</script>
+<script type="text/javascript">
+    // Document ready events
+    $(function() {
+        // Initialise the DataTable.
+        $.fn.dataTable.moment("dd MMM YYYY", "en-AU");
+        var dataTable = $(".related-objects-table").DataTable({
+            "autoWidth": false,
+            "info": false,
+            "ordering": true,
+            "paging": false,
+            "responsive": true,
+            "searching": false
+        });
     });
 </script>
 {% endblock extra_js %}
