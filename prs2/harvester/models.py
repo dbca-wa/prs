@@ -169,7 +169,7 @@ class EmailedReferral(models.Model):
                 assigned = assignee_default
                 logger.warning('>1 regions were intersected ({}), defaulting to {} ({})'.format(regions, region, assigned))
             else:
-                region = regions[0]
+                region = regions.pop()
                 try:
                     assigned = RegionAssignee.objects.get(region=region).user
                 except:
