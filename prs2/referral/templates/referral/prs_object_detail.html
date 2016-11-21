@@ -116,7 +116,7 @@
 <!-- Object related items -->
 {% if related_items %}
 <div id="object-related-items">
-    <h1>{{ related_items_title }}</h1>
+    <h2>{{ related_items_title }}</h2>
     <table class="table table-striped table-bordered table-condensed related-objects-table" id="related-objects-table">
         <thead>
             <tr>
@@ -136,18 +136,19 @@
 <!-- Object related records -->
 {% if related_records %}
 <div id="object-related-records">
-    <h1>Related records:</h1>
+    <h2>Related records:</h2>
     <table class="table table-striped table-bordered table-condensed related-objects-table" id="related-records-table">
         <thead>
             <tr>
             {% for header in record_headers %}
                 <th>{{ header }}</th>
             {% endfor %}
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
             {% for record in related_records %}
-            <tr>{{ record.as_row|safe }}</tr>
+            <tr>{{ record.as_row }}{{ record.as_row_actions }}</tr>
             {% endfor %}
         </tbody>
     </table>
@@ -156,18 +157,19 @@
 <!-- Object related tasks -->
 {% if related_tasks %}
 <div id="object-related-tasks">
-    <h1>Related tasks:</h1>
+    <h2>Related tasks:</h2>
     <table class="table table-striped table-bordered table-condensed related-objects-table" id="related-tasks-table">
         <thead>
             <tr>
             {% for header in task_headers %}
                 <th>{{ header }}</th>
             {% endfor %}
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
             {% for task in related_tasks %}
-            <tr>{{ task.as_row|safe }}</tr>
+            <tr>{{ task.as_row }}{{ task.as_row_actions }}</tr>
             {% endfor %}
         </tbody>
     </table>
@@ -176,18 +178,19 @@
 <!-- Object related notes -->
 {% if related_notes %}
 <div id="object-related-notes">
-    <h1>Related notes:</h1>
+    <h2>Related notes:</h2>
     <table class="table table-striped table-bordered table-condensed related-objects-table" id="related-notes-table">
         <thead>
             <tr>
             {% for header in note_headers %}
                 <th>{{ header }}</th>
             {% endfor %}
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
             {% for note in related_notes %}
-            <tr>{{ note.as_row|safe }}</tr>
+            <tr>{{ note.as_row }}{{ note.as_row_actions }}</tr>
             {% endfor %}
         </tbody>
     </table>
