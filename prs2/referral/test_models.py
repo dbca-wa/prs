@@ -288,6 +288,16 @@ class ReferralTest(PrsTestCase):
             else:
                 self.assertIsNone(r.generate_qgis_layer())
 
+    def test_generate_qgis_layer_specify_template(self):
+        """Test the Referral model generate_qgis_layer() method with the template version specified
+        """
+        for r in Referral.objects.all():
+            if r.location_set.current().filter(poly__isnull=False).exists():
+                # The method will return a unicode string.
+                self.assertIsInstance(r.generate_qgis_layer('qgis_layer_v2-16'), unicode)
+            else:
+                self.assertIsNone(r.generate_qgis_layer('qgis_layer_v2-16'))
+
 
 class TaskTest(PrsTestCase):
     """Unit tests specific to the ``Task`` model class.
