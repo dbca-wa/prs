@@ -477,19 +477,23 @@ class Referral(ReferralBaseModel):
             return True
         return False
 
-    def generate_qgis_layer(self):
+    def generate_qgis_layer(self, template=None):
         """Generates and returns the content for a QGIS layer definition.
+        Optionally specify the name of the template (defaults to the v2.8
+        compatible template).
         """
         # Only return a value for a referral with child locations.
         if not self.location_set.current().filter(poly__isnull=False).exists():
             return None
         # Read in the base Jinja template.
-        t = Template(open('prs2/referral/templates/qgis_layer.jinja', 'r').read())
+        if template:  # Specify template version.
+            t = Template(open('prs2/referral/templates/{}.jinja'.format(template), 'r').read())
+        else:  # Default to QGIS 2.8-compatible template.
+            t = Template(open('prs2/referral/templates/qgis_layer.jinja', 'r').read())
         # Build geographical extent of associated locations.
         qs = self.location_set.current().filter(poly__isnull=False).aggregate(models.Extent('poly'))
         xmin, ymin, xmax, ymax = qs['poly__extent']
-        d = {
-            'REFERRAL_PK': self.pk}
+        d = {'REFERRAL_PK': self.pk}
         return t.render(**d)
 
 

@@ -259,7 +259,10 @@ class ReferralDetail(PrsObjectDetail):
             return HttpResponseRedirect(reverse('site_home'))
         # Override the get() to optionally return a QGIS layer definition.
         if 'generate_qgis' in request.GET and ref.location_set.current().exists():
-            content = ref.generate_qgis_layer()
+            if 'qgis_ver' in request.GET and request.GET['qgis_ver'] == '2_16':
+                content = ref.generate_qgis_layer('qgis_layer_v2-16')
+            else:
+                content = ref.generate_qgis_layer()
             fn = 'prs_referral_{}.qlr'.format(ref.pk)
             resp = HttpResponse(content, content_type='application/x-qgis-project')
             resp['Content-Disposition'] = 'attachment; filename="{}"'.format(fn)
