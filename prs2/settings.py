@@ -31,6 +31,9 @@ if not DEBUG:
         'prs-uat.dpaw.wa.gov.au',
         'prs-uat.dpaw.wa.gov.au.',
     ]
+else:
+    ALLOWED_HOSTS = ['*']
+
 INTERNAL_IPS = ['127.0.0.1', '::1']
 ROOT_URLCONF = 'prs2.urls'
 WSGI_APPLICATION = 'prs2.wsgi.application'
