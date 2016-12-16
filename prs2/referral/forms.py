@@ -134,7 +134,6 @@ class TaskOutcomeField(forms.ModelChoiceField):
 class BaseFormHelper(FormHelper):
     """Base FormHelper class, with common options set.
     """
-
     def __init__(self, *args, **kwargs):
         super(BaseFormHelper, self).__init__(*args, **kwargs)
         self.form_class = 'form-horizontal'
@@ -430,16 +429,24 @@ class RecordCreateForm(RecordForm):
         exclude = BaseForm.Meta.exclude + ['referral', 'notes']
 
 
+class CustomFormHelper(BaseFormHelper):
+    """Override the BaseFormHelper to change field_class.
+    TODO: this is a bad solution for making a single field widget wider.
+    """
+    def __init__(self, *args, **kwargs):
+        super(CustomFormHelper, self).__init__(*args, **kwargs)
+        self.field_class = 'col-xs-12 col-sm-8 col-md-9 col-lg-10'
+
+
 class RecordAddExistingForm(BaseForm):
-    '''
-    Form for associating existing record(s) to a task
-    '''
+    """Form for associating existing record(s) to a task or note.
+    """
     records = forms.ModelMultipleChoiceField(queryset=None)
 
     def __init__(self, referral, *args, **kwargs):
         super(RecordAddExistingForm, self).__init__(*args, **kwargs)
         self.fields['records'].queryset = Record.objects.current().filter(referral=referral)
-        self.helper = BaseFormHelper()
+        self.helper = CustomFormHelper()
         layout = Layout(
             'records',
             Div(

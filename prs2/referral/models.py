@@ -822,11 +822,10 @@ class Task(ReferralBaseModel):
 
 
 class Record(ReferralBaseModel):
-    '''
-    Inherits from the abstract model class ReferralBaseModel.
+    """Inherits from the abstract model class ReferralBaseModel.
     A record is a reference to an electronic file, and is associated with a
     Referral.
-    '''
+    """
     name = models.CharField(
         max_length=512,
         help_text='The name/description of the record (max 512 characters).',
@@ -852,11 +851,11 @@ class Record(ReferralBaseModel):
     tools_template = 'referral/record_tools.html'
 
     def __unicode__(self):
-        return unicode('Record: {}'.format(smart_truncate(self.name, length=40)))
+        return unicode(smart_truncate(self.name, length=256))
 
     def save(self, force_insert=False, force_update=False, *args, **kwargs):
-        '''Overide save() to cleanse text input fields.
-        '''
+        """Overide save() to cleanse text input fields.
+        """
         self.name = unidecode(unicode(self.name))
         if self.description:
             self.description = unidecode(unicode(self.description))
