@@ -249,7 +249,14 @@ class EmailedReferral(models.Model):
                 assigned_user=assigned
             )
             new_task.state = assess_task.initial_state
-            new_task.due_date = datetime.today() + timedelta(assess_task.target_days)
+            if 'DUE_DATE' in app and app['DUE_DATE']:
+                try:
+                    due = datetime.strptime(app['DUE_DATE'], '%d-%b-%y')
+                except:
+                    due = datetime.today() + timedelta(assess_task.target_days)
+            else:
+                due = datetime.today() + timedelta(assess_task.target_days)
+            new_task.due_date = due
             new_task.save()
             logger.info('New PRS task generated: {} assigned to {}'.format(new_task, assigned.get_full_name()))
             actions.append('{} New PRS task generated: {} assigned to {}'.format(datetime.now().isoformat(), new_task, assigned.get_full_name()))
