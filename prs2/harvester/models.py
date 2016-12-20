@@ -203,6 +203,9 @@ class EmailedReferral(models.Model):
                 elif i.startswith('BUSH FOREVER SITE'):
                     added_trigger = True
                     new_ref.dop_triggers.add(DopTrigger.objects.get(name='Bush Forever site'))
+                elif i.startswith('DPW ESTATE'):
+                    added_trigger = True
+                    new_ref.dop_triggers.add(DopTrigger.objects.get(name='Parks and Wildlife estate'))
                 elif i.find('REGIONAL PARK') > -1:
                     added_trigger = True
                     new_ref.dop_triggers.add(DopTrigger.objects.get(name='Regional Park'))
