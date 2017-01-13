@@ -77,12 +77,12 @@ class EmailedReferral(models.Model):
             actions.append('{} Harvested referral {} parsing of application.xml failed'.format(datetime.now().isoformat(), self))
         app = d['APPLICATION']
         ref = app['WAPC_APPLICATION_NO']
-        if Referral.objects.current().filter(reference__icontains=ref):
+        if Referral.objects.current().filter(reference__iexact=ref):
             # Note if the the reference no. exists in PRS already.
             logger.info('Referral ref {} is already in database'.format(ref))
             actions.append('{} Referral ref {} is already in database'.format(datetime.now().isoformat(), ref))
             referral_preexists = True
-            new_ref = Referral.objects.current().filter(reference__icontains=ref).order_by('-pk').first()
+            new_ref = Referral.objects.current().filter(reference__iexact=ref).order_by('-pk').first()
         else:
             referral_preexists = False
 
