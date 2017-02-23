@@ -1,7 +1,9 @@
+from __future__ import unicode_literals
 from datetime import date, timedelta
 from django.db.models.base import ModelBase
 from django.db.models.query import QuerySet
 from django.test import RequestFactory
+from django.utils import six
 from referral.models import Referral, Task
 from referral.test_models import PrsTestCase
 from referral.utils import (
@@ -11,9 +13,12 @@ from referral.utils import (
 
 
 WORD_HTML_SAMPLE = '''<div class=Section1>
-<p>Hi Joe</p>\r\n<p>\u0xe2Just following up on the clearance of the remaining
+<p>Hi Joe</p>
+<p>\\u0xe2Just following up on the clearance of the remaining
 conditions.  Did the additional information supplied recently meet the
-Department\u2019s requirements?</p>\r\n<p>Regards</p>\r\n<p>John</p>\r\n
+Department\\u2019s requirements?</p>
+<p>Regards</p>
+<p>John</p>
 <p style='margin-top:3.0pt;margin-right:0in;margin-bottom:0in;margin-left:.2in;
 margin-bottom:.0001pt;text-indent:-.2in'><a name=a.1></a><b>a</b><b><sup><span
 style='font-size:10.0pt'>1</span></sup></b> (&lt; PPN *'a) <i>[personal pronoun
@@ -42,8 +47,7 @@ statements. <i>Te aa ku tele?</i>, 'what is running?'; <i>te vaka ku aa?</i>,
 'what is going on?' or, 'what are you up to?'; <i>a koe ku aa?</i>, 'how are
 you feeling?' or, 'what are you doing at this specific moment?'; <i>koe e noho
 ki aa?</i>, 'you are staying for what purpose?'. </p>
-</div>
-'''
+</div>'''
 
 
 class UtilsTest(PrsTestCase):
@@ -96,7 +100,7 @@ class UtilsTest(PrsTestCase):
         """
         l = [('/A', 'A'), ('/A/B', 'B'), ('', 'C',)]
         crumbs = breadcrumbs_li(l)
-        self.assertIs(type(crumbs), unicode)
+        self.assertTrue(isinstance(crumbs, six.text_type))
 
     def test_slugify(self):
         """Test the customised slugify function
@@ -121,7 +125,7 @@ class UtilsTest(PrsTestCase):
         get = r.get('/filter', {'q': "test filter  string  to 'normalise'"})
         ret = filter_queryset(get, Referral, Referral.objects.all())
         self.assertTrue(isinstance(ret[0], QuerySet))
-        self.assertTrue(isinstance(ret[1], unicode))
+        self.assertTrue(isinstance(ret[1], six.text_type))
 
     def test_user_task_history(self):
         """Test the user_task_history inserts correct data to a user profile
@@ -139,13 +143,10 @@ class UtilsTest(PrsTestCase):
     def test_dewordify_text(self):
         """Test the dewordify_text utility function
         """
-        self.assertTrue(isinstance(dewordify_text(None), unicode))
-        self.assertTrue(isinstance(dewordify_text(''), unicode))
-        self.assertTrue(isinstance(dewordify_text(u''), unicode))
-        self.assertTrue(isinstance(dewordify_text('Short test'), unicode))
-        self.assertTrue(isinstance(dewordify_text(u'Short test'), unicode))
-        self.assertTrue(isinstance(dewordify_text(WORD_HTML_SAMPLE), unicode))
-        self.assertTrue(isinstance(dewordify_text(unicode(WORD_HTML_SAMPLE)), unicode))
+        self.assertFalse(dewordify_text(None))
+        self.assertFalse(dewordify_text(''))
+        self.assertTrue(dewordify_text('Short test'))
+        self.assertTrue(dewordify_text(WORD_HTML_SAMPLE))
 
     def test_overdue_task_email(self):
         """Test the function for sending emails about overdue tasks

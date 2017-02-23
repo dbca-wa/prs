@@ -15,7 +15,7 @@ class AuditAdmin(VersionAdmin, ModelAdmin):
     search_fields = [
         'id', 'creator__username', 'modifier__username', 'creator__email',
         'modifier__email']
-    list_display = ['__unicode__', 'creator', 'modifier', 'created', 'modified']
+    list_display = ['__str__', 'creator', 'modifier', 'created', 'modified']
     raw_id_fields = ['creator', 'modifier']
 
 

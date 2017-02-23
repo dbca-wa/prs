@@ -184,7 +184,7 @@ class PrsObjectDetail(LoginRequiredMixin, DetailView):
         context['page_title'] = ' | '.join([
             settings.APPLICATION_ACRONYM,
             self.model._meta.verbose_name_plural.capitalize(),
-            unicode(obj.pk)])
+            str(obj.pk)])
         context['page_heading'] = self.model._meta.verbose_name.upper() + ' DETAILS'
         # Create a breadcrumb trail: Home[URL] > Model[URL] > ID
         context['breadcrumb_trail'] = breadcrumbs_li([
@@ -193,7 +193,7 @@ class PrsObjectDetail(LoginRequiredMixin, DetailView):
                 'prs_object_list',
                 kwargs={'model': self.model._meta.object_name.lower()}),
                 self.model._meta.verbose_name_plural.capitalize()),
-            (None, unicode(obj.pk))])
+            (None, obj.pk)])
         # Related model table headers.
         context['note_headers'] = Note.headers
         context['record_headers'] = Record.headers
@@ -311,7 +311,7 @@ class PrsObjectHistory(PrsObjectDetail):
         obj = self.get_object()
         context['title'] = 'CHANGE HISTORY: {}'.format(obj)
         context['page_title'] = ' | '.join([
-            settings.APPLICATION_ACRONYM, self.get_object().__unicode__(),
+            settings.APPLICATION_ACRONYM, self.get_object().__str__(),
             'History'])
         context['page_heading'] = self.model._meta.verbose_name.upper() + ' CHANGE HISTORY'
         # Create a breadcrumb trail: Home[URL] > Model[URL] > ID > History
@@ -354,7 +354,7 @@ class PrsObjectDelete(LoginRequiredMixin, DeleteView):
         context['title'] = 'DELETE {}'.format(obj._meta.object_name.upper())
         context['page_title'] = ' | '.join([
             settings.APPLICATION_ACRONYM,
-            'Delete {}'.format(self.get_object().__unicode__())])
+            'Delete {}'.format(self.get_object().__str__())])
         context['page_heading'] = 'DELETE ' + self.model._meta.verbose_name.upper()
         # Create a breadcrumb trail: Home[URL] > Model[URL] > ID > History
         context['breadcrumb_trail'] = breadcrumbs_li([

@@ -49,7 +49,7 @@ def is_model_or_string(model):
     return model
 
 
-def smart_truncate(content, length=100, suffix=u'....(more)'):
+def smart_truncate(content, length=100, suffix='....(more)'):
     """Small function to truncate a string in a sensible way, sourced from:
     http://stackoverflow.com/questions/250357/smart-truncate-in-python
     """
@@ -57,7 +57,7 @@ def smart_truncate(content, length=100, suffix=u'....(more)'):
     if len(content) <= length:
         return content
     else:
-        return u' '.join(content[:length + 1].split(' ')[0:-1]) + suffix
+        return ' '.join(content[:length + 1].split(' ')[0:-1]) + suffix
 
 
 def dewordify_text(txt):
@@ -81,14 +81,14 @@ def dewordify_text(txt):
         return REPLACEMENTS[m.group(0)]
 
     if txt:
-        # Whatever string encoding is passed in, cast it to unicode and then
+        # Whatever string encoding is passed in,
         # use unidecode to replace non-ASCII characters.
-        txt = unidecode(unicode(txt))  # Replaces odd characters.
+        txt = unidecode(txt)  # Replaces odd characters.
         r = re.compile('|'.join(REPLACEMENTS.keys()))
         r = r.sub(replacer, txt)
-        return unicode(r)
+        return r
     else:
-        return u''
+        return ''
 
 
 def breadcrumbs_li(links):
@@ -273,7 +273,7 @@ def borgcollector_harvest(request, publishes=['prs_locations']):
 def slugify(value):
     """A (slightly) customised slugify function.
     """
-    return django_slugify(unidecode(unicode(value)))
+    return django_slugify(unidecode(value))
 
 
 def overdue_task_email():

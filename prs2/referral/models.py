@@ -13,6 +13,7 @@ from django.core.mail import EmailMultiAlternatives
 from django.core.urlresolvers import reverse
 from django.core.validators import MaxLengthValidator
 from django.db.models import Q
+from django.utils.encoding import python_2_unicode_compatible
 from django.utils.safestring import mark_safe
 # Third-party app imports
 from autoslug import AutoSlugField
@@ -38,7 +39,7 @@ AU_STATE_CHOICES = Choices(
     (8, 'wa', ('WA')),
 )
 
-
+@python_2_unicode_compatible
 class ReferralLookup(ActiveModel, Audit):
     """Abstract model type for lookup-table objects.
     """
@@ -56,41 +57,44 @@ class ReferralLookup(ActiveModel, Audit):
         abstract = True
         ordering = ['name']
 
-    def __unicode__(self):
-        return unicode(self.name)
+    def __str__(self):
+        return self.name
 
     def save(self, force_insert=False, force_update=False, *args, **kwargs):
         '''Overide save() to cleanse text input fields.
         '''
-        self.name = unidecode(unicode(self.name))
+        self.name = unidecode(self.name)
         if self.description:
-            self.description = unidecode(unicode(self.description))
+            self.description = unidecode(self.description)
         super(ReferralLookup, self).save(force_insert, force_update)
 
     def get_absolute_url(self):
-        return unicode(reverse(
+        return reverse(
             'prs_object_detail',
             kwargs={
                 'model': self._meta.verbose_name_plural.lower().replace(' ', ''),
-                'pk': self.pk}))
+                'pk': self.pk})
 
     def as_row(self):
         '''
         Returns a string of HTML that renders the object details as table row cells.
         Remember to enclose output of this function in <tr> tags.
         '''
-        template = u'<td><a href="{url}">{name}</a></td><td>{description}</td><td>{modified}</td>'
+        template = '<td><a href="{url}">{name}</a></td><td>{description}</td><td>{modified}</td>'
         d = copy(self.__dict__)
         d['url'] = self.get_absolute_url()
-        d['description'] = unidecode(unicode(self.description) or u'')
+        if self.description:
+            d['description'] = unidecode(self.description)
+        else:
+            d['description'] = ''
         d['modified'] = self.modified.strftime("%d %b %Y")
-        return unicode(mark_safe(template.format(**d)))
+        return mark_safe(template.format(**d))
 
     def as_tbody(self):
         '''
         Returns a string of HTML to render the object details inside <tbody> tags.
         '''
-        template = u'''<tr><th>ID</th><td>{id}</td></tr>
+        template = '''<tr><th>ID</th><td>{id}</td></tr>
             <tr><th>Name</th><td>{name}</td></tr>
             <tr><th>Description</th><td>{description}</td></tr>
             <tr><th>Date created</th><td>{created}</td></tr>
@@ -171,7 +175,7 @@ class Organisation(ReferralLookup):
         '''
         Returns a string of HTML to render the object details inside <tbody> tags.
         '''
-        template = u'''<tr><th>Name</th><td>{name}</td></tr>
+        template = '''<tr><th>Name</th><td>{name}</td></tr>
             <tr><th>Description</th><td>{description}</td></tr>
             <tr><th>Type</th><td>{type}</td></tr>
             <tr><th>List name</th><td>{list_name}</td></tr>
@@ -271,6 +275,7 @@ class Agency(ReferralLookup):
         verbose_name_plural = 'agencies'
 
 
+@python_2_unicode_compatible
 class ReferralBaseModel(ActiveModel, Audit):
     '''
     Base abstract model class for object types that are not lookups.
@@ -282,15 +287,15 @@ class ReferralBaseModel(ActiveModel, Audit):
         abstract = True
         ordering = ['-created']
 
-    def __unicode__(self):
-        return u'{0} {1}'.format(self._meta.object_name, self.pk)
+    def __str__(self):
+        return '{0} {1}'.format(self._meta.object_name, self.pk)
 
     def get_absolute_url(self):
-        return unicode(reverse(
+        return reverse(
             'prs_object_detail',
             kwargs={
                 'model': self._meta.verbose_name_plural.lower().replace(' ', ''),
-                'pk': self.pk}))
+                'pk': self.pk})
 
 
 class Referral(ReferralBaseModel):
@@ -351,13 +356,13 @@ class Referral(ReferralBaseModel):
         '''Overide save to cleanse text input to the description, address fields.
         '''
         if self.description:
-            self.description = unidecode(unicode(self.description))
+            self.description = unidecode(self.description)
         if self.address:
-            self.address = unidecode(unicode(self.address))
+            self.address = unidecode(self.address)
         super(Referral, self).save(force_insert, force_update)
 
     def get_absolute_url(self):
-        return unicode(reverse('referral_detail', kwargs={'pk': self.pk}))
+        return reverse('referral_detail', kwargs={'pk': self.pk})
 
     @property
     def regions_str(self):
@@ -369,7 +374,7 @@ class Referral(ReferralBaseModel):
         '''
         if not self.region.all():
             return None
-        return unicode(', '.join([r.name for r in self.region.all()]))
+        return ', '.join([r.name for r in self.region.all()])
 
     @property
     def dop_triggers_str(self):
@@ -378,7 +383,7 @@ class Referral(ReferralBaseModel):
         '''
         if not self.dop_triggers.all():
             return None
-        return unicode(', '.join([r.name for r in self.dop_triggers.all()]))
+        return ', '.join([r.name for r in self.dop_triggers.all()])
 
     @property
     def has_location(self):
@@ -404,7 +409,7 @@ class Referral(ReferralBaseModel):
         Returns a string of HTML that renders the object details as table row cells.
         Remember to enclose this function in <tr> tags.
         '''
-        template = u'''<td><a href="{url}">{id}</a></td>
+        template = '''<td><a href="{url}">{id}</a></td>
             <td>{referral_date}</td>
             <td>{description}</td></td>
             <td>{address}</td>
@@ -418,15 +423,21 @@ class Referral(ReferralBaseModel):
         d['region'] = self.regions_str
         d['referring_org'] = self.referring_org
         d['referral_date'] = self.referral_date.strftime('%d %b %Y') or ''
-        d['address'] = unidecode(unicode(self.address) or u'')
-        d['description'] = unidecode(unicode(self.description) or u'')
+        if self.address:
+            d['address'] = unidecode(self.address)
+        else:
+            d['address'] = ''
+        if self.description:
+            d['description'] = unidecode(self.description)
+        else:
+            d['description'] = ''
         return mark_safe(template.format(**d))
 
     def as_tbody(self):
         '''
         Returns a string of HTML to render the object details inside <tbody> tags.
         '''
-        template = u'''<tr><th>Referral ID</th><td><a href="{url}">{id}</a></td></tr>
+        template = '''<tr><th>Referral ID</th><td><a href="{url}">{id}</a></td></tr>
             <tr><th>Referrer's reference</th><td>{reference}</td></tr>
             <tr><th>Description</th><td>{description}</td></tr>
             <tr><th>Address</th><td>{address}</td></tr>
@@ -444,9 +455,15 @@ class Referral(ReferralBaseModel):
         d['dop_triggers'] = self.dop_triggers_str
         d['referring_org'] = self.referring_org
         d['file_no'] = self.file_no or ''
-        d['description'] = unidecode(unicode(self.description) or u'')
+        if self.description:
+            d['description'] = unidecode(self.description)
+        else:
+            d['description'] = ''
         d['referral_date'] = self.referral_date.strftime('%d-%b-%Y')
-        d['address'] = unidecode(unicode(self.address) or u'')
+        if self.address:
+            d['address'] = unidecode(self.address)
+        else:
+            d['address'] = ''
         d['lga'] = self.lga.name if self.lga else ''
         return mark_safe(template.format(**d).strip())
 
@@ -497,6 +514,7 @@ class Referral(ReferralBaseModel):
         return t.render(**d)
 
 
+@python_2_unicode_compatible
 class RelatedReferral(models.Model):
     '''
     Intermediate class for relationships between Referral objects.
@@ -508,12 +526,11 @@ class RelatedReferral(models.Model):
     to_referral = models.ForeignKey(
         Referral, on_delete=models.PROTECT, related_name='to_referral')
 
-    def __unicode__(self):
-        return unicode(
-            '{0} ({1} to {2})'.format(
-                self.pk,
-                self.from_referral.pk,
-                self.to_referral.pk))
+    def __str__(self):
+        return '{0} ({1} to {2})'.format(
+            self.pk,
+            self.from_referral.pk,
+            self.to_referral.pk)
 
 
 class Task(ReferralBaseModel):
@@ -565,7 +582,7 @@ class Task(ReferralBaseModel):
         '''Overide save() to cleanse text input to the description field.
         '''
         if self.description:
-            self.description = unidecode(unicode(self.description))
+            self.description = unidecode(self.description)
         super(Task, self).save(force_insert, force_update)
 
     def as_row(self):
@@ -573,7 +590,7 @@ class Task(ReferralBaseModel):
         Returns a string of HTML that renders the object details as table row cells.
         Remember to enclose this function in <tr> tags.
         '''
-        template = u'''<td><a href="{url}">Open</a></td>
+        template = '''<td><a href="{url}">Open</a></td>
             <td>{type}</td>
             <td>{description}</td>
             <td>{address}</td>
@@ -619,12 +636,12 @@ class Task(ReferralBaseModel):
         '''
         d = copy(self.__dict__)
         if self.state.name == 'Stopped':
-            template = u'''<td><a class="is_prs_user_action" href="{start_url}" title="Start"><i class="fa fa-play"></i></a></td>'''
+            template = '''<td><a class="is_prs_user_action" href="{start_url}" title="Start"><i class="fa fa-play"></i></a></td>'''
             d['start_url'] = reverse('task_action', kwargs={'pk': self.pk, 'action': 'start'})
         elif not self.complete_date:
-            template = u'''<td><a class="is_prs_user_action" href="{edit_url}" title="Edit"><i class="fa fa-pencil"></i></a>'''
-            template += u''' <a class="is_prs_user_action" href="{complete_url}" title="Complete"><i class="fa fa-check-square-o"></i></a>'''
-            template += u'''
+            template = '''<td><a class="is_prs_user_action" href="{edit_url}" title="Edit"><i class="fa fa-pencil"></i></a>'''
+            template += ''' <a class="is_prs_user_action" href="{complete_url}" title="Complete"><i class="fa fa-check-square-o"></i></a>'''
+            template += '''
                 <a class="is_prs_user_action" href="{stop_url}" title="Stop"><i class="fa fa-stop"></i></a>
                 <a class="is_prs_user_action" href="{reassign_url}" title="Reassign"><i class="fa fa-share"></i></a>
                 <a class="is_prs_user_action" href="{cancel_url}" title="Cancel"><i class="fa fa-ban"></i></a>
@@ -640,7 +657,7 @@ class Task(ReferralBaseModel):
             d['cancel_url'] = reverse('task_action', kwargs={'pk': self.pk, 'action': 'cancel'})
             d['delete_url'] = reverse('prs_object_delete', kwargs={'pk': self.pk, 'model': 'task'})
         else:
-            template = u'<td></td>'
+            template = '<td></td>'
         return mark_safe(template.format(**d))
 
     def as_row_minus_referral(self):
@@ -676,35 +693,41 @@ class Task(ReferralBaseModel):
         template to check prs_user permissions and disables Actions for
         readonly users.
         """
-        template = u'<td>{type}</td>'
+        template = '<td>{type}</td>'
         if self.referral.address:  # If the referral has an address, include it in the description field.
-            template += u'<td>{description}<br><b>Address: </b>{address}</td>'
+            template += '<td>{description}<br><b>Address: </b>{address}</td>'
         else:
-            template += u'<td>{description}</td>'
-        template += u'''<td><a href="{referral_url}">{referral_pk}</a></td>
+            template += '<td>{description}</td>'
+        template += '''<td><a href="{referral_url}">{referral_pk}</a></td>
             <td>{type}</td>
             <td>{referring_org}</td>
             <td>{reference}</td>
             <td>{due_date}</td>'''
         if self.is_stopped:  # Render a different set of action icons if the task is stopped.
-            template += u'''<td class="action-icons-cell">
+            template += '''<td class="action-icons-cell">
                 <a class="is_prs_user_action" href="{start_url}" title="Start"><i class="fa fa-play"></i></a></td>'''
         elif not self.complete_date:  # Render icons if the task is not completed.
-            template += u'''<td class="action-icons-cell">
+            template += '''<td class="action-icons-cell">
                 <a class="is_prs_user_action" href="{complete_url}" title="Complete"><i class="fa fa-check-square-o"></i></a>
                 <a class="is_prs_user_action" href="{stop_url}" title="Stop"><i class="fa fa-stop"></i></a>
                 <a class="is_prs_user_action" href="{reassign_url}" title="Reassign"><i class="fa fa-share"></i></a>
                 <a class="is_prs_user_action" href="{cancel_url}" title="Cancel"><i class="fa fa-ban"></i></a>'''
         else:  # Render an empty table cell.
-            template += u'<td class="action-icons-cell"></td>'
+            template += '<td class="action-icons-cell"></td>'
         d = copy(self.__dict__)
         d['type'] = self.type
-        d['description'] = unidecode(unicode(self.description) or u'')
+        if self.description:
+            d['description'] = unidecode(self.description)
+        else:
+            d['description'] = ''
         d['referral_url'] = self.referral.get_absolute_url()
         d['referral_pk'] = self.referral.pk
         d['referring_org'] = self.referral.referring_org
         d['reference'] = self.referral.reference
-        d['address'] = unidecode(unicode(self.referral.address) or u'')
+        if self.referral.address:
+            d['address'] = unidecode(self.referral.address)
+        else:
+            d['address'] = ''
         if self.due_date:
             d['due_date'] = self.due_date.strftime('%d %b %Y')
         else:
@@ -719,25 +742,31 @@ class Task(ReferralBaseModel):
     def as_row_for_index_print(self):
         """As above, minus the column for icons.
         """
-        template = u'''<td>{type}</td>'''
+        template = '''<td>{type}</td>'''
         # If the task referral has an address, combine it into the next cell.
         if self.referral.address:
-            template += u'<td>{description}<br><b>Address: </b>{address}</td>'
+            template += '<td>{description}<br><b>Address: </b>{address}</td>'
         else:
-            template += u'<td>{description}</td>'
-        template += u'''<td>{referral_pk}</td>
+            template += '<td>{description}</td>'
+        template += '''<td>{referral_pk}</td>
             <td>{type}</td>
             <td>{referring_org}</td>
             <td>{reference}</td>
             <td>{due_date}</td>'''
         d = copy(self.__dict__)
         d['type'] = self.type
-        d['description'] = unidecode(unicode(self.description) or u'')
+        if self.description:
+            d['description'] = unidecode(self.description)
+        else:
+            d['description'] = ''
         d['referral_pk'] = self.referral.pk
         d['referring_org'] = self.referral.referring_org
         d['type'] = self.referral.type
         d['reference'] = self.referral.reference
-        d['address'] = unidecode(unicode(self.referral.address) or u'')
+        if self.referral.address:
+            d['address'] = unidecode(self.referral.address)
+        else:
+            d['address'] = ''
         if self.due_date:
             d['due_date'] = self.due_date.strftime("%d %b %Y")
         else:
@@ -748,7 +777,7 @@ class Task(ReferralBaseModel):
         '''
         Returns a string of HTML to render the object details inside <tbody> tags.
         '''
-        template = u'''<tr><th>Type</th><td>{type}</td></tr>
+        template = '''<tr><th>Type</th><td>{type}</td></tr>
             <tr><th>Referral ID</th><td><a href="{referral_url}">{referral_id}</a></td></tr>
             <tr><th>Referrer's reference</th><td>{reference}</td></tr>
             <tr><th>Assigned to</th><td>{assigned_user}</td></tr>
@@ -791,7 +820,10 @@ class Task(ReferralBaseModel):
             d['restart_date'] = ''
         if d['stop_time'] == 0:
             d['stop_time'] = ''
-        d['description'] = unidecode(unicode(self.description) or '')
+        if self.description:
+            d['description'] = unidecode(self.description)
+        else:
+            d['description'] = ''
         return mark_safe(template.format(**d).strip())
 
     def email_user(self, from_email=None):
@@ -850,15 +882,15 @@ class Record(ReferralBaseModel):
         'Record', 'Date', 'Name', 'Infobase ID', 'Referral ID', 'Type', 'Size']
     tools_template = 'referral/record_tools.html'
 
-    def __unicode__(self):
-        return unicode(smart_truncate(self.name, length=256))
+    def __str__(self):
+        return smart_truncate(self.name, length=256)
 
     def save(self, force_insert=False, force_update=False, *args, **kwargs):
         """Overide save() to cleanse text input fields.
         """
-        self.name = unidecode(unicode(self.name))
+        self.name = unidecode(self.name)
         if self.description:
-            self.description = unidecode(unicode(self.description))
+            self.description = unidecode(self.description)
         super(Record, self).save(force_insert, force_update)
 
     @property
@@ -898,7 +930,7 @@ class Record(ReferralBaseModel):
         Returns a string of HTML that renders the object details as table row cells.
         Remember to enclose this function in <tr> tags.
         '''
-        template = u'''<td><a href="{url}">Open</a></td>
+        template = '''<td><a href="{url}">Open</a></td>
             <td>{order_date}</td>
             <td>{name}</td>
             <td><a href="{infobase_url}">{infobase_id}</a></td>
@@ -937,7 +969,7 @@ class Record(ReferralBaseModel):
         html attr class="is_prs_user_action" is used by javascript in the template to
         check prs_user permissions and disables Actions for readonly users.
         '''
-        template = u'''<td><a class="is_prs_user_action" href="{edit_url}" title="Edit"><i class="fa fa-pencil"></i></a>
+        template = '''<td><a class="is_prs_user_action" href="{edit_url}" title="Edit"><i class="fa fa-pencil"></i></a>
             <a class="is_prs_user_action" href="{delete_url}" title="Delete"><i class="fa fa-trash-o"></i></a></td>'''
         d = copy(self.__dict__)
         d['edit_url'] = reverse('prs_object_update', kwargs={'pk': self.pk, 'model': 'records'})
@@ -953,7 +985,7 @@ class Record(ReferralBaseModel):
         """Returns a string of HTML to render the object details inside <tbody>
         tags.
         """
-        template = u'''<tr><th>Name</th><td>{name}</td></tr>
+        template = '''<tr><th>Name</th><td>{name}</td></tr>
             <tr><th>Referral</th><td><a href="{referral_url}">{referral}</a></td></tr>
             <tr><th>Referrer's reference</th><td>{reference}</td></tr>
             <tr><th>Infobase ID</th><td><a href="{infobase_url}">{infobase_id}</a></td></tr>
@@ -1013,8 +1045,8 @@ class Note(ReferralBaseModel):
     class Meta:
         ordering = ['order_date']
 
-    def __unicode__(self):
-        return unicode(self.short_note)
+    def __str__(self):
+        return self.short_note
 
     def save(self, force_insert=False, force_update=False, *args, **kwargs):
         '''
@@ -1024,12 +1056,12 @@ class Note(ReferralBaseModel):
         self.note_html = clean.clean_html(self.note_html)
         # Strip HTML tags and save as plain text.
         t = fromstring(self.note_html)
-        self.note = unicode(t.text_content()).strip()
+        self.note = t.text_content().strip()
         super(Note, self).save(force_insert, force_update)
 
     @property
     def short_note(self, x=12):
-        text = unidecode(unicode(self.note))
+        text = unidecode(self.note)
         text = text.replace('\n', ' ').replace('\r', ' ')  # Replace newlines.
         words = text.split(' ')
         if len(words) > x:
@@ -1042,7 +1074,7 @@ class Note(ReferralBaseModel):
         Returns a string of HTML that renders the object details as table row cells.
         Remember to enclose this function in <tr> tags.
         '''
-        template = u'''<td><a href="{url}">Open</a></td>
+        template = '''<td><a href="{url}">Open</a></td>
             <td>{type}</td>
             <td>{creator}</td>
             <td>{order_date}</td>
@@ -1052,7 +1084,7 @@ class Note(ReferralBaseModel):
         d['url'] = self.get_absolute_url()
         if self.type:
             d['type'] = '<img src="/static/{}" title="{}" />'.format(
-                self.type.icon.__unicode__(), self.type.name)
+                self.type.icon.__str__(), self.type.name)
         else:
             d['type'] = ''
         d['creator'] = self.creator.get_full_name()
@@ -1072,7 +1104,7 @@ class Note(ReferralBaseModel):
         html attr class="is_prs_user_action" is used by javascript in the template to
         check prs_user permissions and disables Actions for readonly users.
         '''
-        template = u'''<td><a class="is_prs_user_action" href="{edit_url}" title="Edit"><i class="fa fa-pencil"></i></a>
+        template = '''<td><a class="is_prs_user_action" href="{edit_url}" title="Edit"><i class="fa fa-pencil"></i></a>
             <a class="is_prs_user_action" href="{delete_url}" title="Delete"><i class="fa fa-trash-o"></i></a></td>'''
         d = copy(self.__dict__)
         d['edit_url'] = reverse('prs_object_update', kwargs={'pk': self.pk, 'model': 'notes'})
@@ -1088,7 +1120,7 @@ class Note(ReferralBaseModel):
         '''
         Returns a string of HTML to render the object details inside <tbody> tags.
         '''
-        template = u'''<tr><th>Referral</th><td><a href="{referral_url}">{referral}</a></td></tr>
+        template = '''<tr><th>Referral</th><td><a href="{referral_url}">{referral}</a></td></tr>
             <tr><th>Referrer's reference</th><td>{reference}</td></tr>
             <tr><th>Type</th><td>{type}</td></tr>
             <tr><th>Created by</th><td>{creator}</td</tr>
@@ -1108,7 +1140,7 @@ class Note(ReferralBaseModel):
             d['order_date'] = self.order_date.strftime('%d-%b-%Y')
         else:
             d['order_date'] = ''
-        d['note_html'] = unidecode(unicode(self.note_html))
+        d['note_html'] = unidecode(self.note_html)
         return mark_safe(template.format(**d).strip())
 
 
@@ -1173,7 +1205,7 @@ class Condition(ReferralBaseModel):
             self.condition_html = dewordify_text(self.condition_html)
             self.condition_html = clean.clean_html(self.condition_html)
             t = fromstring(self.condition_html)
-            self.condition = unicode(t.text_content()).strip()
+            self.condition = t.text_content().strip()
         else:
             self.condition_html = ''
             self.condition = ''
@@ -1181,7 +1213,7 @@ class Condition(ReferralBaseModel):
             self.proposed_condition_html = dewordify_text(self.proposed_condition_html)
             self.proposed_condition_html = clean.clean_html(self.proposed_condition_html)
             t = fromstring(self.proposed_condition_html)
-            self.proposed_condition = unicode(t.text_content()).strip()
+            self.proposed_condition = t.text_content().strip()
         else:
             self.proposed_condition_html = ''
             self.proposed_condition = ''
@@ -1192,7 +1224,7 @@ class Condition(ReferralBaseModel):
         Returns a string of HTML that renders the object details as table row cells.
         Remember to enclose this function in <tr> tags.
         '''
-        template = u'''<td><a href="{url}">Open</a></td>
+        template = '''<td><a href="{url}">Open</a></td>
             <td>{identifier}</td>
             <td>{proposed_condition}</td>
             <td>{condition}</td>
@@ -1229,7 +1261,7 @@ class Condition(ReferralBaseModel):
         html attr class="is_prs_user_action" is used by javascript in the template to
         check prs_user permissions and disables Actions for readonly users.
         '''
-        template = u'''<td><a class="is_prs_user_action" href="{add_clearance_url}" title="Add clearance"><i class="fa fa-plus"></i></a>
+        template = '''<td><a class="is_prs_user_action" href="{add_clearance_url}" title="Add clearance"><i class="fa fa-plus"></i></a>
             <a class="is_prs_user_action" href="{edit_url}" title="Edit"><i class="fa fa-pencil"></i></a>
             <a class="is_prs_user_action" href="{delete_url}" title="Delete"><i class="fa fa-trash-o"></i></a></td>'''
         d = copy(self.__dict__)
@@ -1250,7 +1282,7 @@ class Condition(ReferralBaseModel):
         '''
         Returns a string of HTML to render the object details inside <tbody> tags.
         '''
-        template = u'''<tr><th>Referral</th><td><a href="{referral_url}">{referral}</a></td></tr>
+        template = '''<tr><th>Referral</th><td><a href="{referral_url}">{referral}</a></td></tr>
             <tr><th>Referrer's reference</th><td>{reference}</td></tr>
             <tr><th>Number</th><td>{identifier}</td></tr>
             <tr><th>Model condition</th><td>{model_condition}</td></tr>
@@ -1275,8 +1307,8 @@ class Condition(ReferralBaseModel):
             d['model_condition'] = self.model_condition.condition
         else:
             d['model_condition'] = ''
-        d['proposed_condition_html'] = unidecode(unicode(self.proposed_condition_html))
-        d['condition_html'] = unidecode(unicode(self.condition_html))
+        d['proposed_condition_html'] = unidecode(self.proposed_condition_html)
+        d['condition_html'] = unidecode(self.condition_html)
         if self.category:
             d['category'] = self.category.name
         else:
@@ -1308,6 +1340,7 @@ class ClearanceManager(models.Manager):
         return self.filter(task__effective_to__isnull=False)
 
 
+@python_2_unicode_compatible
 class Clearance(models.Model):
     '''
     Intermediate class for relationships between Condition and Task objects.
@@ -1323,20 +1356,19 @@ class Clearance(models.Model):
         'Deposited plan', 'Referral ID']
     objects = ClearanceManager()
 
-    def __unicode__(self):
-        return unicode('{0} condition {1} has task {2}'.format(
-            self.pk, self.condition.pk, self.task.pk))
+    def __str__(self):
+        return '{0} condition {1} has task {2}'.format(
+            self.pk, self.condition.pk, self.task.pk)
 
     def get_absolute_url(self):
-        return unicode(
-            reverse('prs_object_detail', kwargs={'model': 'clearance', 'pk': self.pk}))
+        return reverse('prs_object_detail', kwargs={'model': 'clearance', 'pk': self.pk})
 
     def as_row(self):
         '''
         Returns a string of HTML that renders the object details as table row
         cells. Remember to enclose this function in <tr> tags.
         '''
-        template = u'''<td><a href="{url}">Open</a></td>
+        template = '''<td><a href="{url}">Open</a></td>
             <td>{identifier}</td>
             <td>{condition}</td>
             <td>{category}</td>
@@ -1353,7 +1385,7 @@ class Clearance(models.Model):
         else:
             d['category'] = ''
         if self.task.description:
-            d['task'] = smart_truncate(unidecode(unicode(self.task.description)), length=400)
+            d['task'] = smart_truncate(unidecode(self.task.description), length=400)
         else:
             d['task'] = self.task.type.name
         d['deposited_plan'] = self.deposited_plan or ''
@@ -1365,7 +1397,7 @@ class Clearance(models.Model):
         '''
         Returns a string of HTML to render the object details inside <tbody> tags.
         '''
-        template = u'''<tr><th>Referral</th><td><a href="{referral_url}">{referral}</a></td></tr>
+        template = '''<tr><th>Referral</th><td><a href="{referral_url}">{referral}</a></td></tr>
             <tr><th>Referrer's reference</th><td>{reference}</td></tr>
             <tr><th>Referral description</th><td>{referral_desc}</td></tr>
             <tr><th>Condition ID</th><td><a href="{condition_url}">{condition}</a></td></tr>
@@ -1377,14 +1409,20 @@ class Clearance(models.Model):
         d['referral'] = self.task.referral
         d['referral_url'] = self.task.referral.get_absolute_url()
         d['reference'] = self.task.referral.reference
-        d['referral_desc'] = unidecode(unicode(self.task.referral.description) or u'')
+        if self.task.referral.description:
+            d['referral_desc'] = unidecode(self.task.referral.description)
+        else:
+            d['referral_desc'] = ''
         d['condition_url'] = reverse(
             'prs_object_detail', kwargs={'pk': self.condition.pk, 'model': 'conditions'})
         d['condition'] = self.condition
         d['condition_html'] = self.condition.condition_html
         d['task_url'] = reverse('prs_object_detail', kwargs={'pk': self.task.pk, 'model': 'tasks'})
         d['task'] = self.task
-        d['task_desc'] = unidecode(unicode(self.task.description) or u'')
+        if self.task.description:
+            d['task_desc'] = unidecode(self.task.description)
+        else:
+            d['task_desc'] = ''
         d['deposited_plan'] = self.deposited_plan or ''
         return mark_safe(template.format(**d).strip())
 
@@ -1452,7 +1490,7 @@ class Location(ReferralBaseModel):
         Returns a string of HTML that renders the object details as table row cells.
         Remember to enclose this function in <tr> tags.
         '''
-        template = u'''<td><a href="{url}">Open</a></td>
+        template = '''<td><a href="{url}">Open</a></td>
             <td>{address}</td>
             <td>{polygon}</td>
             <td class="referral-id-cell"><a href="{referral_url}">{referral}</a></td>'''
@@ -1478,7 +1516,7 @@ class Location(ReferralBaseModel):
         html attr class="is_prs_user_action" is used by javascript in the template to
         check prs_user permissions and disables Actions for readonly users.
         '''
-        template = u'''<td><a class="is_prs_user_action" href="{edit_url}" title="Edit"><i class="fa fa-pencil"></i></a>
+        template = '''<td><a class="is_prs_user_action" href="{edit_url}" title="Edit"><i class="fa fa-pencil"></i></a>
             <a class="is_prs_user_action" href="{delete_url}" title="Delete"><i class="fa fa-trash-o"></i></a></td>'''
         d = copy(self.__dict__)
         d['edit_url'] = reverse('prs_object_update', kwargs={'pk': self.pk, 'model': 'locations'})
@@ -1496,7 +1534,7 @@ class Location(ReferralBaseModel):
         '''
         Returns a string of HTML to render the object details inside <tbody> tags.
         '''
-        template = u'''<tr><th>Referral</th><td><a href="{referral_url}">{referral}</a></td></tr>
+        template = '''<tr><th>Referral</th><td><a href="{referral_url}">{referral}</a></td></tr>
             <tr><th>Referrer's reference</th><td>{reference}</td></tr>
             <tr><th>Short address</th><td>{address}</td></tr>
             <tr><th>Lot no</th><td>{lot_no}</td></tr>
@@ -1557,18 +1595,19 @@ class Bookmark(ReferralBaseModel):
         '''Overide save() to cleanse text input to the description field.
         '''
         if self.description:
-            self.description = unidecode(unicode(self.description))
+            self.description = unidecode(self.description)
         super(Bookmark, self).save(force_insert, force_update)
 
     def as_row(self):
         '''
-        Returns a string of HTML that renders the object details as table row cells.
-        Remember to enclose this function in <tr> tags.
+        Returns a string of HTML that renders the object details as table row
+        cells. Remember to enclose this function in <tr> tags.
 
-        html attr class="is_prs_user_action" is used by javascript in the template to
-        check prs_user permissions and disables Actions for readonly users.
+        html attr class="is_prs_user_action" is used by javascript in the
+        template to check prs_user permissions and disables Actions for
+        readonly users.
         '''
-        template = u'''<td><a href="{referral_url}">{referral}</a></td>
+        template = '''<td><a href="{referral_url}">{referral}</a></td>
             <td>{description}</td>
             <td><a class="is_prs_user_action" href="{delete_url}" title="Delete"><i class="fa fa-trash-o"></i></a></td>'''
         d = copy(self.__dict__)
@@ -1584,7 +1623,7 @@ class Bookmark(ReferralBaseModel):
         '''
         Returns a string of HTML to render the object details inside <tbody> tags.
         '''
-        template = u'''<tr><th>Referral</th><td><a href="{referral_url}">{referral}</a></td></tr>
+        template = '''<tr><th>Referral</th><td><a href="{referral_url}">{referral}</a></td></tr>
             <tr><th>Referrer's reference</th><td>{reference}</td></tr>
             <tr><th>User</th><td>{user}</td></tr>
             <tr><th>Description</th><td>{description}</td></tr>'''
@@ -1597,6 +1636,7 @@ class Bookmark(ReferralBaseModel):
         return mark_safe(template.format(**d))
 
 
+@python_2_unicode_compatible
 class UserProfile(models.Model):
     '''
     An extension of the Django auth model, to add additional fields to each User
@@ -1607,8 +1647,8 @@ class UserProfile(models.Model):
     referral_history = models.TextField(blank=True, null=True)
     task_history = models.TextField(blank=True, null=True)
 
-    def __unicode__(self):
-        return unicode('{0}'.format(self.user.username))
+    def __str__(self):
+        return '{0}'.format(self.user.username)
 
     def last_referral(self):
         '''

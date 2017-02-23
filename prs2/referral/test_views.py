@@ -476,7 +476,7 @@ class ReferralCreateChildTest(PrsViewsTestCase):
         """Test POST request to create a new note on a referral
         """
         # The text below contains character(s) that have caused issues before.
-        note_html = u'''<div><p>Hello Paul</p>\r\n<p>I refer to your email below
+        note_html = '''<div><p>Hello Paul</p>\r\n<p>I refer to your email below
         and your request for clearance of conditions for WAPC 12345 Goodwood
         Estate Stage 2.</p>\r\n<p> </p>\r\n<p>The attached email dated 16 August
         2016 advised that a copy of the Deposited Plan was required for clearance
