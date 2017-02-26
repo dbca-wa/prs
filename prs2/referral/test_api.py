@@ -1,5 +1,4 @@
 from django.core.urlresolvers import reverse
-import json
 from referral.test_models import PrsTestCase
 
 
@@ -36,7 +35,7 @@ class PrsAPITest(PrsTestCase):
                 'api_dispatch_list', kwargs={'resource_name': i, 'api_name': 'v1'})
             self.client.login(username='normaluser', password='pass')
             response = self.client.get(url)
-            res_list = json.loads(response.content)
+            res_list = response.json()
             if res_list['objects']:  # Object(s) exist.
                 obj_id = res_list['objects'][0]['id']
                 url = reverse(

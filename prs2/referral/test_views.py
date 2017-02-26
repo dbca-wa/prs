@@ -119,7 +119,7 @@ class SiteHomeTest(PrsViewsTestCase):
         """
         url = reverse('site_home')
         response = self.client.get(url)
-        link = '<a href="/admin/" title="Administration">Administration</a>'
+        link = b'<a href="/admin/" title="Administration">Administration</a>'
         self.assertIs(response.content.find(link), -1)
         # Log in as admin user
         self.client.logout()
@@ -1025,4 +1025,4 @@ class InfobaseShortcutTest(PrsViewsTestCase):
             # View response shoud be file.
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.get('Content-Type'), 'application/octet-stream')
-            self.assertEqual(response.content, i.infobase_id)
+            self.assertEqual(str(response.content), i.infobase_id)

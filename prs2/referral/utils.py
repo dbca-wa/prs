@@ -10,6 +10,7 @@ from django.db.models.base import ModelBase
 from django.template.defaultfilters import slugify as django_slugify
 from django.utils.encoding import smart_text
 from django.utils.safestring import mark_safe
+from django.utils import six
 from dpaw_utils.requests.api import post as post_sso
 import json
 from reversion.models import Version
@@ -168,8 +169,8 @@ def user_referral_history(user, referral):
     # Iterate through the list; it's either a list of unicode strings (old-style)
     # or a list of lists (new-style).
     for i in ref_history:
-        # Firstly if the item is a unicode-format integer, convert that to a list.
-        if isinstance(i, unicode):
+        # Firstly if the item is a string, convert that to a list ([val, DATE]).
+        if isinstance(i, six.text_type):
             i = [int(i), datetime.strftime(datetime.today(), '%d-%m-%Y')]
         # If the referral that was passed in exists in the current list, pass (don't append it).
         if referral.id == i[0]:

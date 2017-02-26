@@ -67,11 +67,11 @@ class RecordFormTest(PrsTestCase):
     def test_form_clean(self):
         """Test the RecordForm clean method
         """
-        f1 = NamedTemporaryFile()
-        f1.write('Test data')
+        f1 = NamedTemporaryFile('w+b')
+        f1.write(b'Test data')
         f1.seek(0)
-        f2 = NamedTemporaryFile()
-        f2.write('Test data')
+        f2 = NamedTemporaryFile('w+b')
+        f2.write(b'Test data')
         f2.seek(0)
         # An accepted file type.
         up_file1 = SimpleUploadedFile(
@@ -95,8 +95,8 @@ class RecordCreateFormTest(PrsTestCase):
     def test_form_clean(self):
         """Test the RecordCreateForm clean method
         """
-        f = NamedTemporaryFile()
-        f.write('Test data')
+        f = NamedTemporaryFile('w+b')
+        f.write(b'Test data')
         f.seek(0)
         # An accepted file type.
         up_file = SimpleUploadedFile(name=f.name, content=f.read())
