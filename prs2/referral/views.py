@@ -703,7 +703,7 @@ class LocationCreate(ReferralCreateChild):
             wkt = form.pop('wkt')
             poly = GEOSGeometry(wkt)
             # Set any blank form field values to None (digitised features)
-            for k, v in form.iteritems():
+            for k, v in form.items():  # Python2/3 compat (was iteritems)
                 if not v:
                     form[k] = None
             l = Location(**form)
