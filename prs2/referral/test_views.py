@@ -1025,4 +1025,8 @@ class InfobaseShortcutTest(PrsViewsTestCase):
             # View response shoud be file.
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.get('Content-Type'), 'application/octet-stream')
-            self.assertEqual(response.content, bytes(i.infobase_id))
+            # Python 3 compat: response.content is a bytestring.
+            if isinstance(response.content, bytes):
+                self.assertEqual(response.content.decode(), i.infobase_id)
+            else:  # Python 2.
+                self.assertEqual(response.content, i.infobase_id)
