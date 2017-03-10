@@ -1,27 +1,26 @@
-# Project requirements
-Django==1.10.5
-django-extensions==1.7.6
+Django==1.10.6
+django-extensions==1.7.7
 https://static.dpaw.wa.gov.au/static/py/dpaw-utils/dist/dpaw-utils-0.3a15.tar.gz
 django-reversion==2.0.8
-django-debug-toolbar==1.6
+django-debug-toolbar==1.7
 django-tastypie==0.13.3
-django-taggit==0.21.3
-django-braces==1.10.0
+django-taggit==0.22.0
+django-braces==1.11.0
 django-autoslug==1.9.3
-django-crispy-forms==1.6.0
+django-crispy-forms==1.6.1
 django-sql-explorer==1.0
-xlsxwriter==0.9.3  # Required for Excel export in django-sql-explorer
-django-model-utils==2.6
-django-storages==1.5.1
+xlsxwriter==0.9.6  # Required for Excel export in django-sql-explorer
+django-model-utils==2.6.1
+django-storages==1.5.2
 django-bootstrap-pagination==1.6.2
 dj-static==0.0.6
 Unipath==1.1
-Unidecode==0.04.19
+Unidecode==0.04.20
 Fabric==1.10.1
 jinja2==2.8
 Pillow==3.4.2
 coverage==3.7.1
-mixer==5.5.5
+mixer==5.6.6
 django-webtest==1.8.0
 python-magic==0.4.12
 lxml==3.6.4

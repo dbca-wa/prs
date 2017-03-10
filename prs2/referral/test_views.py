@@ -1025,4 +1025,4 @@ class InfobaseShortcutTest(PrsViewsTestCase):
             # View response shoud be file.
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.get('Content-Type'), 'application/octet-stream')
-            self.assertEqual(response.body, bytes(i.infobase_id))
+            self.assertEqual(response.content, bytes(i.infobase_id))
