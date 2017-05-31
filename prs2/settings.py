@@ -59,7 +59,7 @@ INSTALLED_APPS = (
     'reports',
     'harvester',
 )
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -68,7 +68,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'reversion.middleware.RevisionMiddleware',
     'dpaw_utils.middleware.SSOLoginMiddleware',
-)
+]
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
 )
@@ -243,7 +243,7 @@ if DEBUG:
         'debug_toolbar',
     )
     DEBUG_TOOLBAR_PATCH_SETTINGS = True
-    MIDDLEWARE_CLASSES = ('debug_toolbar.middleware.DebugToolbarMiddleware',) + MIDDLEWARE_CLASSES
+    MIDDLEWARE = ['debug_toolbar.middleware.DebugToolbarMiddleware'] + MIDDLEWARE
 
 # Tastypie settings
 TASTYPIE_DEFAULT_FORMATS = ['json']
