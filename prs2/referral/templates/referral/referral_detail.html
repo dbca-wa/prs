@@ -210,6 +210,11 @@
                 });
             },
         };
+        // Hide the Dropzone element if not a PRS user.
+        var is_prs_user = true ? "{{ prs_user }}" == "True" : false
+        if (!is_prs_user) {
+            $("#file-uploader").hide();
+        };
         // Initialise all DataTables.
         $.fn.dataTable.moment("dd MMM YYYY", "en-AU");
         $(".prs-object-table").each(function(idx) {
