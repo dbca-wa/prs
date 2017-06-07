@@ -15,7 +15,7 @@ class HarvesterModelTestCase(PrsTestCase):
 class RegionAssigneeModelTest(HarvesterModelTestCase):
 
     def test_unicode(self):
-        """Test the RegionAssignee __unicode__() method returns unicode.
+        """Test the RegionAssignee __str__() method
         """
         for obj in RegionAssignee.objects.all():
-            self.assertIsInstance(obj.__unicode__(), unicode)
+            self.assertTrue(str(obj))

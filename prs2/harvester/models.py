@@ -10,7 +10,10 @@ from django.utils.encoding import python_2_unicode_compatible
 import json
 import logging
 import requests
-from StringIO import StringIO
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO  # Python3
 import xmltodict
 
 from referral.models import (

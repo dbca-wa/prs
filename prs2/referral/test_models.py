@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from datetime import date, timedelta
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -103,20 +104,15 @@ class ReferralLookupModelTest(PrsTestCase):
         super(ReferralLookupModelTest, self).setUp()
         self.obj = DopTrigger.objects.all()[0]
 
-    def test_unicode(self):
-        """Test ReferralLookupModel __unicode__() method returns unicode.
-        """
-        self.assertIsInstance(self.obj.__unicode__(), unicode)
-
     def test_get_absolute_url(self):
-        """Test ReferralLookupModel get_absolute_url() method returns unicode.
+        """Test ReferralLookupModel get_absolute_url() method
         """
-        self.assertIsInstance(self.obj.get_absolute_url(), unicode)
+        self.assertTrue(self.obj.get_absolute_url())
 
     def test_as_row(self):
         """Test ReferralLookupModel as_row() method.
         """
-        self.assertIsInstance(self.obj.as_row(), unicode)
+        self.assertTrue(self.obj.as_row())
         row = self.obj.as_row()
         # Object name & URL will be in returned output.
         self.assertIsNot(row.find(self.obj.name), -1)
@@ -125,7 +121,7 @@ class ReferralLookupModelTest(PrsTestCase):
     def test_as_tbody(self):
         """Test ReferralLookupModel as_tbody() method.
         """
-        self.assertIsInstance(self.obj.as_tbody(), unicode)
+        self.assertTrue(self.obj.as_tbody())
         tbody = self.obj.as_tbody()
         # Object name will be in returned output.
         self.assertIsNot(tbody.find(self.obj.name), -1)
@@ -154,15 +150,10 @@ class ReferralBaseModelTest(PrsTestCase):
         super(ReferralBaseModelTest, self).setUp()
         self.obj = Referral.objects.all()[0]
 
-    def test_unicode(self):
-        """Test ReferralBaseModel __unicode__() method returns unicode.
-        """
-        self.assertIsInstance(self.obj.__unicode__(), unicode)
-
     def test_get_absolute_url(self):
-        """Test ReferralBaseModel get_absolute_url() method returns unicode.
+        """Test ReferralBaseModel get_absolute_url() method
         """
-        self.assertIsInstance(self.obj.get_absolute_url(), unicode)
+        self.assertTrue(self.obj.get_absolute_url())
 
 
 class OrganisationTest(PrsTestCase):
@@ -189,9 +180,8 @@ class ReferralTest(PrsTestCase):
         for r in Referral.objects.all():
             # Get a random Region and add it to the Referral
             region = Region.objects.order_by('?')[0]
-            r.region.add(region)
+            r.regions.add(region)
             s = r.regions_str
-            self.assertIsInstance(s, unicode)
             # String contains the region name.
             self.assertIsNot(s.find(region.name), -1)
 
@@ -205,7 +195,6 @@ class ReferralTest(PrsTestCase):
             trigger = DopTrigger.objects.order_by('?')[0]
             r.dop_triggers.add(trigger)
             s = r.dop_triggers_str
-            self.assertIsInstance(s, unicode)
             # String contains the trigger name.
             self.assertIsNot(s.find(trigger.name), -1)
 
@@ -244,7 +233,7 @@ class ReferralTest(PrsTestCase):
         for r in Referral.objects.all():
             # Get a random Region and add it to the Referral
             region = Region.objects.order_by('?')[0]
-            r.region.add(region)
+            r.regions.add(region)
             body = r.as_tbody()
             # String contains referral type name.
             self.assertIsNot(body.find(r.type.name), -1)
@@ -261,7 +250,6 @@ class ReferralTest(PrsTestCase):
         # Test that we can't relate a referral to itself.
         self.assertIsNone(ref1.add_relationship(ref1))
         rel = ref1.add_relationship(ref2)
-        # The relationship object returns unicode.
         self.assertEqual(rel.to_referral, ref2)
         self.assertEqual(rel.from_referral, ref1)
         self.assertEqual(ref1.related_referrals.count(), 1)
@@ -284,7 +272,7 @@ class ReferralTest(PrsTestCase):
         for r in Referral.objects.all():
             if r.location_set.current().filter(poly__isnull=False).exists():
                 # The method will return a unicode string.
-                self.assertIsInstance(r.generate_qgis_layer(), unicode)
+                self.assertTrue(r.generate_qgis_layer())
             else:
                 self.assertIsNone(r.generate_qgis_layer())
 
@@ -294,7 +282,7 @@ class ReferralTest(PrsTestCase):
         for r in Referral.objects.all():
             if r.location_set.current().filter(poly__isnull=False).exists():
                 # The method will return a unicode string.
-                self.assertIsInstance(r.generate_qgis_layer('qgis_layer_v2-16'), unicode)
+                self.assertTrue(r.generate_qgis_layer('qgis_layer_v2-16'))
             else:
                 self.assertIsNone(r.generate_qgis_layer('qgis_layer_v2-16'))
 
@@ -485,11 +473,6 @@ class RecordTest(PrsTestCase):
         # Clean up the temp file.
         os.remove(self.tmp_f.name)
 
-    def test_unicode(self):
-        """Test Record model  __unicode__() method returns unicode.
-        """
-        self.assertIsInstance(self.r.__unicode__(), unicode)
-
     def test_filename(self):
         """Test the Record model filename property.
         """
@@ -593,7 +576,7 @@ class NoteTest(PrsTestCase):
         # The note text should be truncated and end with '...'
         self.assertNotEqual(n.short_note, n.note_html)
         self.assertTrue(n.short_note.endswith('...'))
-        self.assertTrue(n.__unicode__().endswith('...'))
+        self.assertTrue(n.__str__().endswith('...'))
         # Short note text should not be truncated.
         n.note_html = 'Foo bar baz'
         n.save()
@@ -747,7 +730,7 @@ class ClearanceTest(PrsTestCase):
         self.assertIsNot(row.find(self.tag.name), -1)
 
     def test_as_tbody(self):
-        """Test the Clearance mode as_tbody() method.
+        """Test the Clearance model as_tbody() method.
         """
         c = Clearance.objects.all()[0]
         body = c.as_tbody()
@@ -833,8 +816,3 @@ class RelatedReferralTest(PrsTestCase):
         ref1, ref2 = q[0], q[1]
         ref1.add_relationship(ref2)
         self.obj = RelatedReferral.objects.all()[0]
-
-    def test_unicode(self):
-        """Test ReferralLookupModel __unicode__() method returns None or unicode.
-        """
-        self.assertIsInstance(self.obj.__unicode__(), unicode)

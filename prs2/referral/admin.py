@@ -15,7 +15,7 @@ class AuditAdmin(VersionAdmin, ModelAdmin):
     search_fields = [
         'id', 'creator__username', 'modifier__username', 'creator__email',
         'modifier__email']
-    list_display = ['__unicode__', 'creator', 'modifier', 'created', 'modified']
+    list_display = ['__str__', 'creator', 'modifier', 'created', 'modified']
     raw_id_fields = ['creator', 'modifier']
 
 
@@ -63,11 +63,12 @@ class ReferralAdmin(ReferralBaseModelAdmin):
     list_display = (
         'id', 'regions_display', 'type', 'reference', 'referring_org', 'creator',
         'created', 'modified', 'effective_to')
-    list_filter = ('region',)
+    list_filter = ('regions',)
     date_hierarchy = 'referral_date'
+    filter_horizontal = ('regions', 'dop_triggers', 'related_refs')
     raw_id_fields = ReferralBaseModelAdmin.raw_id_fields + ['referring_org']
     search_fields = (
-        'id', 'region__name', 'type__name', 'reference', 'file_no',
+        'id', 'regions__name', 'type__name', 'reference', 'file_no',
         'referring_org__name', 'creator__username', 'description', 'tags__name',
         'address', 'dop_triggers__name', 'lga__name')
 
@@ -93,7 +94,7 @@ admin.site.register(Task, TaskAdmin)
 class RecordAdmin(ReferralBaseModelAdmin):
     list_display = (
         'id', 'name', 'infobase_id', 'creator', 'created', 'modified', 'effective_to')
-    raw_id_fields = ReferralBaseModelAdmin.raw_id_fields + ['referral']
+    raw_id_fields = ReferralBaseModelAdmin.raw_id_fields + ['referral', 'notes']
     date_hierarchy = 'created'
     search_fields = ('id', 'name', 'infobase_id', 'description')
 admin.site.register(Record, RecordAdmin)
@@ -102,7 +103,7 @@ admin.site.register(Record, RecordAdmin)
 class NoteAdmin(ReferralBaseModelAdmin):
     list_display = (
         'id', 'referral', 'note', 'creator', 'created', 'modified', 'effective_to')
-    raw_id_fields = ReferralBaseModelAdmin.raw_id_fields + ['referral']
+    raw_id_fields = ReferralBaseModelAdmin.raw_id_fields + ['referral', 'records']
     date_hierarchy = 'created'
     search_fields = ('id', 'note')
 admin.site.register(Note, NoteAdmin)
@@ -121,7 +122,7 @@ class ConditionAdmin(ReferralBaseModelAdmin):
     list_display = (
         'id', 'referral', 'condition', 'creator', 'created', 'modified',
         'effective_to')
-    raw_id_fields = ReferralBaseModelAdmin.raw_id_fields + ['referral']
+    raw_id_fields = ReferralBaseModelAdmin.raw_id_fields + ['referral', 'clearance_tasks']
     date_hierarchy = 'created'
     search_fields = ('id', 'condition', 'creator__username', 'tags__name')
 admin.site.register(Condition, ConditionAdmin)

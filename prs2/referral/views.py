@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 from braces.views import LoginRequiredMixin
 from copy import copy
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.auth.models import Group
@@ -295,7 +295,7 @@ class ReferralDetail(PrsObjectDetail):
                 headers.remove('Referral ID')
                 headers.append('Actions')
                 thead = ''.join(['<th>{}</th>'.format(h) for h in headers])
-                rows = [u'<tr>{}{}</tr>'.format(o.as_row_minus_referral(),
+                rows = ['<tr>{}{}</tr>'.format(o.as_row_minus_referral(),
                                                o.as_row_actions()) for o in obj_qs]
                 tbody = ''.join(rows)
                 obj_tab_html = table.format(thead, tbody)
@@ -687,7 +687,7 @@ class LocationCreate(ReferralCreateChild):
 
         # Aggregate the submitted form values into a dict of dicts.
         forms = {}
-        for key, val in request.POST.iteritems():
+        for key, val in request.POST.items():  # Python2/3 compat (was iteritems)
             if key.startswith('form-'):
                 form = re.findall('^form-[0-9]+', key)[0]
                 field = re.sub('^form-[0-9]+-', '', key)
@@ -703,7 +703,7 @@ class LocationCreate(ReferralCreateChild):
             wkt = form.pop('wkt')
             poly = GEOSGeometry(wkt)
             # Set any blank form field values to None (digitised features)
-            for k, v in form.iteritems():
+            for k, v in form.items():  # Python2/3 compat (was iteritems)
                 if not v:
                     form[k] = None
             l = Location(**form)

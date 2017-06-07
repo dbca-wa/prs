@@ -119,7 +119,7 @@ class SiteHomeTest(PrsViewsTestCase):
         """
         url = reverse('site_home')
         response = self.client.get(url)
-        link = '<a href="/admin/" title="Administration">Administration</a>'
+        link = b'<a href="/admin/" title="Administration">Administration</a>'
         self.assertIs(response.content.find(link), -1)
         # Log in as admin user
         self.client.logout()
@@ -283,7 +283,7 @@ class ReferralCreateTest(PrsViewsTestCase, WebTest):
         form['referral_date'] = '21/12/2015'
         form['type'] = self.ref_type.pk
         form['assigned_user'] = self.n_user.pk
-        form['region'] = [Region.objects.first().pk]
+        form['regions'] = [Region.objects.first().pk]
         form['dop_triggers'] = [DopTrigger.objects.first().pk]
         r = form.submit('save').follow()
         self.assertEqual(r.status_code, 200)
@@ -302,7 +302,7 @@ class ReferralCreateTest(PrsViewsTestCase, WebTest):
         form['assigned_user'] = self.n_user.pk
         form['email_user'] = True
         form['due_date'] = '21/1/2016'
-        form['region'] = [Region.objects.first().pk]
+        form['regions'] = [Region.objects.first().pk]
         form['dop_triggers'] = [DopTrigger.objects.first().pk]
         r = form.submit().follow()
         self.assertEqual(r.status_code, 200)
@@ -476,7 +476,7 @@ class ReferralCreateChildTest(PrsViewsTestCase):
         """Test POST request to create a new note on a referral
         """
         # The text below contains character(s) that have caused issues before.
-        note_html = u'''<div><p>Hello Paul</p>\r\n<p>I refer to your email below
+        note_html = '''<div><p>Hello Paul</p>\r\n<p>I refer to your email below
         and your request for clearance of conditions for WAPC 12345 Goodwood
         Estate Stage 2.</p>\r\n<p> </p>\r\n<p>The attached email dated 16 August
         2016 advised that a copy of the Deposited Plan was required for clearance
@@ -1025,4 +1025,8 @@ class InfobaseShortcutTest(PrsViewsTestCase):
             # View response shoud be file.
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.get('Content-Type'), 'application/octet-stream')
-            self.assertEqual(response.content, i.infobase_id)
+            # Python 3 compat: response.content is a bytestring.
+            if isinstance(response.content, bytes):
+                self.assertEqual(response.content.decode(), i.infobase_id)
+            else:  # Python 2.
+                self.assertEqual(response.content, i.infobase_id)

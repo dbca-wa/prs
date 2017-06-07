@@ -161,7 +161,7 @@ class ReferralForm(BaseForm):
     """Base form class, extended by the ReferralCreate and ReferralUpdate forms.
     """
     referring_org = OrganisationChoiceField()
-    region = RegionMultipleChoiceField(
+    regions = RegionMultipleChoiceField(
         help_text='''[Searchable] The region(s) in which this referral belongs.
         Hold control to select multiple options.''')
     dop_triggers = DopTriggerMultipleChoiceField(
@@ -249,7 +249,7 @@ class ReferralCreateForm(ReferralForm):
             'referral_date', 'due_date', 'type', 'task_type', 'assigned_user',
             # Hack to make crispy_forms output proper HTML for Bootstrap 3:
             PrependedText('email_user', ''),
-            'region', 'dop_triggers', 'file_no',
+            'regions', 'dop_triggers', 'file_no',
             Div(
                 self.save_button,
                 self.cancel_button,
@@ -265,7 +265,7 @@ class ReferralUpdateForm(ReferralForm):
         # Define the form layout.
         self.helper.layout = Layout(
             'referring_org', 'reference', 'description', 'address', 'lga',
-            'referral_date', 'type', 'region', 'dop_triggers',
+            'referral_date', 'type', 'regions', 'dop_triggers',
             'file_no',
             Div(
                 self.save_button, self.cancel_button,
@@ -1032,7 +1032,7 @@ class IntersectingReferralForm(BaseForm):
         model = Referral
         exclude = BaseForm.Meta.exclude + [
             'type', 'referring_org', 'reference', 'file_no', 'description',
-            'referral_date', 'address', 'region', 'tags', 'agency']
+            'referral_date', 'address', 'regions', 'tags', 'agency']
 
 
 class TagReplaceForm(forms.Form):

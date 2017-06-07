@@ -10,6 +10,7 @@ from django.db.models.base import ModelBase
 from django.template.defaultfilters import slugify as django_slugify
 from django.utils.encoding import smart_text
 from django.utils.safestring import mark_safe
+from django.utils import six
 from dpaw_utils.requests.api import post as post_sso
 import json
 from reversion.models import Version
@@ -49,7 +50,7 @@ def is_model_or_string(model):
     return model
 
 
-def smart_truncate(content, length=100, suffix=u'....(more)'):
+def smart_truncate(content, length=100, suffix='....(more)'):
     """Small function to truncate a string in a sensible way, sourced from:
     http://stackoverflow.com/questions/250357/smart-truncate-in-python
     """
@@ -57,7 +58,7 @@ def smart_truncate(content, length=100, suffix=u'....(more)'):
     if len(content) <= length:
         return content
     else:
-        return u' '.join(content[:length + 1].split(' ')[0:-1]) + suffix
+        return ' '.join(content[:length + 1].split(' ')[0:-1]) + suffix
 
 
 def dewordify_text(txt):
@@ -81,14 +82,14 @@ def dewordify_text(txt):
         return REPLACEMENTS[m.group(0)]
 
     if txt:
-        # Whatever string encoding is passed in, cast it to unicode and then
+        # Whatever string encoding is passed in,
         # use unidecode to replace non-ASCII characters.
-        txt = unidecode(unicode(txt))  # Replaces odd characters.
+        txt = unidecode(txt)  # Replaces odd characters.
         r = re.compile('|'.join(REPLACEMENTS.keys()))
         r = r.sub(replacer, txt)
-        return unicode(r)
+        return r
     else:
-        return u''
+        return ''
 
 
 def breadcrumbs_li(links):
@@ -168,8 +169,8 @@ def user_referral_history(user, referral):
     # Iterate through the list; it's either a list of unicode strings (old-style)
     # or a list of lists (new-style).
     for i in ref_history:
-        # Firstly if the item is a unicode-format integer, convert that to a list.
-        if isinstance(i, unicode):
+        # Firstly if the item is a string, convert that to a list ([val, DATE]).
+        if isinstance(i, six.text_type):
             i = [int(i), datetime.strftime(datetime.today(), '%d-%m-%Y')]
         # If the referral that was passed in exists in the current list, pass (don't append it).
         if referral.id == i[0]:
@@ -273,7 +274,7 @@ def borgcollector_harvest(request, publishes=['prs_locations']):
 def slugify(value):
     """A (slightly) customised slugify function.
     """
-    return django_slugify(unidecode(unicode(value)))
+    return django_slugify(unidecode(value))
 
 
 def overdue_task_email():

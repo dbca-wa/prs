@@ -10,7 +10,10 @@ from imaplib import IMAP4_SSL
 import logging
 from pytz import timezone
 import requests
-from StringIO import StringIO
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO  # Python3
 import time
 
 from .models import EmailedReferral, EmailAttachment

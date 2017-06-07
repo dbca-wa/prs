@@ -59,7 +59,7 @@ INSTALLED_APPS = (
     'reports',
     'harvester',
 )
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -68,7 +68,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'reversion.middleware.RevisionMiddleware',
     'dpaw_utils.middleware.SSOLoginMiddleware',
-)
+]
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
 )
@@ -101,6 +101,7 @@ MANAGERS = (
     ('Cho Lamb', 'cho.lamb@dpaw.wa.gov.au', '9442 0309'),
 )
 LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/'
 APPLICATION_TITLE = 'Planning Referral System'
 APPLICATION_ACRONYM = 'PRS'
 APPLICATION_VERSION_NO = '2.2.15'
@@ -243,7 +244,7 @@ if DEBUG:
         'debug_toolbar',
     )
     DEBUG_TOOLBAR_PATCH_SETTINGS = True
-    MIDDLEWARE_CLASSES = ('debug_toolbar.middleware.DebugToolbarMiddleware',) + MIDDLEWARE_CLASSES
+    MIDDLEWARE = ['debug_toolbar.middleware.DebugToolbarMiddleware'] + MIDDLEWARE
 
 # Tastypie settings
 TASTYPIE_DEFAULT_FORMATS = ['json']
