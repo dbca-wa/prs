@@ -63,12 +63,12 @@ class ReferralAdmin(ReferralBaseModelAdmin):
     list_display = (
         'id', 'regions_display', 'type', 'reference', 'referring_org', 'creator',
         'created', 'modified', 'effective_to')
-    list_filter = ('region',)
+    list_filter = ('regions',)
     date_hierarchy = 'referral_date'
-    filter_horizontal = ('region', 'dop_triggers', 'related_refs')
+    filter_horizontal = ('regions', 'dop_triggers', 'related_refs')
     raw_id_fields = ReferralBaseModelAdmin.raw_id_fields + ['referring_org']
     search_fields = (
-        'id', 'region__name', 'type__name', 'reference', 'file_no',
+        'id', 'regions__name', 'type__name', 'reference', 'file_no',
         'referring_org__name', 'creator__username', 'description', 'tags__name',
         'address', 'dop_triggers__name', 'lga__name')
 

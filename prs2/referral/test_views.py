@@ -283,7 +283,7 @@ class ReferralCreateTest(PrsViewsTestCase, WebTest):
         form['referral_date'] = '21/12/2015'
         form['type'] = self.ref_type.pk
         form['assigned_user'] = self.n_user.pk
-        form['region'] = [Region.objects.first().pk]
+        form['regions'] = [Region.objects.first().pk]
         form['dop_triggers'] = [DopTrigger.objects.first().pk]
         r = form.submit('save').follow()
         self.assertEqual(r.status_code, 200)
@@ -302,7 +302,7 @@ class ReferralCreateTest(PrsViewsTestCase, WebTest):
         form['assigned_user'] = self.n_user.pk
         form['email_user'] = True
         form['due_date'] = '21/1/2016'
-        form['region'] = [Region.objects.first().pk]
+        form['regions'] = [Region.objects.first().pk]
         form['dop_triggers'] = [DopTrigger.objects.first().pk]
         r = form.submit().follow()
         self.assertEqual(r.status_code, 200)

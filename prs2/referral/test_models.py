@@ -180,7 +180,7 @@ class ReferralTest(PrsTestCase):
         for r in Referral.objects.all():
             # Get a random Region and add it to the Referral
             region = Region.objects.order_by('?')[0]
-            r.region.add(region)
+            r.regions.add(region)
             s = r.regions_str
             # String contains the region name.
             self.assertIsNot(s.find(region.name), -1)
@@ -233,7 +233,7 @@ class ReferralTest(PrsTestCase):
         for r in Referral.objects.all():
             # Get a random Region and add it to the Referral
             region = Region.objects.order_by('?')[0]
-            r.region.add(region)
+            r.regions.add(region)
             body = r.as_tbody()
             # String contains referral type name.
             self.assertIsNot(body.find(r.type.name), -1)

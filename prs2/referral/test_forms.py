@@ -25,7 +25,7 @@ class ReferralFormTest(PrsTestCase):
             'referral_date': date.today(),
             'type': self.ref_type.pk,
             'assigned_user': self.n_user,
-            'region': list(Region.objects.all()),
+            'regions': list(Region.objects.all()),
         }
         form = ReferralForm(data=form_data)
         # Validation should fail (WAPC subdivision referral, no DoP triggers).

@@ -310,7 +310,7 @@ class Referral(ReferralBaseModel):
     agency = models.ForeignKey(
         Agency, on_delete=models.PROTECT, blank=True, null=True,
         help_text='[Searchable] The agency to which this referral relates.')
-    region = models.ManyToManyField(
+    regions = models.ManyToManyField(
         Region, related_name='regions', blank=True,
         help_text='[Searchable] The region(s) in which this referral belongs.')
     referring_org = models.ForeignKey(
@@ -368,13 +368,10 @@ class Referral(ReferralBaseModel):
     def regions_str(self):
         '''
         Return a unicode string of all the regions that this referral belongs to (or None).
-        NOTE: the Referral model has a field called "region" (singular) that returns the M2M
-        queryset result. This method uses that to return a formatted string.
-        Context/history: referrals used to be associated with one region only.
         '''
-        if not self.region.all():
+        if not self.regions.all():
             return None
-        return ', '.join([r.name for r in self.region.all()])
+        return ', '.join([r.name for r in self.regions.all()])
 
     @property
     def dop_triggers_str(self):
@@ -415,12 +412,12 @@ class Referral(ReferralBaseModel):
             <td>{address}</td>
             <td>{reference}</td>
             <td>{referring_org}</td>
-            <td>{region}</td>
+            <td>{regions}</td>
             <td>{type}</td>'''
         d = copy(self.__dict__)
         d['url'] = self.get_absolute_url()
         d['type'] = self.type
-        d['region'] = self.regions_str
+        d['regions'] = self.regions_str
         d['referring_org'] = self.referring_org
         d['referral_date'] = self.referral_date.strftime('%d %b %Y') or ''
         if self.address:
@@ -445,13 +442,13 @@ class Referral(ReferralBaseModel):
             <tr><th>Referrer</th><td>{referring_org}</td></tr>
             <tr><th>Received date</th><td>{referral_date}</td></tr>
             <tr><th>Type</th><td>{type}</td></tr>
-            <tr><th>Region(s)</th><td>{region}</td></tr>
+            <tr><th>Region(s)</th><td>{regions}</td></tr>
             <tr><th>DoP Trigger(s)</th><td>{dop_triggers}</td></tr>
             <tr><th>File no.</th><td>{file_no}</td></tr>'''
         d = copy(self.__dict__)
         d['url'] = self.get_absolute_url()
         d['type'] = self.type
-        d['region'] = self.regions_str  # Call the referral's regions property (see above).
+        d['regions'] = self.regions_str
         d['dop_triggers'] = self.dop_triggers_str
         d['referring_org'] = self.referring_org
         d['file_no'] = self.file_no or ''
