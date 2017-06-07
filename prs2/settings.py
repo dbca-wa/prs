@@ -101,6 +101,7 @@ MANAGERS = (
     ('Cho Lamb', 'cho.lamb@dpaw.wa.gov.au', '9442 0309'),
 )
 LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/'
 APPLICATION_TITLE = 'Planning Referral System'
 APPLICATION_ACRONYM = 'PRS'
 APPLICATION_VERSION_NO = '2.2.13'
