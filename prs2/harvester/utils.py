@@ -19,62 +19,26 @@ import time
 from .models import EmailedReferral, EmailAttachment
 
 
-logger = logging.getLogger('harvester.log')
+LOGGER = logging.getLogger('harvester.log')
 
 
-class DeferredIMAP():
-    '''Convenience class for maintaining a bit of state about an IMAP server
-    and handling logins/logouts. Note that instances aren't threadsafe.
-    '''
-    def __init__(self, host, user, password):
-        self.deletions = []
-        self.flags = []
-        self.host = host
-        self.user = user
-        self.password = password
-
-    def login(self):
-        self.imp = IMAP4_SSL(self.host)
-        self.imp.login(settings.REFERRAL_EMAIL_USER, settings.REFERRAL_EMAIL_PASSWORD)
-        self.imp.select('INBOX')
-
-    def logout(self, expunge=False):
-        if expunge:
-            self.imp.expunge
-        self.imp.close()
-        self.imp.logout()
-
-    def __getattr__(self, name):
-        def temp(*args, **kwargs):
-            self.login()
-            result = getattr(self.imp, name)(*args, **kwargs)
-            self.logout()
-            return result
-        return temp
-
-
-dimap = DeferredIMAP(
-    host=settings.REFERRAL_EMAIL_HOST, user=settings.REFERRAL_EMAIL_USER,
-    password=settings.REFERRAL_EMAIL_PASSWORD)
-
-
-def unread_from_email(from_email):
+def unread_from_email(imap, from_email):
     """Returns (status, list of UIDs) of unread emails from a sender.
     """
     search = '(UNSEEN FROM "{}")'.format(from_email)
-    status, response = dimap.search(None, search)
+    status, response = imap.search(None, search)
     if status != 'OK':
         return status, response
     # Return status and list of unread email UIDs.
     return status, response[0].split()
 
 
-def fetch_email(uid):
+def fetch_email(imap, uid):
     """Returns (status, message) for an email by UID.
     Email is returned as an email.Message class object.
     """
     message = None
-    status, response = dimap.fetch(str(uid), '(BODY.PEEK[])')
+    status, response = imap.fetch(str(uid), '(BODY.PEEK[])')
 
     if status != 'OK':
         return status, response
@@ -91,12 +55,12 @@ def harvest_email(uid, message):
     Abort if UID exists in the database already.
     """
     if EmailedReferral.objects.filter(email_uid=str(uid)).exists():
-        logger.warning('Email UID {} already present; aborting'.format(uid))
+        LOGGER.warning('Email UID {} already present; aborting'.format(uid))
         return False
     if message.is_multipart():  # Should always be True.
         parts = [i for i in message.walk()]
     else:
-        logger.error('Email UID {} is not of type multipart'.format(uid))
+        LOGGER.error('Email UID {} is not of type multipart'.format(uid))
         return False
 
     message_body = None
@@ -124,7 +88,7 @@ def harvest_email(uid, message):
             # Check the 'To' address against the whitelist of mailboxes.
             to_e = email.utils.parseaddr(message.get('To'))[1]
             if whitelist and not to_e.lower() in whitelist:
-                logger.info('Email UID {} to {} harvest was skipped'.format(uid, to_e))
+                LOGGER.info('Email UID {} to {} harvest was skipped'.format(uid, to_e))
                 return None  # Not in the whitelist; skip.
             from_e = email.utils.parseaddr(message.get('From'))[1]
             # Parse the 'sent' date & time (assume WST).
@@ -137,7 +101,7 @@ def harvest_email(uid, message):
                 from_email=from_e, subject=message.get('Subject'),
                 body=message_body.get_payload())
             em_new.save()
-            logger.info('Email UID {} harvested: {}'.format(uid, em_new.subject))
+            LOGGER.info('Email UID {} harvested: {}'.format(uid, em_new.subject))
             for a in attachments:
                 att_new = EmailAttachment(
                     emailed_referral=em_new, name=a.get_filename())
@@ -146,29 +110,29 @@ def harvest_email(uid, message):
                 att_new.attachment.save(a.get_filename(), new_file)
                 att_new.save()
                 data.close()
-                logger.info('Email attachment created: {}'.format(att_new.name))
+                LOGGER.info('Email attachment created: {}'.format(att_new.name))
         except Exception as e:
-            logger.error('Email UID {} generated exception during harvest'.format(uid))
-            logger.exception(e)
+            LOGGER.error('Email UID {} generated exception during harvest'.format(uid))
+            LOGGER.exception(e)
             return None
     else:
-        logger.error('Email UID {} had no message body'.format(uid))
+        LOGGER.error('Email UID {} had no message body'.format(uid))
         return None
 
     return True
 
 
-def email_mark_read(uid):
+def email_mark_read(imap, uid):
     """Flag an email as 'Seen' based on passed-in UID.
     """
-    status, response = dimap.store(str(uid), '+FLAGS', '\Seen')
+    status, response = imap.store(str(uid), '+FLAGS', '\Seen')
     return status, response
 
 
-def email_mark_unread(uid):
+def email_mark_unread(imap, uid):
     """Remove the 'Seen' flag from an email based on passed-in UID.
     """
-    status, response = dimap.store(str(uid), '-FLAGS', '\Seen')
+    status, response = imap.store(str(uid), '-FLAGS', '\Seen')
     return status, response
 
 
@@ -177,39 +141,47 @@ def harvest_unread_emails(from_email):
     harvest each one.
     """
     actions = []
-    logger.info('Requesting unread emails from {}'.format(from_email))
+    # Instantiate a new IMAP object and login
+    imap = IMAP4_SSL(settings.REFERRAL_EMAIL_HOST)
+    imap.login(settings.REFERRAL_EMAIL_USER, settings.REFERRAL_EMAIL_PASSWORD)
+    imap.select('INBOX')
+
+    LOGGER.info('Requesting unread emails from {}'.format(from_email))
     actions.append('{} Requesting unread emails from {}'.format(datetime.now().isoformat(), from_email))
-    status, uids = unread_from_email(from_email)
+    status, uids = unread_from_email(imap, from_email)
 
     if status != 'OK':
-        logger.error('Server response failure: {}'.status)
+        LOGGER.error('Server response failure: {}'.status)
         actions.append('{} Server response failure: {}'.format(datetime.now().isoformat(), status))
         return actions
 
-    logger.info('Server lists {} unread emails; harvesting'.format(len(uids)))
+    LOGGER.info('Server lists {} unread emails; harvesting'.format(len(uids)))
     actions.append('{} Server lists {} unread emails; harvesting'.format(datetime.now().isoformat(), len(uids)))
 
     for uid in uids:
         # Fetch email message.
         if EmailedReferral.objects.filter(email_uid=str(uid)).exists():
-            logger.info('Email UID {} already present in database, marking as read'.format(uid))
-            status, response = email_mark_read(uid)
+            # Already harvested? Mark it as read.
+            LOGGER.info('Email UID {} already present in database, marking as read'.format(uid))
+            #status, response = email_mark_read(imap, uid)
             continue
-        logger.info('Fetching email UID {}'.format(uid))
-        status, message = fetch_email(uid)
+        LOGGER.info('Fetching email UID {}'.format(uid))
+        status, message = fetch_email(imap, uid)
         if status != 'OK':
-            logger.error('Server response failure on fetching email UID {}: {}'.format(uid, status))
+            LOGGER.error('Server response failure on fetching email UID {}: {}'.format(uid, status))
             continue
-        logger.info('Harvesting email UID {}'.format(uid))
+        LOGGER.info('Harvesting email UID {}'.format(uid))
         actions.append('{} Harvesting email UID {}'.format(datetime.now().isoformat(), uid))
         harvest_email(uid, message)
         # Mark email as read.
-        status, response = email_mark_read(uid)
+        #status, response = email_mark_read(imap, uid)
         if status == 'OK':
-            logger.info('Email UID {} was marked as "Read"'.format(uid))
+            LOGGER.info('Email UID {} was marked as "Read"'.format(uid))
 
-    logger.info('Harvest process completed ({})'.format(from_email))
+    LOGGER.info('Harvest process completed ({})'.format(from_email))
     actions.append('{} Harvest process completed ({})'.format(datetime.now().isoformat(), from_email))
+
+    imap.logout()
     return actions
 
 
@@ -217,7 +189,7 @@ def import_harvested_refs():
     """Process harvested referrals and generate referrals & records within PRS
     """
     actions = []
-    logger.info('Starting import of harvested referrals')
+    LOGGER.info('Starting import of harvested referrals')
     actions.append('{} Starting import of harvested referrals'.format(datetime.now().isoformat()))
     # Process harvested refs that are unprocessed at present.
     for er in EmailedReferral.objects.filter(referral__isnull=True, processed=False):
@@ -226,7 +198,7 @@ def import_harvested_refs():
         except:
             actions.append('Emailed referral {} failed to import; notify the custodian to investigate'.format(er))
 
-    logger.info('Import process completed')
+    LOGGER.info('Import process completed')
     actions.append('{} Import process completed'.format(datetime.now().isoformat()))
     return actions
 
