@@ -98,8 +98,8 @@ L.control.scale({maxWidth: 500, imperial: false}).addTo(map);
 map.addControl(new L.Control.Search({
     // OSM Noninatum geocoder URL
     // Limit searches to AU, and append "WA" to the end of every search :)
-    url: '//nominatim.openstreetmap.org/search?format=json&countrycodes=au&q={s}%20western%20australia',
-    propertyName: 'display_name',
+    url: '//caddy-dev.dpaw.wa.gov.au/api/geocode?q={s}',
+    propertyName: 'address',
     propertyLoc: ['lat','lon'],
     // Other variables.
     delayType: 1000,
