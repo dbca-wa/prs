@@ -155,31 +155,32 @@ def harvest_unread_emails(from_email):
         actions.append('{} Server response failure: {}'.format(datetime.now().isoformat(), status))
         return actions
 
-    LOGGER.info('Server lists {} unread emails; harvesting'.format(len(uids)))
-    actions.append('{} Server lists {} unread emails; harvesting'.format(datetime.now().isoformat(), len(uids)))
+    LOGGER.info('Server lists {} unread emails'.format(len(uids)))
+    actions.append('{} Server lists {} unread emails'.format(datetime.now().isoformat(), len(uids)))
 
-    for uid in uids:
-        # Fetch email message.
-        if EmailedReferral.objects.filter(email_uid=str(uid)).exists():
-            # Already harvested? Mark it as read.
-            LOGGER.info('Email UID {} already present in database, marking as read'.format(uid))
-            #status, response = email_mark_read(imap, uid)
-            continue
-        LOGGER.info('Fetching email UID {}'.format(uid))
-        status, message = fetch_email(imap, uid)
-        if status != 'OK':
-            LOGGER.error('Server response failure on fetching email UID {}: {}'.format(uid, status))
-            continue
-        LOGGER.info('Harvesting email UID {}'.format(uid))
-        actions.append('{} Harvesting email UID {}'.format(datetime.now().isoformat(), uid))
-        harvest_email(uid, message)
-        # Mark email as read.
-        #status, response = email_mark_read(imap, uid)
-        if status == 'OK':
-            LOGGER.info('Email UID {} was marked as "Read"'.format(uid))
+    if uids:
+        for uid in uids:
+            # Fetch email message.
+            if EmailedReferral.objects.filter(email_uid=str(uid)).exists():
+                # Already harvested? Mark it as read.
+                LOGGER.info('Email UID {} already present in database, marking as read'.format(uid))
+                status, response = email_mark_read(imap, uid)
+                continue
+            LOGGER.info('Fetching email UID {}'.format(uid))
+            status, message = fetch_email(imap, uid)
+            if status != 'OK':
+                LOGGER.error('Server response failure on fetching email UID {}: {}'.format(uid, status))
+                continue
+            LOGGER.info('Harvesting email UID {}'.format(uid))
+            actions.append('{} Harvesting email UID {}'.format(datetime.now().isoformat(), uid))
+            harvest_email(uid, message)
+            # Mark email as read.
+            status, response = email_mark_read(imap, uid)
+            if status == 'OK':
+                LOGGER.info('Email UID {} was marked as "Read"'.format(uid))
 
-    LOGGER.info('Harvest process completed ({})'.format(from_email))
-    actions.append('{} Harvest process completed ({})'.format(datetime.now().isoformat(), from_email))
+        LOGGER.info('Harvest process completed ({})'.format(from_email))
+        actions.append('{} Harvest process completed ({})'.format(datetime.now().isoformat(), from_email))
 
     imap.logout()
     return actions
