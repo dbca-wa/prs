@@ -1,9 +1,9 @@
-from __future__ import unicode_literals
-from braces.views import LoginRequiredMixin
+from __future__ import unicode_literals, absolute_import
 from copy import copy
 from datetime import datetime, timedelta
 from django.conf import settings
 from django.contrib import admin, messages
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Group
 from django.contrib.gis.geos import GEOSGeometry, MultiPolygon
 from django.core.mail import EmailMultiAlternatives

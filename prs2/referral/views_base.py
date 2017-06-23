@@ -1,7 +1,8 @@
-from braces.views import LoginRequiredMixin
+from __future__ import unicode_literals, absolute_import
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.admin import site
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.serializers import serialize
 from django.core.urlresolvers import reverse
 from django.http import (
