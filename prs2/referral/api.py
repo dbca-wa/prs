@@ -1,12 +1,20 @@
+from django.db.models import signals
+from django.contrib.auth import get_user_model
 from tastypie import fields
-from tastypie.authentication import SessionAuthentication
+from tastypie.authentication import BasicAuthentication, ApiKeyAuthentication, SessionAuthentication, MultiAuthentication
 from tastypie.cache import SimpleCache
+from tastypie.models import create_api_key
 from tastypie.resources import ModelResource, ALL_WITH_RELATIONS
 
 from referral.models import (
     DopTrigger, Region, OrganisationType, Organisation, TaskState, TaskType,
     ReferralType, NoteType, Agency, Referral, Task, Record, Note, Condition,
     ConditionCategory, Clearance, Location, UserProfile, ModelCondition)
+
+
+# Set up a signal to auto-create API key values for users.
+User = get_user_model()
+signals.post_save.connect(create_api_key, sender=User)
 
 
 def generate_filtering(mdl):
@@ -22,7 +30,7 @@ def generate_meta(klass, overrides={}):
     """Utility function to generate a standard ModelResource Meta class.
     """
     metaitems = {
-        'authentication': SessionAuthentication(),
+        'authentication': MultiAuthentication(BasicAuthentication(), SessionAuthentication(), ApiKeyAuthentication()),
         'queryset': klass.objects.all(),
         'resource_name': klass._meta.model_name,
         'filtering': generate_filtering(klass),
