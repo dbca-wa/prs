@@ -7,7 +7,7 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-xs-12">
-            <h4>Please log in with your DPaW username and password:</h4>
+            <h4>Please log in with your DBCA username and password:</h4>
             <form class="form-horizontal" action="" method="POST">
                 {% csrf_token %}
                 {% if form.errors %}
@@ -36,10 +36,10 @@
                 </div>
                 <input type="hidden" name="next" value="{{ next }}" />
             </form>
-            <p>Welcome to the Planning Referral Sysyem, DPaW's system for recording and managing land use planning referrals and related work.</p>
+            <p>Welcome to the Planning Referral Sysyem, DBCA's system for recording and managing land use planning referrals and related work.</p>
             <h4>New to PRS?</h4>
             <ul>
-                <li>For "read-only" access to PRS, enter your DPaW username and password to log in. No additional permissions are required.</li>
+                <li>For "read-only" access to PRS, enter your DBCA username (not email) and password to log in. No additional permissions are required.</li>
                 <li>If you require "edit" rights, please contact the application owner(s):</li>
                     <ul>
                     {% for manager in managers %}
