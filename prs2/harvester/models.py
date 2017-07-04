@@ -79,202 +79,221 @@ class EmailedReferral(models.Model):
             self.save()
             actions.append('{} Harvested referral {} parsing of application.xml failed'.format(datetime.now().isoformat(), self))
         app = d['APPLICATION']
-        ref = app['WAPC_APPLICATION_NO']
-        if Referral.objects.current().filter(reference__iexact=ref):
+        reference = app['WAPC_APPLICATION_NO']
+
+        # New/existing referral object.
+        if Referral.objects.current().filter(reference__iexact=reference):
             # Note if the the reference no. exists in PRS already.
-            logger.info('Referral ref {} is already in database'.format(ref))
-            actions.append('{} Referral ref {} is already in database'.format(datetime.now().isoformat(), ref))
+            logger.info('Referral ref. {} is already in database'.format(reference))
+            actions.append('{} Referral ref. {} is already in database; using existing referral'.format(datetime.now().isoformat(), reference))
+            new_ref = Referral.objects.current().filter(reference__iexact=reference).order_by('-pk').first()
             referral_preexists = True
-            new_ref = Referral.objects.current().filter(reference__iexact=ref).order_by('-pk').first()
         else:
+            # No match with existing references.
+            logger.info('Importing harvested referral ref. {} as new entity'.format(reference))
+            actions.append('{} Importing harvested referral ref. {} as new entity'.format(datetime.now().isoformat(), reference))
+            new_ref = Referral(reference=reference)
             referral_preexists = False
 
-        if not referral_preexists:
-            # No match with existing references; import the harvested referral.
-            logger.info('Importing harvested referral ref {}'.format(ref))
-            actions.append('{} Importing harvested referral ref {}'.format(datetime.now().isoformat(), ref))
+        # Referral type
+        try:
+            ref_type = ReferralType.objects.filter(name__istartswith=app['APP_TYPE'])[0]
+        except:
+            logger.warning('Referral type {} is not recognised type; skipping'.format(app['APP_TYPE']))
+            actions.append('{} Referral type {} is not recognised type; skipping'.format(datetime.now().isoformat(), app['APP_TYPE']))
+            self.processed = True
+            self.save()
+            return actions
+
+        # Determine the intersecting region(s).
+        regions = []
+        assigned = None
+        # ADDRESS_DETAIL may or may not be a list :/
+        if not isinstance(app['ADDRESS_DETAIL']['DOP_ADDRESS_TYPE'], list):
+            addresses = [app['ADDRESS_DETAIL']['DOP_ADDRESS_TYPE']]
+        else:
+            addresses = app['ADDRESS_DETAIL']['DOP_ADDRESS_TYPE']
+        # Address geometry:
+        url = env('SLIP_WFS_URL', None)
+        auth = (env('SLIP_USERNAME', None), env('SLIP_PASSWORD', None))
+        type_name = env('SLIP_DATASET', '')
+        locations = []
+        for a in addresses:
+            # Use the long/lat info to intersect DPaW regions.
             try:
-                ref_type = ReferralType.objects.filter(name__istartswith=app['APP_TYPE'])[0]
+                p = Point(x=float(a['LONGITUDE']), y=float(a['LATITUDE']))
+                for r in Region.objects.all():
+                    if r.region_mpoly and r.region_mpoly.intersects(p) and r not in regions:
+                        regions.append(r)
+                intersected_region = True
             except:
-                logger.warning('Referral type {} is not recognised type; skipping'.format(app['APP_TYPE']))
-                actions.append('{} Referral type {} is not recognised type; skipping'.format(datetime.now().isoformat(), app['APP_TYPE']))
-                self.processed = True
-                self.save()
-                return actions
-            # Determine the intersecting region(s).
-            regions = []
-            assigned = None
-            # ADDRESS_DETAIL may or may not be a list :/
-            if not isinstance(app['ADDRESS_DETAIL']['DOP_ADDRESS_TYPE'], list):
-                addresses = [app['ADDRESS_DETAIL']['DOP_ADDRESS_TYPE']]
-            else:
-                addresses = app['ADDRESS_DETAIL']['DOP_ADDRESS_TYPE']
-            # Address geometry:
-            url = env('SLIP_WFS_URL', None)
-            auth = (env('SLIP_USERNAME', None), env('SLIP_PASSWORD', None))
-            type_name = env('SLIP_DATASET', '')
-            locations = []
-            for a in addresses:
-                # Use the long/lat info to intersect DPaW regions.
-                try:
-                    p = Point(x=float(a['LONGITUDE']), y=float(a['LATITUDE']))
-                    for r in Region.objects.all():
-                        if r.region_mpoly and r.region_mpoly.intersects(p) and r not in regions:
-                            regions.append(r)
-                    intersected_region = True
-                except:
-                    logger.warning('Address long/lat could not be parsed ({}, {})'.format(a['LONGITUDE'], a['LATITUDE']))
-                    actions.append('{} Address long/lat could not be parsed ({}, {})'.format(datetime.now().isoformat(), a['LONGITUDE'], a['LATITUDE']))
-                    intersected_region = False
-                # Use the PIN field to try returning geometry from SLIP.
-                if 'PIN' in a:
-                    pin = int(a['PIN'])
-                    if pin > 0:
-                        params = {
-                            'service': 'WFS',
-                            'version': '1.0.0',
-                            'typeName': type_name,
-                            'request': 'getFeature',
-                            'outputFormat': 'json',
-                            'cql_filter': 'polygon_number={}'.format(pin)
-                        }
-                        try:
-                            resp = requests.get(url, auth=auth, params=params)
-                            if resp.json()['features']:  # Features are Multipolygons.
-                                features = resp.json()['features']  # List of MP features.
-                                a['FEATURES'] = features
-                                locations.append(a)  # A dict for each address location.
-                                # If we haven't yet, use the feature geom to intersect DPaW regions.
-                                if not intersected_region:
-                                    for f in features:
-                                        prop = f['properties']
-                                        if 'centroid_longitude' in prop and 'centroid_latitude' in prop:
-                                            p = Point(x=prop['centroid_longitude'], y=prop['centroid_latitude'])
-                                            for r in Region.objects.all():
-                                                if r.region_mpoly and r.region_mpoly.intersects(p) and r not in regions:
-                                                    regions.append(r)
-                            logger.info('Address PIN {} returned geometry from SLIP'.format(pin))
-                        except:
-                            logger.error('Error querying Landgate SLIP for spatial data (referral ref {})'.format(ref))
-                    else:
-                        logger.warning('Address PIN could not be parsed ({})'.format(a['PIN']))
-            regions = set(regions)
-            # Business rules:
-            # Didn't intersect a region? Might be bad geometry in the XML.
-            # Likewise if >1 region was intersected, default to Swan Region
-            # and the designated fallback user.
-            if len(regions) == 0:
-                region = Region.objects.get(name='Swan')
+                logger.warning('Address long/lat could not be parsed ({}, {})'.format(a['LONGITUDE'], a['LATITUDE']))
+                actions.append('{} Address long/lat could not be parsed ({}, {})'.format(datetime.now().isoformat(), a['LONGITUDE'], a['LATITUDE']))
+                intersected_region = False
+            # Use the PIN field to try returning geometry from SLIP.
+            if 'PIN' in a:
+                pin = int(a['PIN'])
+                if pin > 0:
+                    params = {
+                        'service': 'WFS',
+                        'version': '1.0.0',
+                        'typeName': type_name,
+                        'request': 'getFeature',
+                        'outputFormat': 'json',
+                        'cql_filter': 'polygon_number={}'.format(pin)
+                    }
+                    try:
+                        resp = requests.get(url, auth=auth, params=params)
+                        if resp.json()['features']:  # Features are Multipolygons.
+                            features = resp.json()['features']  # List of MP features.
+                            a['FEATURES'] = features
+                            locations.append(a)  # A dict for each address location.
+                            # If we haven't yet, use the feature geom to intersect DPaW regions.
+                            if not intersected_region:
+                                for f in features:
+                                    prop = f['properties']
+                                    if 'centroid_longitude' in prop and 'centroid_latitude' in prop:
+                                        p = Point(x=prop['centroid_longitude'], y=prop['centroid_latitude'])
+                                        for r in Region.objects.all():
+                                            if r.region_mpoly and r.region_mpoly.intersects(p) and r not in regions:
+                                                regions.append(r)
+                        logger.info('Address PIN {} returned geometry from SLIP'.format(pin))
+                    except:
+                        logger.error('Error querying Landgate SLIP for spatial data (referral ref. {})'.format(reference))
+                else:
+                    logger.warning('Address PIN could not be parsed ({})'.format(a['PIN']))
+        regions = set(regions)
+        # Business rules:
+        # Didn't intersect a region? Might be bad geometry in the XML.
+        # Likewise if >1 region was intersected, default to Swan Region
+        # and the designated fallback user.
+        if len(regions) == 0:
+            region = Region.objects.get(name='Swan')
+            assigned = assignee_default
+            logger.warning('No regions were intersected, defaulting to {} ({})'.format(region, assigned))
+        elif len(regions) > 1:
+            region = Region.objects.get(name='Swan')
+            assigned = assignee_default
+            logger.warning('>1 regions were intersected ({}), defaulting to {} ({})'.format(regions, region, assigned))
+        else:
+            region = regions.pop()
+            try:
+                assigned = RegionAssignee.objects.get(region=region).user
+            except:
+                logger.warning('No default assignee set for {}, defaulting to {}'.format(region, assignee_default))
+                actions.append('{} No default assignee set for {}, defaulting to {}'.format(datetime.now().isoformat(), region, assignee_default))
                 assigned = assignee_default
-                logger.warning('No regions were intersected, defaulting to {} ({})'.format(region, assigned))
-            elif len(regions) > 1:
-                region = Region.objects.get(name='Swan')
-                assigned = assignee_default
-                logger.warning('>1 regions were intersected ({}), defaulting to {} ({})'.format(regions, region, assigned))
-            else:
-                region = regions.pop()
-                try:
-                    assigned = RegionAssignee.objects.get(region=region).user
-                except:
-                    logger.warning('No default assignee set for {}, defaulting to {}'.format(region, assignee_default))
-                    actions.append('{} No default assignee set for {}, defaulting to {}'.format(datetime.now().isoformat(), region, assignee_default))
-                    assigned = assignee_default
-            # Create the referral in PRS.
-            new_ref = Referral.objects.create(
-                type=ref_type, agency=dpaw, referring_org=wapc,
-                reference=ref, description=app['DEVELOPMENT_DESCRIPTION'],
-                referral_date=self.received, address=app['LOCATION'])
+
+        # Create/update the referral in PRS.
+        new_ref.type = ref_type
+        new_ref.agency = dpaw
+        new_ref.referring_org = wapc
+        new_ref.reference = reference
+        new_ref.description = app['DEVELOPMENT_DESCRIPTION']
+        new_ref.referral_date = self.received, address=app['LOCATION']
+        new_ref.save()
+
+        if referral_preexists:
+            logger.info('PRS referral updated: {}'.format(new_ref))
+            actions.append('{} PRS referral updated: {}'.format(datetime.now().isoformat(), new_ref))
+        else:
             logger.info('New PRS referral generated: {}'.format(new_ref))
             actions.append('{} New PRS referral generated: {}'.format(datetime.now().isoformat(), new_ref))
-            # Assign to a region.
-            new_ref.region.add(region)
-            # Assign an LGA.
+
+        # Assign to a region.
+        new_ref.region.add(region)
+        # Assign an LGA.
+        try:
+            new_ref.lga = LocalGovernment.objects.get(name=app['LOCAL_GOVERNMENT'])
+            new_ref.save()
+        except:
+            logger.warning('LGA {} was not recognised'.format(app['LOCAL_GOVERNMENT']))
+            actions.append('{} LGA {} was not recognised'.format(datetime.now().isoformat(), app['LOCAL_GOVERNMENT']))
+
+        # Add triggers to the new referral.
+        triggers = [i.strip() for i in app['MRSZONE_TEXT'].split(',')]
+        added_trigger = False
+        for i in triggers:
+            if DopTrigger.objects.current().filter(name__istartswith=i).exists():
+                added_trigger = True
+                new_ref.dop_triggers.add(DopTrigger.objects.current().get(name__istartswith=i))
+            # A couple of exceptions for DoP triggers follow (specific -> general trigger).
+            elif i.startswith('BUSH FOREVER SITE'):
+                added_trigger = True
+                new_ref.dop_triggers.add(DopTrigger.objects.get(name='Bush Forever site'))
+            elif i.startswith('DPW ESTATE'):
+                added_trigger = True
+                new_ref.dop_triggers.add(DopTrigger.objects.get(name='Parks and Wildlife estate'))
+            elif i.find('REGIONAL PARK') > -1:
+                added_trigger = True
+                new_ref.dop_triggers.add(DopTrigger.objects.get(name='Regional Park'))
+        # If we didn't link any DoP triggers, link the "No Parks and Wildlife trigger" tag.
+        if not added_trigger:
+            new_ref.dop_triggers.add(DopTrigger.objects.get(name='No Parks and Wildlife trigger'))
+
+        # Add locations to the new referral (one per polygon in each MP geometry).
+        new_locations = []
+        for l in locations:
+            for f in l['FEATURES']:
+                geom = GEOSGeometry(json.dumps(f['geometry']))
+                for p in geom:
+                    new_loc = Location.objects.create(
+                        address_no=int(a['NUMBER_FROM']) if a['NUMBER_FROM'] else None,
+                        address_suffix=a['NUMBER_FROM_SUFFIX'],
+                        road_name=a['STREET_NAME'],
+                        road_suffix=a['STREET_SUFFIX'],
+                        locality=a['SUBURB'],
+                        postcode=a['POSTCODE'],
+                        referral=new_ref,
+                        poly=p
+                    )
+                    new_locations.append(new_loc)
+                    logger.info('New PRS location generated: {}'.format(new_loc))
+                    actions.append('{} New PRS location generated: {}'.format(datetime.now().isoformat(), new_loc))
+
+        # Check to see if new locations intersect with any existing locations.
+        intersecting = []
+        for l in new_locations:
+            other_l = Location.objects.current().exclude(pk=l.pk).filter(poly__isnull=False, poly__intersects=l.poly)
+            if other_l.exists():
+                intersecting += list(other_l)
+        # For any intersecting locations, relate the new and existing referrals.
+        for l in intersecting:
+            if l.referral.pk != new_ref.pk:
+                new_ref.add_relationship(l.referral)
+                logger.info('New referral {} related to existing referral {}'.format(new_ref.pk, l.referral.pk))
+                actions.append('{} New referral {} related to existing referral {}'.format(datetime.now().isoformat(), new_ref.pk, l.referral.pk))
+
+        # Create an "Assess a referral" task and assign it to a user.
+        new_task = Task(
+            type=assess_task,
+            referral=new_ref,
+            start_date=new_ref.referral_date,
+            description=new_ref.description,
+            assigned_user=assigned
+        )
+        new_task.state = assess_task.initial_state
+        if 'DUE_DATE' in app and app['DUE_DATE']:
             try:
-                new_ref.lga = LocalGovernment.objects.get(name=app['LOCAL_GOVERNMENT'])
-                new_ref.save()
+                due = datetime.strptime(app['DUE_DATE'], '%d-%b-%y')
             except:
-                logger.warning('LGA {} was not recognised'.format(app['LOCAL_GOVERNMENT']))
-                actions.append('{} LGA {} was not recognised'.format(datetime.now().isoformat(), app['LOCAL_GOVERNMENT']))
-            # Add triggers to the new referral.
-            triggers = [i.strip() for i in app['MRSZONE_TEXT'].split(',')]
-            added_trigger = False
-            for i in triggers:
-                if DopTrigger.objects.current().filter(name__istartswith=i).exists():
-                    added_trigger = True
-                    new_ref.dop_triggers.add(DopTrigger.objects.current().get(name__istartswith=i))
-                # A couple of exceptions for DoP triggers follow (specific -> general trigger).
-                elif i.startswith('BUSH FOREVER SITE'):
-                    added_trigger = True
-                    new_ref.dop_triggers.add(DopTrigger.objects.get(name='Bush Forever site'))
-                elif i.startswith('DPW ESTATE'):
-                    added_trigger = True
-                    new_ref.dop_triggers.add(DopTrigger.objects.get(name='Parks and Wildlife estate'))
-                elif i.find('REGIONAL PARK') > -1:
-                    added_trigger = True
-                    new_ref.dop_triggers.add(DopTrigger.objects.get(name='Regional Park'))
-            # If we didn't link any DoP triggers, link the "No Parks and Wildlife trigger" tag.
-            if not added_trigger:
-                new_ref.dop_triggers.add(DopTrigger.objects.get(name='No Parks and Wildlife trigger'))
-            # Add locations to the new referral (one per polygon in each MP geometry).
-            new_locations = []
-            for l in locations:
-                for f in l['FEATURES']:
-                    geom = GEOSGeometry(json.dumps(f['geometry']))
-                    for p in geom:
-                        new_loc = Location.objects.create(
-                            address_no=int(a['NUMBER_FROM']) if a['NUMBER_FROM'] else None,
-                            address_suffix=a['NUMBER_FROM_SUFFIX'],
-                            road_name=a['STREET_NAME'],
-                            road_suffix=a['STREET_SUFFIX'],
-                            locality=a['SUBURB'],
-                            postcode=a['POSTCODE'],
-                            referral=new_ref,
-                            poly=p
-                        )
-                        new_locations.append(new_loc)
-                        logger.info('New PRS location generated: {}'.format(new_loc))
-                        actions.append('{} New PRS location generated: {}'.format(datetime.now().isoformat(), new_loc))
-            # Check to see if new locations intersect with any existing locations.
-            intersecting = []
-            for l in new_locations:
-                other_l = Location.objects.current().exclude(pk=l.pk).filter(poly__isnull=False, poly__intersects=l.poly)
-                if other_l.exists():
-                    intersecting += list(other_l)
-            # For any intersecting locations, relate the new and existing referrals.
-            for l in intersecting:
-                if l.referral.pk != new_ref.pk:
-                    new_ref.add_relationship(l.referral)
-                    logger.info('New referral {} related to existing referral {}'.format(new_ref.pk, l.referral.pk))
-                    actions.append('{} New referral {} related to existing referral {}'.format(datetime.now().isoformat(), new_ref.pk, l.referral.pk))
-            # Create an "Assess a referral" task and assign it to a user.
-            new_task = Task(
-                type=assess_task,
-                referral=new_ref,
-                start_date=new_ref.referral_date,
-                description=new_ref.description,
-                assigned_user=assigned
-            )
-            new_task.state = assess_task.initial_state
-            if 'DUE_DATE' in app and app['DUE_DATE']:
-                try:
-                    due = datetime.strptime(app['DUE_DATE'], '%d-%b-%y')
-                except:
-                    due = datetime.today() + timedelta(assess_task.target_days)
-            else:
                 due = datetime.today() + timedelta(assess_task.target_days)
-            new_task.due_date = due
-            new_task.save()
-            logger.info('New PRS task generated: {} assigned to {}'.format(new_task, assigned.get_full_name()))
-            actions.append('{} New PRS task generated: {} assigned to {}'.format(datetime.now().isoformat(), new_task, assigned.get_full_name()))
-            # Email the assigned user about the new task.
-            new_task.email_user()
-            logger.info('Task assignment email sent to {}'.format(assigned.email))
-            actions.append('{} Task assignment email sent to {}'.format(datetime.now().isoformat(), assigned.email))
+        else:
+            due = datetime.today() + timedelta(assess_task.target_days)
+        new_task.due_date = due
+        new_task.save()
+        logger.info('New PRS task generated: {} assigned to {}'.format(new_task, assigned.get_full_name()))
+        actions.append('{} New PRS task generated: {} assigned to {}'.format(datetime.now().isoformat(), new_task, assigned.get_full_name()))
+
+        # Email the assigned user about the new task.
+        new_task.email_user()
+        logger.info('Task assignment email sent to {}'.format(assigned.email))
+        actions.append('{} Task assignment email sent to {}'.format(datetime.now().isoformat(), assigned.email))
 
         # Save the EmailedReferral as a record on the referral.
         new_record = Record.objects.create(
             name=self.subject, referral=new_ref, order_date=datetime.today())
-        file_name = 'emailed_referral_{}.html'.format(ref)
+        file_name = 'emailed_referral_{}.html'.format(reference)
         new_file = File(StringIO(self.body))
         new_record.uploaded_file.save(file_name, new_file)
         new_record.save()
@@ -300,6 +319,7 @@ class EmailedReferral(models.Model):
         self.referral = new_ref
         self.processed = True
         self.save()
+
         return actions
 
 
