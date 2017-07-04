@@ -2,10 +2,12 @@ from __future__ import absolute_import, print_function, unicode_literals
 from datetime import date, timedelta
 from django.contrib.auth import get_user_model
 from django.contrib.gis.geos import Polygon
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.urlresolvers import reverse
 from django.test import Client
 from django.utils.http import urlencode
 from django_webtest import WebTest
+import json
 from mixer.backend.django import mixer
 import uuid
 
@@ -1030,3 +1032,27 @@ class InfobaseShortcutTest(PrsViewsTestCase):
                 self.assertEqual(response.content.decode(), i.infobase_id)
             else:  # Python 2.
                 self.assertEqual(response.content, i.infobase_id)
+
+
+class RecordUploadViewTest(PrsViewsTestCase):
+
+    def test_post(self):
+        """Test POST response for an authorised user
+        """
+        url = reverse('referral_record_upload', kwargs={'pk': Referral.objects.first().pk})
+        f = SimpleUploadedFile('file.txt', b'file_content')
+        response = self.client.post(url, {'file': f})
+        self.assertEquals(response.status_code, 200)
+        result = json.loads(response.content)
+        self.assertTrue(Record.objects.filter(pk=result['object']['id']).exists())
+
+    def test_post_forbidden(self):
+        """Test POST response for an unauthorised user
+        """
+        url = reverse('referral_record_upload', kwargs={'pk': Referral.objects.first().pk})
+        f = SimpleUploadedFile('file.txt', b'file_content')
+        # Log in as read-only user
+        self.client.logout()
+        self.client.login(username='readonlyuser', password='pass')
+        response = self.client.post(url, {'file': f})
+        self.assertEquals(response.status_code, 403)

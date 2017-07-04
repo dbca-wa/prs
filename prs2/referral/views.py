@@ -818,13 +818,16 @@ class LocationIntersects(PrsObjectCreate):
 
 class RecordUpload(LoginRequiredMixin, View):
     """Minimal view to handle POST of form-encoded uploaded files.
-    Note that this view is CSRF-exempt, though auth is still required.
     TODO: unit test for this view.
     """
     http_method_names = ['post']
 
     @method_decorator(csrf_exempt)
     def dispatch(self, request, *args, **kwargs):
+        if not prs_user(request):
+            return HttpResponseForbidden(json.dumps(
+                {'error': {'code': 403, 'message': 'You do not have permission to create records'}}
+            ))
         return super(RecordUpload, self).dispatch(request, *args, **kwargs)
 
     def parent_referral(self):
@@ -836,7 +839,15 @@ class RecordUpload(LoginRequiredMixin, View):
             name=f.name, referral=self.parent_referral(), uploaded_file=f,
             order_date=datetime.now(), creator=request.user, modifier=request.user)
         rec.save()
-        return HttpResponse(json.dumps({'success': True}))
+        return HttpResponse(json.dumps(
+            {
+                'success': True,
+                'object': {
+                    'id': rec.pk,
+                    'resource_uri': rec.get_absolute_url()
+                }
+            }
+        ))
 
 
 class TaskAction(PrsObjectUpdate):
