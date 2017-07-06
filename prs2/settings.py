@@ -22,18 +22,9 @@ SECRET_KEY = env('SECRET_KEY')
 CSRF_COOKIE_SECURE = env('CSRF_COOKIE_SECURE', False)
 SESSION_COOKIE_SECURE = env('SESSION_COOKIE_SECURE', False)
 if not DEBUG:
-    # Localhost, UAT and Production hosts:
-    ALLOWED_HOSTS = [
-        'localhost',
-        '127.0.0.1',
-        'prs.dpaw.wa.gov.au',
-        'prs.dpaw.wa.gov.au.',
-        'prs-uat.dpaw.wa.gov.au',
-        'prs-uat.dpaw.wa.gov.au.',
-    ]
+    ALLOWED_HOSTS = env('ALLOWED_DOMAINS', '').split(',')
 else:
     ALLOWED_HOSTS = ['*']
-
 INTERNAL_IPS = ['127.0.0.1', '::1']
 ROOT_URLCONF = 'prs2.urls'
 WSGI_APPLICATION = 'prs2.wsgi.application'
