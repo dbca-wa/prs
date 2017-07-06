@@ -190,7 +190,8 @@ class EmailedReferral(models.Model):
         new_ref.referring_org = wapc
         new_ref.reference = reference
         new_ref.description = app['DEVELOPMENT_DESCRIPTION']
-        new_ref.referral_date = self.received, address=app['LOCATION']
+        new_ref.referral_date = self.received
+        new_ref.address = app['LOCATION']
         new_ref.save()
 
         if referral_preexists:
