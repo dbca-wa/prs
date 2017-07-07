@@ -202,7 +202,7 @@ class EmailedReferral(models.Model):
             actions.append('{} New PRS referral generated: {}'.format(datetime.now().isoformat(), new_ref))
 
         # Assign to a region.
-        new_ref.region.add(region)
+        new_ref.regions.add(region)
         # Assign an LGA.
         try:
             new_ref.lga = LocalGovernment.objects.get(name=app['LOCAL_GOVERNMENT'])

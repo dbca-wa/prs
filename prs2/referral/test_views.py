@@ -1043,7 +1043,7 @@ class RecordUploadViewTest(PrsViewsTestCase):
         f = SimpleUploadedFile('file.txt', b'file_content')
         response = self.client.post(url, {'file': f})
         self.assertEquals(response.status_code, 200)
-        result = json.loads(response.content)
+        result = json.loads(response.content.decode('utf8'))
         self.assertTrue(Record.objects.filter(pk=result['object']['id']).exists())
 
     def test_post_forbidden(self):
