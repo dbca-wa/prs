@@ -22,18 +22,9 @@ SECRET_KEY = env('SECRET_KEY')
 CSRF_COOKIE_SECURE = env('CSRF_COOKIE_SECURE', False)
 SESSION_COOKIE_SECURE = env('SESSION_COOKIE_SECURE', False)
 if not DEBUG:
-    # Localhost, UAT and Production hosts:
-    ALLOWED_HOSTS = [
-        'localhost',
-        '127.0.0.1',
-        'prs.dpaw.wa.gov.au',
-        'prs.dpaw.wa.gov.au.',
-        'prs-uat.dpaw.wa.gov.au',
-        'prs-uat.dpaw.wa.gov.au.',
-    ]
+    ALLOWED_HOSTS = env('ALLOWED_DOMAINS', '').split(',')
 else:
     ALLOWED_HOSTS = ['*']
-
 INTERNAL_IPS = ['127.0.0.1', '::1']
 ROOT_URLCONF = 'prs2.urls'
 WSGI_APPLICATION = 'prs2.wsgi.application'
@@ -104,7 +95,7 @@ LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 APPLICATION_TITLE = 'Planning Referral System'
 APPLICATION_ACRONYM = 'PRS'
-APPLICATION_VERSION_NO = '2.3.1'
+APPLICATION_VERSION_NO = '2.3.3'
 APPLICATION_ALERTS_EMAIL = 'PRS-Alerts@dpaw.wa.gov.au'
 SITE_URL = env('SITE_URL', 'localhost')
 PRS_USER_GROUP = env('PRS_USER_GROUP', 'PRS user')

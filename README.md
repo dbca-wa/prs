@@ -25,6 +25,7 @@ The following variables are required for the project to run:
 Variables below may also need to be defined (context-dependent):
 
     DEBUG=True
+    ALLOWED_DOMAINS=".dpaw.wa.gov.au,.dbca.wa.gov.au"
     CSRF_COOKIE_SECURE=False
     SESSION_COOKIE_SECURE=False
     EMAIL_HOST="email.host"
