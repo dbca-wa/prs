@@ -1,4 +1,4 @@
-Django==1.10.7
+Django==1.11.3
 django-extensions==1.7.9
 git+https://github.com/parksandwildlife/dpaw-utils.git@0.3a16#egg=dpaw-utils
 django-reversion==2.0.8
@@ -27,5 +27,4 @@ django-downloadview==1.9
 webtemplate-dpaw==0.4.2
 selenium==2.46.1
 openpyxl==2.2.6
-pytz==2017.2
 xmltodict==0.10.2
