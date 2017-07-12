@@ -441,7 +441,7 @@ class CustomFormHelper(BaseFormHelper):
 class RecordAddExistingForm(BaseForm):
     """Form for associating existing record(s) to a task or note.
     """
-    records = forms.ModelMultipleChoiceField(queryset=None)
+    records = RecordChoiceField(queryset=None)
 
     def __init__(self, referral, *args, **kwargs):
         super(RecordAddExistingForm, self).__init__(*args, **kwargs)

@@ -18,6 +18,7 @@
 {% block page_content_inner %}
 <div class="row">
     <div class="col-xs-12">
+        <div id="modal-spinner"></div>
         <!-- Navigation tabs -->
         <ul class="nav nav-tabs" role="tablist">
             <li role="presentation" class="active">
@@ -31,7 +32,6 @@
             </li>
         </ul>
         <div class="tab-content">
-            <div id="modal-spinner"></div>
             <div role="tabpanel" class="tab-pane fade in active" id="tab_referrals">
             <!-- Referrals result panel -->
                 <!-- Filters row -->
@@ -283,7 +283,7 @@
                                     <tr>
                                         <th>Referral ID</th>
                                         <th>Referral ref.</th>
-                                        <th>Region</th>
+                                        <th>Region(s)</th>
                                         <th>Assigned user</th>
                                         <th>Task type</th>
                                         <th>Task description</th>
@@ -320,7 +320,12 @@
 <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/moment.js/2.10.6/moment.min.js"></script>
 <script type="text/javascript">
     const refListUrl = '{% url 'prs_object_list' model='referrals' %}';
-    var spinner = new Spinner({scale: 3}).spin();
+    const spinner = new Spinner({scale: 3, top: '120px'});
+
+    function startSpinner() {
+        spinner.spin()
+        $("#modal-spinner").append(spinner.el);
+    }
 
     function _updateSelectOptions(el, url, filters) {
         // Utility function to replace options in a DOM select element
@@ -407,7 +412,7 @@
         var data = {};
         var region = $("select#filter-region-referral").val();
         if (region) {
-            $.extend(data, {"region__id": region});
+            $.extend(data, {"regions__id__in": region});
         }
         var organisation = $("select#filter-organisation-referral").val();
         if (organisation) {
@@ -437,7 +442,7 @@
         var data = {};
         var region = $("select#filter-region-clearance").val();
         if (region) {
-            $.extend(data, {"task__referral__region__id__in": region});
+            $.extend(data, {"task__referral__regions__id__in": region});
         }
         var organisation = $("select#filter-organisation-clearance").val();
         if (organisation) {
@@ -463,7 +468,7 @@
         var data = {};
         var region = $("select#filter-region-task").val();
         if (region) {
-            $.extend(data, {"referral__region__id__in": region});
+            $.extend(data, {"referral__regions__id__in": region});
         }
         var type = $("select#filter-taskType").val();
         if (type) {
@@ -500,11 +505,6 @@
             params["model"] = model;
         };
         window.open("{% url 'reports_download' %}" + '?' + $.param(params), "_blank");
-    }
-
-    function startSpinner() {
-        spinner.spin();
-        $("#modal-spinner").append(spinner.el);
     }
 
     // DataTables configuration.
@@ -545,7 +545,7 @@
                 }
             },
             {
-                "data": "region",
+                "data": "regions",
                 "render": function(data, type, row, meta) {
                     return data.map(function(obj) {return obj.name}).join(", ")
                 }
@@ -608,7 +608,7 @@
                 }
             },
             {
-                "data": "condition.referral.region",
+                "data": "condition.referral.regions",
                 "render": function(data, type, row, meta) {
                     return data.map(function(obj) {return obj.name}).join(", ")
                 }
@@ -681,7 +681,7 @@
             },
             {"data": "referral.reference"},
             {
-                "data": "referral.region",
+                "data": "referral.regions",
                 "render": function(data, type, row, meta) {
                     return data.map(function(obj) {return obj.name}).join(", ")
                 }
@@ -726,7 +726,7 @@
 
     // Document ready
     $(function () {
-        $("#modal-spinner").append(spinner.el);
+        startSpinner();
 
         // Initialise the DataTables.
         var refDataTable = $("table#referralsTable").DataTable(configRefTable);

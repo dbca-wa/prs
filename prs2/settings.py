@@ -88,15 +88,15 @@ TEMPLATES = [
     }
 ]
 MANAGERS = (
-    ('Sean Walsh', 'sean.walsh@dpaw.wa.gov.au', '9442 0306'),
-    ('Cho Lamb', 'cho.lamb@dpaw.wa.gov.au', '9442 0309'),
+    ('Sean Walsh', 'sean.walsh@dbca.wa.gov.au'),
+    ('Cho Lamb', 'cho.lamb@dbca.wa.gov.au'),
 )
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 APPLICATION_TITLE = 'Planning Referral System'
 APPLICATION_ACRONYM = 'PRS'
 APPLICATION_VERSION_NO = '2.3.3'
-APPLICATION_ALERTS_EMAIL = 'PRS-Alerts@dpaw.wa.gov.au'
+APPLICATION_ALERTS_EMAIL = 'PRS-Alerts@dbca.wa.gov.au'
 SITE_URL = env('SITE_URL', 'localhost')
 PRS_USER_GROUP = env('PRS_USER_GROUP', 'PRS user')
 PRS_POWER_USER_GROUP = env('PRS_PWUSER_GROUP', 'PRS power user')
@@ -124,7 +124,7 @@ ALLOWED_UPLOAD_TYPES = [
 ]
 
 # Email settings
-ADMINS = ('asi@dpaw.wa.gov.au',)
+ADMINS = ('asi@dbca.wa.gov.au',)
 EMAIL_HOST = env('EMAIL_HOST', 'email.host')
 EMAIL_PORT = env('EMAIL_PORT', 25)
 REFERRAL_EMAIL_HOST = env('REFERRAL_EMAIL_HOST', 'host')
