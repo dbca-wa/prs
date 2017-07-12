@@ -90,8 +90,8 @@ class ReferralResource(ModelResource):
     type = fields.ToOneField(ReferralTypeResource, attribute='type', full=True)
     agency = fields.ToOneField(
         AgencyResource, attribute='agency', full=True, null=True, blank=True)
-    region = fields.ToManyField(
-        RegionResource, attribute='region', full=True, null=True, blank=True)
+    regions = fields.ToManyField(
+        RegionResource, attribute='regions', full=True, null=True, blank=True)
     referring_org = fields.ToOneField(
         OrganisationResource, attribute='referring_org', full=True)
     dop_triggers = fields.ToManyField(
@@ -103,7 +103,7 @@ class ReferralResource(ModelResource):
         'prs2.api.TagResource', attribute='tags', full=True, null=True, blank=True)
     # Update Meta filtering to include M2M fields.
     Meta.filtering.update({
-        'region': ALL_WITH_RELATIONS,
+        'regions': ALL_WITH_RELATIONS,
         'dop_triggers': ALL_WITH_RELATIONS,
         'tags': ALL_WITH_RELATIONS,
     })
