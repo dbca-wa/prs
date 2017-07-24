@@ -1,6 +1,7 @@
 sudo: false
 language: python
 cache: pip
+dist: trusty
 python:
     - 2.7
     - 3.5
@@ -24,8 +25,8 @@ install:
     - pip install -r requirements.txt
     - pip install coveralls
 before_script:
-    - psql -c "create extension postgis" -U postgres
     - psql -c "create database travis_ci_test;" -U postgres
+    - psql -c "create extension postgis;" -U postgres -d travis_ci_test
     - python manage.py migrate --noinput
 script:
     - coverage run --source="." manage.py test
