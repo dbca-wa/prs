@@ -2,12 +2,15 @@ sudo: false
 language: python
 cache: pip
 python:
-    - "2.7"
-    - "3.5"
-addons:
-    postgresql: "9.4"
+    - 2.7
+    - 3.5
 services:
     - postgresql
+addons:
+    postgresql: 9.5
+    apt:
+        packages:
+            - postgresql-9.5-postgis-2.3
 branches:
     only:
         - master
@@ -16,12 +19,13 @@ env:
         - SECRET_KEY=SecretKeyForTravis
         - DATABASE_URL="postgis://postgres@localhost:5432/travis_ci_test"
 install:
-    - psql -U postgres -c "create extension postgis"
+    - pip install --upgrade pip
     - pip install --upgrade setuptools
     - pip install -r requirements.txt
     - pip install coveralls
 before_script:
-    - psql -c 'create database travis_ci_test;' -U postgres
+    - psql -c "create extension postgis" -U postgres
+    - psql -c "create database travis_ci_test;" -U postgres
     - python manage.py migrate --noinput
 script:
     - coverage run --source="." manage.py test
