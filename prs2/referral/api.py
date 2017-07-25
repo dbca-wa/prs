@@ -30,7 +30,7 @@ def generate_meta(klass, overrides={}):
     """Utility function to generate a standard ModelResource Meta class.
     """
     metaitems = {
-        'authentication': MultiAuthentication(BasicAuthentication(), SessionAuthentication(), ApiKeyAuthentication()),
+        'authentication': MultiAuthentication(ApiKeyAuthentication(), BasicAuthentication(), SessionAuthentication()),
         'queryset': klass.objects.all(),
         'resource_name': klass._meta.model_name,
         'filtering': generate_filtering(klass),
@@ -42,51 +42,54 @@ def generate_meta(klass, overrides={}):
 
 
 class DopTriggerResource(ModelResource):
-    Meta = generate_meta(DopTrigger)
+    Meta = generate_meta(DopTrigger, overrides={'queryset': DopTrigger.objects.current().filter(public=True)})
 
 
 class RegionResource(ModelResource):
-    Meta = generate_meta(Region)
+    Meta = generate_meta(Region, overrides={'excludes': ['region_mpoly'], 'queryset': Region.objects.current().filter(public=True)})
 
 
 class OrganisationTypeResource(ModelResource):
-    Meta = generate_meta(OrganisationType)
+    Meta = generate_meta(OrganisationType, overrides={'queryset': OrganisationType.objects.current().filter(public=True)})
 
 
 class OrganisationResource(ModelResource):
-    Meta = generate_meta(Organisation)
+    Meta = generate_meta(Organisation, overrides={'queryset': Organisation.objects.current().filter(public=True)})
     type = fields.ToOneField(
         OrganisationTypeResource, attribute='type', full=True)
 
 
 class TaskStateResource(ModelResource):
-    Meta = generate_meta(TaskState)
+    Meta = generate_meta(TaskState, overrides={'queryset': TaskState.objects.current().filter(public=True)})
     task_type = fields.ToOneField(
         'referral.api.TaskTypeResource', attribute='task_type', full=True,
         null=True, blank=True)
 
 
 class TaskTypeResource(ModelResource):
-    Meta = generate_meta(TaskType)
+    Meta = generate_meta(TaskType, overrides={'queryset': TaskType.objects.current().filter(public=True)})
     initial_state = fields.ToOneField(
         'referral.api.TaskStateResource', attribute='initial_state', full=True,
         null=True, blank=True)
 
 
 class ReferralTypeResource(ModelResource):
-    Meta = generate_meta(ReferralType)
+    Meta = generate_meta(ReferralType, overrides={'queryset': ReferralType.objects.current().filter(public=True)})
+    initial_task = fields.ToOneField(
+        'referral.api.TaskTypeResource', attribute='initial_task', full=True,
+        null=True, blank=True)
 
 
 class NoteTypeResource(ModelResource):
-    Meta = generate_meta(NoteType)
+    Meta = generate_meta(NoteType, overrides={'queryset': NoteType.objects.current().filter(public=True)})
 
 
 class AgencyResource(ModelResource):
-    Meta = generate_meta(Agency)
+    Meta = generate_meta(Agency, overrides={'queryset': Agency.objects.current().filter(public=True)})
 
 
 class ReferralResource(ModelResource):
-    Meta = generate_meta(Referral)
+    Meta = generate_meta(Referral, overrides={'queryset': Referral.objects.current()})
     type = fields.ToOneField(ReferralTypeResource, attribute='type', full=True)
     agency = fields.ToOneField(
         AgencyResource, attribute='agency', full=True, null=True, blank=True)
@@ -110,7 +113,7 @@ class ReferralResource(ModelResource):
 
 
 class TaskResource(ModelResource):
-    Meta = generate_meta(Task)
+    Meta = generate_meta(Task, overrides={'queryset': Task.objects.current()})
     type = fields.ToOneField(TaskTypeResource, attribute='type', full=True)
     referral = fields.ToOneField(
         ReferralResource, attribute='referral', full=True)
@@ -120,7 +123,7 @@ class TaskResource(ModelResource):
 
 
 class RecordResource(ModelResource):
-    Meta = generate_meta(Record)
+    Meta = generate_meta(Record, overrides={'queryset': Record.objects.current()})
     referral = fields.ToOneField(
         ReferralResource, attribute='referral', full=True)
     notes = fields.ToManyField(
@@ -129,7 +132,7 @@ class RecordResource(ModelResource):
 
 
 class NoteResource(ModelResource):
-    Meta = generate_meta(Note)
+    Meta = generate_meta(Note, overrides={'queryset': Note.objects.current()})
     referral = fields.ToOneField(
         ReferralResource, attribute='referral', full=True)
     type = fields.ToOneField(
@@ -140,17 +143,17 @@ class NoteResource(ModelResource):
 
 
 class ConditionCategoryResource(ModelResource):
-    Meta = generate_meta(ConditionCategory)
+    Meta = generate_meta(ConditionCategory, overrides={'queryset': ConditionCategory.objects.current().filter(public=True)})
 
 
 class ModelConditionResource(ModelResource):
-    Meta = generate_meta(ModelCondition)
+    Meta = generate_meta(ModelCondition, overrides={'queryset': ModelCondition.objects.current()})
     category = fields.ToOneField(
         ConditionCategoryResource, attribute='category', full=True, null=True)
 
 
 class ConditionResource(ModelResource):
-    Meta = generate_meta(Condition)
+    Meta = generate_meta(Condition, overrides={'queryset': Condition.objects.current()})
     referral = fields.ToOneField(
         ReferralResource, attribute='referral', full=True, null=True,
         blank=True)
@@ -175,7 +178,7 @@ class ClearanceResource(ModelResource):
 
 
 class LocationResource(ModelResource):
-    Meta = generate_meta(Location)
+    Meta = generate_meta(Location, overrides={'queryset': Location.objects.current()})
     referral = fields.ToOneField(
         ReferralResource, attribute='referral', full=True, null=True,
         blank=True)
