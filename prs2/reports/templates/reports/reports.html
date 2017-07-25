@@ -431,7 +431,7 @@
             $.extend(data, {"referral_date__lte": moment(toDate, "D/M/YYYY").format("YYYY-MM-DD")});
         }
         var tags = $("#filter-referralTags").val();
-        if (tags) {
+        if (tags.length > 0) {
             $.extend(data, {"tags__id__in": tags.join(",")});
         }
         return data;
