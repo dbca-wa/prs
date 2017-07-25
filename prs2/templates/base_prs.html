@@ -1,10 +1,14 @@
-{% extends "webtemplate_dpaw/base.html" %}
+{% extends "webtemplate_dpaw/base_dbca.html" %}
 {% load cache %}
 {% load static from staticfiles %}
 
 {% block extra_style %}
 {{ block.super }}
-<link rel="stylesheet" href="//static.dpaw.wa.gov.au/static/libs/font-awesome/4.4.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="//static.dbca.wa.gov.au/static/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+{% endblock %}
+
+{% block navbar_logo %}
+<img class="navbar-brand hidden-xs" src="{% static 'img/dpaw_logo_small.png' %}">
 {% endblock %}
 
 {% block navbar_site_title %}
@@ -50,7 +54,7 @@
         <li><a href="{% url 'prs_object_list' model='bookmarks' %}" title="Bookmarks">Bookmarks</a></li>
         <li><a href="{% url 'stopped_tasks_list' %}" title="Stopped tasks">Stopped tasks</a></li>
         <li><a href="{% url 'help_page' %}" title="Help">Help</a></li>
-        <li><a href="{% url 'logout' %}" title="Log out">Log out</a></li>
+        {#<li><a href="{% url 'logout' %}" title="Log out">Log out</a></li>#}
     </ul>
 </li>
 <li class="active is_prs_user"><a href="{% url 'referral_create' %}" title="Create a new referral"><strong>Create</strong></a></li>
@@ -94,7 +98,7 @@
 {% block page_footer %}
 {% cache 600 footer %}
 <hr>
-<div class="container text-center">
+<div class="container-fluid text-center">
     <div class="row">
         <div class="col-xs-12">
             <small>v{{ version_no }} &copy; Department of Biodiversity, Conservation and Attractions</small>

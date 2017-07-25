@@ -1,5 +1,5 @@
 # Stdlib imports
-from __future__ import unicode_literals
+from __future__ import unicode_literals, absolute_import
 from copy import copy
 from datetime import date
 import json

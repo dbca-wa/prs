@@ -2,10 +2,10 @@
 
 {% block extra_style %}
 {{ block.super }}
-<link rel="stylesheet" type="text/css" href="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.9/css/dataTables.bootstrap.min.css">
-<link rel="stylesheet" type="text/css" href="//static.dpaw.wa.gov.au/static/libs/bootstrap-datepicker/1.4.1/css/bootstrap-datepicker.min.css">
-<link rel="stylesheet" type="text/css" href="//static.dpaw.wa.gov.au/static/libs/select2/4.0.0/css/select2.min.css">
-<link rel="stylesheet" type="text/css" href="//static.dpaw.wa.gov.au/static/libs/select2-bootstrap-css/1.4.6/select2-bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="//static.dbca.wa.gov.au/static/libs/datatables/1.10.9/css/dataTables.bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="//static.dbca.wa.gov.au/static/libs/bootstrap-datepicker/1.4.1/css/bootstrap-datepicker.min.css">
+<link rel="stylesheet" type="text/css" href="//static.dbca.wa.gov.au/static/libs/select2/4.0.0/css/select2.min.css">
+<link rel="stylesheet" type="text/css" href="//static.dbca.wa.gov.au/static/libs/select2-bootstrap-css/1.4.6/select2-bootstrap.min.css">
 <style>
 .dataTables_wrapper {
     <!-- CSS hack to prevent DataTables from adding a horizontal scrollbar to object table -->
@@ -311,13 +311,13 @@
 
 {% block extra_js %}
 {{ block.super }}
-<script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/lodash.js/3.10.1/lodash.min.js"></script>
-<script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.9/js/jquery.dataTables.min.js"></script>
-<script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.9/js/dataTables.bootstrap.min.js"></script>
-<script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/bootstrap-datepicker/1.4.1/js/bootstrap-datepicker.min.js"></script>
-<script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/spin.js/2.3.2/spin.min.js"></script>
-<script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/select2/4.0.0/js/select2.min.js"></script>
-<script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/moment.js/2.10.6/moment.min.js"></script>
+<script type="text/javascript" src="//static.dbca.wa.gov.au/static/libs/lodash.js/4.17.4/lodash.min.js"></script>
+<script type="text/javascript" src="//static.dbca.wa.gov.au/static/libs/datatables/1.10.9/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="//static.dbca.wa.gov.au/static/libs/datatables/1.10.9/js/dataTables.bootstrap.min.js"></script>
+<script type="text/javascript" src="//static.dbca.wa.gov.au/static/libs/bootstrap-datepicker/1.4.1/js/bootstrap-datepicker.min.js"></script>
+<script type="text/javascript" src="//static.dbca.wa.gov.au/static/libs/spin.js/2.3.2/spin.min.js"></script>
+<script type="text/javascript" src="//static.dbca.wa.gov.au/static/libs/select2/4.0.0/js/select2.min.js"></script>
+<script type="text/javascript" src="//static.dbca.wa.gov.au/static/libs/moment.js/2.18.1/moment.min.js"></script>
 <script type="text/javascript">
     const refListUrl = '{% url 'prs_object_list' model='referrals' %}';
     const spinner = new Spinner({scale: 3, top: '120px'});
