@@ -43,9 +43,6 @@ v1_api.register(GroupResource())
 
 
 class UserResource(ModelResource):
-    userprofile = fields.ToOneField(
-        'referral.api.UserProfileResource', attribute='userprofile', full=True,
-        null=True, blank=True)
     groups = fields.ToManyField(
         GroupResource, attribute='groups', full=True, null=True,
         blank=True)

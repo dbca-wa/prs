@@ -24,7 +24,7 @@ django-webtest==1.9.2
 python-magic==0.4.13
 lxml==3.7.3
 django-downloadview==1.9
-webtemplate-dpaw==0.4.2
+webtemplate-dpaw==0.4.8
 selenium==2.46.1
 openpyxl==2.2.6
 xmltodict==0.10.2
