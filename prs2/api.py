@@ -1,12 +1,12 @@
 from django.conf import settings
 from referral import api as referral_api
 from taggit.models import Tag
-from tastypie import fields
 from tastypie.api import Api
 from tastypie.authentication import SessionAuthentication
 from tastypie.cache import SimpleCache
-from tastypie.resources import ModelResource, ALL, ALL_WITH_RELATIONS
+from tastypie.resources import ModelResource, ALL
 from django.contrib.auth.models import User, Group
+from django.db import ProgrammingError
 
 v1_api = Api(api_name='v1')
 v1_api.register(referral_api.DopTriggerResource())
@@ -46,9 +46,12 @@ v1_api.register(GroupResource())
 class UserResource(ModelResource):
 
     class Meta:
-        # Queryset should only return active users in the "PRS user" group.
-        prs_user = Group.objects.get_or_create(name=settings.PRS_USER_GROUP)[0]
-        queryset = User.objects.filter(groups__in=[prs_user], is_active=True)
+        try:
+            # Queryset should only return active users in the "PRS user" group.
+            prs_user = Group.objects.get_or_create(name=settings.PRS_USER_GROUP)[0]
+            queryset = User.objects.filter(groups__in=[prs_user], is_active=True)
+        except ProgrammingError:
+            queryset = User.objects.all()
         ordering = ['username']
         excludes = ['password', 'date_joined', 'is_staff', 'is_superuser', 'last_login']
         filtering = {
