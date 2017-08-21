@@ -42,42 +42,46 @@ def generate_meta(klass, overrides={}):
 
 
 class DopTriggerResource(ModelResource):
-    Meta = generate_meta(DopTrigger, overrides={'queryset': DopTrigger.objects.current().filter(public=True)})
+    Meta = generate_meta(
+        DopTrigger, overrides={
+            'queryset': DopTrigger.objects.current().filter(public=True),
+            'excludes': ['created', 'description', 'effective_to', 'id', 'modified', 'public']
+        })
 
 
 class RegionResource(ModelResource):
-    Meta = generate_meta(Region, overrides={'excludes': ['region_mpoly'], 'queryset': Region.objects.current().filter(public=True)})
+    Meta = generate_meta(
+        Region, overrides={'excludes': ['region_mpoly'], 'queryset': Region.objects.current().filter(public=True)})
 
 
 class OrganisationTypeResource(ModelResource):
-    Meta = generate_meta(OrganisationType, overrides={'queryset': OrganisationType.objects.current().filter(public=True)})
+    Meta = generate_meta(
+        OrganisationType, overrides={'queryset': OrganisationType.objects.current().filter(public=True)})
 
 
 class OrganisationResource(ModelResource):
-    Meta = generate_meta(Organisation, overrides={'queryset': Organisation.objects.current().filter(public=True)})
-    type = fields.ToOneField(
-        OrganisationTypeResource, attribute='type', full=True)
+    Meta = generate_meta(
+        Organisation, overrides={'queryset': Organisation.objects.current().filter(public=True)})
 
 
 class TaskStateResource(ModelResource):
-    Meta = generate_meta(TaskState, overrides={'queryset': TaskState.objects.current().filter(public=True)})
+    Meta = generate_meta(
+        TaskState, overrides={'queryset': TaskState.objects.current().filter(public=True)})
     task_type = fields.ToOneField(
-        'referral.api.TaskTypeResource', attribute='task_type', full=True,
+        'referral.api.TaskTypeResource', attribute='task_type', full=False,
         null=True, blank=True)
 
 
 class TaskTypeResource(ModelResource):
     Meta = generate_meta(TaskType, overrides={'queryset': TaskType.objects.current().filter(public=True)})
     initial_state = fields.ToOneField(
-        'referral.api.TaskStateResource', attribute='initial_state', full=True,
+        'referral.api.TaskStateResource', attribute='initial_state', full=False,
         null=True, blank=True)
 
 
 class ReferralTypeResource(ModelResource):
-    Meta = generate_meta(ReferralType, overrides={'queryset': ReferralType.objects.current().filter(public=True)})
-    initial_task = fields.ToOneField(
-        'referral.api.TaskTypeResource', attribute='initial_task', full=True,
-        null=True, blank=True)
+    Meta = generate_meta(
+        ReferralType, overrides={'queryset': ReferralType.objects.current().filter(public=True)})
 
 
 class NoteTypeResource(ModelResource):
@@ -89,21 +93,11 @@ class AgencyResource(ModelResource):
 
 
 class ReferralResource(ModelResource):
-    Meta = generate_meta(Referral, overrides={'queryset': Referral.objects.current()})
-    type = fields.ToOneField(ReferralTypeResource, attribute='type', full=True)
-    agency = fields.ToOneField(
-        AgencyResource, attribute='agency', full=True, null=True, blank=True)
-    regions = fields.ToManyField(
-        RegionResource, attribute='regions', full=True, null=True, blank=True)
-    referring_org = fields.ToOneField(
-        OrganisationResource, attribute='referring_org', full=True)
-    dop_triggers = fields.ToManyField(
-        DopTriggerResource, attribute='dop_triggers', full=True, null=True,
-        blank=True)
-    related_refs = fields.ToManyField(
-        'self', attribute='related_refs', null=True, blank=True)
-    tags = fields.ToManyField(
-        'prs2.api.TagResource', attribute='tags', full=True, null=True, blank=True)
+    Meta = generate_meta(
+        Referral, overrides={
+            'queryset': Referral.objects.current(),
+            'excludes': ['created', 'effective_to', 'modified']
+        })
     # Update Meta filtering to include M2M fields.
     Meta.filtering.update({
         'regions': ALL_WITH_RELATIONS,
@@ -111,39 +105,104 @@ class ReferralResource(ModelResource):
         'tags': ALL_WITH_RELATIONS,
     })
 
+    def build_filters(self, filters=None):
+        # Because we override the dehydrate for many fields, we need to define the
+        # field filtering manually here.
+        if filters is None:
+            filters = {}
+        orm_filters = super(ReferralResource, self).build_filters(filters)
+
+        if 'regions__id__in' in filters:
+            orm_filters['regions__id__in'] = filters['regions__id__in']
+        if 'referring_org__id' in filters:
+            orm_filters['referring_org__id'] = filters['referring_org__id']
+        if 'type__id' in filters:
+            orm_filters['type__id'] = filters['type__id']
+        if 'tags__id__in' in filters:
+            orm_filters['tags__id__in'] = filters['tags__id__in']
+
+        return orm_filters
+
+    def dehydrate(self, bundle):
+        bundle.data['type'] = bundle.obj.type.name
+        bundle.data['regions'] = [i.name for i in bundle.obj.regions.all()]
+        bundle.data['referring_org'] = bundle.obj.referring_org.name
+        bundle.data['dop_triggers'] = [i.name for i in bundle.obj.dop_triggers.all()]
+        bundle.data['related_refs'] = [i.pk for i in bundle.obj.related_refs.all()]
+        bundle.data['tags'] = [i.name for i in bundle.obj.tags.all()]
+        return bundle
+
 
 class TaskResource(ModelResource):
-    Meta = generate_meta(Task, overrides={'queryset': Task.objects.current()})
-    type = fields.ToOneField(TaskTypeResource, attribute='type', full=True)
-    referral = fields.ToOneField(
-        ReferralResource, attribute='referral', full=True)
-    assigned_user = fields.ToOneField(
-        'prs2.api.UserResource', attribute='assigned_user', full=True)
-    state = fields.ToOneField(TaskStateResource, attribute='state', full=True)
+    Meta = generate_meta(Task, overrides={
+        'queryset': Task.objects.current(),
+        'excludes': ['created', 'effective_to', 'modified']
+    })
+
+    def build_filters(self, filters=None):
+        # Because we override the dehydrate for many fields, we need to define the
+        # field filtering manually here.
+        # For 'through' field filters, we need to pop those out of the filters
+        # and re-apply them after calling ``super``.
+        if 'referral__regions__id__in' in filters:
+            ref_region = filters.pop('referral__regions__id__in')
+        else:
+            ref_region = False
+
+        if filters is None:
+            filters = {}
+        orm_filters = super(TaskResource, self).build_filters(filters)
+
+        if ref_region:
+            orm_filters['referral__regions__id__in'] = ref_region
+        if 'type__id' in filters:
+            orm_filters['type__id'] = filters['type__id']
+        if 'state__id' in filters:
+            orm_filters['state__id'] = filters['state__id']
+        if 'assigned_user__id' in filters:
+            orm_filters['assigned_user__id'] = filters['assigned_user__id']
+
+        return orm_filters
+
+    def dehydrate(self, bundle):
+        bundle.data['referral'] = bundle.obj.referral.pk
+        bundle.data['reference'] = bundle.obj.referral.reference
+        bundle.data['regions'] = [i.name for i in bundle.obj.referral.regions.all()]
+        bundle.data['type'] = bundle.obj.type.name
+        bundle.data['assigned_user'] = bundle.obj.assigned_user.get_full_name()
+        bundle.data['state'] = bundle.obj.state.name
+        return bundle
 
 
 class RecordResource(ModelResource):
-    Meta = generate_meta(Record, overrides={'queryset': Record.objects.current()})
-    referral = fields.ToOneField(
-        ReferralResource, attribute='referral', full=True)
-    notes = fields.ToManyField(
-        'referral.api.NoteResource', attribute='notes', full=True, null=True,
-        blank=True)
+    Meta = generate_meta(Record, overrides={
+        'queryset': Record.objects.current(),
+        'excludes': ['created', 'effective_to', 'modified']
+    })
+
+    def dehydrate(self, bundle):
+        bundle.data['referral'] = bundle.obj.referral.pk
+        bundle.data['notes'] = [i.pk for i in bundle.obj.notes.all()]
+        return bundle
 
 
 class NoteResource(ModelResource):
-    Meta = generate_meta(Note, overrides={'queryset': Note.objects.current()})
-    referral = fields.ToOneField(
-        ReferralResource, attribute='referral', full=True)
-    type = fields.ToOneField(
-        NoteTypeResource, attribute='type', full=True, null=True, blank=True)
-    records = fields.ToManyField(
-        'referral.api.RecordResource', attribute='records', full=True,
-        null=True, blank=True)
+    Meta = generate_meta(Note, overrides={
+        'queryset': Note.objects.current(),
+        'excludes': ['created', 'effective_to', 'modified', 'note_html']
+    })
+
+    def dehydrate(self, bundle):
+        bundle.data['note'] = bundle.obj.note.strip()
+        bundle.data['referral'] = bundle.obj.referral.pk
+        bundle.data['type'] = bundle.obj.type.name if bundle.obj.type else ''
+        bundle.data['records'] = [i.pk for i in bundle.obj.records.all()]
+        return bundle
 
 
 class ConditionCategoryResource(ModelResource):
-    Meta = generate_meta(ConditionCategory, overrides={'queryset': ConditionCategory.objects.current().filter(public=True)})
+    Meta = generate_meta(
+        ConditionCategory, overrides={'queryset': ConditionCategory.objects.current().filter(public=True)})
 
 
 class ModelConditionResource(ModelResource):
@@ -153,35 +212,74 @@ class ModelConditionResource(ModelResource):
 
 
 class ConditionResource(ModelResource):
-    Meta = generate_meta(Condition, overrides={'queryset': Condition.objects.current()})
-    referral = fields.ToOneField(
-        ReferralResource, attribute='referral', full=True, null=True,
-        blank=True)
-    clearance_tasks = fields.ToManyField(
-        TaskResource, attribute='clearance_tasks', full=True, null=True,
-        blank=True)
-    category = fields.ToOneField(
-        ConditionCategoryResource, attribute='category', full=True, null=True)
-    tags = fields.ToManyField(
-        'prs2.api.TagResource', attribute='tags', full=True, null=True, blank=True)
+    Meta = generate_meta(
+        Condition, overrides={
+            'queryset': Condition.objects.current(),
+            'excludes': ['condition_html', 'created', 'effective_to', 'modified', 'proposed_condition_html']
+        })
     # Update Meta filtering to include M2M fields.
     Meta.filtering.update({
         'tags': ALL_WITH_RELATIONS,
     })
 
+    def dehydrate(self, bundle):
+        bundle.data['referral'] = bundle.obj.referral.pk
+        bundle.data['category'] = bundle.obj.category.name if bundle.obj.category else None
+        bundle.data['clearance_tasks'] = [i.pk for i in bundle.obj.clearance_tasks.all()]
+        bundle.data['tags'] = [i.name for i in bundle.obj.tags.all()]
+        return bundle
+
 
 class ClearanceResource(ModelResource):
     Meta = generate_meta(Clearance)
-    condition = fields.ToOneField(
-        ConditionResource, attribute='condition', full=True)
-    task = fields.ToOneField(TaskResource, attribute='task', full=True)
+
+    def build_filters(self, filters=None):
+        # Because we override the dehydrate for many fields, we need to define the
+        # field filtering manually here.
+        # For 'through' field filters, we need to pop those out of the filters
+        # and re-apply them after calling ``super``.
+        if 'task__referral__regions__id__in' in filters:
+            task_ref_region = filters.pop('task__referral__regions__id__in')
+        else:
+            task_ref_region = False
+        if 'task__state__id' in filters:
+            task_state = filters.pop('task__state__id')[0]
+        else:
+            task_state = None
+
+        if filters is None:
+            filters = {}
+        orm_filters = super(ClearanceResource, self).build_filters(filters)
+
+        if task_ref_region:
+            orm_filters['task__referral__regions__id__in'] = task_ref_region
+        if task_state:
+            orm_filters['task__state__id'] = task_state
+
+        return orm_filters
+
+    def dehydrate(self, bundle):
+        bundle.data['task'] = bundle.obj.task.pk
+        bundle.data['description'] = bundle.obj.task.description
+        bundle.data['assigned_user'] = bundle.obj.task.assigned_user.get_full_name()
+        bundle.data['state'] = bundle.obj.task.state.name
+        bundle.data['referral'] = bundle.obj.task.referral.pk
+        bundle.data['regions'] = [i.name for i in bundle.obj.task.referral.regions.all()]
+        bundle.data['condition'] = bundle.obj.condition.condition
+        bundle.data['identifier'] = bundle.obj.condition.identifier
+        bundle.data['category'] = bundle.obj.condition.category.name if bundle.obj.condition.category else None
+        return bundle
 
 
 class LocationResource(ModelResource):
-    Meta = generate_meta(Location, overrides={'queryset': Location.objects.current()})
-    referral = fields.ToOneField(
-        ReferralResource, attribute='referral', full=True, null=True,
-        blank=True)
+    Meta = generate_meta(Location, overrides={
+        'queryset': Location.objects.current(),
+        'excludes': ['created', 'effective_to', 'modified']
+    })
+
+    def dehydrate(self, bundle):
+        bundle.data['referral'] = bundle.obj.referral.pk
+        return bundle
 
 
 class UserProfileResource(ModelResource):

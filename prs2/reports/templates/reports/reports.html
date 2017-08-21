@@ -352,7 +352,7 @@
 
     function updateRegion() {
         var url = "{% url 'api_dispatch_list' resource_name='region' api_name='v1' %}";
-        var filters = {"effective_to__isnull": true, "limit": 0};
+        var filters = {"limit": 0};
         var el = $("select#filter-region-referral").get(0);
         _updateSelectOptions(el, url, filters);
         var el = $("select#filter-region-clearance").get(0);
@@ -364,7 +364,7 @@
     function updateOrganisation() {
         var el = $("select#filter-organisation-referral").get(0);
         var url = "{% url 'api_dispatch_list' resource_name='organisation' api_name='v1' %}";
-        var filters = {"effective_to__isnull": true, "limit": 0};
+        var filters = {"limit": 0};
         _updateSelectOptions(el, url, filters);
         var el = $("select#filter-organisation-clearance").get(0);
         _updateSelectOptions(el, url, filters);
@@ -373,14 +373,14 @@
     function updateReferralType() {
         var el = $("select#filter-referralType").get(0);
         var url = "{% url 'api_dispatch_list' resource_name='referraltype' api_name='v1' %}";
-        var filters = {"effective_to__isnull": true, "limit": 0};
+        var filters = {"limit": 0};
         _updateSelectOptions(el, url, filters);
     }
 
     function updateTaskState() {
         var el = $("select#filter-taskState-clearance").get(0);
         var url = "{% url 'api_dispatch_list' resource_name='taskstate' api_name='v1' %}";
-        var filters = {"effective_to__isnull": true, "limit": 0};
+        var filters = {"limit": 0};
         _updateSelectOptions(el, url, filters);
         var el = $("select#filter-taskState-task").get(0);
         _updateSelectOptions(el, url, filters);
@@ -389,21 +389,21 @@
     function updateTaskType() {
         var el = $("select#filter-taskType").get(0);
         var url = "{% url 'api_dispatch_list' resource_name='tasktype' api_name='v1' %}";
-        var filters = {"effective_to__isnull": true, "limit": 0};
+        var filters = {"limit": 0};
         _updateSelectOptions(el, url, filters);
     }
 
     function updateAssignedUser() {
         var el = $("select#filter-assigned").get(0);
         var url = "{% url 'api_dispatch_list' resource_name='user' api_name='v1' %}";
-        var filters = {"order_by": "username", "effective_to__isnull": true, "groups__name__in": "{{ prs_user_group }}", "limit": 0};
+        var filters = {"order_by": "username", "limit": 0};
         _updateSelectOptions(el, url, filters);
     }
 
     function updateTags() {
         var el = $("select#filter-referralTags").get(0);
         var url = "{% url 'api_dispatch_list' resource_name='tag' api_name='v1' %}";
-        var filters = {"limit": 0, "order_by": "name"};
+        var filters = {"order_by": "name", "limit": 0};
         _updateSelectOptions(el, url, filters);
     }
 
@@ -547,11 +547,11 @@
             {
                 "data": "regions",
                 "render": function(data, type, row, meta) {
-                    return data.map(function(obj) {return obj.name}).join(", ")
+                    return data.map(function(obj) {return obj}).join(", ")
                 }
             },
-            {"data": "referring_org.name"},
-            {"data": "type.name"},
+            {"data": "referring_org"},
+            {"data": "type"},
             {"data": "reference"},
             {
                 "data": "referral_date",
@@ -564,7 +564,7 @@
             {
                 "data": "tags",
                 "render": function(data, type, row, meta) {
-                    return data.map(function(obj) {return obj.name}).join(", ")
+                    return data.map(function(obj) {return obj}).join(", ")
                 }
             },
             {"data": "description"},
@@ -602,44 +602,30 @@
         },
         columns: [
             {
-                "data": "condition.referral.id",
+                "data": "referral",
                 "render": function(data, type, row, meta) {
                     return "<a href='" + refListUrl + data + "/'>" + data +"</a>";
                 }
             },
             {
-                "data": "condition.referral.regions",
+                "data": "regions",
                 "render": function(data, type, row, meta) {
-                    return data.map(function(obj) {return obj.name}).join(", ")
+                    return data.map(function(obj) {return obj}).join(", ")
                 }
             },
-            {"data": "condition.identifier"},
+            {"data": "identifier"},
             {
-                "data": "condition.condition_html",
+                "data": "condition",
                 "render": function(data, type, row, meta) {
                     var c = "<div>{}</div>";
                     return c.replace("{}", data);
                 }
             },
-            {
-                "data": "condition.category",
-                "render": function(data, type, row, meta) {
-                    if (data) {
-                        return data.name;
-                    } else {
-                        return "";
-                    }
-                }
-            },
-            {"data": "task.description"},
+            {"data": "category"},
+            {"data": "description"},
             {"data": "deposited_plan"},
-            {
-                "data": "task.assigned_user",
-                "render": function(data, type, row, meta) {
-                    return data.first_name + " " + data.last_name;
-                }
-            },
-            {"data": "task.state.name"}
+            {"data": "assigned_user"},
+            {"data": "state"}
         ],
     }
 
@@ -674,27 +660,22 @@
         },
         columns: [
             {
-                "data": "referral.id",
+                "data": "referral",
                 "render": function(data, type, row, meta) {
                     return "<a href='" + refListUrl + data + "/'>" + data +"</a>";
                 }
             },
-            {"data": "referral.reference"},
+            {"data": "reference"},
             {
-                "data": "referral.regions",
+                "data": "regions",
                 "render": function(data, type, row, meta) {
-                    return data.map(function(obj) {return obj.name}).join(", ")
+                    return data.map(function(obj) {return obj}).join(", ")
                 }
             },
-            {
-                "data": "assigned_user",
-                "render": function(data, type, row, meta) {
-                    return data.first_name + " " + data.last_name;
-                }
-            },
-            {"data": "type.name"},
+            {"data": "assigned_user"},
+            {"data": "type"},
             {"data": "description"},
-            {"data": "state.name"},
+            {"data": "state"},
             {
                 "data": "start_date",
                 "type": "date",
