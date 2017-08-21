@@ -45,7 +45,7 @@ class DopTriggerResource(ModelResource):
     Meta = generate_meta(
         DopTrigger, overrides={
             'queryset': DopTrigger.objects.current().filter(public=True),
-            'excludes': ['created', 'description', 'effective_to', 'id', 'modified', 'public']
+            'excludes': ['created', 'description', 'effective_to', 'modified', 'public']
         })
 
 
@@ -105,12 +105,12 @@ class ReferralResource(ModelResource):
         'tags': ALL_WITH_RELATIONS,
     })
 
-    def build_filters(self, filters=None):
+    def build_filters(self, filters=None, ignore_bad_filters=False):
         # Because we override the dehydrate for many fields, we need to define the
         # field filtering manually here.
         if filters is None:
             filters = {}
-        orm_filters = super(ReferralResource, self).build_filters(filters)
+        orm_filters = super(ReferralResource, self).build_filters(filters, ignore_bad_filters)
 
         if 'regions__id__in' in filters:
             orm_filters['regions__id__in'] = filters['regions__id__in']
@@ -139,7 +139,7 @@ class TaskResource(ModelResource):
         'excludes': ['created', 'effective_to', 'modified']
     })
 
-    def build_filters(self, filters=None):
+    def build_filters(self, filters=None, ignore_bad_filters=False):
         # Because we override the dehydrate for many fields, we need to define the
         # field filtering manually here.
         # For 'through' field filters, we need to pop those out of the filters
@@ -151,7 +151,7 @@ class TaskResource(ModelResource):
 
         if filters is None:
             filters = {}
-        orm_filters = super(TaskResource, self).build_filters(filters)
+        orm_filters = super(TaskResource, self).build_filters(filters, ignore_bad_filters)
 
         if ref_region:
             orm_filters['referral__regions__id__in'] = ref_region
@@ -233,7 +233,7 @@ class ConditionResource(ModelResource):
 class ClearanceResource(ModelResource):
     Meta = generate_meta(Clearance)
 
-    def build_filters(self, filters=None):
+    def build_filters(self, filters=None, ignore_bad_filters=False):
         # Because we override the dehydrate for many fields, we need to define the
         # field filtering manually here.
         # For 'through' field filters, we need to pop those out of the filters
@@ -249,7 +249,7 @@ class ClearanceResource(ModelResource):
 
         if filters is None:
             filters = {}
-        orm_filters = super(ClearanceResource, self).build_filters(filters)
+        orm_filters = super(ClearanceResource, self).build_filters(filters, ignore_bad_filters)
 
         if task_ref_region:
             orm_filters['task__referral__regions__id__in'] = task_ref_region

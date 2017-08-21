@@ -47,7 +47,7 @@ class UserResource(ModelResource):
 
     class Meta:
         # Queryset should only return active users in the "PRS user" group.
-        prs_user = Group.objects.get(name=settings.PRS_USER_GROUP)
+        prs_user = Group.objects.get_or_create(name=settings.PRS_USER_GROUP)[0]
         queryset = User.objects.filter(groups__in=[prs_user], is_active=True)
         ordering = ['username']
         excludes = ['password', 'date_joined', 'is_staff', 'is_superuser', 'last_login']
