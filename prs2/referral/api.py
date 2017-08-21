@@ -65,15 +65,20 @@ class OrganisationResource(ModelResource):
 
 
 class TaskStateResource(ModelResource):
-    Meta = generate_meta(
-        TaskState, overrides={'queryset': TaskState.objects.current().filter(public=True)})
+    Meta = generate_meta(TaskState, overrides={
+        'queryset': TaskState.objects.current().filter(public=True),
+        'excludes': ['created', 'effective_to', 'modified']
+    })
     task_type = fields.ToOneField(
         'referral.api.TaskTypeResource', attribute='task_type', full=False,
         null=True, blank=True)
 
 
 class TaskTypeResource(ModelResource):
-    Meta = generate_meta(TaskType, overrides={'queryset': TaskType.objects.current().filter(public=True)})
+    Meta = generate_meta(TaskType, overrides={
+        'queryset': TaskType.objects.current(),
+        'excludes': ['created', 'effective_to', 'modified']
+    })
     initial_state = fields.ToOneField(
         'referral.api.TaskStateResource', attribute='initial_state', full=False,
         null=True, blank=True)
@@ -255,6 +260,10 @@ class ClearanceResource(ModelResource):
             orm_filters['task__referral__regions__id__in'] = task_ref_region
         if task_state:
             orm_filters['task__state__id'] = task_state
+        if 'task__start_date__gte' in filters:
+            orm_filters['task__start_date__gte'] = filters['task__start_date__gte']
+        if 'task__start_date__lte' in filters:
+            orm_filters['task__start_date__lte'] = filters['task__start_date__lte']
 
         return orm_filters
 
