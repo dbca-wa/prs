@@ -212,14 +212,14 @@ class EmailedReferral(models.Model):
             actions.append('{} LGA {} was not recognised'.format(datetime.now().isoformat(), app['LOCAL_GOVERNMENT']))
 
         # Add triggers to the new referral.
-        triggers = [i.strip() for i in app['MRSZONE_TEXT'].split(',')]
+        if 'MRSZONE_TEXT' in app:
+            triggers = [i.strip() for i in app['MRSZONE_TEXT'].split(',')]
+        else:
+            triggers = []
         added_trigger = False
         for i in triggers:
-            if DopTrigger.objects.current().filter(name__istartswith=i).exists():
-                added_trigger = True
-                new_ref.dop_triggers.add(DopTrigger.objects.current().get(name__istartswith=i))
             # A couple of exceptions for DoP triggers follow (specific -> general trigger).
-            elif i.startswith('BUSH FOREVER SITE'):
+            if i.startswith('BUSH FOREVER SITE'):
                 added_trigger = True
                 new_ref.dop_triggers.add(DopTrigger.objects.get(name='Bush Forever site'))
             elif i.startswith('DPW ESTATE'):
@@ -228,6 +228,10 @@ class EmailedReferral(models.Model):
             elif i.find('REGIONAL PARK') > -1:
                 added_trigger = True
                 new_ref.dop_triggers.add(DopTrigger.objects.get(name='Regional Park'))
+            # All other triggers (don't use exists() in case of duplicates).
+            elif DopTrigger.objects.current().filter(name__istartswith=i).count() == 1:
+                added_trigger = True
+                new_ref.dop_triggers.add(DopTrigger.objects.current().get(name__istartswith=i))
         # If we didn't link any DoP triggers, link the "No Parks and Wildlife trigger" tag.
         if not added_trigger:
             new_ref.dop_triggers.add(DopTrigger.objects.get(name='No Parks and Wildlife trigger'))
