@@ -144,6 +144,9 @@
 
     // Function to query Geoserver for the clicked-on location, return a feature and add it to locationsLayer.
     var queryCadastre = function(latlng) {
+        if (latlng == null) {
+            return;
+        }
         // Generate our CQL filter.
         var filter = 'INTERSECTS(wkb_geometry, POINT ({0} {1}))'.replace('{0}', latlng.lat).replace('{1}', latlng.lng);
         var parameters = L.Util.extend(cadastreWFSParams, {'cql_filter': filter});
