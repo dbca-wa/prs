@@ -8,12 +8,14 @@ from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 import json
 import logging
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO  # Python3
 import sys
 import xmltodict
+
+if sys.version_info > (3, 0):
+    from io import BytesIO  # Python3
+else:
+    from StringIO import StringIO
+
 
 from referral.models import (
     Referral, Record, Region, ReferralType, Agency, Organisation, DopTrigger,
@@ -291,7 +293,10 @@ class EmailedReferral(models.Model):
         new_record = Record.objects.create(
             name=self.subject, referral=new_ref, order_date=datetime.today())
         file_name = 'emailed_referral_{}.html'.format(reference)
-        new_file = File(StringIO(self.body))
+        if sys.version_info > (3, 0):
+            new_file = File(BytesIO(self.body))
+        else:
+            new_file = File(StringIO(self.body))
         if create_records:
             new_record.uploaded_file.save(file_name, new_file)
             new_record.save()
@@ -304,7 +309,7 @@ class EmailedReferral(models.Model):
                 name=i.name, referral=new_ref, order_date=datetime.today())
             # Duplicate the uploaded file.
             if sys.version_info > (3, 0):
-                data = StringIO(i.attachment.read().decode('utf-8'))
+                data = BytesIO(i.attachment.read())
             else:
                 data = StringIO(i.attachment.read())
             new_file = File(data)
