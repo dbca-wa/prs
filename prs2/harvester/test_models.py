@@ -4,6 +4,7 @@ from mixer.backend.django import mixer
 import os
 from referral.models import Agency, Region, DopTrigger, Referral, Task, Record
 from referral.test_models import PrsTestCase
+import sys
 
 from harvester.models import EmailedReferral, EmailAttachment, RegionAssignee
 
@@ -38,7 +39,10 @@ class EmailedReferralModelTest(HarvesterModelTestCase):
             emailed_referral=self.e_ref, name='application.xml')
         self.app_xml.attachment.save('application.xml', xml, save=False)
         self.app_xml.save()
-        letter = File(open(os.path.join(curr, 'test_files', 'test_referral_letter.pdf')))
+        if sys.version_info > (3, 0):
+            letter = File(open(os.path.join(curr, 'test_files', 'test_referral_letter.pdf'), encoding='latin1'))
+        else:
+            letter = File(open(os.path.join(curr, 'test_files', 'test_referral_letter.pdf')))
         self.app_letter = EmailAttachment(
             emailed_referral=self.e_ref, name='referral_letter.pdf')
         self.app_letter.attachment.save('referral_letter.pdf', letter, save=False)
