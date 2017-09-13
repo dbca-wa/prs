@@ -12,7 +12,7 @@ import sys
 import xmltodict
 
 if sys.version_info > (3, 0):
-    from io import BytesIO  # Python3
+    from io import StringIO  # Python3
 else:
     from StringIO import StringIO
 
@@ -293,10 +293,7 @@ class EmailedReferral(models.Model):
         new_record = Record.objects.create(
             name=self.subject, referral=new_ref, order_date=datetime.today())
         file_name = 'emailed_referral_{}.html'.format(reference)
-        if sys.version_info > (3, 0):
-            new_file = File(BytesIO(self.body))
-        else:
-            new_file = File(StringIO(self.body))
+        new_file = File(StringIO(self.body))
         if create_records:
             new_record.uploaded_file.save(file_name, new_file)
             new_record.save()
@@ -309,7 +306,7 @@ class EmailedReferral(models.Model):
                 name=i.name, referral=new_ref, order_date=datetime.today())
             # Duplicate the uploaded file.
             if sys.version_info > (3, 0):
-                data = BytesIO(i.attachment.read())
+                data = StringIO(i.attachment.read().decode('utf-8'))
             else:
                 data = StringIO(i.attachment.read())
             new_file = File(data)
