@@ -48,7 +48,7 @@ class EmailedReferral(models.Model):
             return
 
         User = get_user_model()
-        dpaw = Agency.objects.get(slug='dpaw')
+        dbca = Agency.objects.get(slug='dbca')
         wapc = Organisation.objects.get(slug='wapc')
         assess_task = TaskType.objects.get(name='Assess a referral')
         assignee_default = User.objects.get(username=settings.REFERRAL_ASSIGNEE_FALLBACK)
@@ -116,7 +116,7 @@ class EmailedReferral(models.Model):
         # Address geometry:
         locations = []
         for a in addresses:
-            # Use the long/lat info to intersect DPaW regions.
+            # Use the long/lat info to intersect DBCA regions.
             try:
                 p = Point(x=float(a['LONGITUDE']), y=float(a['LATITUDE']))
                 for r in Region.objects.all():
@@ -128,14 +128,14 @@ class EmailedReferral(models.Model):
                 actions.append('{} Address long/lat could not be parsed ({}, {})'.format(datetime.now().isoformat(), a['LONGITUDE'], a['LATITUDE']))
                 intersected_region = False
             # Use the PIN field to try returning geometry from SLIP.
-            if 'PIN' in a and a['PIN']:
+            if create_locations and 'PIN' in a and a['PIN']:
                 try:
                     resp = query_slip(a['PIN'])
                     if resp.json()['features']:  # Features are Multipolygons.
                         features = resp.json()['features']  # List of MP features.
                         a['FEATURES'] = features
                         locations.append(a)  # A dict for each address location.
-                        # If we haven't yet, use the feature geom to intersect DPaW regions.
+                        # If we haven't yet, use the feature geom to intersect DBCA regions.
                         if not intersected_region:
                             for f in features:
                                 prop = f['properties']
@@ -174,7 +174,7 @@ class EmailedReferral(models.Model):
 
         # Create/update the referral in PRS.
         new_ref.type = ref_type
-        new_ref.agency = dpaw
+        new_ref.agency = dbca
         new_ref.referring_org = wapc
         new_ref.reference = reference
         new_ref.description = app['DEVELOPMENT_DESCRIPTION']
