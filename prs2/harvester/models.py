@@ -1,5 +1,4 @@
-from __future__ import unicode_literals
-from confy import env
+from __future__ import unicode_literals, absolute_import
 from datetime import datetime, timedelta
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -9,7 +8,6 @@ from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 import json
 import logging
-import requests
 try:
     from StringIO import StringIO
 except ImportError:
@@ -41,9 +39,11 @@ class EmailedReferral(models.Model):
     def __str__(self):
         return self.subject
 
-    def harvest(self):
+    def harvest(self, create_tasks=True, create_locations=True, create_records=True):
         """Undertake the harvest process for this emailed referral.
         """
+        from .utils import query_slip
+
         if self.processed:
             return
 
@@ -114,9 +114,6 @@ class EmailedReferral(models.Model):
         else:
             addresses = app['ADDRESS_DETAIL']['DOP_ADDRESS_TYPE']
         # Address geometry:
-        url = env('SLIP_WFS_URL', None)
-        auth = (env('SLIP_USERNAME', None), env('SLIP_PASSWORD', None))
-        type_name = env('SLIP_DATASET', '')
         locations = []
         for a in addresses:
             # Use the long/lat info to intersect DPaW regions.
@@ -131,37 +128,28 @@ class EmailedReferral(models.Model):
                 actions.append('{} Address long/lat could not be parsed ({}, {})'.format(datetime.now().isoformat(), a['LONGITUDE'], a['LATITUDE']))
                 intersected_region = False
             # Use the PIN field to try returning geometry from SLIP.
-            if 'PIN' in a:
-                pin = int(a['PIN'])
-                if pin > 0:
-                    params = {
-                        'service': 'WFS',
-                        'version': '1.0.0',
-                        'typeName': type_name,
-                        'request': 'getFeature',
-                        'outputFormat': 'json',
-                        'cql_filter': 'polygon_number={}'.format(pin)
-                    }
-                    try:
-                        resp = requests.get(url, auth=auth, params=params)
-                        if resp.json()['features']:  # Features are Multipolygons.
-                            features = resp.json()['features']  # List of MP features.
-                            a['FEATURES'] = features
-                            locations.append(a)  # A dict for each address location.
-                            # If we haven't yet, use the feature geom to intersect DPaW regions.
-                            if not intersected_region:
-                                for f in features:
-                                    prop = f['properties']
-                                    if 'centroid_longitude' in prop and 'centroid_latitude' in prop:
-                                        p = Point(x=prop['centroid_longitude'], y=prop['centroid_latitude'])
-                                        for r in Region.objects.all():
-                                            if r.region_mpoly and r.region_mpoly.intersects(p) and r not in regions:
-                                                regions.append(r)
-                        logger.info('Address PIN {} returned geometry from SLIP'.format(pin))
-                    except:
-                        logger.error('Error querying Landgate SLIP for spatial data (referral ref. {})'.format(reference))
-                else:
-                    logger.warning('Address PIN could not be parsed ({})'.format(a['PIN']))
+            if 'PIN' in a and a['PIN']:
+                try:
+                    resp = query_slip(a['PIN'])
+                    if resp.json()['features']:  # Features are Multipolygons.
+                        features = resp.json()['features']  # List of MP features.
+                        a['FEATURES'] = features
+                        locations.append(a)  # A dict for each address location.
+                        # If we haven't yet, use the feature geom to intersect DPaW regions.
+                        if not intersected_region:
+                            for f in features:
+                                prop = f['properties']
+                                if 'centroid_longitude' in prop and 'centroid_latitude' in prop:
+                                    p = Point(x=prop['centroid_longitude'], y=prop['centroid_latitude'])
+                                    for r in Region.objects.all():
+                                        if r.region_mpoly and r.region_mpoly.intersects(p) and r not in regions:
+                                            regions.append(r)
+                    logger.info('Address PIN {} returned geometry from SLIP'.format(a['PIN']))
+                except Exception as e:
+                    logger.error('Error querying Landgate SLIP for spatial data (referral ref. {})'.format(reference))
+                    logger.exception(e)
+            else:
+                logger.warning('Address PIN could not be parsed ({})'.format(a['PIN']))
         regions = set(regions)
         # Business rules:
         # Didn't intersect a region? Might be bad geometry in the XML.
@@ -242,7 +230,7 @@ class EmailedReferral(models.Model):
             for f in l['FEATURES']:
                 geom = GEOSGeometry(json.dumps(f['geometry']))
                 for p in geom:
-                    new_loc = Location.objects.create(
+                    new_loc = Location(
                         address_no=int(a['NUMBER_FROM']) if a['NUMBER_FROM'] else None,
                         address_suffix=a['NUMBER_FROM_SUFFIX'],
                         road_name=a['STREET_NAME'],
@@ -252,9 +240,11 @@ class EmailedReferral(models.Model):
                         referral=new_ref,
                         poly=p
                     )
-                    new_locations.append(new_loc)
-                    logger.info('New PRS location generated: {}'.format(new_loc))
-                    actions.append('{} New PRS location generated: {}'.format(datetime.now().isoformat(), new_loc))
+                    if create_locations:
+                        new_loc.save()
+                        new_locations.append(new_loc)
+                        logger.info('New PRS location generated: {}'.format(new_loc))
+                        actions.append('{} New PRS location generated: {}'.format(datetime.now().isoformat(), new_loc))
 
         # Check to see if new locations intersect with any existing locations.
         intersecting = []
@@ -286,9 +276,10 @@ class EmailedReferral(models.Model):
         else:
             due = datetime.today() + timedelta(assess_task.target_days)
         new_task.due_date = due
-        new_task.save()
-        logger.info('New PRS task generated: {} assigned to {}'.format(new_task, assigned.get_full_name()))
-        actions.append('{} New PRS task generated: {} assigned to {}'.format(datetime.now().isoformat(), new_task, assigned.get_full_name()))
+        if create_tasks:
+            new_task.save()
+            logger.info('New PRS task generated: {} assigned to {}'.format(new_task, assigned.get_full_name()))
+            actions.append('{} New PRS task generated: {} assigned to {}'.format(datetime.now().isoformat(), new_task, assigned.get_full_name()))
 
         # Email the assigned user about the new task.
         new_task.email_user()
@@ -300,10 +291,11 @@ class EmailedReferral(models.Model):
             name=self.subject, referral=new_ref, order_date=datetime.today())
         file_name = 'emailed_referral_{}.html'.format(reference)
         new_file = File(StringIO(self.body))
-        new_record.uploaded_file.save(file_name, new_file)
-        new_record.save()
-        logger.info('New PRS record generated: {}'.format(new_record))
-        actions.append('{} New PRS record generated: {}'.format(datetime.now().isoformat(), new_record))
+        if create_records:
+            new_record.uploaded_file.save(file_name, new_file)
+            new_record.save()
+            logger.info('New PRS record generated: {}'.format(new_record))
+            actions.append('{} New PRS record generated: {}'.format(datetime.now().isoformat(), new_record))
 
         # Add records to the referral (one per attachment).
         for i in attachments:
@@ -312,13 +304,14 @@ class EmailedReferral(models.Model):
             # Duplicate the uploaded file.
             data = StringIO(i.attachment.read())
             new_file = File(data)
-            new_record.uploaded_file.save(i.name, new_file)
-            new_record.save()
-            logger.info('New PRS record generated: {}'.format(new_record))
-            actions.append('{} New PRS record generated: {}'.format(datetime.now().isoformat(), new_record))
-            # Link the attachment to the new, generated record.
-            i.record = new_record
-            i.save()
+            if create_records:
+                new_record.uploaded_file.save(i.name, new_file)
+                new_record.save()
+                logger.info('New PRS record generated: {}'.format(new_record))
+                actions.append('{} New PRS record generated: {}'.format(datetime.now().isoformat(), new_record))
+                # Link the attachment to the new, generated record.
+                i.record = new_record
+                i.save()
 
         # Link the emailed referral to the new or existing referral.
         self.referral = new_ref
