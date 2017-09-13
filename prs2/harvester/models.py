@@ -12,6 +12,7 @@ try:
     from StringIO import StringIO
 except ImportError:
     from io import StringIO  # Python3
+import sys
 import xmltodict
 
 from referral.models import (
@@ -302,7 +303,10 @@ class EmailedReferral(models.Model):
             new_record = Record.objects.create(
                 name=i.name, referral=new_ref, order_date=datetime.today())
             # Duplicate the uploaded file.
-            data = StringIO(i.attachment.read())
+            if sys.version_info > (3, 0):
+                data = StringIO(i.attachment.read().decode('utf-8'))
+            else:
+                data = StringIO(i.attachment.read())
             new_file = File(data)
             if create_records:
                 new_record.uploaded_file.save(i.name, new_file)
