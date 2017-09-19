@@ -116,41 +116,42 @@ class EmailedReferral(models.Model):
             addresses = app['ADDRESS_DETAIL']['DOP_ADDRESS_TYPE']
         # Address geometry:
         locations = []
-        for a in addresses:
-            # Use the long/lat info to intersect DBCA regions.
-            try:
-                p = Point(x=float(a['LONGITUDE']), y=float(a['LATITUDE']))
-                for r in Region.objects.all():
-                    if r.region_mpoly and r.region_mpoly.intersects(p) and r not in regions:
-                        regions.append(r)
-                intersected_region = True
-            except:
-                logger.warning('Address long/lat could not be parsed ({}, {})'.format(a['LONGITUDE'], a['LATITUDE']))
-                actions.append('{} Address long/lat could not be parsed ({}, {})'.format(datetime.now().isoformat(), a['LONGITUDE'], a['LATITUDE']))
-                intersected_region = False
-            # Use the PIN field to try returning geometry from SLIP.
-            if create_locations and 'PIN' in a and a['PIN']:
+        if create_locations:
+            for a in addresses:
+                # Use the long/lat info to intersect DBCA regions.
                 try:
-                    resp = query_slip(a['PIN'])
-                    if resp.json()['features']:  # Features are Multipolygons.
-                        features = resp.json()['features']  # List of MP features.
-                        a['FEATURES'] = features
-                        locations.append(a)  # A dict for each address location.
-                        # If we haven't yet, use the feature geom to intersect DBCA regions.
-                        if not intersected_region:
-                            for f in features:
-                                prop = f['properties']
-                                if 'centroid_longitude' in prop and 'centroid_latitude' in prop:
-                                    p = Point(x=prop['centroid_longitude'], y=prop['centroid_latitude'])
-                                    for r in Region.objects.all():
-                                        if r.region_mpoly and r.region_mpoly.intersects(p) and r not in regions:
-                                            regions.append(r)
-                    logger.info('Address PIN {} returned geometry from SLIP'.format(a['PIN']))
-                except Exception as e:
-                    logger.error('Error querying Landgate SLIP for spatial data (referral ref. {})'.format(reference))
-                    logger.exception(e)
-            else:
-                logger.warning('Address PIN could not be parsed ({})'.format(a['PIN']))
+                    p = Point(x=float(a['LONGITUDE']), y=float(a['LATITUDE']))
+                    for r in Region.objects.all():
+                        if r.region_mpoly and r.region_mpoly.intersects(p) and r not in regions:
+                            regions.append(r)
+                    intersected_region = True
+                except:
+                    logger.warning('Address long/lat could not be parsed ({}, {})'.format(a['LONGITUDE'], a['LATITUDE']))
+                    actions.append('{} Address long/lat could not be parsed ({}, {})'.format(datetime.now().isoformat(), a['LONGITUDE'], a['LATITUDE']))
+                    intersected_region = False
+                # Use the PIN field to try returning geometry from SLIP.
+                if 'PIN' in a and a['PIN']:
+                    try:
+                        resp = query_slip(a['PIN'])
+                        if resp.json()['features']:  # Features are Multipolygons.
+                            features = resp.json()['features']  # List of MP features.
+                            a['FEATURES'] = features
+                            locations.append(a)  # A dict for each address location.
+                            # If we haven't yet, use the feature geom to intersect DBCA regions.
+                            if not intersected_region:
+                                for f in features:
+                                    prop = f['properties']
+                                    if 'centroid_longitude' in prop and 'centroid_latitude' in prop:
+                                        p = Point(x=prop['centroid_longitude'], y=prop['centroid_latitude'])
+                                        for r in Region.objects.all():
+                                            if r.region_mpoly and r.region_mpoly.intersects(p) and r not in regions:
+                                                regions.append(r)
+                        logger.info('Address PIN {} returned geometry from SLIP'.format(a['PIN']))
+                    except Exception as e:
+                        logger.error('Error querying Landgate SLIP for spatial data (referral ref. {})'.format(reference))
+                        logger.exception(e)
+                else:
+                    logger.warning('Address PIN could not be parsed ({})'.format(a['PIN']))
         regions = set(regions)
         # Business rules:
         # Didn't intersect a region? Might be bad geometry in the XML.
@@ -226,89 +227,88 @@ class EmailedReferral(models.Model):
             new_ref.dop_triggers.add(DopTrigger.objects.get(name='No Parks and Wildlife trigger'))
 
         # Add locations to the new referral (one per polygon in each MP geometry).
-        new_locations = []
-        for l in locations:
-            for f in l['FEATURES']:
-                geom = GEOSGeometry(json.dumps(f['geometry']))
-                for p in geom:
-                    new_loc = Location(
-                        address_no=int(a['NUMBER_FROM']) if a['NUMBER_FROM'] else None,
-                        address_suffix=a['NUMBER_FROM_SUFFIX'],
-                        road_name=a['STREET_NAME'],
-                        road_suffix=a['STREET_SUFFIX'],
-                        locality=a['SUBURB'],
-                        postcode=a['POSTCODE'],
-                        referral=new_ref,
-                        poly=p
-                    )
-                    if create_locations:
+        if create_locations:
+            new_locations = []
+            for l in locations:
+                for f in l['FEATURES']:
+                    geom = GEOSGeometry(json.dumps(f['geometry']))
+                    for p in geom:
+                        new_loc = Location(
+                            address_no=int(a['NUMBER_FROM']) if a['NUMBER_FROM'] else None,
+                            address_suffix=a['NUMBER_FROM_SUFFIX'],
+                            road_name=a['STREET_NAME'],
+                            road_suffix=a['STREET_SUFFIX'],
+                            locality=a['SUBURB'],
+                            postcode=a['POSTCODE'],
+                            referral=new_ref,
+                            poly=p
+                        )
                         new_loc.save()
                         new_locations.append(new_loc)
                         logger.info('New PRS location generated: {}'.format(new_loc))
                         actions.append('{} New PRS location generated: {}'.format(datetime.now().isoformat(), new_loc))
 
-        # Check to see if new locations intersect with any existing locations.
-        intersecting = []
-        for l in new_locations:
-            other_l = Location.objects.current().exclude(pk=l.pk).filter(poly__isnull=False, poly__intersects=l.poly)
-            if other_l.exists():
-                intersecting += list(other_l)
-        # For any intersecting locations, relate the new and existing referrals.
-        for l in intersecting:
-            if l.referral.pk != new_ref.pk:
-                new_ref.add_relationship(l.referral)
-                logger.info('New referral {} related to existing referral {}'.format(new_ref.pk, l.referral.pk))
-                actions.append('{} New referral {} related to existing referral {}'.format(datetime.now().isoformat(), new_ref.pk, l.referral.pk))
+            # Check to see if new locations intersect with any existing locations.
+            intersecting = []
+            for l in new_locations:
+                other_l = Location.objects.current().exclude(pk=l.pk).filter(poly__isnull=False, poly__intersects=l.poly)
+                if other_l.exists():
+                    intersecting += list(other_l)
+            # For any intersecting locations, relate the new and existing referrals.
+            for l in intersecting:
+                if l.referral.pk != new_ref.pk:
+                    new_ref.add_relationship(l.referral)
+                    logger.info('New referral {} related to existing referral {}'.format(new_ref.pk, l.referral.pk))
+                    actions.append('{} New referral {} related to existing referral {}'.format(datetime.now().isoformat(), new_ref.pk, l.referral.pk))
 
         # Create an "Assess a referral" task and assign it to a user.
-        new_task = Task(
-            type=assess_task,
-            referral=new_ref,
-            start_date=new_ref.referral_date,
-            description=new_ref.description,
-            assigned_user=assigned
-        )
-        new_task.state = assess_task.initial_state
-        if 'DUE_DATE' in app and app['DUE_DATE']:
-            try:
-                due = datetime.strptime(app['DUE_DATE'], '%d-%b-%y')
-            except:
-                due = datetime.today() + timedelta(assess_task.target_days)
-        else:
-            due = datetime.today() + timedelta(assess_task.target_days)
-        new_task.due_date = due
         if create_tasks:
+            new_task = Task(
+                type=assess_task,
+                referral=new_ref,
+                start_date=new_ref.referral_date,
+                description=new_ref.description,
+                assigned_user=assigned
+            )
+            new_task.state = assess_task.initial_state
+            if 'DUE_DATE' in app and app['DUE_DATE']:
+                try:
+                    due = datetime.strptime(app['DUE_DATE'], '%d-%b-%y')
+                except:
+                    due = datetime.today() + timedelta(assess_task.target_days)
+            else:
+                due = datetime.today() + timedelta(assess_task.target_days)
+            new_task.due_date = due
             new_task.save()
             logger.info('New PRS task generated: {} assigned to {}'.format(new_task, assigned.get_full_name()))
             actions.append('{} New PRS task generated: {} assigned to {}'.format(datetime.now().isoformat(), new_task, assigned.get_full_name()))
 
-        # Email the assigned user about the new task.
-        new_task.email_user()
-        logger.info('Task assignment email sent to {}'.format(assigned.email))
-        actions.append('{} Task assignment email sent to {}'.format(datetime.now().isoformat(), assigned.email))
+            # Email the assigned user about the new task.
+            new_task.email_user()
+            logger.info('Task assignment email sent to {}'.format(assigned.email))
+            actions.append('{} Task assignment email sent to {}'.format(datetime.now().isoformat(), assigned.email))
 
         # Save the EmailedReferral as a record on the referral.
-        new_record = Record.objects.create(
-            name=self.subject, referral=new_ref, order_date=datetime.today())
-        file_name = 'emailed_referral_{}.html'.format(reference)
-        new_file = File(StringIO(self.body))
         if create_records:
+            new_record = Record.objects.create(
+                name=self.subject, referral=new_ref, order_date=datetime.today())
+            file_name = 'emailed_referral_{}.html'.format(reference)
+            new_file = File(StringIO(self.body))
             new_record.uploaded_file.save(file_name, new_file)
             new_record.save()
             logger.info('New PRS record generated: {}'.format(new_record))
             actions.append('{} New PRS record generated: {}'.format(datetime.now().isoformat(), new_record))
 
-        # Add records to the referral (one per attachment).
-        for i in attachments:
-            new_record = Record.objects.create(
-                name=i.name, referral=new_ref, order_date=datetime.today())
-            # Duplicate the uploaded file.
-            if sys.version_info > (3, 0):
-                data = StringIO(i.attachment.read().decode('utf-8'))
-            else:
-                data = StringIO(i.attachment.read())
-            new_file = File(data)
-            if create_records:
+            # Add records to the referral (one per attachment).
+            for i in attachments:
+                new_record = Record.objects.create(
+                    name=i.name, referral=new_ref, order_date=datetime.today())
+                # Duplicate the uploaded file.
+                if sys.version_info > (3, 0):
+                    data = StringIO(i.attachment.read().decode('utf-8'))
+                else:
+                    data = StringIO(i.attachment.read())
+                new_file = File(data)
                 new_record.uploaded_file.save(i.name, new_file)
                 new_record.save()
                 logger.info('New PRS record generated: {}'.format(new_record))

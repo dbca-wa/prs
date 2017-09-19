@@ -196,20 +196,22 @@
 <script type="text/javascript" src="//static.dbca.wa.gov.au/static/libs/datatables/1.10.9/js/dataTables.bootstrap.min.js"></script>
 <script type="text/javascript" src="//static.dbca.wa.gov.au/static/libs/moment.js/2.18.1/moment.min.js"></script>
 <script type="text/javascript" src="{% static 'js/datetime-moment.js' %}"></script>
+<script>
+// Configure file upload Dropzone element - needs to happen outside of $(function(){}).
+Dropzone.options.idReferralDropzone = {
+    paramName: "file",
+    acceptedFiles: ".tif,.jpg,.jpeg,.gif,.png,.doc,.docx,.xls,.xlsx,.csv,.pdf,.txt,.zip,.msg,.qgs",
+    init: function() {
+        this.on("queuecomplete", function(file) {
+            // Reload the current page on completed upload(s).
+            location.assign("{% url 'referral_detail' pk=referral.pk related_model='records' %}");
+        });
+    },
+};
+</script>
 <script type="text/javascript">
     // Document ready events
     $(function() {
-        // Configure file upload Dropzone element.
-        Dropzone.options.idReferralDropzone = {
-            paramName: "file",
-            acceptedFiles: ".tif,.jpg,.jpeg,.gif,.png,.doc,.docx,.xls,.xlsx,.csv,.pdf,.txt,.zip,.msg,.qgs",
-            init: function() {
-                this.on("queuecomplete", function(file) {
-                    // Reload the current page on completed upload(s).
-                    location.assign("{% url 'referral_detail' pk=referral.pk related_model='records' %}");
-                });
-            },
-        };
         // Hide the Dropzone element if not a PRS user.
         var is_prs_user = true ? "{{ prs_user }}" == "True" : false
         if (!is_prs_user) {
