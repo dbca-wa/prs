@@ -201,6 +201,7 @@
 Dropzone.options.idReferralDropzone = {
     paramName: "file",
     acceptedFiles: ".tif,.jpg,.jpeg,.gif,.png,.doc,.docx,.xls,.xlsx,.csv,.pdf,.txt,.zip,.msg,.qgs",
+    timeout: 600000,  // 10 minutes is ms.
     init: function() {
         this.on("queuecomplete", function(file) {
             // Reload the current page on completed upload(s).

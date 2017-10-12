@@ -149,6 +149,7 @@ class EmailedReferral(models.Model):
                         logger.info('Address PIN {} returned geometry from SLIP'.format(a['PIN']))
                     except Exception as e:
                         logger.error('Error querying Landgate SLIP for spatial data (referral ref. {})'.format(reference))
+                        logger.error(resp.content)
                         logger.exception(e)
                 else:
                     logger.warning('Address PIN could not be parsed ({})'.format(a['PIN']))
