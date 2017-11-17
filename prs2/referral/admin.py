@@ -22,6 +22,7 @@ class AuditAdmin(VersionAdmin, ModelAdmin):
 class LookupAdmin(AuditAdmin):
     list_display = (
         'id', 'name', 'slug', 'public', 'created', 'modified', 'effective_to')
+    prepopulated_fields = {'slug': ('name',)}
     raw_id_fields = ('creator', 'modifier')
     search_fields = ('name', 'slug')
 

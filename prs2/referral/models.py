@@ -16,7 +16,6 @@ from django.db.models import Q
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.safestring import mark_safe
 # Third-party app imports
-from autoslug import AutoSlugField
 from jinja2 import Template
 from lxml.html import clean, fromstring
 from model_utils import Choices
@@ -39,6 +38,7 @@ AU_STATE_CHOICES = Choices(
     (8, 'wa', ('WA')),
 )
 
+
 @python_2_unicode_compatible
 class ReferralLookup(ActiveModel, Audit):
     """Abstract model type for lookup-table objects.
@@ -46,9 +46,8 @@ class ReferralLookup(ActiveModel, Audit):
     name = models.CharField(max_length=200)
     description = models.CharField(
         max_length=200, null=True, blank=True, validators=[MaxLengthValidator(200)])
-    slug = AutoSlugField(
-        populate_from='name', unique=True,
-        help_text='Must be unique. Automatically generated from name.')
+    slug = models.SlugField(
+        unique=True, help_text='Must be unique. Automatically generated from name.')
     public = models.BooleanField(
         default=True, help_text='Is this lookup selection available to all users?')
     headers = ['Name', 'Description', 'Last modified']

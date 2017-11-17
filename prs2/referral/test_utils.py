@@ -7,7 +7,7 @@ from django.utils import six
 from referral.models import Referral, Task
 from referral.test_models import PrsTestCase
 from referral.utils import (
-    is_model_or_string, smart_truncate, breadcrumbs_li, slugify,
+    is_model_or_string, smart_truncate, breadcrumbs_li,
     update_revision_history, filter_queryset, user_task_history,
     dewordify_text, overdue_task_email)
 
@@ -101,12 +101,6 @@ class UtilsTest(PrsTestCase):
         l = [('/A', 'A'), ('/A/B', 'B'), ('', 'C',)]
         crumbs = breadcrumbs_li(l)
         self.assertTrue(isinstance(crumbs, six.text_type))
-
-    def test_slugify(self):
-        """Test the customised slugify function
-        """
-        self.assertEqual('test', slugify('Test'))
-        self.assertEqual('test-value', slugify('Test Value'))
 
     def test_update_revision_history(self):
         """Test update_revision_history, for coverage :P
