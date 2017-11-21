@@ -1056,3 +1056,13 @@ class RecordUploadViewTest(PrsViewsTestCase):
         self.client.login(username='readonlyuser', password='pass')
         response = self.client.post(url, {'file': f})
         self.assertEquals(response.status_code, 403)
+
+
+class HealthCheckViewTest(PrsViewsTestCase):
+    def test_healthcheck(self):
+        """Test the healthcheck view works without auth
+        """
+        self.client.logout()
+        url = reverse('health_check')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
