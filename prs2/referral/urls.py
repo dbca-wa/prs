@@ -37,6 +37,7 @@ urlpatterns += [
 
 # Other static/functional URLs
 urlpatterns += [
+    url(r'^healthcheck/$', views.HealthCheckView.as_view(), name='health_check'),
     url(r'^help/$', views.HelpPage.as_view(), name='help_page'),
     url(r'^search/$', views.GeneralSearch.as_view(), name='prs_general_search'),
     url(r'^stopped-tasks/$', views.SiteHome.as_view(stopped_tasks=True), name='stopped_tasks_list'),

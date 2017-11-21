@@ -271,12 +271,6 @@ def borgcollector_harvest(request, publishes=['prs_locations']):
     return r
 
 
-def slugify(value):
-    """A (slightly) customised slugify function.
-    """
-    return django_slugify(unidecode(value))
-
-
 def overdue_task_email():
     """A utility function to send an email to each user with tasks that are
     overdue.

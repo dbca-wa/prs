@@ -246,9 +246,3 @@ CRISPY_TEMPLATE_PACK = 'bootstrap3'
 # django-sql-explorer settings
 # Requires user is_staff==True and membership in 'PRS power user' group.
 EXPLORER_PERMISSION_VIEW = lambda u: u.is_staff and u.userprofile.is_power_user()
-
-
-# Custom slugify function for django-autoslug, because I'm sick of
-# RuntimeWarning errors about unicode :/
-# Ref: https://django-autoslug.readthedocs.io/en/latest/settings.html
-AUTOSLUG_SLUGIFY_FUNCTION = 'referral.utils.slugify'
