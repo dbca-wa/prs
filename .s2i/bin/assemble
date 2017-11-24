@@ -1,0 +1,8 @@
+#!/bin/bash
+
+shopt -s dotglob
+
+pip install --upgrade pip
+pip install --upgrade setuptools
+
+
