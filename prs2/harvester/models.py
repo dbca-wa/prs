@@ -356,7 +356,7 @@ class RegionAssignee(models.Model):
     """A model to define which user will be assigned any generated referrals
     for a region.
     """
-    region = models.OneToOneField(Region)
+    region = models.OneToOneField(Region, on_delete=models.PROTECT)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.PROTECT,
         limit_choices_to={'groups__name__in': ['PRS user'], 'is_active': True},

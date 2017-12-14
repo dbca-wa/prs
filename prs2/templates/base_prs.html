@@ -23,19 +23,19 @@
 <li class="dropdown">
     <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Search <span class="caret"></span></a>
     <ul class="dropdown-menu" role="menu">
-        <li><a href="{% url 'prs_object_list' model='referrals' %}" title="Referrals">Referrals</a></li>
-        <li><a href="{% url 'prs_object_list' model='tasks' %}" title="Tasks">Tasks</a></li>
-        <li><a href="{% url 'prs_object_list' model='notes' %}" title="Notes">Notes</a></li>
-        <li><a href="{% url 'prs_object_list' model='conditions' %}" title="Conditions">Conditions</a></li>
-        <li><a href="{% url 'prs_object_list' model='records' %}" title="Records">Records</a></li>
-        <li><a href="{% url 'prs_object_list' model='locations' %}" title="Locations">Locations</a></li>
-        <li><a href="{% url 'prs_object_list' model='clearances' %}" title="Clearances">Clearances</a></li>
+        <li><a href="{% url 'referral:prs_object_list' model='referrals' %}" title="Referrals">Referrals</a></li>
+        <li><a href="{% url 'referral:prs_object_list' model='tasks' %}" title="Tasks">Tasks</a></li>
+        <li><a href="{% url 'referral:prs_object_list' model='notes' %}" title="Notes">Notes</a></li>
+        <li><a href="{% url 'referral:prs_object_list' model='conditions' %}" title="Conditions">Conditions</a></li>
+        <li><a href="{% url 'referral:prs_object_list' model='records' %}" title="Records">Records</a></li>
+        <li><a href="{% url 'referral:prs_object_list' model='locations' %}" title="Locations">Locations</a></li>
+        <li><a href="{% url 'referral:prs_object_list' model='clearances' %}" title="Clearances">Clearances</a></li>
         <li class="divider"></li>
-        <li><a href="{% url 'prs_general_search' %}" title="Search all">Search all</a></li>
+        <li><a href="{% url 'referral:prs_general_search' %}" title="Search all">Search all</a></li>
     </ul>
 </li>
 {% endcache %}
-<li><a href="{% url 'reports' %}" title="Reports">Reports</a></li>
+<li><a href="{% url 'reports:reports' %}" title="Reports">Reports</a></li>
 {% block navbar_auth %}
 <li class="dropdown">
     <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">{% firstof user.get_full_name user.username %} <span class="caret"></span></a>
@@ -44,20 +44,20 @@
         <li><a href="{% url 'admin:index' %}" title="Administration">Administration</a></li>
         {% endif %}
         {% if prs_power_user %}
-        <li><a href="{% url 'tag_replace' %}" title="Tag replace">Tag replace</a></li>
+        <li><a href="{% url 'referral:tag_replace' %}" title="Tag replace">Tag replace</a></li>
         <li class="divider"></li>
         {% endif %}
         {% if last_referral %}
-        <li><a href="{% url 'referral_detail' pk=last_referral.pk %}" title="Last referral">Last referral: {{ last_referral.pk }}</a></li>
+        <li><a href="{% url 'referral:referral_detail' pk=last_referral.pk %}" title="Last referral">Last referral: {{ last_referral.pk }}</a></li>
         {% endif %}
-        <li><a href="{% url 'referral_recent' %}" title="Recent referrals">Recent referrals</a></li>
-        <li><a href="{% url 'prs_object_list' model='bookmarks' %}" title="Bookmarks">Bookmarks</a></li>
-        <li><a href="{% url 'stopped_tasks_list' %}" title="Stopped tasks">Stopped tasks</a></li>
-        <li><a href="{% url 'help_page' %}" title="Help">Help</a></li>
+        <li><a href="{% url 'referral:referral_recent' %}" title="Recent referrals">Recent referrals</a></li>
+        <li><a href="{% url 'referral:prs_object_list' model='bookmarks' %}" title="Bookmarks">Bookmarks</a></li>
+        <li><a href="{% url 'referral:stopped_tasks_list' %}" title="Stopped tasks">Stopped tasks</a></li>
+        <li><a href="{% url 'referral:help_page' %}" title="Help">Help</a></li>
         {#<li><a href="{% url 'logout' %}" title="Log out">Log out</a></li>#}
     </ul>
 </li>
-<li class="active is_prs_user"><a href="{% url 'referral_create' %}" title="Create a new referral"><strong>Create</strong></a></li>
+<li class="active is_prs_user"><a href="{% url 'referral:referral_create' %}" title="Create a new referral"><strong>Create</strong></a></li>
 {% endblock navbar_auth %}
 {% endblock navbar_links %}
 

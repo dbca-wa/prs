@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.admin import site
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.serializers import serialize
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import (
     HttpResponse, HttpResponseBadRequest, HttpResponseRedirect, Http404)
 from django.shortcuts import redirect

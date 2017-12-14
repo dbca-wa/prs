@@ -10,7 +10,7 @@ from django.contrib.auth.signals import user_logged_in
 from django.contrib.gis.db import models
 from django.core.exceptions import SuspiciousFileOperation
 from django.core.mail import EmailMultiAlternatives
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.core.validators import MaxLengthValidator
 from django.db.models import Q
 from django.utils.encoding import python_2_unicode_compatible
@@ -361,7 +361,7 @@ class Referral(ReferralBaseModel):
         super(Referral, self).save(force_insert, force_update)
 
     def get_absolute_url(self):
-        return reverse('referral_detail', kwargs={'pk': self.pk})
+        return reverse('referral:referral_detail', kwargs={'pk': self.pk})
 
     @property
     def regions_str(self):
@@ -538,7 +538,7 @@ class Task(ReferralBaseModel):
     type = models.ForeignKey(
         TaskType, on_delete=models.PROTECT, verbose_name='task type',
         help_text='The task type.')
-    referral = models.ForeignKey(Referral)
+    referral = models.ForeignKey(Referral, on_delete=models.PROTECT)
     assigned_user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.PROTECT,
         related_name='refer_task_assigned_user',
@@ -788,7 +788,7 @@ class Task(ReferralBaseModel):
         d = copy(self.__dict__)
         d['type'] = self.type
         d['referral_url'] = reverse(
-            'referral_detail',
+            'referral:referral_detail',
             kwargs={
                 'pk': self.referral.pk,
                 'related_model': 'tasks'})
@@ -991,7 +991,7 @@ class Record(ReferralBaseModel):
             <tr><th>Date</th><td>{order_date}</td</tr>'''
         d = copy(self.__dict__)
         d['referral_url'] = reverse(
-            'referral_detail',
+            'referral:referral_detail',
             kwargs={
                 'pk': self.referral.pk,
                 'related_model': 'records'})
@@ -1124,7 +1124,7 @@ class Note(ReferralBaseModel):
             <tr class="highlight"><th>Note</th><td>{note_html}</td></tr>'''
         d = copy(self.__dict__)
         d['referral_url'] = reverse(
-            'referral_detail',
+            'referral:referral_detail',
             kwargs={
                 'pk': self.referral.pk,
                 'related_model': 'notes'})
@@ -1241,7 +1241,7 @@ class Condition(ReferralBaseModel):
             d['category'] = ''
         if self.referral:
             d['referral_url'] = reverse(
-                'referral_detail',
+                'referral:referral_detail',
                 kwargs={
                     'pk': self.referral.pk,
                     'related_model': 'conditions'})
@@ -1288,7 +1288,7 @@ class Condition(ReferralBaseModel):
         d = copy(self.__dict__)
         if self.referral:
             d['referral_url'] = reverse(
-                'referral_detail',
+                'referral:referral_detail',
                 kwargs={
                     'pk': self.referral.pk,
                     'related_model': 'conditions'})
@@ -1498,7 +1498,7 @@ class Location(ReferralBaseModel):
         else:
             d['polygon'] = ''
         d['referral_url'] = reverse(
-            'referral_detail',
+            'referral:referral_detail',
             kwargs={
                 'pk': self.referral.pk,
                 'related_model': 'locations'})
@@ -1543,7 +1543,7 @@ class Location(ReferralBaseModel):
         d = copy(self.__dict__)
         d['url'] = self.get_absolute_url()
         d['referral_url'] = reverse(
-            'referral_detail',
+            'referral:referral_detail',
             kwargs={
                 'pk': self.referral.pk,
                 'related_model': 'locations'})
@@ -1624,7 +1624,7 @@ class Bookmark(ReferralBaseModel):
             <tr><th>User</th><td>{user}</td></tr>
             <tr><th>Description</th><td>{description}</td></tr>'''
         d = copy(self.__dict__)
-        d['referral_url'] = reverse('referral_detail', kwargs={'pk': self.referral.pk})
+        d['referral_url'] = reverse('referral:referral_detail', kwargs={'pk': self.referral.pk})
         d['referral'] = self.referral
         d['reference'] = self.referral.reference
         d['user'] = self.user.get_full_name()
@@ -1637,7 +1637,7 @@ class UserProfile(models.Model):
     '''
     An extension of the Django auth model, to add additional fields to each User
     '''
-    user = models.OneToOneField(settings.AUTH_USER_MODEL)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     agency = models.ForeignKey(Agency, on_delete=models.PROTECT, blank=True, null=True)
     # Referral history is a list of 2-tuples: (referral pk, datetime)
     referral_history = models.TextField(blank=True, null=True)
