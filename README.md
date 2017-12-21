@@ -41,7 +41,6 @@ Variables below may also need to be defined (context-dependent):
     PRS_USER_GROUP="PRS user"
     PRS_PWUSER_GROUP="PRS power user"
     BORGCOLLECTOR_API="https://borg.dpaw.wa.gov.au/api/"
-    SSO_COOKIE_NAME="oim_dpaw_wa_gov_au_sessionid"
     SLIP_USERNAME="slip_username"
     SLIP_PASSWORD="slip_password"
     SLIP_WFS_URL="https://wfs.slip.url.au/endpoint"
