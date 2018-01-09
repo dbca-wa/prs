@@ -14,8 +14,7 @@ django-storages==1.5.2
 django-bootstrap-pagination==1.6.2
 dj-static==0.0.6
 Unipath==1.1
-Unidecode==0.04.20
-Fabric==1.10.1
+Unidecode==1.0.22
 jinja2==2.9.6
 Pillow==3.4.2
 coverage==3.7.1
@@ -25,6 +24,5 @@ python-magic==0.4.13
 lxml==3.7.3
 django-downloadview==1.9
 webtemplate-dpaw==0.4.8
-selenium==2.46.1
 openpyxl==2.2.6
 xmltodict==0.10.2
