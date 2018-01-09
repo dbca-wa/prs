@@ -1,6 +1,7 @@
 Django==1.11.7
 django-extensions==1.9.7
 git+https://github.com/parksandwildlife/dpaw-utils.git@0.3a16#egg=dpaw-utils
+uWSGI==2.0.15
 django-reversion==2.0.10
 django-debug-toolbar==1.8
 django-tastypie==0.14.0
