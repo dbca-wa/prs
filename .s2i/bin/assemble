@@ -1,5 +1,8 @@
 #!/bin/bash
 
+echo "---> Installing GDAL ..."
+yum install -y gdal gdal-libs gdal-devel gdal-python
+
 function is_django_installed() {
   python -c "import django" &>/dev/null
 }
