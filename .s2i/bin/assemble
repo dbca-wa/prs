@@ -1,7 +1,22 @@
 #!/bin/bash
 
 echo "---> Installing GDAL ..."
-yum install -y gdal gdal-libs gdal-devel gdal-python
+GDAL_VERSION="2.2.3"
+
+cd $OPENSHIFT_DATA_DIR
+
+wget http://download.osgeo.org/gdal/gdal-${GDAL_VERSION}.tar.gz
+
+tar xf gdal-${GDAL_VERSION}.tar.gz
+rm gdal-${GDAL_VERSION}.tar.gz
+cd gdal-${GDAL_VERSION}
+
+./configure --prefix=${OPENSHIFT_DATA_DIR}gdal
+make
+make install
+cd ..
+rm -rf gdal-${GDAL_VERSION}
+
 
 function is_django_installed() {
   python -c "import django" &>/dev/null
