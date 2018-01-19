@@ -2,15 +2,14 @@
 
 echo "---> Installing GDAL ..."
 GDAL_VERSION="2.2.3"
-#cd $OPENSHIFT_DATA_DIR
-cd OPENSHIFT_TMP_DIR
+cd /tmp
 wget -nv http://download.osgeo.org/gdal/${GDAL_VERSION}/gdal-${GDAL_VERSION}.tar.gz
 tar xf gdal-${GDAL_VERSION}.tar.gz
 rm gdal-${GDAL_VERSION}.tar.gz
 cd gdal-${GDAL_VERSION}
-./configure --prefix=${OPENSHIFT_DATA_DIR}gdal
-#./configure --prefix=${OPENSHIFT_DATA_DIR}gdal
+./configure
 make
 make install
 cd ..
 rm -rf gdal-${GDAL_VERSION}
+gdal-config --version
