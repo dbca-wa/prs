@@ -8,7 +8,7 @@ var landgateOrthomosaic = L.tileLayer.wms(
     geoserver_wms_url,
     {
         crs: L.CRS.EPSG4326,
-        layers: 'landgate:LGATE-V001',
+        layers: 'landgate:virtual_mosaic',
         tileSize: 1024,
         format: 'image/jpeg',
         tiled: true,

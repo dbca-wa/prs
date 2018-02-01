@@ -180,9 +180,9 @@ class EmailedReferral(models.Model):
         new_ref.agency = dbca
         new_ref.referring_org = wapc
         new_ref.reference = reference
-        new_ref.description = app['DEVELOPMENT_DESCRIPTION']
+        new_ref.description = app['DEVELOPMENT_DESCRIPTION'] if 'DEVELOPMENT_DESCRIPTION' in app else ''
         new_ref.referral_date = self.received
-        new_ref.address = app['LOCATION']
+        new_ref.address = app['LOCATION'] if 'LOCATION' in app else ''
         new_ref.save()
 
         if referral_preexists:
