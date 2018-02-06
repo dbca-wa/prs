@@ -241,3 +241,18 @@ def query_slip(pin):
     }
     resp = requests.get(url, auth=auth, params=params)
     return resp
+
+
+def query_slip_esri(pin):
+    """Function to query the Landgate SLIP service (Esri REST API) for a cadastral location, by PIN.
+    Ref: https://catalogue.data.wa.gov.au/group/about/cadastre
+    """
+    url = env('SLIP_ESRI_FS_URL', None)
+    url = url + '/query'  # Add query suffix to the URL.
+    auth = (env('SLIP_USERNAME', None), env('SLIP_PASSWORD', None))
+    params = {
+        'f': 'json',
+        'layerDefs': '{{"2":"polygon_number={}"}}'.format(pin)
+    }
+    resp = requests.get(url, auth=auth, params=params)
+    return resp
