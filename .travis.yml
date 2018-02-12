@@ -1,7 +1,7 @@
 language: python
 cache: pip
 dist: trusty
-sudo: required
+sudo: false
 python:
     - 2.7
     - 3.5
@@ -19,10 +19,6 @@ env:
     global:
         - SECRET_KEY=SecretKeyForTravis
         - DATABASE_URL="postgis://postgres@localhost:5432/travis_ci_test"
-before_install:
-    - sudo apt install -y libgdal-dev
-    - export CPLUS_INCLUDE_PATH=/usr/include/gdal
-    - export C_INCLUDE_PATH=/usr/include/gdal
 install:
     - pip install --upgrade pip
     - pip install --upgrade setuptools
