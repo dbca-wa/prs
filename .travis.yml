@@ -21,6 +21,8 @@ env:
         - DATABASE_URL="postgis://postgres@localhost:5432/travis_ci_test"
 before_install:
     - sudo apt install -y libgdal-dev
+    - export CPLUS_INCLUDE_PATH=/usr/include/gdal
+    - export C_INCLUDE_PATH=/usr/include/gdal
 install:
     - pip install --upgrade pip
     - pip install --upgrade setuptools
