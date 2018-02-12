@@ -1,9 +1,9 @@
 # Planning Referral System
 
 [![Build
-Status](https://travis-ci.org/parksandwildlife/prs.svg?branch=master)](https://travis-ci.org/parksandwildlife/prs)
+Status](https://travis-ci.org/dbca-wa/prs.svg?branch=master)](https://travis-ci.org/dbca-wa/prs)
 [![Coverage
-Status](https://coveralls.io/repos/github/parksandwildlife/prs/badge.svg?branch=master)](https://coveralls.io/github/parksandwildlife/prs?branch=master)
+Status](https://coveralls.io/repos/github/dbca-wa/prs/badge.svg?branch=master)](https://coveralls.io/github/dbca-wa/prs?branch=master)
 
 This project is the Department of Parks and Wildlife [Planning
 Referral System](https://prs.dpaw.wa.gov.au/) corporate application.

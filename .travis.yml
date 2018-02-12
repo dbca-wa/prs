@@ -1,17 +1,17 @@
-sudo: false
 language: python
 cache: pip
 dist: trusty
+sudo: false
 python:
     - 2.7
     - 3.5
-services:
-    - postgresql
 addons:
     postgresql: 9.5
     apt:
         packages:
             - postgresql-9.5-postgis-2.3
+services:
+    - postgresql
 branches:
     only:
         - master
@@ -25,8 +25,8 @@ install:
     - pip install -r requirements.txt
     - pip install coveralls
 before_script:
-    - psql -c "create database travis_ci_test;" -U postgres
-    - psql -c "create extension postgis;" -U postgres -d travis_ci_test
+    - psql -U postgres -c "create database travis_ci_test;"
+    - psql -U postgres -d travis_ci_test -c "create extension postgis;"
     - python manage.py migrate --noinput
 script:
     - coverage run --source="." manage.py test

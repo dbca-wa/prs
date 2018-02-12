@@ -12,6 +12,7 @@ try:
     from StringIO import StringIO
 except ImportError:
     from io import StringIO  # Python3
+from shapely.geometry import Polygon
 import sys
 import xmltodict
 
@@ -132,17 +133,17 @@ class EmailedReferral(models.Model):
                 # Use the PIN field to try returning geometry from SLIP.
                 if 'PIN' in a and a['PIN']:
                     try:
-                        resp = query_slip(a['PIN'])
-                        if resp.json()['features']:  # Features are Multipolygons.
-                            features = resp.json()['features']  # List of MP features.
+                        resp = query_slip_esri(a['PIN'])
+                        features = resp.json()['features']  # List of spatial features.
+                        if len(features) > 0:
                             a['FEATURES'] = features
                             locations.append(a)  # A dict for each address location.
                             # If we haven't yet, use the feature geom to intersect DBCA regions.
                             if not intersected_region:
                                 for f in features:
-                                    prop = f['properties']
-                                    if 'centroid_longitude' in prop and 'centroid_latitude' in prop:
-                                        p = Point(x=prop['centroid_longitude'], y=prop['centroid_latitude'])
+                                    att = f['attributes']
+                                    if 'centroid_longitude' in att and 'centroid_latitude' in att:
+                                        p = Point(x=att['centroid_longitude'], y=att['centroid_latitude'])
                                         for r in Region.objects.all():
                                             if r.region_mpoly and r.region_mpoly.intersects(p) and r not in regions:
                                                 regions.append(r)
@@ -232,7 +233,8 @@ class EmailedReferral(models.Model):
             new_locations = []
             for l in locations:
                 for f in l['FEATURES']:
-                    geom = GEOSGeometry(json.dumps(f['geometry']))
+                    poly = Polygon(f['geometry']['rings'][0])
+                    geom = GEOSGeometry(poly.wkt)
                     for p in geom:
                         new_loc = Location(
                             address_no=int(a['NUMBER_FROM']) if a['NUMBER_FROM'] else None,
