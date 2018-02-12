@@ -44,7 +44,7 @@ class EmailedReferral(models.Model):
     def harvest(self, create_tasks=True, create_locations=True, create_records=True):
         """Undertake the harvest process for this emailed referral.
         """
-        from .utils import query_slip
+        from .utils import query_slip_esri
 
         if self.processed:
             return
@@ -235,21 +235,20 @@ class EmailedReferral(models.Model):
                 for f in l['FEATURES']:
                     poly = Polygon(f['geometry']['rings'][0])
                     geom = GEOSGeometry(poly.wkt)
-                    for p in geom:
-                        new_loc = Location(
-                            address_no=int(a['NUMBER_FROM']) if a['NUMBER_FROM'] else None,
-                            address_suffix=a['NUMBER_FROM_SUFFIX'],
-                            road_name=a['STREET_NAME'],
-                            road_suffix=a['STREET_SUFFIX'],
-                            locality=a['SUBURB'],
-                            postcode=a['POSTCODE'],
-                            referral=new_ref,
-                            poly=p
-                        )
-                        new_loc.save()
-                        new_locations.append(new_loc)
-                        logger.info('New PRS location generated: {}'.format(new_loc))
-                        actions.append('{} New PRS location generated: {}'.format(datetime.now().isoformat(), new_loc))
+                    new_loc = Location(
+                        address_no=int(a['NUMBER_FROM']) if a['NUMBER_FROM'] else None,
+                        address_suffix=a['NUMBER_FROM_SUFFIX'],
+                        road_name=a['STREET_NAME'],
+                        road_suffix=a['STREET_SUFFIX'],
+                        locality=a['SUBURB'],
+                        postcode=a['POSTCODE'],
+                        referral=new_ref,
+                        poly=geom
+                    )
+                    new_loc.save()
+                    new_locations.append(new_loc)
+                    logger.info('New PRS location generated: {}'.format(new_loc))
+                    actions.append('{} New PRS location generated: {}'.format(datetime.now().isoformat(), new_loc))
 
             # Check to see if new locations intersect with any existing locations.
             intersecting = []
