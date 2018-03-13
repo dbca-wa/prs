@@ -63,7 +63,7 @@ class EmailedReferralModelTest(HarvesterModelTestCase):
         # NOTE: we don't test email harvesting or parsing.
         # NOTE: creation of Locations requires that we query the Landgate SLIP service.
         # As we can't commit the username or password, explicitly skip creation of locations here.
-        actions = self.e_ref.harvest(create_locations=False)
+        actions = self.e_ref.harvest(create_locations=False, assignee=self.n_user)
         # actions should not be an empty list.
         self.assertTrue(bool(actions))
         # >0 Referrals, Tasks and Records should have been created.

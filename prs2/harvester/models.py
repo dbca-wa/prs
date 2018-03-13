@@ -41,7 +41,7 @@ class EmailedReferral(models.Model):
     def __str__(self):
         return self.subject
 
-    def harvest(self, create_tasks=True, create_locations=True, create_records=True):
+    def harvest(self, create_tasks=True, create_locations=True, create_records=True, assignee=False):
         """Undertake the harvest process for this emailed referral.
         """
         from .utils import query_slip_esri
@@ -53,7 +53,10 @@ class EmailedReferral(models.Model):
         dbca = Agency.objects.get(slug='dbca')
         wapc = Organisation.objects.get(slug='wapc')
         assess_task = TaskType.objects.get(name='Assess a referral')
-        assignee_default = User.objects.get(username=settings.REFERRAL_ASSIGNEE_FALLBACK)
+        if not assignee:
+            assignee_default = User.objects.get(username=settings.REFERRAL_ASSIGNEE_FALLBACK)
+        else:
+            assignee_default = assignee
         actions = []
         attachments = self.emailattachment_set.all()
         # Emails without attachments are usually reminder notices.
