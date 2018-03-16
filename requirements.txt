@@ -18,7 +18,7 @@ Unipath==1.1
 Unidecode==1.0.22
 jinja2==2.9.6
 Pillow==5.0.0
-coverage==3.7.1
+coverage==4.0.3
 mixer==6.0.1
 django-webtest==1.9.2
 python-magic==0.4.15

@@ -6,4 +6,5 @@ omit =
     */__init__.py
     prs2/wsgi.py
     prs2/settings.py
-    fabfile.py
+    manage.py
+    run_uwsgi.py
