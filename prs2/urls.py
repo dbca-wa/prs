@@ -13,13 +13,7 @@ urlpatterns = [
     url(r'^explorer/', include('explorer.urls')),  # django-sql-explorer
 ]
 
-# Additional URLS for development/debug.
-if settings.DEBUG:
-    # Add in Debug Toolbar URLs.
-    import debug_toolbar
-    urlpatterns.append(url(r'^__debug__/', include(debug_toolbar.urls)))
-
-# PRS project URLs - must be placed after the debug_toolbar URLs.
+# PRS project URLs
 urlpatterns += [
     url(r'^api/', include(v1_api.urls)),  # All API views are registered in api.py
     url(r'^reports/', include('reports.urls')),
