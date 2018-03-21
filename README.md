@@ -73,8 +73,3 @@ To obtain coverage reports:
 
     coverage run --source='.' manage.py test -k -v2
     coverage report -m
-
-**Fabric** scripts are also available to run tests:
-
-    fab test
-    fab test_coverage

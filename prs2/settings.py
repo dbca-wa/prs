@@ -18,7 +18,7 @@ sys.path.insert(0, PROJECT_DIR)
 
 # Application definition
 DEBUG = env('DEBUG', False)
-SECRET_KEY = env('SECRET_KEY')
+SECRET_KEY = env('SECRET_KEY', 'PlaceholderSecretKey')
 CSRF_COOKIE_SECURE = env('CSRF_COOKIE_SECURE', False)
 SESSION_COOKIE_SECURE = env('SESSION_COOKIE_SECURE', False)
 if not DEBUG:
@@ -227,15 +227,6 @@ if DEBUG:
     LOGGING['loggers']['prs.log']['level'] = 'DEBUG'
     LOGGING['handlers']['harvester_log']['formatter'] = 'verbose'
     LOGGING['loggers']['harvester.log']['level'] = 'DEBUG'
-
-    # Developer local IP may be required for debug_toolbar to work/
-    if env('INTERNAL_IP', False):
-        INTERNAL_IPS.append(env('INTERNAL_IP'))
-    INSTALLED_APPS += (
-        'debug_toolbar',
-    )
-    DEBUG_TOOLBAR_PATCH_SETTINGS = True
-    MIDDLEWARE = ['debug_toolbar.middleware.DebugToolbarMiddleware'] + MIDDLEWARE
 
 # Tastypie settings
 TASTYPIE_DEFAULT_FORMATS = ['json']
