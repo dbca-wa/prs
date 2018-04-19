@@ -65,14 +65,6 @@ def harvest_email(uid, message):
 
     message_body = None
     attachments = []
-    # Build the whitelist of receiving mailboxes (we only harvest messages
-    # sent to these addresses).
-    # Whitelist should consist of a .txt file, one email per line.
-    try:
-        f = open('mailbox_whitelist.txt', 'r')
-        whitelist = [i.strip() for i in f.readlines()]
-    except:
-        whitelist = False
 
     for p in parts:
         # 'text/html' content is the email body.
@@ -87,7 +79,7 @@ def harvest_email(uid, message):
         try:
             # Check the 'To' address against the whitelist of mailboxes.
             to_e = email.utils.parseaddr(message.get('To'))[1]
-            if whitelist and not to_e.lower() in whitelist:
+            if not to_e.lower() in settings.ASSESSOR_EMAILS:
                 LOGGER.info('Email UID {} to {} harvest was skipped'.format(uid, to_e))
                 return None  # Not in the whitelist; skip.
             from_e = email.utils.parseaddr(message.get('From'))[1]
