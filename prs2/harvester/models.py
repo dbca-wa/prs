@@ -3,17 +3,11 @@ from datetime import datetime, timedelta
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.gis.geos import GEOSGeometry, Point
-from django.core.files import File
+from django.core.files.base import ContentFile
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
-import json
 import logging
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO  # Python3
 from shapely.geometry import Polygon
-import sys
 import xmltodict
 
 from referral.models import (
@@ -298,7 +292,7 @@ class EmailedReferral(models.Model):
             new_record = Record.objects.create(
                 name=self.subject, referral=new_ref, order_date=datetime.today())
             file_name = 'emailed_referral_{}.html'.format(reference)
-            new_file = File(StringIO(self.body))
+            new_file = ContentFile(self.body)
             new_record.uploaded_file.save(file_name, new_file)
             new_record.save()
             logger.info('New PRS record generated: {}'.format(new_record))
@@ -309,11 +303,7 @@ class EmailedReferral(models.Model):
                 new_record = Record.objects.create(
                     name=i.name, referral=new_ref, order_date=datetime.today())
                 # Duplicate the uploaded file.
-                if sys.version_info > (3, 0):
-                    data = StringIO(i.attachment.read().decode('utf-8'))
-                else:
-                    data = StringIO(i.attachment.read())
-                new_file = File(data)
+                new_file = ContentFile(i.attachment.read())
                 new_record.uploaded_file.save(i.name, new_file)
                 new_record.save()
                 logger.info('New PRS record generated: {}'.format(new_record))

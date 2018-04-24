@@ -3,7 +3,7 @@ import base64
 from confy import env
 from datetime import date, datetime
 from django.conf import settings
-from django.core.files import File
+from django.core.files.base import ContentFile
 from django.core.mail import EmailMultiAlternatives
 import email
 from imaplib import IMAP4_SSL
@@ -38,14 +38,17 @@ def fetch_email(imap, uid):
     Email is returned as an email.Message class object.
     """
     message = None
-    status, response = imap.fetch(str(uid), '(BODY.PEEK[])')
+    status, response = imap.fetch(uid, '(BODY.PEEK[])')
 
     if status != 'OK':
         return status, response
 
     for i in response:
         if isinstance(i, tuple):
-            message = email.message_from_string(i[1])
+            s = i[1]
+            if isinstance(s, bytes):
+                s = s.decode('utf-8')
+            message = email.message_from_string(s)
 
     return status, message
 
@@ -65,20 +68,12 @@ def harvest_email(uid, message):
 
     message_body = None
     attachments = []
-    # Build the whitelist of receiving mailboxes (we only harvest messages
-    # sent to these addresses).
-    # Whitelist should consist of a .txt file, one email per line.
-    try:
-        f = open('mailbox_whitelist.txt', 'r')
-        whitelist = [i.strip() for i in f.readlines()]
-    except:
-        whitelist = False
 
     for p in parts:
         # 'text/html' content is the email body.
         if p.get_content_type() == 'text/html':
             message_body = p
-        # Other content types (not multipart/mixed) are attachments.
+        # Other content types (not multipart/mixed) are attachments (normally application/octet-stream).
         elif p.get_content_type() != 'multipart/mixed':
             attachments.append(p)
 
@@ -87,7 +82,7 @@ def harvest_email(uid, message):
         try:
             # Check the 'To' address against the whitelist of mailboxes.
             to_e = email.utils.parseaddr(message.get('To'))[1]
-            if whitelist and not to_e.lower() in whitelist:
+            if not to_e.lower() in settings.ASSESSOR_EMAILS:
                 LOGGER.info('Email UID {} to {} harvest was skipped'.format(uid, to_e))
                 return None  # Not in the whitelist; skip.
             from_e = email.utils.parseaddr(message.get('From'))[1]
@@ -105,11 +100,13 @@ def harvest_email(uid, message):
             for a in attachments:
                 att_new = EmailAttachment(
                     emailed_referral=em_new, name=a.get_filename())
-                data = StringIO(base64.decodestring(a.get_payload()))
-                new_file = File(data)
+                try:
+                    data = a.get_payload(decode=True)
+                except:
+                    data = StringIO(base64.decodestring(a.get_payload()))
+                new_file = ContentFile(data)
                 att_new.attachment.save(a.get_filename(), new_file)
                 att_new.save()
-                data.close()
                 LOGGER.info('Email attachment created: {}'.format(att_new.name))
         except Exception as e:
             LOGGER.error('Email UID {} generated exception during harvest'.format(uid))
@@ -160,6 +157,9 @@ def harvest_unread_emails(from_email):
 
     if uids:
         for uid in uids:
+            # Decode uid to a string if required.
+            if isinstance(uid, bytes):
+                uid = uid.decode('utf-8')
             # Fetch email message.
             if EmailedReferral.objects.filter(email_uid=str(uid)).exists():
                 # Already harvested? Mark it as read.

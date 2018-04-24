@@ -131,7 +131,10 @@ REFERRAL_EMAIL_HOST = env('REFERRAL_EMAIL_HOST', 'host')
 REFERRAL_EMAIL_USER = env('REFERRAL_EMAIL_USER', 'referrals')
 REFERRAL_EMAIL_PASSWORD = env('REFERRAL_EMAIL_PASSWORD', 'password')
 REFERRAL_ASSIGNEE_FALLBACK = env('REFERRAL_ASSIGNEE_FALLBACK', 'admin')
-PLANNING_EMAILS = env('PLANNING_EMAILS', ['referrals@planning.wa.gov.au'])
+# Whitelist of sender emails (only harvest referrals sent by these):
+PLANNING_EMAILS = env('PLANNING_EMAILS', 'referrals@dplh.wa.gov.au').split(',')
+# Whitelist of receiving mailboxes (only harvest referrals sent to these):
+ASSESSOR_EMAILS = env('ASSESSOR_EMAILS', '').split(',')
 
 # Database configuration
 DATABASES = {
