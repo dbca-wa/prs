@@ -37,7 +37,7 @@ class DownloadView(TemplateView):
 
     def get(self, request):
         # Get any query parameters to filter the data.
-        query_params = dict(request.GET.iteritems())
+        query_params = dict(request.GET.items())
         # Get the required model type from the query params.
         model = is_model_or_string(query_params.pop('model'))
         # Special case: remove tag PKs from the query params.
