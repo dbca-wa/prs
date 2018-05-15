@@ -1,21 +1,15 @@
-from __future__ import unicode_literals, absolute_import
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, Submit, HTML, Div
+from crispy_forms.bootstrap import PrependedText
 from datetime import datetime
-
-# Django imports
 from django import forms
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.db.models import Q
-
-# Other app imports
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Submit, HTML, Div
-from crispy_forms.bootstrap import PrependedText
 from taggit.models import Tag
 
-# PRS app imports
 from referral.models import (
     Region, Task, Referral, Condition, Note, Record, Location,
     Bookmark, TaskState, Organisation, TaskType, DopTrigger,

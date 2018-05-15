@@ -1,12 +1,13 @@
 from django.conf import settings
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponse
 from django.views.generic import TemplateView
 from openpyxl import Workbook
 from openpyxl.styles import Font
+from taggit.models import Tag
+
 from referral.models import Referral, Clearance, Task, TaskType
 from referral.utils import breadcrumbs_li, is_model_or_string, prs_user
-from taggit.models import Tag
 
 
 class ReportView(TemplateView):

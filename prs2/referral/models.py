@@ -1,27 +1,23 @@
-# Stdlib imports
-from __future__ import unicode_literals, absolute_import
 from copy import copy
 from datetime import date
 import json
 import os
-# Core Django imports
 from django.conf import settings
 from django.contrib.auth.signals import user_logged_in
 from django.contrib.gis.db import models
 from django.core.exceptions import SuspiciousFileOperation
 from django.core.mail import EmailMultiAlternatives
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.core.validators import MaxLengthValidator
 from django.db.models import Q
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.safestring import mark_safe
-# Third-party app imports
 from jinja2 import Template
 from lxml.html import clean, fromstring
 from model_utils import Choices
 from taggit.managers import TaggableManager
 from unidecode import unidecode
-# PRS app imports
+
 from referral.base import Audit, ActiveModel
 from referral.utils import smart_truncate, dewordify_text, as_row_subtract_referral_cell
 
@@ -538,7 +534,7 @@ class Task(ReferralBaseModel):
     type = models.ForeignKey(
         TaskType, on_delete=models.PROTECT, verbose_name='task type',
         help_text='The task type.')
-    referral = models.ForeignKey(Referral)
+    referral = models.ForeignKey(Referral, on_delete=models.PROTECT)
     assigned_user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.PROTECT,
         related_name='refer_task_assigned_user',
@@ -1637,7 +1633,7 @@ class UserProfile(models.Model):
     '''
     An extension of the Django auth model, to add additional fields to each User
     '''
-    user = models.OneToOneField(settings.AUTH_USER_MODEL)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     agency = models.ForeignKey(Agency, on_delete=models.PROTECT, blank=True, null=True)
     # Referral history is a list of 2-tuples: (referral pk, datetime)
     referral_history = models.TextField(blank=True, null=True)

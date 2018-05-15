@@ -1,14 +1,14 @@
-from __future__ import absolute_import, print_function, unicode_literals
 from datetime import date, timedelta
 from django.contrib.auth import get_user_model
 from django.contrib.gis.geos import Polygon
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.test import Client
 from django.utils.http import urlencode
 from django_webtest import WebTest
 import json
 from mixer.backend.django import mixer
+from taggit.models import Tag
 import uuid
 
 from referral.models import (
@@ -16,7 +16,6 @@ from referral.models import (
     TaskState, Task, Record, Note, Condition, Location, Clearance,
     Bookmark, Region, Referral, DopTrigger)
 from referral.test_models import PrsTestCase
-from taggit.models import Tag
 
 User = get_user_model()
 

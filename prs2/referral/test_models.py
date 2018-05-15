@@ -1,10 +1,9 @@
-from __future__ import unicode_literals
 from datetime import date, timedelta
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.gis.geos import Polygon
 from django.core import mail
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.test import TestCase
 from mixer.backend.django import mixer
 import os

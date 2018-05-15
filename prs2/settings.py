@@ -44,8 +44,8 @@ INSTALLED_APPS = (
     'crispy_forms',
     'bootstrap_pagination',
     'tastypie',
-    'explorer',  # django-sql-explorer
-    'webtemplate_dpaw',
+    #'explorer',  # django-sql-explorer
+    'webtemplate_dbca',
     'referral',
     'reports',
     'harvester',
