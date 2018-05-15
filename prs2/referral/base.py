@@ -1,29 +1,22 @@
-from __future__ import (division, print_function, unicode_literals,
-                        absolute_import)
-
-import logging
-import magic  # File MIME-type identification
-from reversion.revisions import create_revision, set_comment
-import threading
-
 from django.conf import settings
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.contrib.auth import get_user_model
 from django.contrib.gis.db import models
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.db.models import FileField
 from django.utils import timezone
 from django.utils.encoding import python_2_unicode_compatible
+import logging
+import magic
+from reversion.revisions import create_revision, set_comment
+import threading
+
 
 logger = logging.getLogger("log." + __name__)
 INITIAL_COMMENT = 'Initial version.'
 
 
-class ActiveModelManager(models.GeoManager):
-    '''
-    Base ModelManager class for the Referral app, which subclasses
-    contrib.gis.db.models.GeoManager
-    '''
+class ActiveModelManager(models.Manager):
 
     def current(self):
         return self.filter(effective_to=None)
@@ -39,10 +32,10 @@ class Audit(models.Model):
         abstract = True
 
     creator = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT,
         related_name='%(app_label)s_%(class)s_created', editable=False)
     modifier = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT,
         related_name='%(app_label)s_%(class)s_modified', editable=False)
     created = models.DateTimeField(default=timezone.now, editable=False)
     modified = models.DateTimeField(auto_now=True, editable=False)

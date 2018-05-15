@@ -1,18 +1,15 @@
-from __future__ import unicode_literals, absolute_import
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.admin import site
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.serializers import serialize
-from django.core.urlresolvers import reverse
-from django.http import (
-    HttpResponse, HttpResponseBadRequest, HttpResponseRedirect, Http404)
+from django.urls import reverse
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect, Http404
 from django.shortcuts import redirect
 from django.template.defaultfilters import slugify
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-from django.views.generic import (
-    View, ListView, DetailView, CreateView, UpdateView, DeleteView)
+from django.views.generic import View, ListView, DetailView, CreateView, UpdateView, DeleteView
 import json
 import logging
 from reversion.models import Version

@@ -44,8 +44,8 @@ INSTALLED_APPS = (
     'crispy_forms',
     'bootstrap_pagination',
     'tastypie',
-    'explorer',  # django-sql-explorer
-    'webtemplate_dpaw',
+    #'explorer',  # django-sql-explorer
+    'webtemplate_dbca',
     'referral',
     'reports',
     'harvester',
@@ -95,7 +95,7 @@ LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 APPLICATION_TITLE = 'Planning Referral System'
 APPLICATION_ACRONYM = 'PRS'
-APPLICATION_VERSION_NO = '2.3.10'
+APPLICATION_VERSION_NO = '2.4'
 APPLICATION_ALERTS_EMAIL = 'PRS-Alerts@dbca.wa.gov.au'
 SITE_URL = env('SITE_URL', 'localhost')
 PRS_USER_GROUP = env('PRS_USER_GROUP', 'PRS user')

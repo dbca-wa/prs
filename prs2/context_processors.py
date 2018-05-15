@@ -13,7 +13,7 @@ def template_context(request):
         'prs_user_group': settings.PRS_USER_GROUP,
         'managers': settings.MANAGERS,
     }
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         context['prs_user'] = request.user.userprofile.is_prs_user()
         context['prs_power_user'] = request.user.userprofile.is_power_user()
         context['last_referral'] = request.user.userprofile.last_referral()
