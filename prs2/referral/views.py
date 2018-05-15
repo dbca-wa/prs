@@ -686,7 +686,7 @@ class LocationCreate(ReferralCreateChild):
 
         # Aggregate the submitted form values into a dict of dicts.
         forms = {}
-        for key, val in request.POST.items():  # Python2/3 compat (was iteritems)
+        for key, val in request.POST.items():
             if key.startswith('form-'):
                 form = re.findall('^form-[0-9]+', key)[0]
                 field = re.sub('^form-[0-9]+-', '', key)
@@ -702,7 +702,7 @@ class LocationCreate(ReferralCreateChild):
             wkt = form.pop('wkt')
             poly = GEOSGeometry(wkt)
             # Set any blank form field values to None (digitised features)
-            for k, v in form.items():  # Python2/3 compat (was iteritems)
+            for k, v in form.items():
                 if not v:
                     form[k] = None
             l = Location(**form)
