@@ -3,7 +3,6 @@ cache: pip
 dist: trusty
 sudo: false
 python:
-    - 2.7
     - 3.5
 addons:
     postgresql: 9.5
