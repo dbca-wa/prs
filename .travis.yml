@@ -1,16 +1,17 @@
-sudo: false
+sudo: required
 language: python
 cache: pip
 dist: trusty
 python:
     - 3.6
+services:
+    - postgresql
+    - docker
 addons:
     postgresql: 9.6
     apt:
         packages:
             - postgresql-9.6-postgis-2.3
-services:
-    - postgresql
 branches:
     only:
         - master
@@ -31,3 +32,13 @@ script:
     - coverage run --source="." manage.py test
 after_success:
     - coveralls
+before_deploy:
+    - wget https://github.com/openshift/source-to-image/releases/download/v1.1.9a/source-to-image-v1.1.9a-40ad911d-linux-amd64.tar.gz
+    - tar xvf source-to-image-v1.1.9a-40ad911d-linux-amd64.tar.gz
+    - ./s2i build -e SECRET_KEY=${SECRET_KEY} . dbcawa/s2i-django dbcawa/prs:${TRAVIS_BRANCH}
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+deploy:
+    provider: script
+    script: docker push dbcawa/prs
+    on:
+        all_branches: true
