@@ -2,11 +2,9 @@
 
 [![Build
 Status](https://travis-ci.org/dbca-wa/prs.svg?branch=master)](https://travis-ci.org/dbca-wa/prs)
-[![Coverage
-Status](https://coveralls.io/repos/github/dbca-wa/prs/badge.svg?branch=master)](https://coveralls.io/github/dbca-wa/prs?branch=master)
 
-This project is the Department of Parks and Wildlife [Planning
-Referral System](https://prs.dpaw.wa.gov.au/) corporate application.
+This project is the Department of Biodiversity, Conservation and Attractions
+[Planning Referral System](https://prs.dbca.wa.gov.au/) corporate application.
 
 # Installation
 
@@ -25,7 +23,7 @@ The following variables are required for the project to run:
 Variables below may also need to be defined (context-dependent):
 
     DEBUG=True
-    ALLOWED_DOMAINS=".dpaw.wa.gov.au,.dbca.wa.gov.au"
+    ALLOWED_DOMAINS=".dbca.wa.gov.au"
     CSRF_COOKIE_SECURE=False
     SESSION_COOKIE_SECURE=False
     EMAIL_HOST="email.host"
@@ -34,20 +32,18 @@ Variables below may also need to be defined (context-dependent):
     REFERRAL_EMAIL_USER="referrals@email.address"
     REFERRAL_EMAIL_PASSWORD="password"
     REFERRAL_ASSIGNEE_FALLBACK="admin"
-    PLANNING_EMAILS=["referrals@planning.wa.gov.au","planning.referrals@planning.wa.gov.au"]
-    SITE_URL="prs.dpaw.wa.gov.au"
+    PLANNING_EMAILS="referrals@planning.wa.gov.au,planning.referrals@planning.wa.gov.au"
+    ASSESSOR_EMAILS="assessor1@dbca.wa.gov.au,assessor2@dbca.wa.gov.au"
+    SITE_URL="prs.dbca.wa.gov.au"
     GEOSERVER_WMS_URL="//kmi.dpaw.wa.gov.au/geoserver/gwc/service/wms"
     GEOSERVER_WFS_URL="//kmi.dpaw.wa.gov.au/geoserver/ows"
     PRS_USER_GROUP="PRS user"
     PRS_PWUSER_GROUP="PRS power user"
     BORGCOLLECTOR_API="https://borg.dpaw.wa.gov.au/api/"
-    SSO_COOKIE_NAME="oim_dpaw_wa_gov_au_sessionid"
     SLIP_USERNAME="slip_username"
     SLIP_PASSWORD="slip_password"
     SLIP_WFS_URL="https://wfs.slip.url.au/endpoint"
     SLIP_DATASET="slip:LGATE-001"
-    # django-debug-toolbar settings:
-    INTERNAL_IP="x.x.x.x"
 
 # Running
 
