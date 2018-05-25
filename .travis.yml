@@ -23,22 +23,9 @@ install:
     - pip install --upgrade pip
     - pip install --upgrade setuptools
     - pip install -r requirements.txt
-    - pip install coveralls
 before_script:
     - psql -U postgres -c "create database travis_ci_test;"
     - psql -U postgres -d travis_ci_test -c "create extension postgis;"
     - python manage.py migrate --noinput
 script:
-    - coverage run --source="." manage.py test
-after_success:
-    - coveralls
-before_deploy:
-    - wget https://github.com/openshift/source-to-image/releases/download/v1.1.9a/source-to-image-v1.1.9a-40ad911d-linux-amd64.tar.gz
-    - tar xvf source-to-image-v1.1.9a-40ad911d-linux-amd64.tar.gz
-    - ./s2i build -e SECRET_KEY=${SECRET_KEY} . dbcawa/s2i-django dbcawa/prs:${TRAVIS_BRANCH}
-    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-deploy:
-    provider: script
-    script: docker push dbcawa/prs
-    on:
-        all_branches: true
+    - python manage.py test
