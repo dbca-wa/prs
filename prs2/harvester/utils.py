@@ -102,7 +102,7 @@ def harvest_email(uid, message):
                     emailed_referral=em_new, name=a.get_filename())
                 try:
                     data = a.get_payload(decode=True)
-                except:
+                except Exception:
                     data = StringIO(base64.decodestring(a.get_payload()))
                 new_file = ContentFile(data)
                 att_new.attachment.save(a.get_filename(), new_file)
@@ -196,7 +196,7 @@ def import_harvested_refs():
     for er in EmailedReferral.objects.filter(referral__isnull=True, processed=False):
         try:
             actions.append(er.harvest())
-        except:
+        except Exception:
             actions.append('Emailed referral {} failed to import; notify the custodian to investigate'.format(er))
 
     LOGGER.info('Import process completed')

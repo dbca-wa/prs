@@ -7,7 +7,6 @@ from django.contrib import admin
 from django.core.mail import EmailMultiAlternatives
 from django.db.models import Q
 from django.db.models.base import ModelBase
-from django.template.defaultfilters import slugify as django_slugify
 from django.utils.encoding import smart_text
 from django.utils.safestring import mark_safe
 from django.utils import six
@@ -147,7 +146,7 @@ def user_referral_history(user, referral):
     # Retrieve user profile (create it if it doesn't exist)
     try:
         profile = user.get_profile()
-    except:
+    except Exception:
         profile = user.userprofile
     # If the user has no history, create an empty list
     if not profile.referral_history:
@@ -156,7 +155,7 @@ def user_referral_history(user, referral):
         try:
             # Deserialise the list of lists from the user profile
             ref_history = json.loads(profile.referral_history)
-        except:
+        except Exception:
             # If that failed, assume that the user still has "old style" history in their profile.
             ref_history = profile.referral_history.split(',')
     # Edge-case: single-ref history profiles only.

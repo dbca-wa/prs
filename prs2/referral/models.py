@@ -1672,6 +1672,7 @@ class UserProfile(models.Model):
 def create_user_profile(**kwargs):
     UserProfile.objects.get_or_create(user=kwargs['user'])
 
+
 # Connect the user_logged_in signal to the method above to ensure that user
 # profiles exist.
 user_logged_in.connect(create_user_profile)

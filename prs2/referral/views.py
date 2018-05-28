@@ -27,14 +27,14 @@ from referral.models import (
     Agency, ReferralType)
 from referral.utils import (
     is_model_or_string, breadcrumbs_li, smart_truncate, get_query,
-    user_task_history, user_referral_history, filter_queryset,
-    prs_user, is_prs_power_user, borgcollector_harvest)
+    user_task_history, user_referral_history, prs_user, is_prs_power_user,
+    borgcollector_harvest)
 from referral.forms import (
     ReferralCreateForm, NoteForm, NoteAddExistingForm,
     RecordCreateForm, RecordAddExistingForm, TaskCreateForm,
     ConditionCreateForm,
     TaskClearanceCreateForm, ClearanceCreateForm, LocationForm,
-    BookmarkForm, ConditionForm, RecordForm, FORMS_MAP,
+    BookmarkForm, ConditionForm, RecordForm,
     TaskForm, TaskCompleteForm, TaskStopForm, TaskStartForm,
     TaskReassignForm, TaskCancelForm, TaskInheritForm,
     IntersectingReferralForm, TagReplaceForm)
@@ -156,7 +156,7 @@ class ReferralCreate(PrsObjectCreate):
                 name__iexact='western australian planning commission')
             initial['task_type'] = TaskType.objects.get(name='Assess a referral')
             initial['agency'] = Agency.objects.get(code='DPaW')
-        except:
+        except Exception:
             initial['referring_org'] = Organisation.objects.current()[0]
             initial['task_type'] = TaskType.objects.all()[0]
             initial['agency'] = Agency.objects.all()[0]
@@ -309,7 +309,7 @@ class ReferralDetail(PrsObjectDetail):
                 context[obj_list] = None
 
         # Add child locations serialised as GeoJSON (if geometry exists).
-        if any([l.poly for l in ref.location_set.current()]):
+        if any([loc.poly for loc in ref.location_set.current()]):
             context['geojson_locations'] = serialize(
                 'geojson', ref.location_set.current(), geometry_field='poly', srid=4283)
 
@@ -671,7 +671,7 @@ class LocationCreate(ReferralCreateChild):
         context['title'] = 'CREATE LOCATION(S)'
         context['address'] = ref.address
         # Add any existing referral locations serialised as GeoJSON.
-        if any([l.poly for l in ref.location_set.current()]):
+        if any([loc.poly for loc in ref.location_set.current()]):
             context['geojson_locations'] = serialize(
                 'geojson', ref.location_set.current(), geometry_field='poly', srid=4283)
         return context
@@ -705,14 +705,14 @@ class LocationCreate(ReferralCreateChild):
             for k, v in form.items():
                 if not v:
                     form[k] = None
-            l = Location(**form)
+            loc = Location(**form)
             if isinstance(poly, MultiPolygon):
-                l.poly = poly[0]
+                loc.poly = poly[0]
             else:
-                l.poly = poly
-            l.referral = ref
-            l.save()
-            locations.append(l)
+                loc.poly = poly
+            loc.referral = ref
+            loc.save()
+            locations.append(loc)
 
         messages.success(request, '{} location(s) created.'.format(len(forms)))
 
@@ -1006,11 +1006,7 @@ class TaskAction(PrsObjectUpdate):
                     'Development application',
                     'Extractive industry / mining',
                     'Subdivision'])
-                if (
-                    obj.state in trigger_outcome
-                    and obj.referral.type in trigger_ref_type
-                    and not obj.referral.has_proposed_condition
-                ):
+                if obj.state in trigger_outcome and obj.referral.type in trigger_ref_type and not obj.referral.has_proposed_condition:
                     msg = '''You are unable to complete this task as 'Response
                         with condition' without first recording proposed
                         condition(s) on the referral.
@@ -1072,7 +1068,7 @@ class ReferralRecent(PrsObjectList):
         try:  # Empty history fails.
             history_list = json.loads(self.request.user.userprofile.referral_history)
             return Referral.objects.current().filter(pk__in=[i[0] for i in history_list])
-        except:
+        except Exception:
             return Referral.objects.none()
 
     def get_context_data(self, **kwargs):
@@ -1131,8 +1127,8 @@ class TagList(PrsObjectList):
         return a JSON response (list of tag names).
         """
         if request.is_ajax() or 'json' in request.GET:
-            l = [str(i) for i in self.get_queryset().values_list('name', flat=True)]
-            return JsonResponse(l, safe=False)
+            loc = [str(i) for i in self.get_queryset().values_list('name', flat=True)]
+            return JsonResponse(loc, safe=False)
         return super(TagList, self).get(request, *args, **kwargs)
 
     def get_queryset(self):

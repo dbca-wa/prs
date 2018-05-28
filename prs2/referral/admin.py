@@ -26,33 +26,22 @@ class LookupAdmin(AuditAdmin):
     raw_id_fields = ('creator', 'modifier')
     search_fields = ('name', 'slug')
 
-admin.site.register(Region, LookupAdmin)
-admin.site.register(OrganisationType, LookupAdmin)
-admin.site.register(DopTrigger, LookupAdmin)
-admin.site.register(TaskType, LookupAdmin)
-admin.site.register(NoteType, LookupAdmin)
-admin.site.register(ConditionCategory, LookupAdmin)
-admin.site.register(LocalGovernment, LookupAdmin)
-
 
 class OrganisationAdmin(LookupAdmin):
     list_display = (
         'id', 'name', 'list_name', 'slug', 'created', 'modified', 'effective_to')
-admin.site.register(Organisation, OrganisationAdmin)
 
 
 class TaskStateAdmin(LookupAdmin):
     list_display = (
         'id', 'name', 'slug', 'public', 'task_type', 'is_ongoing',
         'is_assessment', 'created', 'modified', 'effective_to')
-admin.site.register(TaskState, TaskStateAdmin)
 
 
 class ReferralTypeAdmin(LookupAdmin):
     list_display = (
         'id', 'name', 'slug', 'initial_task', 'public', 'created', 'modified',
         'effective_to')
-admin.site.register(ReferralType, ReferralTypeAdmin)
 
 
 class ReferralBaseModelAdmin(AuditAdmin):
@@ -77,8 +66,6 @@ class ReferralAdmin(ReferralBaseModelAdmin):
         return obj.regions_str
     regions_display.short_description = 'region(s)'
 
-admin.site.register(Referral, ReferralAdmin)
-
 
 class TaskAdmin(ReferralBaseModelAdmin):
     list_display = (
@@ -89,7 +76,6 @@ class TaskAdmin(ReferralBaseModelAdmin):
     search_fields = (
         'id', 'type__name', 'referral__id', 'assigned_user__username', 'description',
         'assigned_user__first_name', 'assigned_user__last_name', 'state__name')
-admin.site.register(Task, TaskAdmin)
 
 
 class RecordAdmin(ReferralBaseModelAdmin):
@@ -98,7 +84,6 @@ class RecordAdmin(ReferralBaseModelAdmin):
     raw_id_fields = ReferralBaseModelAdmin.raw_id_fields + ['referral', 'notes']
     date_hierarchy = 'created'
     search_fields = ('id', 'name', 'infobase_id', 'description')
-admin.site.register(Record, RecordAdmin)
 
 
 class NoteAdmin(ReferralBaseModelAdmin):
@@ -107,7 +92,6 @@ class NoteAdmin(ReferralBaseModelAdmin):
     raw_id_fields = ReferralBaseModelAdmin.raw_id_fields + ['referral', 'records']
     date_hierarchy = 'created'
     search_fields = ('id', 'note')
-admin.site.register(Note, NoteAdmin)
 
 
 class ModelConditionAdmin(ReferralBaseModelAdmin):
@@ -116,7 +100,6 @@ class ModelConditionAdmin(ReferralBaseModelAdmin):
         'modified', 'effective_to')
     search_fields = (
         'id', 'condition', 'category__name', 'identifier', 'creator__username')
-admin.site.register(ModelCondition, ModelConditionAdmin)
 
 
 class ConditionAdmin(ReferralBaseModelAdmin):
@@ -126,7 +109,6 @@ class ConditionAdmin(ReferralBaseModelAdmin):
     raw_id_fields = ReferralBaseModelAdmin.raw_id_fields + ['referral', 'clearance_tasks']
     date_hierarchy = 'created'
     search_fields = ('id', 'condition', 'creator__username', 'tags__name')
-admin.site.register(Condition, ConditionAdmin)
 
 
 class LocationAdmin(ReferralBaseModelAdmin):
@@ -137,7 +119,6 @@ class LocationAdmin(ReferralBaseModelAdmin):
     search_fields = (
         'id', 'address_no', 'lot_no', 'road_name', 'road_suffix', 'locality',
         'postcode', 'address_string')
-admin.site.register(Location, LocationAdmin)
 
 
 class BookmarkAdmin(ReferralBaseModelAdmin):
@@ -147,7 +128,6 @@ class BookmarkAdmin(ReferralBaseModelAdmin):
     raw_id_fields = ReferralBaseModelAdmin.raw_id_fields + ['referral']
     date_hierarchy = 'created'
     search_fields = ('id', 'referral__id', 'user__username', 'description')
-admin.site.register(Bookmark, BookmarkAdmin)
 
 
 class ClearanceAdmin(admin.ModelAdmin):
@@ -157,17 +137,37 @@ class ClearanceAdmin(admin.ModelAdmin):
     search_fields = (
         'condition__id', 'condition__condition', 'task__id', 'task__description',
         'deposited_plan')
-admin.site.register(Clearance, ClearanceAdmin)
 
 
 class AgencyAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'code')
     search_fields = ('name', 'code')
-admin.site.register(Agency, AgencyAdmin)
 
 
 class UserProfileAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'agency')
     list_filter = ('agency',)
     search_fields = ('user__username', 'user__first_name', 'user__last_name')
+
+
 admin.site.register(UserProfile, UserProfileAdmin)
+admin.site.register(Region, LookupAdmin)
+admin.site.register(OrganisationType, LookupAdmin)
+admin.site.register(DopTrigger, LookupAdmin)
+admin.site.register(TaskType, LookupAdmin)
+admin.site.register(NoteType, LookupAdmin)
+admin.site.register(ConditionCategory, LookupAdmin)
+admin.site.register(LocalGovernment, LookupAdmin)
+admin.site.register(Organisation, OrganisationAdmin)
+admin.site.register(TaskState, TaskStateAdmin)
+admin.site.register(ReferralType, ReferralTypeAdmin)
+admin.site.register(Referral, ReferralAdmin)
+admin.site.register(Task, TaskAdmin)
+admin.site.register(Record, RecordAdmin)
+admin.site.register(Note, NoteAdmin)
+admin.site.register(ModelCondition, ModelConditionAdmin)
+admin.site.register(Condition, ConditionAdmin)
+admin.site.register(Location, LocationAdmin)
+admin.site.register(Bookmark, BookmarkAdmin)
+admin.site.register(Clearance, ClearanceAdmin)
+admin.site.register(Agency, AgencyAdmin)

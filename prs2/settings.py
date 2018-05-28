@@ -44,7 +44,6 @@ INSTALLED_APPS = (
     'crispy_forms',
     'bootstrap_pagination',
     'tastypie',
-    #'explorer',  # django-sql-explorer
     'webtemplate_dbca',
     'referral',
     'reports',
@@ -236,7 +235,3 @@ TASTYPIE_DEFAULT_FORMATS = ['json']
 
 # crispy_forms settings
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
-
-# django-sql-explorer settings
-# Requires user is_staff==True and membership in 'PRS power user' group.
-EXPLORER_PERMISSION_VIEW = lambda u: u.is_staff and u.userprofile.is_power_user()

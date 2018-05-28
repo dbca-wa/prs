@@ -12,9 +12,8 @@ from taggit.models import Tag
 import uuid
 
 from referral.models import (
-    Agency, Organisation, OrganisationType, ReferralType, TaskType,
-    TaskState, Task, Record, Note, Condition, Location, Clearance,
-    Bookmark, Region, Referral, DopTrigger)
+    Organisation, ReferralType, TaskType, Task, Record, Note, Condition,
+    Location, Clearance, Bookmark, Region, Referral, DopTrigger)
 from referral.test_models import PrsTestCase
 
 User = get_user_model()
@@ -217,10 +216,10 @@ class ReferralDetailTest(PrsViewsTestCase):
     def test_referral_generate_qgis(self):
         """Test that the referral with locations can return a QGIS layer definition
         """
-        l = Location.objects.first()
-        l.referral = self.ref
-        l.poly = Polygon(((0.0, 0.0), (0.0, 50.0), (50.0, 50.0), (50.0, 0.0), (0.0, 0.0)))
-        l.save()
+        loc = Location.objects.first()
+        loc.referral = self.ref
+        loc.poly = Polygon(((0.0, 0.0), (0.0, 50.0), (50.0, 50.0), (50.0, 0.0), (0.0, 0.0)))
+        loc.save()
         url = self.ref.get_absolute_url()
         r = self.client.get(url, {'generate_qgis': 'true'})
         self.assertEqual(r.status_code, 200)
@@ -737,7 +736,7 @@ class TagListTest(PrsViewsTestCase):
         super(TagListTest, self).setUp()
         # Create a bunch of additional Tags.
         tags = (tag for tag in ['tag1', 'tag2', 'tag3', 'tag4', 'tag5'])
-        for counter in range(5):
+        for _count in range(5):
             mixer.blend(Tag, name=tags)
 
     def test_get(self):
@@ -951,8 +950,8 @@ class TaskActionTest(PrsViewsTestCase):
         self.task.referral.type = ReferralType.objects.get(name='Subdivision')
         self.task.referral.save()
         # Ensure that no locations exist on the parent referral.
-        for l in self.task.referral.location_set.all():
-            l.delete()
+        for loc in self.task.referral.location_set.all():
+            loc.delete()
         url = reverse('task_action', kwargs={'pk': self.task.pk, 'action': 'complete'})
         response = self.client.get(url)
         # Response should be a redirect to the task URL.

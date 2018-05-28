@@ -98,8 +98,8 @@ class UtilsTest(PrsTestCase):
     def test_html_breadcrumbs(self):
         """Test the breadcrumbs_li utility function
         """
-        l = [('/A', 'A'), ('/A/B', 'B'), ('', 'C',)]
-        crumbs = breadcrumbs_li(l)
+        pairs = [('/A', 'A'), ('/A/B', 'B'), ('', 'C',)]
+        crumbs = breadcrumbs_li(pairs)
         self.assertTrue(isinstance(crumbs, six.text_type))
 
     def test_update_revision_history(self):

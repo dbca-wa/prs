@@ -97,7 +97,7 @@ class EmailedReferral(models.Model):
         # Referral type
         try:
             ref_type = ReferralType.objects.filter(name__istartswith=app['APP_TYPE'])[0]
-        except:
+        except Exception:
             logger.warning('Referral type {} is not recognised type; skipping'.format(app['APP_TYPE']))
             actions.append('{} Referral type {} is not recognised type; skipping'.format(datetime.now().isoformat(), app['APP_TYPE']))
             self.processed = True
@@ -123,7 +123,7 @@ class EmailedReferral(models.Model):
                         if r.region_mpoly and r.region_mpoly.intersects(p) and r not in regions:
                             regions.append(r)
                     intersected_region = True
-                except:
+                except Exception:
                     logger.warning('Address long/lat could not be parsed ({}, {})'.format(a['LONGITUDE'], a['LATITUDE']))
                     actions.append('{} Address long/lat could not be parsed ({}, {})'.format(datetime.now().isoformat(), a['LONGITUDE'], a['LATITUDE']))
                     intersected_region = False
@@ -168,7 +168,7 @@ class EmailedReferral(models.Model):
             region = regions.pop()
             try:
                 assigned = RegionAssignee.objects.get(region=region).user
-            except:
+            except Exception:
                 logger.warning('No default assignee set for {}, defaulting to {}'.format(region, assignee_default))
                 actions.append('{} No default assignee set for {}, defaulting to {}'.format(datetime.now().isoformat(), region, assignee_default))
                 assigned = assignee_default
@@ -196,7 +196,7 @@ class EmailedReferral(models.Model):
         try:
             new_ref.lga = LocalGovernment.objects.get(name=app['LOCAL_GOVERNMENT'])
             new_ref.save()
-        except:
+        except Exception:
             logger.warning('LGA {} was not recognised'.format(app['LOCAL_GOVERNMENT']))
             actions.append('{} LGA {} was not recognised'.format(datetime.now().isoformat(), app['LOCAL_GOVERNMENT']))
 
@@ -273,7 +273,7 @@ class EmailedReferral(models.Model):
             if 'DUE_DATE' in app and app['DUE_DATE']:
                 try:
                     due = datetime.strptime(app['DUE_DATE'], '%d-%b-%y')
-                except:
+                except Exception:
                     due = datetime.today() + timedelta(assess_task.target_days)
             else:
                 due = datetime.today() + timedelta(assess_task.target_days)

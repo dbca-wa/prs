@@ -15,7 +15,7 @@ import logging
 from reversion.models import Version
 from taggit.models import Tag
 
-from referral.forms import FORMS_MAP, ReferralForm
+from referral.forms import FORMS_MAP
 from referral.utils import (
     is_model_or_string, breadcrumbs_li, get_query, prs_user,
     borgcollector_harvest)

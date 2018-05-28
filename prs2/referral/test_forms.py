@@ -2,8 +2,7 @@ from datetime import date
 from django.core.files.uploadedfile import SimpleUploadedFile
 from referral.test_models import PrsTestCase
 from referral.forms import ReferralForm, OrganisationForm, RecordForm, RecordCreateForm
-from referral.models import (
-    Organisation, OrganisationType, ReferralType, TaskType, Region, DopTrigger)
+from referral.models import Organisation, ReferralType, Region, DopTrigger
 from tempfile import NamedTemporaryFile
 
 
