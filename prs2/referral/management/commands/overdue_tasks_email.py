@@ -9,5 +9,5 @@ class Command(BaseCommand):
         try:
             overdue_task_email()
             self.stdout.write('Done')
-        except:
+        except Exception:
             raise CommandError('Unable to send overdue tasks email to users')

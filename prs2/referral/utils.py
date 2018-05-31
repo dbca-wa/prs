@@ -7,7 +7,6 @@ from django.contrib import admin
 from django.core.mail import EmailMultiAlternatives
 from django.db.models import Q
 from django.db.models.base import ModelBase
-from django.template.defaultfilters import slugify as django_slugify
 from django.utils.encoding import smart_text
 from django.utils.safestring import mark_safe
 from django.utils import six
@@ -41,16 +40,16 @@ def is_model_or_string(model):
     if not isinstance(model, ModelBase):
         # Hack: if the last character is "s", remove it before calling get_model
         x = len(model) - 1
-        if model[x] == 's':
+        if model[x] == "s":
             model = model[0:x]
         try:
-            model = apps.get_model('referral', model)
+            model = apps.get_model("referral", model)
         except LookupError:
             model = None
     return model
 
 
-def smart_truncate(content, length=100, suffix='....(more)'):
+def smart_truncate(content, length=100, suffix="....(more)"):
     """Small function to truncate a string in a sensible way, sourced from:
     http://stackoverflow.com/questions/250357/smart-truncate-in-python
     """
@@ -58,7 +57,7 @@ def smart_truncate(content, length=100, suffix='....(more)'):
     if len(content) <= length:
         return content
     else:
-        return ' '.join(content[:length + 1].split(' ')[0:-1]) + suffix
+        return " ".join(content[: length + 1].split(" ")[0:-1]) + suffix
 
 
 def dewordify_text(txt):
@@ -70,13 +69,14 @@ def dewordify_text(txt):
     http://stackoverflow.com/questions/1175540/iterative-find-replace-from-a-list-of-tuples-in-python
     """
     REPLACEMENTS = {
-        '&nbsp;': ' ',
-        '&lt;': '<',
-        '&gt;': '>',
-        ' class="MsoNormal"': '',
-        '<span lang="EN-AU">': '',
-        '<span>': '',
-        '</span>': ''}
+        "&nbsp;": " ",
+        "&lt;": "<",
+        "&gt;": ">",
+        ' class="MsoNormal"': "",
+        '<span lang="EN-AU">': "",
+        "<span>": "",
+        "</span>": "",
+    }
 
     def replacer(m):
         return REPLACEMENTS[m.group(0)]
@@ -85,18 +85,18 @@ def dewordify_text(txt):
         # Whatever string encoding is passed in,
         # use unidecode to replace non-ASCII characters.
         txt = unidecode(txt)  # Replaces odd characters.
-        r = re.compile('|'.join(REPLACEMENTS.keys()))
+        r = re.compile("|".join(REPLACEMENTS.keys()))
         r = r.sub(replacer, txt)
         return r
     else:
-        return ''
+        return ""
 
 
 def breadcrumbs_li(links):
     """Returns HTML: an unordered list of URLs (no surrounding <ul> tags).
     ``links`` should be a iterable of tuples (URL, text).
     """
-    crumbs = ''
+    crumbs = ""
     li_str = '<li><a href="{}">{}</a></li>'
     li_str_last = '<li class="active"><span>{}</span></li>'
     # Iterate over the list, except for the last item.
@@ -116,9 +116,9 @@ def get_query(query_string, search_fields):
     spaces and grouping quoted words together.
     """
     findterms = re.compile(r'"([^"]+)"|(\S+)').findall
-    normspace = re.compile(r'\s{2,}').sub
+    normspace = re.compile(r"\s{2,}").sub
     query = None  # Query to search for every search term
-    terms = [normspace(' ', (t[0] or t[1]).strip()) for t in findterms(query_string)]
+    terms = [normspace(" ", (t[0] or t[1]).strip()) for t in findterms(query_string)]
     for term in terms:
         or_query = None  # Query to search for a given term in each field
         for field_name in search_fields:
@@ -139,7 +139,7 @@ def as_row_subtract_referral_cell(html_row):
     containing the Referral ID (we don't need to display this on the referral details page).
     """
     # Use regex to remove the <TD> tag of class "referral-id-cell".
-    html_row = re.sub(r'<td class="referral-id-cell">.+</td>', r'', html_row)
+    html_row = re.sub(r'<td class="referral-id-cell">.+</td>', r"", html_row)
     return mark_safe(html_row)
 
 
@@ -147,7 +147,7 @@ def user_referral_history(user, referral):
     # Retrieve user profile (create it if it doesn't exist)
     try:
         profile = user.get_profile()
-    except:
+    except Exception:
         profile = user.userprofile
     # If the user has no history, create an empty list
     if not profile.referral_history:
@@ -156,14 +156,14 @@ def user_referral_history(user, referral):
         try:
             # Deserialise the list of lists from the user profile
             ref_history = json.loads(profile.referral_history)
-        except:
+        except Exception:
             # If that failed, assume that the user still has "old style" history in their profile.
-            ref_history = profile.referral_history.split(',')
+            ref_history = profile.referral_history.split(",")
     # Edge-case: single-ref history profiles only.
     if isinstance(ref_history, int):
         ref = ref_history
         ref_history = []
-        ref_history.append([ref, datetime.strftime(datetime.today(), '%d-%m-%Y')])
+        ref_history.append([ref, datetime.strftime(datetime.today(), "%d-%m-%Y")])
     # We're going to replace the existing list with a new one.
     new_ref_history = []
     # Iterate through the list; it's either a list of unicode strings (old-style)
@@ -171,14 +171,16 @@ def user_referral_history(user, referral):
     for i in ref_history:
         # Firstly if the item is a string, convert that to a list ([val, DATE]).
         if isinstance(i, six.text_type):
-            i = [int(i), datetime.strftime(datetime.today(), '%d-%m-%Y')]
+            i = [int(i), datetime.strftime(datetime.today(), "%d-%m-%Y")]
         # If the referral that was passed in exists in the current list, pass (don't append it).
         if referral.id == i[0]:
             pass
         else:
             new_ref_history.append(i)
     # Add the passed-in referral to the end of the new list.
-    new_ref_history.append([referral.id, datetime.strftime(datetime.today(), '%d-%m-%Y')])
+    new_ref_history.append(
+        [referral.id, datetime.strftime(datetime.today(), "%d-%m-%Y")]
+    )
     # History can be a maximum of 20 referrals; slice the new list accordingly.
     if len(new_ref_history) > 20:
         new_ref_history = new_ref_history[-20:]
@@ -195,17 +197,19 @@ def user_task_history(user, task, comment=None):
         task_history = []
     else:
         task_history = json.loads(profile.task_history)
-    task_history.append([task.pk, datetime.strftime(datetime.today(), '%d-%m-%Y'), comment])
+    task_history.append(
+        [task.pk, datetime.strftime(datetime.today(), "%d-%m-%Y"), comment]
+    )
     profile.task_history = json.dumps(task_history)
     profile.save()
 
 
 def filter_queryset(request, model, queryset):
-    '''
+    """
     Function to dynamically filter a model queryset, based upon the search_fields defined in
     admin.py for that model. If search_fields is not defined, the queryset is returned unchanged.
-    '''
-    search_string = request.GET['q']
+    """
+    search_string = request.GET["q"]
     # Replace single-quotes with double-quotes
     search_string = search_string.replace("'", r'"')
     if admin.site._registry[model].search_fields:
@@ -216,19 +220,21 @@ def filter_queryset(request, model, queryset):
 
 
 def is_prs_user(request):
-    if 'PRS user' not in [group.name for group in request.user.groups.all()]:
+    if "PRS user" not in [group.name for group in request.user.groups.all()]:
         return False
     return True
 
 
 def is_prs_power_user(request):
-    if 'PRS power user' not in [group.name for group in request.user.groups.all()]:
+    if "PRS power user" not in [group.name for group in request.user.groups.all()]:
         return False
     return True
 
 
 def prs_user(request):
-    return is_prs_user(request) or is_prs_power_user(request) or request.user.is_superuser
+    return (
+        is_prs_user(request) or is_prs_power_user(request) or request.user.is_superuser
+    )
 
 
 def update_revision_history(app_model):
@@ -243,7 +249,7 @@ def update_revision_history(app_model):
     for v in Version.objects.all():
         # Deserialise the object version.
         data = json.loads(v.serialized_data)[0]
-        if data['model'] == app_model:  # Example: referral.record
+        if data["model"] == app_model:  # Example: referral.record
             pass
             """
             # Do something to the deserialised data here, e.g.:
@@ -259,15 +265,17 @@ def update_revision_history(app_model):
             """
 
 
-def borgcollector_harvest(request, publishes=['prs_locations']):
+def borgcollector_harvest(request, publishes=["prs_locations"]):
     """Convenience function to manually run a Borg Collector harvest
     job for the PRS locations layer.
 
     Docs: https://github.com/parksandwildlife/borgcollector
     """
-    api_url = env('BORGCOLLECTOR_API', 'https://borg.dpaw.wa.gov.au/api/') + 'jobs/'
+    api_url = env("BORGCOLLECTOR_API", "https://borg.dpaw.wa.gov.au/api/") + "jobs/"
     # Send a POST request to the API endpoint.
-    r = post_sso(user_request=request, url=api_url, data=json.dumps({'publishes': publishes}))
+    r = post_sso(
+        user_request=request, url=api_url, data=json.dumps({"publishes": publishes})
+    )
     return r
 
 
@@ -280,34 +288,46 @@ def overdue_task_email():
 
     prs_grp = Group.objects.get(name=settings.PRS_USER_GROUP)
     users = prs_grp.user_set.filter(is_active=True)
-    users = users.filter(username='AshleyF')
+    users = users.filter(username="AshleyF")
     ongoing_states = TaskState.objects.current().filter(is_ongoing=True)
 
     # For each user, send an email if they have any incomplete tasks that
     # are in an 'ongoing' state (i.e. not stopped).
-    subject = 'PRS overdue task notification'
-    from_email = 'PRS-Alerts@dpaw.wa.gov.au'
+    subject = "PRS overdue task notification"
+    from_email = "PRS-Alerts@dpaw.wa.gov.au"
 
     for user in users:
         ongoing_tasks = Task.objects.current().filter(
-            complete_date=None, state__in=ongoing_states,
-            due_date__lt=date.today(), assigned_user=user)
+            complete_date=None,
+            state__in=ongoing_states,
+            due_date__lt=date.today(),
+            assigned_user=user,
+        )
         if ongoing_tasks.exists():
             # Send a single email to this user containing the list of tasks
             to_email = [user.email]
-            text_content = '''This is an automated message to let you know that the following tasks
-                assigned to you within PRS are currently overdue:\n'''
-            html_content = '''<p>This is an automated message to let you know that the following tasks
+            text_content = """This is an automated message to let you know that the following tasks
+                assigned to you within PRS are currently overdue:\n"""
+            html_content = """<p>This is an automated message to let you know that the following tasks
                 assigned to you within PRS are currently overdue:</p>
-                <ul>'''
+                <ul>"""
             for t in ongoing_tasks:
-                text_content += '* Referral ID {} - {}\n'.format(t.referral.pk, t.type.name)
+                text_content += "* Referral ID {} - {}\n".format(
+                    t.referral.pk, t.type.name
+                )
                 html_content += '<li><a href="{}">Referral ID {} - {}</a></li>'.format(
-                    settings.SITE_URL + t.referral.get_absolute_url(), t.referral.pk, t.type.name)
-            text_content += 'This is an automatically-generated email - please do not reply.\n'
-            html_content += '</ul><p>This is an automatically-generated email - please do not reply.</p>'
+                    settings.SITE_URL + t.referral.get_absolute_url(),
+                    t.referral.pk,
+                    t.type.name,
+                )
+            text_content += (
+                "This is an automatically-generated email - please do not reply.\n"
+            )
+            html_content += (
+                "</ul><p>This is an automatically-generated email - please do not reply.</p>"
+            )
             msg = EmailMultiAlternatives(subject, text_content, from_email, to_email)
-            msg.attach_alternative(html_content, 'text/html')
+            msg.attach_alternative(html_content, "text/html")
             # Email should fail gracefully - ie no Exception raised on failure.
             msg.send(fail_silently=True)
 

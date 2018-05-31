@@ -88,9 +88,9 @@ class PrsTestCase(TestCase):
                 Clearance, condition=mixer.SELECT, task=mixer.SELECT)
             mixer.cycle(2).blend(Location, referral=mixer.SELECT)
             # Generate some geometry in one Location.
-            l = Location.objects.all()[0]
-            l.poly = Polygon(((0.0, 0.0), (0.0, 50.0), (50.0, 50.0), (50.0, 0.0), (0.0, 0.0)))
-            l.save()
+            loc = Location.objects.all()[0]
+            loc.poly = Polygon(((0.0, 0.0), (0.0, 50.0), (50.0, 50.0), (50.0, 0.0), (0.0, 0.0)))
+            loc.save()
             mixer.cycle(2).blend(Bookmark, referral=mixer.SELECT, user=mixer.SELECT)
 
 
@@ -743,51 +743,51 @@ class LocationTest(PrsTestCase):
     def test_nice_address(self):
         """Test the Location model nice_address() method
         """
-        l = Location.objects.all()[0]
-        l.address_no = '1'
-        l.address_suffix = 'A'
-        l.lot_no = '10'
-        l.road_name = 'Foo'
-        l.road_suffix = 'Street'
-        l.locality = 'Perth'
-        l.postcode = '6000'
-        l.save()
-        self.assertEqual(l.nice_address, '1A (Lot 10) Foo Street Perth 6000')
+        loc = Location.objects.all()[0]
+        loc.address_no = '1'
+        loc.address_suffix = 'A'
+        loc.lot_no = '10'
+        loc.road_name = 'Foo'
+        loc.road_suffix = 'Street'
+        loc.locality = 'Perth'
+        loc.postcode = '6000'
+        loc.save()
+        self.assertEqual(loc.nice_address, '1A (Lot 10) Foo Street Perth 6000')
         # Change some field values, for coverage.
-        l.address_no = None
-        l.postcode = None
-        l.save()
-        self.assertEqual(l.nice_address, 'Lot 10 Foo Street Perth')
+        loc.address_no = None
+        loc.postcode = None
+        loc.save()
+        self.assertEqual(loc.nice_address, 'Lot 10 Foo Street Perth')
 
     def test_as_row(self):
         """Test the Location model as_row() method.
         """
-        l = Location.objects.all()[0]
-        row = l.as_row()
-        self.assertIsNot(row.find(l.referral.get_absolute_url()), -1)
+        loc = Location.objects.all()[0]
+        row = loc.as_row()
+        self.assertIsNot(row.find(loc.referral.get_absolute_url()), -1)
 
     def test_as_row_actions(self):
         """Test the Location model as_row_actions() method.
         """
-        l = Location.objects.all()[0]
-        row = l.as_row_actions()
+        loc = Location.objects.all()[0]
+        row = loc.as_row_actions()
         self.assertIsNot(row.find('Edit'), -1)
         self.assertIsNot(row.find('Delete'), -1)
 
     def test_as_row_minus_referral(self):
         """Test the Location model as_row_minus_referral() method.
         """
-        l = Location.objects.all()[0]
-        row = l.as_row_minus_referral()
-        self.assertIs(row.find(l.referral.get_absolute_url()), -1)
+        loc = Location.objects.all()[0]
+        row = loc.as_row_minus_referral()
+        self.assertIs(row.find(loc.referral.get_absolute_url()), -1)
         self.assertIs(row.find('class="referral-id-cell"'), -1)
 
     def test_as_tbody(self):
         """Test the Location mode as_tbody() method.
         """
-        l = Location.objects.all()[0]
-        body = l.as_tbody()
-        self.assertIsNot(body.find(l.referral.get_absolute_url()), -1)
+        loc = Location.objects.all()[0]
+        body = loc.as_tbody()
+        self.assertIsNot(body.find(loc.referral.get_absolute_url()), -1)
 
 
 class BookmarkTest(PrsTestCase):

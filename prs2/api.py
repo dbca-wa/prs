@@ -40,11 +40,11 @@ class GroupResource(ModelResource):
         filtering = {'id': ALL, 'name': ALL}
         authentication = SessionAuthentication()
 
+
 v1_api.register(GroupResource())
 
 
 class UserResource(ModelResource):
-
     class Meta:
         try:
             # Queryset should only return active users in the "PRS user" group.
@@ -65,6 +65,7 @@ class UserResource(ModelResource):
         cache = SimpleCache()
         authentication = SessionAuthentication()
 
+
 v1_api.register(UserResource())
 
 
@@ -75,5 +76,6 @@ class TagResource(ModelResource):
         filtering = {'id': ALL, 'name': ALL, 'slug': ALL}
         cache = SimpleCache()
         authentication = SessionAuthentication()
+
 
 v1_api.register(TagResource())

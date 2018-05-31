@@ -14,6 +14,6 @@ class Command(BaseCommand):
 
         lga_reader = csv.reader(lga_file)
         for row in lga_reader:
-            lga = LocalGovernment.objects.create(name=row[0])
+            LocalGovernment.objects.create(name=row[0])
 
         self.stdout.write('Done!')

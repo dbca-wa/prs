@@ -7,12 +7,12 @@ Call and extend these settings by passing --settings=<PATH> to runserver, e.g.
 from confy import env, database
 import os
 import sys
-from unipath import Path
+from pathlib import Path
 
 # Project paths
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = Path(__file__).ancestor(2)
-PROJECT_DIR = os.path.join(BASE_DIR, 'prs2')
+BASE_DIR = str(Path(__file__).resolve().parents[1])
+PROJECT_DIR = str(Path(__file__).resolve().parents[0])
 # Add PROJECT_DIR to the system path.
 sys.path.insert(0, PROJECT_DIR)
 
@@ -44,16 +44,17 @@ INSTALLED_APPS = (
     'crispy_forms',
     'bootstrap_pagination',
     'tastypie',
-    #'explorer',  # django-sql-explorer
     'webtemplate_dbca',
     'referral',
     'reports',
     'harvester',
 )
 MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -95,7 +96,7 @@ LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 APPLICATION_TITLE = 'Planning Referral System'
 APPLICATION_ACRONYM = 'PRS'
-APPLICATION_VERSION_NO = '2.4'
+APPLICATION_VERSION_NO = '2.4.1'
 APPLICATION_ALERTS_EMAIL = 'PRS-Alerts@dbca.wa.gov.au'
 SITE_URL = env('SITE_URL', 'localhost')
 PRS_USER_GROUP = env('PRS_USER_GROUP', 'PRS user')
@@ -236,7 +237,3 @@ TASTYPIE_DEFAULT_FORMATS = ['json']
 
 # crispy_forms settings
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
-
-# django-sql-explorer settings
-# Requires user is_staff==True and membership in 'PRS power user' group.
-EXPLORER_PERMISSION_VIEW = lambda u: u.is_staff and u.userprofile.is_power_user()
