@@ -6,13 +6,11 @@ from django.urls import reverse
 from django.db.models import FileField
 from django.utils import timezone
 from django.utils.encoding import python_2_unicode_compatible
-import logging
 import magic
 from reversion.revisions import create_revision, set_comment
 import threading
 
 
-logger = logging.getLogger("log." + __name__)
 INITIAL_COMMENT = 'Initial version.'
 
 

@@ -174,28 +174,33 @@ LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
-        'console': {'format': '%(message)s'},
+        'console': {'format': '%(name)-12s %(message)s'},
+        'verbose': {'format': '%(asctime)s %(levelname)-8s %(message)s'},
     },
     'handlers': {
-        'prs_log': {
-            'level': 'INFO',
+        'console': {
+            'level': 'WARNING',
             'class': 'logging.StreamHandler',
             'formatter': 'console'
         },
-        'harvester_log': {
+        'harvester': {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
             'formatter': 'console'
         },
     },
     'loggers': {
-        'prs.log': {
-            'handlers': ['prs_log'],
+        'prs': {
+            'handlers': ['console'],
             'level': 'INFO'
         },
-        'harvester.log': {
-            'handlers': ['harvester_log'],
+        'harvester': {
+            'handlers': ['harvester'],
             'level': 'INFO'
+        },
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'WARNING'
         },
     }
 }

@@ -36,7 +36,7 @@ from referral.utils import (
     borgcollector_harvest,
 )
 
-logger = logging.getLogger("prs.log")
+logger = logging.getLogger("prs")
 
 
 class PrsObjectList(LoginRequiredMixin, ListView):

@@ -87,7 +87,7 @@ from referral.views_base import (
     PrsObjectTag,
 )
 
-logger = logging.getLogger("prs.log")
+logger = logging.getLogger("prs")
 
 
 class SiteHome(LoginRequiredMixin, ListView):
