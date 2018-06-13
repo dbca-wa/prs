@@ -1,9 +1,3 @@
-"""
-Base Django settings for prs2 project.
-Call and extend these settings by passing --settings=<PATH> to runserver, e.g.
-
-> python manage.py runserver --settings=prs2.settings_dev.py
-"""
 from confy import env, database
 import os
 import sys
@@ -175,62 +169,41 @@ STATICFILES_DIRS = (os.path.join(BASE_DIR, 'prs2', 'static'),)
 # This is required to add context variables to all templates:
 STATIC_CONTEXT_VARS = {}
 
-# Logging settings
-# Ensure that the logs directory exists:
-if not os.path.exists(os.path.join(BASE_DIR, 'logs')):
-    os.mkdir(os.path.join(BASE_DIR, 'logs'))
+# Logging settings - log to stdout/stderr
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
-        'simple': {
-            'format': '%(levelname)s %(asctime)s %(message)s'
-        },
-        'verbose': {
-            'format': '%(levelname)s %(asctime)s %(module)s %(message)s'
-        },
+        'console': {'format': '%(name)-12s %(message)s'},
+        'verbose': {'format': '%(asctime)s %(levelname)-8s %(message)s'},
     },
     'handlers': {
-        'prs_log': {
+        'console': {
             'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs', 'prs.log'),
-            'formatter': 'simple',
-            'maxBytes': 1024 * 1024 * 5,
-            'backupCount': 5,
+            'class': 'logging.StreamHandler',
+            'formatter': 'console'
         },
-        'harvester_log': {
+        'harvester': {
             'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs', 'harvester.log'),
-            'formatter': 'simple',
-            'maxBytes': 1024 * 1024 * 5,
-            'backupCount': 5,
+            'class': 'logging.StreamHandler',
+            'formatter': 'console'
         },
     },
     'loggers': {
+        'prs': {
+            'handlers': ['console'],
+            'level': 'INFO'
+        },
+        'harvester': {
+            'handlers': ['harvester'],
+            'level': 'INFO'
+        },
         'django.request': {
-            'handlers': ['prs_log'],
-            'level': 'INFO'
-        },
-        'prs.log': {
-            'handlers': ['prs_log'],
-            'level': 'INFO'
-        },
-        'harvester.log': {
-            'handlers': ['harvester_log'],
-            'level': 'INFO'
+            'handlers': ['console'],
+            'level': 'WARNING'
         },
     }
 }
-
-# Supplement some settings when DEBUG is True.
-if DEBUG:
-    LOGGING['loggers']['django.request']['level'] = 'DEBUG'
-    LOGGING['handlers']['prs_log']['formatter'] = 'verbose'
-    LOGGING['loggers']['prs.log']['level'] = 'DEBUG'
-    LOGGING['handlers']['harvester_log']['formatter'] = 'verbose'
-    LOGGING['loggers']['harvester.log']['level'] = 'DEBUG'
 
 # Tastypie settings
 TASTYPIE_DEFAULT_FORMATS = ['json']

@@ -19,7 +19,7 @@ import time
 from .models import EmailedReferral, EmailAttachment
 
 
-LOGGER = logging.getLogger('harvester.log')
+LOGGER = logging.getLogger('harvester')
 
 
 def unread_from_email(imap, from_email):

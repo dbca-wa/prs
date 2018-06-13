@@ -14,7 +14,7 @@ from referral.models import (
     Referral, Record, Region, ReferralType, Agency, Organisation, DopTrigger,
     TaskType, Task, Location, LocalGovernment)
 
-logger = logging.getLogger('harvester.log')
+logger = logging.getLogger('harvester')
 
 
 @python_2_unicode_compatible
