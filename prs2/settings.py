@@ -33,6 +33,7 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_extensions',
+    'raven.contrib.django.raven_compat',
     'taggit',
     'reversion',
     'crispy_forms',
@@ -188,8 +189,21 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'console'
         },
+		'sentry': {
+            'level': 'WARNING',
+            'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
+        },
     },
     'loggers': {
+        'django': {
+            'handlers': ['console'],
+			'propagate': True,
+        },
+        'django.request': {
+            'handlers': ['console', 'sentry'],
+            'level': 'WARNING',
+			'propagate': False,
+        },
         'prs': {
             'handlers': ['console'],
             'level': 'INFO'
@@ -197,10 +211,6 @@ LOGGING = {
         'harvester': {
             'handlers': ['harvester'],
             'level': 'INFO'
-        },
-        'django.request': {
-            'handlers': ['console'],
-            'level': 'WARNING'
         },
     }
 }
@@ -210,3 +220,8 @@ TASTYPIE_DEFAULT_FORMATS = ['json']
 
 # crispy_forms settings
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
+
+
+# Sentry configuration
+if env('RAVEN_DSN', False):
+    RAVEN_CONFIG = {'dsn': env('RAVEN_DSN')}
