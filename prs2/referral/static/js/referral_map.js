@@ -15,17 +15,6 @@ var landgateOrthomosaic = L.tileLayer.wms(
         version: '1.1.1'
     }
 );
-var mapboxSatellite = L.tileLayer.wms(
-    geoserver_wms_url,
-    {
-        crs: L.CRS.EPSG4326,
-        layers: 'dpaw:mapbox_satellite',
-        tileSize: 1024,
-        format: 'image/jpeg',
-        tiled: true,
-        version: '1.1.1'
-    }
-);
 var mapboxStreets = L.tileLayer.wms(
     geoserver_wms_url,
     {
@@ -37,6 +26,7 @@ var mapboxStreets = L.tileLayer.wms(
         version: '1.1.1'
     }
 );
+var empty = L.tileLayer('');
 var cadastre = L.tileLayer.wms(
     geoserver_wms_url,
     {
@@ -46,6 +36,18 @@ var cadastre = L.tileLayer.wms(
         // "PRS styled" internal version of cadastre:
         layers: 'cddp:cadastre',
         styles: 'cddp:cadastre.cadastre_prs',
+        tileSize: 1024,
+        format: 'image/png',
+        tiled: true,
+        transparent: true,
+        version: '1.1.1'
+    }
+);
+var slipRoads = L.tileLayer.wms(
+    geoserver_wms_url,
+    {
+        crs: L.CRS.EPSG4326,
+        layers: 'landgate:roads_lgate_195',
         tileSize: 1024,
         format: 'image/png',
         tiled: true,
@@ -80,11 +82,12 @@ var map = L.map('map', {
 // Define layer groups.
 var baseMaps = {
     "Landgate Orthomosaic": landgateOrthomosaic,
-    "Mapbox Satellite": mapboxSatellite,
-    "OpenStreetMap Streets": mapboxStreets
+    "OpenStreetMap Streets": mapboxStreets,
+    "No base layer": empty
 };
 var overlayMaps = {
     "Cadastre": cadastre,
+    "SLIP roads": slipRoads,
     "PRS locations": prsLocations,
 };
 
