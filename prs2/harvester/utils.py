@@ -22,6 +22,15 @@ from .models import EmailedReferral, EmailAttachment
 LOGGER = logging.getLogger('harvester')
 
 
+def get_imap(mailbox='INBOX'):
+    """Instantiate a new IMAP object, login, and connect to a mailbox.
+    """
+    imap = IMAP4_SSL(settings.REFERRAL_EMAIL_HOST)
+    imap.login(settings.REFERRAL_EMAIL_USER, settings.REFERRAL_EMAIL_PASSWORD)
+    imap.select(mailbox)
+    return imap
+
+
 def unread_from_email(imap, from_email):
     """Returns (status, list of UIDs) of unread emails from a sender.
     """
@@ -38,7 +47,7 @@ def fetch_email(imap, uid):
     Email is returned as an email.Message class object.
     """
     message = None
-    status, response = imap.fetch(uid, '(BODY.PEEK[])')
+    status, response = imap.fetch(str(uid), '(BODY.PEEK[])')
 
     if status != 'OK':
         return status, response
@@ -98,16 +107,17 @@ def harvest_email(uid, message):
             em_new.save()
             LOGGER.info('Email UID {} harvested: {}'.format(uid, em_new.subject))
             for a in attachments:
-                att_new = EmailAttachment(
-                    emailed_referral=em_new, name=a.get_filename())
+                att_name = a.get_filename()
+                att_new = EmailAttachment(emailed_referral=em_new, name=att_name)
                 try:
                     data = a.get_payload(decode=True)
                 except Exception:
                     data = StringIO(base64.decodestring(a.get_payload()))
-                new_file = ContentFile(data)
-                att_new.attachment.save(a.get_filename(), new_file)
-                att_new.save()
-                LOGGER.info('Email attachment created: {}'.format(att_new.name))
+                if att_name and data:  # Some attachments may have no payload.
+                    new_file = ContentFile(data)
+                    att_new.attachment.save(att_name, new_file)
+                    att_new.save()
+                    LOGGER.info('Email attachment created: {}'.format(att_new.name))
         except Exception as e:
             LOGGER.error('Email UID {} generated exception during harvest'.format(uid))
             LOGGER.exception(e)
@@ -138,10 +148,7 @@ def harvest_unread_emails(from_email):
     harvest each one.
     """
     actions = []
-    # Instantiate a new IMAP object and login
-    imap = IMAP4_SSL(settings.REFERRAL_EMAIL_HOST)
-    imap.login(settings.REFERRAL_EMAIL_USER, settings.REFERRAL_EMAIL_PASSWORD)
-    imap.select('INBOX')
+    imap = get_imap()
 
     LOGGER.info('Requesting unread emails from {}'.format(from_email))
     actions.append('{} Requesting unread emails from {}'.format(datetime.now().isoformat(), from_email))
