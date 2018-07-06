@@ -213,7 +213,7 @@ class ReferralCreate(PrsObjectCreate):
                 name__iexact="western australian planning commission"
             )
             initial["task_type"] = TaskType.objects.get(name="Assess a referral")
-            initial["agency"] = Agency.objects.get(code="DPaW")
+            initial["agency"] = Agency.objects.get(code="DBCA")
         except Exception:
             initial["referring_org"] = Organisation.objects.current()[0]
             initial["task_type"] = TaskType.objects.all()[0]
@@ -713,7 +713,7 @@ class ReferralCreateChild(PrsObjectCreate):
         pu_group = Group.objects.get(name=settings.PRS_POWER_USER_GROUP)
         users = pu_group.user_set.filter(is_active=True)
         subject = "PRS condition created notification"
-        from_email = "PRS-Alerts@dpaw.wa.gov.au"
+        from_email = "PRS-Alerts@dbca.wa.gov.au"
         for user in users:
             # Send a single email to this user
             to_email = [user.email]
