@@ -9,5 +9,6 @@ RUN apt-get update -y \
   && pip install --no-cache-dir -r requirements.txt \
   && python manage.py collectstatic --noinput
 
+HEALTHCHECK --interval=1m --timeout=5s --start-period=10s --retries=3 CMD ["wget", "-q", "-O", "-", "http://localhost:8080/healthcheck/"]
 EXPOSE 8080
 CMD ["gunicorn", "prs2.wsgi", "--config", "gunicorn.ini"]
