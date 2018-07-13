@@ -8,7 +8,7 @@
 <link rel="stylesheet" type="text/css" href="{% static 'css/prs_datatables.css' %}" />
 {% if geojson_locations %}
 <link rel="stylesheet" href="//api.mapbox.com/mapbox.js/v2.2.1/mapbox.css" />
-<link rel="stylesheet" href="{% static 'leaflet-search/leaflet-search.css' %}" />
+<link rel="stylesheet" href="{% static 'css/leaflet-search.css' %}" />
 {% endif %}
 <link rel="stylesheet" type="text/css" href="//static.dbca.wa.gov.au/static/libs/dropzone/5.1.1/min/dropzone.min.css">
 <link rel="stylesheet" href="{% static 'css/prs_dropzone.css' %}" />
@@ -214,7 +214,7 @@
 <script type="text/javascript" src="{% static 'js/datetime-moment.js' %}"></script>
 {% if geojson_locations %}
 <script src="//api.mapbox.com/mapbox.js/v2.2.2/mapbox.js"></script>
-<script src="{% static 'leaflet-search/leaflet-search.min.js' %}"></script>
+<script src="{% static 'js/leaflet-search.min.js' %}"></script>
 <script>
     // Set global variables (needs to happen before loading referral_map.js)
     var geoserver_wms_url = '{{ geoserver_wms_url }}';
