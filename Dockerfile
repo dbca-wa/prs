@@ -5,7 +5,8 @@ WORKDIR /usr/src/app
 COPY gunicorn.ini manage.py requirements.txt ./
 COPY prs2 ./prs2
 RUN apt-get update -y \
-  && apt-get install -y wget git libmagic-dev gcc binutils libproj-dev gdal-bin \
+  && apt-get install --no-install-recommends -y wget git libmagic-dev gcc binutils libproj-dev gdal-bin \
+  && rm -rf /var/lib/apt/lists/* \
   && pip install --no-cache-dir -r requirements.txt \
   && python manage.py collectstatic --noinput
 
