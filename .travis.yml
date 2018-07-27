@@ -19,6 +19,8 @@ env:
     global:
         - SECRET_KEY=SecretKeyForTravis
         - DATABASE_URL="postgis://postgres@localhost:5432/travis_ci_test"
+before_install:
+    - docker build -t dbcawa/prs .
 install:
     - pip install --upgrade pip
     - pip install --upgrade setuptools
