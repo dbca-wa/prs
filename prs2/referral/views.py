@@ -1470,13 +1470,14 @@ class ReferralDelete(PrsObjectDelete):
             i.delete()
         ref.delete()
         messages.success(request, "{0} deleted.".format(self.model._meta.object_name))
+        # FIXME: don't call the Borg API at present (broken).
         # Call the Borg Collector publish API endpoint to create a manual job
         # to update the prs_locations layer.
-        resp = borgcollector_harvest(self.request)
-        logger.info(
-            "Borg Collector API response status was {}".format(resp.status_code)
-        )
-        logger.info("Borg Collector API response: {}".format(resp.content))
+        #resp = borgcollector_harvest(self.request)
+        #logger.info(
+        #    "Borg Collector API response status was {}".format(resp.status_code)
+        #)
+        #logger.info("Borg Collector API response: {}".format(resp.content))
         return redirect("site_home")
 
 
