@@ -6,9 +6,11 @@
 <link rel="stylesheet" type="text/css" href="//static.dbca.wa.gov.au/static/libs/bootstrap-datepicker/1.4.1/css/bootstrap-datepicker.min.css">
 <link rel="stylesheet" type="text/css" href="//static.dbca.wa.gov.au/static/libs/select2/4.0.0/css/select2.min.css">
 <link rel="stylesheet" type="text/css" href="//static.dbca.wa.gov.au/static/libs/select2-bootstrap-css/1.4.6/select2-bootstrap.min.css">
+ <!-- CSS hack to prevent DataTables from adding a horizontal scrollbar to object table -->
+
 <style>
+   
 .dataTables_wrapper {
-    <!-- CSS hack to prevent DataTables from adding a horizontal scrollbar to object table -->
     table-layout:fixed;
     width: 99% !important;
 }
@@ -319,7 +321,7 @@
 <script type="text/javascript" src="//static.dbca.wa.gov.au/static/libs/select2/4.0.0/js/select2.min.js"></script>
 <script type="text/javascript" src="//static.dbca.wa.gov.au/static/libs/moment.js/2.18.1/moment.min.js"></script>
 <script type="text/javascript">
-    const refListUrl = '{% url 'prs_object_list' model='referrals' %}';
+    const refListUrl = "{% url 'prs_object_list' model='referrals' %}";
     const spinner = new Spinner({scale: 3, top: '120px'});
 
     function startSpinner() {
@@ -338,11 +340,12 @@
             success: function (data) {
                 el.options.length = 0;
                 el.options.add(new Option('--------', ''));
-                for (var i in data.objects) {
-                    if ('username' in data.objects[i]) {  // API: user object type.
-                        el.options.add(new Option(data.objects[i].first_name + " " + data.objects[i].last_name, data.objects[i].id));
+                data = JSON.parse(JSON.stringify(data));
+                for (var i in data) {
+                    if ('username' in data[i]) {  // API: user object type.
+                        el.options.add(new Option(data[i].first_name + " " + data[i].last_name, data[i].id));
                     } else {
-                        el.options.add(new Option(data.objects[i].name, data.objects[i].id));
+                        el.options.add(new Option(data[i].name, data[i].id));
                     }
                 }
             }
@@ -351,7 +354,7 @@
     }
 
     function updateRegion() {
-        var url = "{% url 'api_dispatch_list' resource_name='region' api_name='v1' %}";
+        var url = "{% url 'referral_api:region-list' %}";
         var filters = {"limit": 0};
         var el = $("select#filter-region-referral").get(0);
         _updateSelectOptions(el, url, filters);
@@ -359,11 +362,12 @@
         _updateSelectOptions(el, url, filters);
         var el = $("select#filter-region-task").get(0);
         _updateSelectOptions(el, url, filters);
+        
     }
 
     function updateOrganisation() {
         var el = $("select#filter-organisation-referral").get(0);
-        var url = "{% url 'api_dispatch_list' resource_name='organisation' api_name='v1' %}";
+        var url = "{% url 'referral_api:organisation-list' %}";
         var filters = {"limit": 0};
         _updateSelectOptions(el, url, filters);
         var el = $("select#filter-organisation-clearance").get(0);
@@ -372,14 +376,14 @@
 
     function updateReferralType() {
         var el = $("select#filter-referralType").get(0);
-        var url = "{% url 'api_dispatch_list' resource_name='referraltype' api_name='v1' %}";
+        var url = "{% url 'referral_api:type-list' %}";
         var filters = {"limit": 0};
         _updateSelectOptions(el, url, filters);
     }
 
     function updateTaskState() {
         var el = $("select#filter-taskState-clearance").get(0);
-        var url = "{% url 'api_dispatch_list' resource_name='taskstate' api_name='v1' %}";
+        var url = "{% url 'referral_api:taskstate-list' %}";
         var filters = {"limit": 0};
         _updateSelectOptions(el, url, filters);
         var el = $("select#filter-taskState-task").get(0);
@@ -388,21 +392,21 @@
 
     function updateTaskType() {
         var el = $("select#filter-taskType").get(0);
-        var url = "{% url 'api_dispatch_list' resource_name='tasktype' api_name='v1' %}";
+        var url = "{% url 'referral_api:tasktype-list' %}";
         var filters = {"limit": 0};
         _updateSelectOptions(el, url, filters);
     }
 
     function updateAssignedUser() {
         var el = $("select#filter-assigned").get(0);
-        var url = "{% url 'api_dispatch_list' resource_name='user' api_name='v1' %}";
+        var url = "{% url 'referral_api:userprofile-list' %}";
         var filters = {"order_by": "username", "limit": 0};
         _updateSelectOptions(el, url, filters);
     }
 
     function updateTags() {
         var el = $("select#filter-referralTags").get(0);
-        var url = "{% url 'api_dispatch_list' resource_name='tag' api_name='v1' %}";
+        var url = "{% url 'referral_api:tag-list' %}";
         var filters = {"order_by": "name", "limit": 0};
         _updateSelectOptions(el, url, filters);
     }
@@ -507,6 +511,7 @@
         window.open("{% url 'reports_download' %}" + '?' + $.param(params), "_blank");
     }
 
+    
     // DataTables configuration.
     const configRefTable = {
         autoWidth: false,
@@ -524,15 +529,16 @@
             data.offset = settings._iDisplayStart;
             var params = $.extend({}, data, queryReferralFilters());
             $.get(
-                "{% url 'api_dispatch_list' api_name='v1' resource_name='referral' %}",
+                "{% url 'referral_api:referral-list' %}",
                 params,  // Query parameters for the API call.
                 function(resp) {
+
                     spinner.stop();
                     // Map the API response to the DataTables format and pass it to DataTables callback.
                     callback({
-                        recordsTotal: resp.meta.total_count,
-                        recordsFiltered: resp.meta.total_count,
-                        data: resp.objects
+                        data: JSON.parse(JSON.stringify(resp.results)),
+                        recordsTotal: JSON.parse(JSON.stringify(resp.count)),
+                        recordsFiltered: JSON.parse(JSON.stringify(resp.count))
                     });
                 }
             );
@@ -544,12 +550,7 @@
                     return "<a href='" + refListUrl + data + "/'>" + data +"</a>";
                 }
             },
-            {
-                "data": "regions",
-                "render": function(data, type, row, meta) {
-                    return data.map(function(obj) {return obj}).join(", ")
-                }
-            },
+            {"data": "regions_str"},
             {"data": "referring_org"},
             {"data": "type"},
             {"data": "reference"},
@@ -587,45 +588,40 @@
             data.offset = settings._iDisplayStart;
             var params = $.extend({}, data, queryClearanceFilters());
             $.get(
-                "{% url 'api_dispatch_list' api_name='v1' resource_name='clearance' %}",
+                "{% url 'referral_api:clearance-list' %}",
                 params,  // Query parameters for the API call.
                 function(resp) {
                     spinner.stop();
                     // Map the API response to the DataTables format and pass it to DataTables callback.
                     callback({
-                        recordsTotal: resp.meta.total_count,
-                        recordsFiltered: resp.meta.total_count,
-                        data: resp.objects
+                        recordsTotal: JSON.parse(JSON.stringify(resp.count)),
+                        recordsFiltered: JSON.parse(JSON.stringify(resp.count)),
+                        data: JSON.parse(JSON.stringify(resp.results))
                     });
                 }
             );
         },
         columns: [
             {
-                "data": "referral",
+                "data": "task.referral.id",
                 "render": function(data, type, row, meta) {
                     return "<a href='" + refListUrl + data + "/'>" + data +"</a>";
                 }
             },
+            {"data": "task.referral.regions_str"},
+            {"data": "condition.identifier"},
             {
-                "data": "regions",
-                "render": function(data, type, row, meta) {
-                    return data.map(function(obj) {return obj}).join(", ")
-                }
-            },
-            {"data": "identifier"},
-            {
-                "data": "condition",
+                "data": "condition.condition",
                 "render": function(data, type, row, meta) {
                     var c = "<div>{}</div>";
                     return c.replace("{}", data);
                 }
             },
-            {"data": "category"},
-            {"data": "description"},
+            {"data": "condition.category"},
+            {"data": "task.description"},
             {"data": "deposited_plan"},
-            {"data": "assigned_user"},
-            {"data": "state"}
+            {"data": "task.assigned_user"},
+            {"data": "task.state"}
         ],
     }
 
@@ -645,33 +641,28 @@
             data.offset = settings._iDisplayStart;
             var params = $.extend({}, data, queryTaskFilters());
             $.get(
-                "{% url 'api_dispatch_list' api_name='v1' resource_name='task' %}",
+                "{% url 'referral_api:task-list' %}",
                 params,  // Query parameters for the API call.
                 function(resp) {
                     spinner.stop();
                     // Map the API response to the DataTables format and pass it to DataTables callback.
                     callback({
-                        recordsTotal: resp.meta.total_count,
-                        recordsFiltered: resp.meta.total_count,
-                        data: resp.objects
+                        recordsTotal: JSON.parse(JSON.stringify(resp.count)),
+                        recordsFiltered: JSON.parse(JSON.stringify(resp.count)),
+                        data: JSON.parse(JSON.stringify(resp.results))
                     });
                 }
             );
         },
         columns: [
             {
-                "data": "referral",
+                "data": "referral.id",
                 "render": function(data, type, row, meta) {
                     return "<a href='" + refListUrl + data + "/'>" + data +"</a>";
                 }
             },
-            {"data": "reference"},
-            {
-                "data": "regions",
-                "render": function(data, type, row, meta) {
-                    return data.map(function(obj) {return obj}).join(", ")
-                }
-            },
+            {"data": "referral.reference"},
+            {"data": "referral.regions_str"},
             {"data": "assigned_user"},
             {"data": "type"},
             {"data": "description"},
