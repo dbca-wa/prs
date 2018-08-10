@@ -67,6 +67,7 @@ class PrsTestCase(TestCase):
         mixer.cycle(2).blend(ReferralType, initial_task=mixer.SELECT)
         mixer.cycle(2).blend(NoteType)
         mixer.cycle(2).blend(Agency)
+        mixer.cycle(2).blend(Tag)
 
         if not Referral.objects.exists():
             # Create some referral data

@@ -43,6 +43,7 @@ INSTALLED_APPS = (
     'referral',
     'reports',
     'harvester',
+    'rest_framework',
 )
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
