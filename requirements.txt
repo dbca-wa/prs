@@ -16,7 +16,7 @@ django-storages==1.6.6
 django-bootstrap-pagination==1.6.4
 Unidecode==1.0.22
 Pillow==5.2.0
-coverage==4.0.3
+coverage==4.5.1
 mixer==6.0.1
 django-webtest==1.9.3
 python-magic==0.4.15
@@ -28,3 +28,4 @@ shapely==1.6.4
 raven==6.9.0
 djangorestframework==3.8.2
 dateparser==0.7.0
+olefile==0.45.1
