@@ -1,5 +1,6 @@
 from copy import copy
 from datetime import date
+import dateparser
 import json
 import os
 from django.conf import settings
@@ -19,7 +20,7 @@ from taggit.managers import TaggableManager
 from unidecode import unidecode
 
 from referral.base import Audit, ActiveModel
-from referral.utils import smart_truncate, dewordify_text, as_row_subtract_referral_cell
+from referral.utils import smart_truncate, dewordify_text, as_row_subtract_referral_cell, Message
 
 
 # Australian state choices, for addresses.
@@ -1049,6 +1050,17 @@ class Record(ReferralBaseModel):
         if self.description:
             self.description = unidecode(self.description)
         super(Record, self).save(force_insert, force_update)
+        """If the file is a .MSG we take the date sent of the email and 
+        place is in as the order_date. This was a request feature.
+        """
+        if self.extension == 'MSG':
+            f = os.path.realpath(self.uploaded_file.path)
+            msg = Message(f)
+            date_sent = msg.date
+            date = dateparser.parse(date_sent)
+            if self.order_date != date:    
+                self.order_date = date
+                self.save()
 
     @property
     def filename(self):
