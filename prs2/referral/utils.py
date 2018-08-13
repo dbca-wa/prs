@@ -17,8 +17,6 @@ import re
 from unidecode import unidecode
 import os
 import sys
-import glob
-import traceback
 from email.parser import Parser as EmailParser
 import email.utils
 import olefile as OleFile
@@ -347,33 +345,7 @@ ExtractMsg:
 https://github.com/mattgwwalker/msg-extractor
 """
 
-# __author__ = "Matthew Walker"
-# __date__ = "2016-10-09"
-# __version__ = '0.3'
-
-# --- LICENSE -----------------------------------------------------------------
-#
-#    Copyright 2013 Matthew Walker
-#
-#    This program is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 3 of the License, or
-#    (at your option) any later version.
-#
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
-#
-#    You should have received a copy of the GNU General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-
-
-# This property information was sourced from
-# http://www.fileformat.info/format/outlookmsg/index.htm
-# on 2013-07-22.
-properties = {
+MSG_PROPERTIES = {
     '001A': 'Message class',
     '0037': 'Subject',
     '003D': 'Subject prefix',
@@ -727,7 +699,7 @@ class Message(OleFile.OleFileIO):
                 raise Exception(
                     "Failed to create directory '%s'. Does it already exist?" %
                     dirName
-                    )
+                )
 
         oldDir = os.getcwd()
         try:
@@ -791,9 +763,8 @@ class Message(OleFile.OleFileIO):
             for dir_ in self.listdir():
                 sysdir = "/".join(dir_)
                 code = dir_[-1][-8:-4]
-                global properties
-                if code in properties:
-                    sysdir = sysdir + " - " + properties[code]
+                if code in MSG_PROPERTIES:
+                    sysdir = sysdir + " - " + MSG_PROPERTIES[code]
                 os.makedirs(sysdir)
                 os.chdir(sysdir)
 
@@ -833,46 +804,3 @@ class Message(OleFile.OleFileIO):
         """
         for attachment in self.attachments:
             attachment.save()
-
-
-if __name__ == "__main__":
-    if len(sys.argv) <= 1:
-        print(__doc__)
-        print("""
-Launched from command line, this script parses Microsoft Outlook Message files
-and save their contents to the current directory.  On error the script will
-write out a 'raw' directory will all the details from the file, but in a
-less-than-desirable format. To force this mode, the flag '--raw'
-can be specified.
-Usage:  <file> [file2 ...]
-or:  --raw <file>
-or:  --json
-to name the directory as the .msg file, --use-file-name
-""")
-        sys.exit()
-
-    writeRaw = False
-    toJson = False
-    useFileName = False
-
-    for rawFilename in sys.argv[1:]:
-        if rawFilename == '--raw':
-            writeRaw = True
-
-        if rawFilename == '--json':
-            toJson = True
-
-        if rawFilename == '--use-file-name':
-            useFileName = True
-
-        for filename in glob.glob(rawFilename):
-            msg = Message(filename)
-            try:
-                if writeRaw:
-                    msg.saveRaw()
-                else:
-                    msg.save(toJson, useFileName)
-            except Exception:
-                # msg.debug()
-                print("Error with file '" + filename + "': " +
-traceback.format_exc())
