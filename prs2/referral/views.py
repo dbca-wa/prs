@@ -8,7 +8,7 @@ from django.contrib.gis.geos import GEOSGeometry, MultiPolygon
 from django.core.mail import EmailMultiAlternatives
 from django.core.serializers import serialize
 from django.urls import reverse
-from django.db.models import Q
+from django.db.models import Q, F
 from django.http import (
     HttpResponse,
     HttpResponseRedirect,
@@ -51,7 +51,7 @@ from referral.utils import (
     user_referral_history,
     prs_user,
     is_prs_power_user,
-    borgcollector_harvest,
+    #borgcollector_harvest,
 )
 from referral.forms import (
     ReferralCreateForm,
@@ -354,6 +354,8 @@ class ReferralDetail(PrsObjectDetail):
                     m.objects.current().filter(referral=ref).count()
                 )
                 obj_qs = m.objects.current().filter(referral=ref)
+                if m is Record:  # Sort records newest > oldest (nulls last).
+                    obj_qs = obj_qs.order_by(F("order_date").desc(nulls_last=True))
                 headers = copy(m.headers)
                 headers.remove("Referral ID")
                 headers.append("Actions")

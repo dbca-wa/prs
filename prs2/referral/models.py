@@ -338,8 +338,7 @@ class ReferralBaseModel(ActiveModel, Audit):
 
 class Referral(ReferralBaseModel):
     """
-    Inherits from the abstract model class ReferralBaseModel.
-    A planning referral which has been sent to DPaW for comment.
+    A planning referral which has been sent to the department for comment.
     """
     type = models.ForeignKey(
         ReferralType,
@@ -618,7 +617,6 @@ class RelatedReferral(models.Model):
 
 class Task(ReferralBaseModel):
     """
-    Inherits from the abstract model class ReferralBaseModel.
     Tasks that must be completed by users. Added against individual Referrals.
     This is how we record and manage our workflow.
     """
@@ -1006,8 +1004,7 @@ class Task(ReferralBaseModel):
 
 
 class Record(ReferralBaseModel):
-    """Inherits from the abstract model class ReferralBaseModel.
-    A record is a reference to an electronic file, and is associated with a
+    """A record is a reference to an electronic file, and is associated with a
     Referral.
     """
     name = models.CharField(
@@ -1197,7 +1194,6 @@ class Record(ReferralBaseModel):
 
 class Note(ReferralBaseModel):
     """
-    Inherits from the abstract model class ReferralBaseModel.
     A note or comment about a referral. These notes are meant to supplement
     formal record-keeping procedures only. HTML-formatted text is allowed.
     """
@@ -1662,7 +1658,7 @@ class Clearance(models.Model):
 
 class Location(ReferralBaseModel):
     """
-    Inherits from the abstract model class ReferralBaseModel.
+    A physical location that is associated with a single referral.
     """
     address_no = models.IntegerField(
         null=True, blank=True, verbose_name="address number"
@@ -1826,7 +1822,6 @@ class Location(ReferralBaseModel):
 
 class Bookmark(ReferralBaseModel):
     """
-    Inherits from the abstract model class ReferralBaseModel.
     Users are able to bookmark referrals for faster access.
     """
     referral = models.ForeignKey(Referral, on_delete=models.PROTECT)

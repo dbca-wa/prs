@@ -3,6 +3,7 @@ from django.contrib import messages
 from django.contrib.admin import site
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.serializers import serialize
+from django.db.models import F
 from django.urls import reverse
 from django.http import (
     HttpResponse,
@@ -33,7 +34,7 @@ from referral.utils import (
     breadcrumbs_li,
     get_query,
     prs_user,
-    borgcollector_harvest,
+    #borgcollector_harvest,
 )
 
 logger = logging.getLogger("prs")
@@ -239,7 +240,7 @@ class PrsObjectDetail(LoginRequiredMixin, DetailView):
         # Additional context for specific model types.
         if self.model == Task:
             if obj.records.current():  # Related records.
-                context["related_records"] = obj.records.current()
+                context["related_records"] = obj.records.current().order_by(F("order_date").desc(nulls_last=True))
             if obj.notes.current():  # Related records.
                 context["related_notes"] = obj.notes.current()
             context["task_stopped"] = True if obj.state.name == "Stopped" else False
@@ -267,7 +268,7 @@ class PrsObjectDetail(LoginRequiredMixin, DetailView):
             if Task.objects.current().filter(notes=obj):  # Related tasks.
                 context["related_tasks"] = Task.objects.current().filter(notes=obj)
             if obj.records.exists():  # Related records.
-                context["related_records"] = obj.records.current()
+                context["related_records"] = obj.records.current().order_by(F("order_date").desc(nulls_last=True))
         if self.model == Location:
             # Add child locations serialised as GeoJSON (if geometry exists).
             if obj:

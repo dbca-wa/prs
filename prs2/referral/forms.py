@@ -39,13 +39,14 @@ class RecordChoiceField(forms.ModelMultipleChoiceField):
         super(RecordChoiceField, self).__init__(*args, **kwargs)
 
     def label_from_instance(self, obj):
-        if obj.infobase_id:
+        if obj.order_date:
+            label = '{0} ({1})'.format(obj.name, obj.order_date.strftime('%d/%m/%Y'))
+        elif obj.infobase_id:
             label = '{0} ({1})'.format(obj.name, obj.infobase_id)
         elif obj.uploaded_file:
             label = '{0} ({1}, {2})'.format(obj.name, obj.extension, obj.filesize_str)
         else:
-            label = '{0}'.format(obj.name)
-
+            label = str(obj)
         return label
 
 
