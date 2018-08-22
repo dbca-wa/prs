@@ -7,7 +7,7 @@ gunicorn==19.9.0
 jinja2==2.10
 whitenoise==3.3.1
 django-crispy-forms==1.7.2
-webtemplate-dbca==0.5.0
+webtemplate-dbca==0.6.0
 django-reversion==3.0.0
 django-tastypie==0.14.1
 django-taggit==0.23.0
