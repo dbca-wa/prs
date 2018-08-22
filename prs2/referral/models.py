@@ -1047,17 +1047,15 @@ class Record(ReferralBaseModel):
         if self.description:
             self.description = unidecode(self.description)
         super(Record, self).save(force_insert, force_update)
-        """If the file is a .MSG we take the date sent of the email and
-        place is in as the order_date. This was a request feature.
-        """
-        if self.extension == 'MSG':
-            f = os.path.realpath(self.uploaded_file.path)
-            msg = Message(f)
-            date_sent = msg.date
-            date = dateparser.parse(date_sent)
-            if self.order_date != date:
-                self.order_date = date
-                self.save()
+
+        # If the file is a .MSG we take the sent date of the email and use it for order_date.
+        if self.extension == "MSG":
+            msg = Message(os.path.realpath(self.uploaded_file.path))
+            if msg.date:
+                date = dateparser.parse(msg.date)
+                if date and self.order_date != date:
+                    self.order_date = date
+                    self.save()
 
     @property
     def filename(self):
