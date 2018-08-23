@@ -1,15 +1,17 @@
 from __future__ import unicode_literals
 from datetime import date, timedelta
+from django.conf import settings
 from django.db.models.base import ModelBase
 from django.db.models.query import QuerySet
 from django.test import RequestFactory
 from django.utils import six
-from referral.models import Referral, Task
+from pathlib import Path
+from referral.models import Referral, Task, Record
 from referral.test_models import PrsTestCase
 from referral.utils import (
     is_model_or_string, smart_truncate, breadcrumbs_li,
     update_revision_history, filter_queryset, user_task_history,
-    dewordify_text, overdue_task_email)
+    dewordify_text, overdue_task_email, Message)
 
 
 WORD_HTML_SAMPLE = '''<div class=Section1>
@@ -153,3 +155,20 @@ class UtilsTest(PrsTestCase):
             state.is_ongoing = True
             state.save()
         self.assertTrue(overdue_task_email())
+
+    def test_message_import(self):
+        """Test Outlook MSG file import & date parsing
+        """
+        path = Path(settings.BASE_DIR, 'prs2', 'referral', 'fixtures', 'test_email.msg')
+        msg = Message(path)
+        self.assertTrue(msg.date)
+        record = Record.objects.all()[0]
+        # Record order_date is empty.
+        self.assertFalse(record.order_date)
+        tmp_f = open(settings.MEDIA_ROOT + '/test.msg', 'wb')
+        tmp_f.write(open(path, 'rb').read())
+        tmp_f.close()
+        record.uploaded_file = tmp_f.name
+        record.save()
+        # Record order_date is no longer empty.
+        self.assertTrue(record.order_date)
