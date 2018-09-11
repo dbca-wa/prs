@@ -33,8 +33,8 @@ class PrsAPI2Test(PrsTestCase):
             self.client.login(username='normaluser', password='pass')
             response = self.client.get(url)
             res_list = response.json()
-            if res_list[0]:  # Object(s) exist.
-                obj_id = res_list[0]['id']
+            if res_list['results'][0]:  # Object(s) exist.
+                obj_id = res_list['results'][0]['id']
                 url = reverse('referral_api:' + i + '-detail', args=[obj_id])
             response = self.client.get(url)
             self.assertEqual(response.status_code, 200)

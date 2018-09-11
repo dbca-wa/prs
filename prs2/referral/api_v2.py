@@ -1,19 +1,18 @@
-from django.contrib.auth import get_user_model
 from datetime import datetime
+from django.conf import settings
+from django.contrib.auth.models import User, Group
 from rest_framework import viewsets, permissions
-from .serializer import *
-from taggit.managers import TaggableManager
 from taggit.models import Tag
 from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.filters import OrderingFilter
 
 from referral.models import (
     DopTrigger, Region, OrganisationType, Organisation, TaskState, TaskType,
     ReferralType, NoteType, Agency, Referral, Task, Record, Note, Condition,
     ConditionCategory, Clearance, Location, UserProfile, ModelCondition)
+from referral import serializer
 
-"""
-Pagination class
-"""
+
 class StandardResultsSetPagination(LimitOffsetPagination):
     page_size = 25
     page_size_query_param = 'limit'
@@ -21,58 +20,69 @@ class StandardResultsSetPagination(LimitOffsetPagination):
 
 
 """
-Viewsets for models, all readonly. 
+Viewsets for models, all readonly.
 """
+
 
 class DopTriggerView(viewsets.ReadOnlyModelViewSet):
     permission_classes = (permissions.IsAuthenticated,)
     queryset = DopTrigger.objects.current().filter(public=True)
-    serializer_class = DopTriggerSerializer
+    serializer_class = serializer.DopTriggerSerializer
+
 
 class RegionView(viewsets.ReadOnlyModelViewSet):
     permission_classes = (permissions.IsAuthenticated,)
     queryset = Region.objects.current().filter(public=True)
-    serializer_class = RegionSerializer
+    serializer_class = serializer.RegionSerializer
+
 
 class OrganisationTypeView(viewsets.ReadOnlyModelViewSet):
     permission_classes = (permissions.IsAuthenticated,)
     queryset = OrganisationType.objects.current().filter(public=True)
-    serializer_class = OrganisationTypeSerializer
+    serializer_class = serializer.OrganisationTypeSerializer
+
 
 class OrganisationView(viewsets.ReadOnlyModelViewSet):
     permission_classes = (permissions.IsAuthenticated,)
     queryset = Organisation.objects.current().filter(public=True)
-    serializer_class = OrganisationSerializer
+    serializer_class = serializer.OrganisationSerializer
+
 
 class TaskStateView(viewsets.ReadOnlyModelViewSet):
     permission_classes = (permissions.IsAuthenticated,)
     queryset = TaskState.objects.current().filter(public=True)
-    serializer_class = TaskStateSerializer
+    serializer_class = serializer.TaskStateSerializer
+
 
 class TaskTypeView(viewsets.ReadOnlyModelViewSet):
     permission_classes = (permissions.IsAuthenticated,)
     queryset = TaskType.objects.current()
-    serializer_class = TaskTypeSerializer
+    serializer_class = serializer.TaskTypeSerializer
+
 
 class ReferralTypeView(viewsets.ReadOnlyModelViewSet):
     permission_classes = (permissions.IsAuthenticated,)
     queryset = ReferralType.objects.current().filter(public=True)
-    serializer_class = ReferralTypeSerializer
+    serializer_class = serializer.ReferralTypeSerializer
+
 
 class NoteTypeView(viewsets.ReadOnlyModelViewSet):
     permission_classes = (permissions.IsAuthenticated,)
     queryset = NoteType.objects.current().filter(public=True)
-    serializer_class = NoteTypeSerializer
+    serializer_class = serializer.NoteTypeSerializer
+
 
 class AgencyView(viewsets.ReadOnlyModelViewSet):
     permission_classes = (permissions.IsAuthenticated,)
     queryset = Agency.objects.current().filter(public=True)
-    serializer_class = AgencySerializer
+    serializer_class = serializer.AgencySerializer
+
 
 class ReferralView(viewsets.ReadOnlyModelViewSet):
     permission_classes = (permissions.IsAuthenticated,)
-    serializer_class = ReferralSerializer
+    serializer_class = serializer.ReferralSerializer
     pagination_class = StandardResultsSetPagination
+
     def get_queryset(self):
         queryset = Referral.objects.all()
         dop_trigger = self.request.query_params.get('dop_trigger', None)
@@ -82,8 +92,6 @@ class ReferralView(viewsets.ReadOnlyModelViewSet):
         referral_date_gte = self.request.query_params.get('referral_date__gte', None)
         referral_date_lte = self.request.query_params.get('referral_date__lte', None)
         tags = self.request.query_params.get('tags__id__in', None)
-        start = self.request.query_params.get('start', None)
-        length = self.request.query_params.get('length',None)
         if dop_trigger is not None:
             queryset = queryset.filter(dop_trigger=dop_trigger)
         if region is not None:
@@ -104,10 +112,12 @@ class ReferralView(viewsets.ReadOnlyModelViewSet):
         queryset = self.get_serializer_class().setup_eager_loading(queryset)
         return queryset
 
+
 class TaskView(viewsets.ReadOnlyModelViewSet):
     permission_classes = (permissions.IsAuthenticated,)
-    serializer_class = TaskSerializer
+    serializer_class = serializer.TaskSerializer
     pagination_class = StandardResultsSetPagination
+
     def get_queryset(self):
         queryset = Task.objects.current()
         region = self.request.query_params.get('referral__regions__id__in', None)
@@ -116,8 +126,6 @@ class TaskView(viewsets.ReadOnlyModelViewSet):
         state = self.request.query_params.get('state__id', None)
         start_date_gte = self.request.query_params.get('start_date__gte', None)
         start_date_lte = self.request.query_params.get('start_date__lte', None)
-        start = self.request.query_params.get('start', None)
-        length = self.request.query_params.get('length',None)
         if region is not None:
             queryset = queryset.filter(referral__regions__id__in=region)
         if user is not None:
@@ -135,36 +143,42 @@ class TaskView(viewsets.ReadOnlyModelViewSet):
         queryset = self.get_serializer_class().setup_eager_loading(queryset)
         return queryset
 
+
 class RecordView(viewsets.ReadOnlyModelViewSet):
     permission_classes = (permissions.IsAuthenticated,)
     queryset = Record.objects.current()
-    serializer_class = RecordSerializer
+    serializer_class = serializer.RecordSerializer
+
 
 class NoteView(viewsets.ReadOnlyModelViewSet):
     permission_classes = (permissions.IsAuthenticated,)
     queryset = Note.objects.current()
-    serializer_class = NoteSerializer
+    serializer_class = serializer.NoteSerializer
+
 
 class ConditionCategoryView(viewsets.ReadOnlyModelViewSet):
     permission_classes = (permissions.IsAuthenticated,)
     queryset = ConditionCategory.objects.current().filter(public=True)
-    serializer_class = ConditionCategorySerializer
+    serializer_class = serializer.ConditionCategorySerializer
+
 
 class ModelConditionView(viewsets.ReadOnlyModelViewSet):
     permission_classes = (permissions.IsAuthenticated,)
     queryset = ModelCondition.objects.current()
-    serializer_class = ModelConditionSerializer
+    serializer_class = serializer.ModelConditionSerializer
+
 
 class ConditionView(viewsets.ReadOnlyModelViewSet):
     permission_classes = (permissions.IsAuthenticated,)
     queryset = Condition.objects.current()
-    serializer_class = ConditionSerializer
-    
+    serializer_class = serializer.ConditionSerializer
+
 
 class ClearanceView(viewsets.ReadOnlyModelViewSet):
     permission_classes = (permissions.IsAuthenticated,)
-    serializer_class = ClearanceSerializer
+    serializer_class = serializer.ClearanceSerializer
     pagination_class = StandardResultsSetPagination
+
     def get_queryset(self):
         queryset = Clearance.objects.all()
         region = self.request.query_params.get('task__referral__regions__id__in', None)
@@ -172,8 +186,6 @@ class ClearanceView(viewsets.ReadOnlyModelViewSet):
         status = self.request.query_params.get('task__state__id', None)
         start_date_gte = self.request.query_params.get('task__start_date__gte', None)
         start_date_lte = self.request.query_params.get('task__start_date__lte', None)
-        start = self.request.query_params.get('start', None)
-        length = self.request.query_params.get('length',None)
         if region is not None:
             queryset = queryset.filter(task__referral__regions__id__in=region)
         if referring_org is not None:
@@ -189,22 +201,27 @@ class ClearanceView(viewsets.ReadOnlyModelViewSet):
         queryset = self.get_serializer_class().setup_eager_loading(queryset)
         return queryset
 
+
 class LocationView(viewsets.ReadOnlyModelViewSet):
     permission_classes = (permissions.IsAuthenticated,)
     queryset = Location.objects.current()
-    serializer_class = LocationSerializer
+    serializer_class = serializer.LocationSerializer
+
 
 class UserProfileView(viewsets.ReadOnlyModelViewSet):
     permission_classes = (permissions.IsAuthenticated,)
     queryset = UserProfile.objects.all()
-    serializer_class = UserProfileSerializer
+    serializer_class = serializer.UserProfileSerializer
+
 
 class GroupView(viewsets.ReadOnlyModelViewSet):
     permission_classes = (permissions.IsAuthenticated,)
     queryset = Group.objects.all()
-    serializer_class = GroupSerializer
+    serializer_class = serializer.GroupSerializer
+
 
 class UserView(viewsets.ReadOnlyModelViewSet):
+    filter_backends = (OrderingFilter,)
     permission_classes = (permissions.IsAuthenticated,)
     try:
         # Queryset should only return active users in the "PRS user" group.
@@ -212,9 +229,11 @@ class UserView(viewsets.ReadOnlyModelViewSet):
         queryset = User.objects.filter(groups__in=[prs_user], is_active=True)
     except:
         queryset = User.objects.all()
-    serializer_class = UserSerializer
+    serializer_class = serializer.UserSerializer
+
 
 class TagView(viewsets.ReadOnlyModelViewSet):
+    filter_backends = (OrderingFilter,)
     permission_classes = (permissions.IsAuthenticated,)
     queryset = Tag.objects.all()
-    serializer_class = TagSerializer
+    serializer_class = serializer.TagSerializer
