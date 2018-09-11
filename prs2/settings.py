@@ -40,10 +40,10 @@ INSTALLED_APPS = (
     'bootstrap_pagination',
     'tastypie',
     'webtemplate_dbca',
+    'rest_framework',
     'referral',
     'reports',
     'harvester',
-    'rest_framework',
 )
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -219,7 +219,12 @@ TASTYPIE_DEFAULT_FORMATS = ['json']
 # crispy_forms settings
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
-
 # Sentry configuration
 if env('RAVEN_DSN', False):
     RAVEN_CONFIG = {'dsn': env('RAVEN_DSN')}
+
+# django-rest-framework configuration
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 100
+}

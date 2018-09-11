@@ -341,11 +341,11 @@
                 el.options.length = 0;
                 el.options.add(new Option('--------', ''));
                 data = JSON.parse(JSON.stringify(data));
-                for (var i in data) {
-                    if ('username' in data[i]) {  // API: user object type.
-                        el.options.add(new Option(data[i].first_name + " " + data[i].last_name, data[i].id));
+                for (var i in data.results) {
+                    if ('username' in data.results[i]) {  // API: user object type.
+                        el.options.add(new Option(data.results[i].first_name + " " + data.results[i].last_name, data.results[i].id));
                     } else {
-                        el.options.add(new Option(data[i].name, data[i].id));
+                        el.options.add(new Option(data.results[i].name, data.results[i].id));
                     }
                 }
             }
@@ -355,7 +355,7 @@
 
     function updateRegion() {
         var url = "{% url 'referral_api:region-list' %}";
-        var filters = {"limit": 0};
+        var filters = {"format": "json"};
         var el = $("select#filter-region-referral").get(0);
         _updateSelectOptions(el, url, filters);
         var el = $("select#filter-region-clearance").get(0);
@@ -368,7 +368,7 @@
     function updateOrganisation() {
         var el = $("select#filter-organisation-referral").get(0);
         var url = "{% url 'referral_api:organisation-list' %}";
-        var filters = {"limit": 0};
+        var filters = {"format": "json"};
         _updateSelectOptions(el, url, filters);
         var el = $("select#filter-organisation-clearance").get(0);
         _updateSelectOptions(el, url, filters);
@@ -377,14 +377,14 @@
     function updateReferralType() {
         var el = $("select#filter-referralType").get(0);
         var url = "{% url 'referral_api:type-list' %}";
-        var filters = {"limit": 0};
+        var filters = {"format": "json"};
         _updateSelectOptions(el, url, filters);
     }
 
     function updateTaskState() {
         var el = $("select#filter-taskState-clearance").get(0);
         var url = "{% url 'referral_api:taskstate-list' %}";
-        var filters = {"limit": 0};
+        var filters = {"format": "json"};
         _updateSelectOptions(el, url, filters);
         var el = $("select#filter-taskState-task").get(0);
         _updateSelectOptions(el, url, filters);
@@ -393,21 +393,21 @@
     function updateTaskType() {
         var el = $("select#filter-taskType").get(0);
         var url = "{% url 'referral_api:tasktype-list' %}";
-        var filters = {"limit": 0};
+        var filters = {"format": "json"};
         _updateSelectOptions(el, url, filters);
     }
 
     function updateAssignedUser() {
         var el = $("select#filter-assigned").get(0);
-        var url = "{% url 'referral_api:userprofile-list' %}";
-        var filters = {"order_by": "username", "limit": 0};
+        var url = "{% url 'referral_api:user-list' %}";
+        var filters = {"format": "json", "ordering": "username"};
         _updateSelectOptions(el, url, filters);
     }
 
     function updateTags() {
         var el = $("select#filter-referralTags").get(0);
         var url = "{% url 'referral_api:tag-list' %}";
-        var filters = {"order_by": "name", "limit": 0};
+        var filters = {"format": "json", "ordering": "name"};
         _updateSelectOptions(el, url, filters);
     }
 

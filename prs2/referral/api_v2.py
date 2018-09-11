@@ -4,6 +4,7 @@ from django.contrib.auth.models import User, Group
 from rest_framework import viewsets, permissions
 from taggit.models import Tag
 from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.filters import OrderingFilter
 
 from referral.models import (
     DopTrigger, Region, OrganisationType, Organisation, TaskState, TaskType,
@@ -220,6 +221,7 @@ class GroupView(viewsets.ReadOnlyModelViewSet):
 
 
 class UserView(viewsets.ReadOnlyModelViewSet):
+    filter_backends = (OrderingFilter,)
     permission_classes = (permissions.IsAuthenticated,)
     try:
         # Queryset should only return active users in the "PRS user" group.
@@ -231,6 +233,7 @@ class UserView(viewsets.ReadOnlyModelViewSet):
 
 
 class TagView(viewsets.ReadOnlyModelViewSet):
+    filter_backends = (OrderingFilter,)
     permission_classes = (permissions.IsAuthenticated,)
     queryset = Tag.objects.all()
     serializer_class = serializer.TagSerializer
