@@ -91,9 +91,10 @@ def harvest_email(uid, message):
         try:
             # Check the 'To' address against the whitelist of mailboxes.
             to_e = email.utils.parseaddr(message.get('To'))[1]
-            if not to_e.lower() in settings.ASSESSOR_EMAILS:
-                LOGGER.info('Email UID {} to {} harvest was skipped'.format(uid, to_e))
-                return None  # Not in the whitelist; skip.
+            # FIXME: skip the "To" whitelist check at present.
+            #if not to_e.lower() in settings.ASSESSOR_EMAILS:
+            #    LOGGER.info('Email UID {} to {} harvest was skipped'.format(uid, to_e))
+            #    return None  # Not in the whitelist; skip.
             from_e = email.utils.parseaddr(message.get('From'))[1]
             # Parse the 'sent' date & time (assume WST).
             wa_tz = timezone('Australia/Perth')
