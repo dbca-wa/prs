@@ -6,6 +6,7 @@ django-extensions==2.1.0
 gunicorn==19.9.0
 jinja2==2.10
 whitenoise==3.3.1
+dj-static==0.0.6
 django-crispy-forms==1.7.2
 webtemplate-dbca==0.6.0
 django-reversion==3.0.0
@@ -22,7 +23,7 @@ django-webtest==1.9.3
 python-magic==0.4.15
 lxml==4.2.4
 django-downloadview==1.9
-openpyxl==2.5.5
+openpyxl==2.5.8
 xmltodict==0.11.0
 shapely==1.6.4
 raven==6.9.0
