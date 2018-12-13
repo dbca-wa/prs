@@ -1,6 +1,6 @@
-from __future__ import absolute_import
 import base64
-from confy import env
+#from confy import env
+from dbca_utils.utils import env
 from datetime import date, datetime
 from django.conf import settings
 from django.core.files.base import ContentFile

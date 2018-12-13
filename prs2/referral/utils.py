@@ -1,6 +1,5 @@
-from __future__ import absolute_import, unicode_literals
-from confy import env
 from datetime import datetime, date
+from dbca_utils.utils import env
 from django.apps import apps
 from django.conf import settings
 from django.contrib import admin
@@ -10,10 +9,10 @@ from django.db.models.base import ModelBase
 from django.utils.encoding import smart_text
 from django.utils.safestring import mark_safe
 from django.utils import six
-from dpaw_utils.requests.api import post as post_sso
 import json
 from reversion.models import Version
 import re
+import requests
 from unidecode import unidecode
 import os
 import sys
@@ -278,7 +277,7 @@ def borgcollector_harvest(request, publishes=["prs_locations"]):
     """
     api_url = env("BORGCOLLECTOR_API", "https://borg.dpaw.wa.gov.au/api/") + "jobs/"
     # Send a POST request to the API endpoint.
-    r = post_sso(
+    r = requests.post(
         user_request=request, url=api_url, data=json.dumps({"publishes": publishes})
     )
     return r

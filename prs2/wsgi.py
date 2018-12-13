@@ -2,7 +2,7 @@
 WSGI config for prs2 project.
 It exposes the WSGI callable as a module-level variable named ``application``.
 """
-import confy
+import dotenv
 from django.core.wsgi import get_wsgi_application
 import os
 from pathlib import Path
@@ -11,7 +11,7 @@ from pathlib import Path
 d = Path(__file__).resolve().parents[1]
 dot_env = os.path.join(str(d), '.env')
 if os.path.exists(dot_env):
-    confy.read_environment_file(dot_env)  # Thus must precede dj_static import.
+    dotenv.read_dotenv(dot_env)
 
 
 from dj_static import Cling, MediaCling
