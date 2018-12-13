@@ -68,6 +68,19 @@ var prsLocations = L.tileLayer.wms(
         version: '1.1.1'
     }
 );
+var dbcaLands = L.tileLayer.wms(
+    geoserver_wms_url,
+    {
+        crs: L.CRS.EPSG4326,
+        layers: 'cddp:legislated_lands_and_waters',
+        opacity: 0.75,
+        tileSize: 1024,
+        format: 'image/png',
+        tiled: true,
+        transparent: true,
+        version: '1.1.1'
+    }
+);
 
 // Define map.
 var map = L.map('map', {
@@ -89,6 +102,7 @@ var overlayMaps = {
     "Cadastre": cadastre,
     "SLIP roads": slipRoads,
     "PRS locations": prsLocations,
+    "DBCA tenure": dbcaLands,
 };
 
 // Define layer control.
