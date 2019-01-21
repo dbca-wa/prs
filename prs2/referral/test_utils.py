@@ -4,13 +4,14 @@ from django.db.models.base import ModelBase
 from django.db.models.query import QuerySet
 from django.test import RequestFactory
 from django.utils import six
+from extract_msg import Message
 from pathlib import Path
 from referral.models import Referral, Task, Record
 from referral.test_models import PrsTestCase
 from referral.utils import (
     is_model_or_string, smart_truncate, breadcrumbs_li,
     update_revision_history, filter_queryset, user_task_history,
-    dewordify_text, overdue_task_email, Message)
+    dewordify_text, overdue_task_email)
 
 
 WORD_HTML_SAMPLE = '''<div class=Section1>

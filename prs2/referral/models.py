@@ -1,6 +1,6 @@
 from copy import copy
 from datetime import date
-import dateparser
+from dateutil.parser import parse
 import json
 import os
 from django.conf import settings
@@ -13,6 +13,7 @@ from django.core.validators import MaxLengthValidator
 from django.db.models import Q
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.safestring import mark_safe
+from extract_msg import Message
 from jinja2 import Template
 from lxml.html import clean, fromstring
 from model_utils import Choices
@@ -20,7 +21,7 @@ from taggit.managers import TaggableManager
 from unidecode import unidecode
 
 from referral.base import Audit, ActiveModel
-from referral.utils import smart_truncate, dewordify_text, as_row_subtract_referral_cell, Message
+from referral.utils import smart_truncate, dewordify_text, as_row_subtract_referral_cell
 
 
 # Australian state choices, for addresses.
@@ -1052,7 +1053,7 @@ class Record(ReferralBaseModel):
         if self.extension == "MSG":
             msg = Message(os.path.realpath(self.uploaded_file.path))
             if msg.date:
-                date = dateparser.parse(msg.date)
+                date = parse(msg.date.replace('GMT ', ''))
                 if date and self.order_date != date:
                     self.order_date = date
                     self.save()
