@@ -204,11 +204,9 @@ Dropzone.options.idReferralDropzone = {
     timeout: 600000,  // 10 minutes is ms.
     maxFilesize: 2048,  // 2 GB file size limit.
     init: function() {
-        /*
         this.on("uploadprogress", function(file, progress) {
             console.log("File progress", progress);
         });
-        */
         this.on("queuecomplete", function(file) {
             // Reload the current page on completed upload(s).
             location.assign("{% url 'referral_detail' pk=referral.pk related_model='records' %}");
