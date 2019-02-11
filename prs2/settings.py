@@ -1,7 +1,9 @@
-from confy import env, database
+from dbca_utils.utils import env
+import dj_database_url
 import os
-import sys
 from pathlib import Path
+import sys
+
 
 # Project paths
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -55,7 +57,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'reversion.middleware.RevisionMiddleware',
-    'dpaw_utils.middleware.SSOLoginMiddleware',
+    'dbca_utils.middleware.SSOLoginMiddleware',
     'prs2.middleware.PrsMiddleware',
 ]
 TEMPLATES = [
@@ -90,7 +92,7 @@ LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 APPLICATION_TITLE = 'Planning Referral System'
 APPLICATION_ACRONYM = 'PRS'
-APPLICATION_VERSION_NO = '2.4.9'
+APPLICATION_VERSION_NO = '2.4.10'
 APPLICATION_ALERTS_EMAIL = 'PRS-Alerts@dbca.wa.gov.au'
 SITE_URL = env('SITE_URL', 'localhost')
 PRS_USER_GROUP = env('PRS_USER_GROUP', 'PRS user')
@@ -134,7 +136,7 @@ ASSESSOR_EMAILS = env('ASSESSOR_EMAILS', '').split(',')
 # Database configuration
 DATABASES = {
     # Defined in the DATABASE_URL env variable.
-    'default': database.config(),
+    'default': dj_database_url.config(),
 }
 
 # Internationalization
@@ -188,7 +190,7 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'console'
         },
-		'sentry': {
+        'sentry': {
             'level': 'WARNING',
             'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
         },
@@ -196,12 +198,12 @@ LOGGING = {
     'loggers': {
         'django': {
             'handlers': ['console'],
-			'propagate': True,
+            'propagate': True,
         },
         'django.request': {
             'handlers': ['console', 'sentry'],
             'level': 'WARNING',
-			'propagate': False,
+            'propagate': False,
         },
         'prs': {
             'handlers': ['console'],
