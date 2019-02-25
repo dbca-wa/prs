@@ -960,9 +960,11 @@ class LocationIntersects(PrsObjectCreate):
 
 class RecordUpload(LoginRequiredMixin, View):
     """Minimal view to handle POST of form-encoded uploaded files.
-    TODO: unit test for this view.
+    Files can be uploaded on a Referral (creates a new child Record), or
+    directly on a Record (updates it to replace any previous uploaded file).
     """
     http_method_names = ["post"]
+    parent_referral = False
 
     @method_decorator(csrf_exempt)
     def dispatch(self, request, *args, **kwargs):
@@ -979,19 +981,29 @@ class RecordUpload(LoginRequiredMixin, View):
             )
         return super(RecordUpload, self).dispatch(request, *args, **kwargs)
 
-    def parent_referral(self):
-        return Referral.objects.get(pk=self.kwargs["pk"])
+    def get_parent_object(self):
+        if self.parent_referral:
+            return Referral.objects.get(pk=self.kwargs["pk"])
+        else:
+            return Record.objects.get(pk=self.kwargs["pk"])
 
     def post(self, request, *args, **kargs):
         f = request.FILES["file"]
-        rec = Record(
-            name=f.name,
-            referral=self.parent_referral(),
-            uploaded_file=f,
-            order_date=datetime.now(),
-            creator=request.user,
-            modifier=request.user,
-        )
+        if self.parent_referral:
+            rec = Record(
+                name=f.name,
+                referral=self.get_parent_object(),
+                uploaded_file=f,
+                order_date=datetime.now(),
+                creator=request.user,
+                modifier=request.user,
+            )
+        else:
+            rec = self.get_parent_object()
+            rec.name = f.name
+            rec.uploaded_file = f
+            rec.modifier = request.user
+
         rec.save()
         return HttpResponse(
             json.dumps(

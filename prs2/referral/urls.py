@@ -12,7 +12,7 @@ urlpatterns = [
     path("referrals/<int:pk>/relate/", views.ReferralRelate.as_view(), name="referral_relate"),
     path("referrals/<int:pk>/history/", views.PrsObjectHistory.as_view(model=Referral), name="prs_object_history"),
     path("referrals/<int:pk>/delete/", views.ReferralDelete.as_view(), name="referral_delete"),
-    path("referrals/<int:pk>/upload/", views.RecordUpload.as_view(), name="referral_record_upload"),
+    path("referrals/<int:pk>/upload/", views.RecordUpload.as_view(parent_referral=True), name="referral_record_upload"),
     path("referrals/<int:pk>/locations/create/", views.LocationCreate.as_view(), name="referral_location_create"),
     path("referrals/<int:pk>/tag/", views.PrsObjectTag.as_view(model=Referral), name="referral_tag"),
     path("referrals/<int:pk>/<related_model>/", views.ReferralDetail.as_view(), name="referral_detail"),
@@ -33,6 +33,7 @@ urlpatterns += [
     path("conditions/<int:pk>/clearance/", views.ConditionClearanceCreate.as_view(), name="condition_clearance_add"),
     path("records/<int:pk>/infobase/", views.InfobaseShortcut.as_view(), name="infobase_shortcut"),
     path("records/<int:pk>/download/", views.ReferralDownloadView.as_view(model=Record, file_field="uploaded_file"), name="download_record"),
+    path("records/<int:pk>/upload/", views.RecordUpload.as_view(), name="record_upload"),
 ]
 
 # Other static/functional URLs
