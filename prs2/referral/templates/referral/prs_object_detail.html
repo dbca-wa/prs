@@ -53,7 +53,7 @@
 <li class="dropdown">
     <a id="id-menu-note" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Note <span class="caret"></span></a>
     <ul class="dropdown-menu" role="menu">
-        <li class="is_prs_user"><a href="{% url 'prs_object_update' model='notes' pk=object.id %}">Edit note</a></li>
+        <li class="is_prs_user"><a href="{% url 'prs_object_update' model='notes' pk=object.id %}">Update note</a></li>
         <li class="is_prs_user"><a href="{% url 'prs_object_delete' model='notes' pk=object.id %}">Delete note</a></li>
         <li class="is_prs_user"><a href="{% url 'referral_create_child_related' pk=object.referral.id id=object.id model='note' type='addnewrecord' %}">Add a new record to this note</a></li>
         <li class="is_prs_user"><a href="{% url 'referral_create_child_related' pk=object.referral.id id=object.id model='note' type='addrecord' %}">Add existing record(s) to this note</a></li>
@@ -66,7 +66,7 @@
 <li class="dropdown">
     <a id="id-menu-record" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Record <span class="caret"></span></a>
     <ul class="dropdown-menu" role="menu">
-        <li class="is_prs_user"><a href="{% url 'prs_object_update' model='records' pk=object.id %}">Edit record</a></li>
+        <li class="is_prs_user"><a href="{% url 'prs_object_update' model='records' pk=object.id %}">Update record</a></li>
         <li class="is_prs_user"><a href="{% url 'prs_object_delete' model='records' pk=object.id %}">Delete record</a></li>
         <li class="is_prs_user"><a href="{% url 'referral_create_child_related' pk=object.referral.id id=object.id model='record' type='addnewnote' %}">Add a new note to this record</a></li>
         <li class="is_prs_user"><a href="{% url 'referral_create_child_related' pk=object.referral.id id=object.id model='record' type='addnote' %}">Add existing note(s) to this record</a></li>
@@ -79,7 +79,7 @@
 <li class="dropdown">
     <a id="id-menu-location" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Location <span class="caret"></span></a>
     <ul class="dropdown-menu" role="menu">
-        <li class="is_prs_user"><a href="{% url 'prs_object_update' model='locations' pk=object.id %}">Edit location</a></li>
+        <li class="is_prs_user"><a href="{% url 'prs_object_update' model='locations' pk=object.id %}">Update location</a></li>
         <li class="is_prs_user"><a href="{% url 'prs_object_delete' model='locations' pk=object.id %}">Delete location</a></li>
         <li><a href="{% url 'prs_object_history' model='locations' pk=object.id %}">History</a></li>
     </ul>
@@ -90,7 +90,7 @@
 <li class="dropdown">
     <a id="id-menu-condition" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Condition <span class="caret"></span></a>
     <ul class="dropdown-menu" role="menu">
-        <li class="is_prs_user"><a href="{% url 'prs_object_update' model='conditions' pk=object.id %}">Edit condition</a></li>
+        <li class="is_prs_user"><a href="{% url 'prs_object_update' model='conditions' pk=object.id %}">Update condition</a></li>
         <li class="is_prs_user"><a href="{% url 'prs_object_delete' model='conditions' pk=object.id %}">Delete condition</a></li>
         <li class="is_prs_user"><a href="{% url 'condition_clearance_add' pk=object.id %}">Add a clearance request</a></li>
         <li><a href="{% url 'prs_object_history' model='conditions' pk=object.id %}">History</a></li>
@@ -104,15 +104,33 @@
 {% block page_content_inner %}
 <div class="alert alert-danger hidden" id="complete_msg">{{can_complete_msg}}</div>
 <div id="object-details">
+
 <!-- Object details -->
 <h1>{{ page_heading }}</h1>
-    <table class="table table-striped table-bordered table-condensed" style="width:auto;">
-        <tbody>
-            {{ object.as_tbody|safe }}
-        </tbody>
-    </table>
+    <div class="row">
+        <div class="col-sm-12 col-md-9">
+            <table class="table table-striped table-bordered table-condensed" style="width:auto;">
+                <tbody>
+                    {{ object.as_tbody|safe }}
+                </tbody>
+            </table>
+        </div>
+
+        {% if object_type == 'record' %}
+        <div class="col-sm-12 col-md-3">
+            <div id="file-uploader">
+                <form action="{% url 'record_upload' pk=object.pk %}" class="dropzone" id="id-record-dropzone">
+                    <div class="dz-message">Drop files here or click to upload.</div>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+    </div><!-- /.row -->
+
 </div>
 <br>
+
 <!-- Object related items -->
 {% if related_items %}
 <div id="object-related-items">
@@ -208,6 +226,7 @@
 
 {% block extra_js %}
 {{ block.super }}
+<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/dropzone/5.1.1/min/dropzone.min.js"></script>
 <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/datatables/1.10.9/js/jquery.dataTables.min.js"></script>
 <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/datatables/1.10.9/js/dataTables.bootstrap.min.js"></script>
 <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
@@ -232,6 +251,24 @@
     locationsLayer.addTo(map);
 </script>
 {% endif %}
+<script>
+    // Configure file upload Dropzone element - needs to happen outside of $(function(){}).
+    Dropzone.options.idRecordDropzone = {
+        paramName: "file",
+        acceptedFiles: ".tif,.jpg,.jpeg,.gif,.png,.doc,.docx,.xls,.xlsx,.csv,.pdf,.txt,.zip,.msg,.qgs",
+        timeout: 600000,  // 10 minutes is ms.
+        maxFilesize: 2048,  // 2 GB file size limit.
+        init: function() {
+            this.on("uploadprogress", function(file, progress) {
+                console.log("File progress", progress);
+            });
+            this.on("queuecomplete", function(file) {
+                // Reload the current page on completed upload(s).
+                location.assign("{% url 'prs_object_detail' model='records' pk=object.pk %}");
+            });
+        },
+    };
+</script>
 <script type="text/javascript" charset="utf-8">
     $("#id_complete").click(function() {
        $('#complete_msg').removeClass('hidden');
@@ -240,6 +277,11 @@
 <script type="text/javascript">
     // Document ready events
     $(function() {
+        // Hide the Dropzone element if not a PRS user.
+        var is_prs_user = true ? "{{ prs_user }}" == "True" : false
+        if (!is_prs_user) {
+            $("#file-uploader").hide();
+        };
         // Initialise the DataTable.
         $.fn.dataTable.moment("dd MMM YYYY", "en-AU");
         var dataTable = $(".related-objects-table").DataTable({

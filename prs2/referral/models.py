@@ -8,13 +8,13 @@ from django.contrib.auth.signals import user_logged_in
 from django.contrib.gis.db import models
 from django.core.exceptions import SuspiciousFileOperation
 from django.core.mail import EmailMultiAlternatives
-from django.urls import reverse
 from django.core.validators import MaxLengthValidator
 from django.db.models import Q
+from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.safestring import mark_safe
 from extract_msg import Message
-from jinja2 import Template
 from lxml.html import clean, fromstring
 from model_utils import Choices
 from taggit.managers import TaggableManager
@@ -570,7 +570,7 @@ class Referral(ReferralBaseModel):
             return True
         return False
 
-    def generate_qgis_layer(self, template=None):
+    def generate_qgis_layer(self, template='qgis_layer_v2-8'):
         """Generates and returns the content for a QGIS layer definition.
         Optionally specify the name of the template (defaults to the v2.8
         compatible template).
@@ -578,22 +578,8 @@ class Referral(ReferralBaseModel):
         # Only return a value for a referral with child locations.
         if not self.location_set.current().filter(poly__isnull=False).exists():
             return None
-        # Read in the base Jinja template.
-        if template:  # Specify template version.
-            t = Template(
-                open("prs2/referral/templates/{}.jinja".format(template), "r").read()
-            )
-        else:  # Default to QGIS 2.8-compatible template.
-            t = Template(open("prs2/referral/templates/qgis_layer.jinja", "r").read())
-        # Build geographical extent of associated locations.
-        qs = (
-            self.location_set.current()
-            .filter(poly__isnull=False)
-            .aggregate(models.Extent("poly"))
-        )
-        xmin, ymin, xmax, ymax = qs["poly__extent"]
-        d = {"REFERRAL_PK": self.pk}
-        return t.render(**d)
+        xml = 'referral/{}.xml'.format(template)
+        return render_to_string(xml, {'REFERRAL_PK': self.pk})
 
 
 @python_2_unicode_compatible
@@ -1920,10 +1906,7 @@ class UserProfile(models.Model):
     def is_power_user(self):
         """Returns group membership of the PRS power user group.
         """
-        return (
-            self.user.is_superuser
-            or self.user.groups.filter(name=settings.PRS_POWER_USER_GROUP).exists()
-        )
+        return self.user.is_superuser or self.user.groups.filter(name=settings.PRS_POWER_USER_GROUP).exists()
 
 
 def create_user_profile(**kwargs):
