@@ -1000,7 +1000,6 @@ class RecordUpload(LoginRequiredMixin, View):
             )
         else:
             rec = self.get_parent_object()
-            rec.name = f.name
             rec.uploaded_file = f
             rec.modifier = request.user
 
