@@ -579,7 +579,10 @@ class Referral(ReferralBaseModel):
         if not self.location_set.current().filter(poly__isnull=False).exists():
             return None
         xml = 'referral/{}.xml'.format(template)
-        return render_to_string(xml, {'REFERRAL_PK': self.pk})
+        return render_to_string(xml, {
+            'REFERRAL_PK': self.pk,
+            'GEOSERVER_WFS_URL': settings.GEOSERVER_WFS_URL
+        })
 
 
 @python_2_unicode_compatible

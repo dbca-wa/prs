@@ -1073,11 +1073,7 @@ class TaskAction(PrsObjectUpdate):
                 "Utilities infrastructure & roads",
             ]
         )
-        if (
-            action == "complete"
-            and task.referral.type in trigger_ref_type
-            and not task.referral.has_location
-        ):
+        if action == "complete" and task.referral.type in trigger_ref_type and not task.referral.has_location:
             msg = """You are unable to complete this task without first
                 recording location(s) on the referral.
                 <a href="{}">Click here to create location(s).</a>""".format(
@@ -1196,11 +1192,7 @@ class TaskAction(PrsObjectUpdate):
                         "Subdivision",
                     ]
                 )
-                if (
-                    obj.state in trigger_outcome
-                    and obj.referral.type in trigger_ref_type
-                    and not obj.referral.has_proposed_condition
-                ):
+                if obj.state in trigger_outcome and obj.referral.type in trigger_ref_type and not obj.referral.has_proposed_condition:
                     msg = """You are unable to complete this task as 'Response
                         with condition' without first recording proposed
                         condition(s) on the referral.
@@ -1654,6 +1646,24 @@ class ConditionClearanceCreate(PrsObjectCreate):
             msg.attach_alternative(html_content, "text/html")
             # Email should fail gracefully - ie no Exception raised on failure.
             msg.send(fail_silently=True)
+
+        # Business rule: for each new clearance request, email the MANAGERS user list.
+        subject = 'PRS referral {} - new condition clearance request notification'.format(clearance_task.referral.pk)
+        from_email = 'PRS-Alerts@dbca.wa.gov.au'
+        to_email = [i[1] for i in settings.MANAGERS]
+        text_content = 'This is an automated message to let you know that the following clearance request was just created:\n'
+        html_content = '<p>This is an automated message to let you know that the following clearance request was just created:</p>'
+        text_content += '* Task ID {}\n'.format(clearance_task.pk)
+        html_content += '<p><a href="{}">Task ID {}</a></p>'.format(settings.SITE_URL + clearance_task.get_absolute_url(), clearance_task.pk)
+        text_content += 'The clearance task was created by {}.\n'.format(clearance_task.creator.get_full_name())
+        html_content += '<p>The clearance task was created by {}.</p>'.format(clearance_task.creator.get_full_name())
+        text_content += 'This is an automatically-generated email - please do not reply.\n'
+        html_content += '<p>This is an automatically-generated email - please do not reply.</p>'
+        msg = EmailMultiAlternatives(subject, text_content, from_email, to_email)
+        msg.attach_alternative(html_content, 'text/html')
+        # Email should fail gracefully - i.e. no Exception raised on failure.
+        msg.send(fail_silently=True)
+
         return redirect(clearance_task.get_absolute_url())
 
 
