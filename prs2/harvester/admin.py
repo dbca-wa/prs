@@ -12,6 +12,7 @@ class EmailedReferralAdmin(admin.ModelAdmin):
         'referral_url', 'processed')
     raw_id_fields = ('referral',)
     search_fields = ('subject',)
+    readonly_fields = ['email_uid', 'to_email', 'from_email', 'subject', 'body', 'processed', 'log']
 
     def attachments(self, instance):
         return instance.emailattachment_set.count()
@@ -29,6 +30,7 @@ class EmailAttachmentAdmin(admin.ModelAdmin):
     list_display = ('name', 'emailed_referral_url', 'record_url')
     raw_id_fields = ('record',)
     search_fields = ('name', 'emailed_referral__subject',)
+    readonly_fields = ['emailed_referral', 'name', 'attachment']
 
     def emailed_referral_url(self, instance):
         url = reverse('admin:harvester_emailedreferral_change', args=[instance.emailed_referral.pk])
