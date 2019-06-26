@@ -403,4 +403,7 @@ class RegionAssignee(models.Model):
         help_text='Default assigned user for this region.')
 
     def __str__(self):
-        return '{} -> {}'.format(self.region, self.user.get_full_name())
+        if self.user:
+            return '{} -> {}'.format(self.region, self.user.get_full_name())
+        else:
+            return '{} -> none'.format(self.region)
