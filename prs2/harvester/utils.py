@@ -1,5 +1,4 @@
 import base64
-#from confy import env
 from dbca_utils.utils import env
 from datetime import date, datetime
 from django.conf import settings
@@ -8,6 +7,7 @@ from django.core.mail import EmailMultiAlternatives
 import email
 from imaplib import IMAP4_SSL
 import logging
+from lxml.html import clean, fromstring
 from pytz import timezone
 import requests
 try:
@@ -92,9 +92,9 @@ def harvest_email(uid, message):
             # Check the 'To' address against the whitelist of mailboxes.
             to_e = email.utils.parseaddr(message.get('To'))[1]
             # FIXME: skip the "To" whitelist check at present.
-            #if not to_e.lower() in settings.ASSESSOR_EMAILS:
-            #    LOGGER.info('Email UID {} to {} harvest was skipped'.format(uid, to_e))
-            #    return None  # Not in the whitelist; skip.
+            # if not to_e.lower() in settings.ASSESSOR_EMAILS:
+            #     LOGGER.info('Email UID {} to {} harvest was skipped'.format(uid, to_e))
+            #     return None  # Not in the whitelist; skip.
             from_e = email.utils.parseaddr(message.get('From'))[1]
             # Parse the 'sent' date & time (assume WST).
             wa_tz = timezone('Australia/Perth')
@@ -104,7 +104,10 @@ def harvest_email(uid, message):
             em_new = EmailedReferral(
                 received=received, email_uid=str(uid), to_email=to_e,
                 from_email=from_e, subject=message.get('Subject'),
-                body=message_body.get_payload())
+            )
+            # Strip the HTML from the message body and just save the text content.
+            t = fromstring(clean.clean_html(message_body.get_payload()))
+            em_new.body = t.text_content().replace('=\n', '').strip()
             em_new.save()
             LOGGER.info('Email UID {} harvested: {}'.format(uid, em_new.subject))
             for a in attachments:
