@@ -18,7 +18,8 @@ urlpatterns = [
     ),
     # PRS project URLs
     path('api/', include((v2_api.urls, 'referral_api'), namespace='api_drf')),
-    path('api/v1/', include(v1_api.urls)),
+    path('api/v2/', include((v2_api.urls, 'referral_api'), namespace='api_drf_v2')),
+    path('api/', include(v1_api.urls)),  # Tastypie will prefix '/api/v1/' automatically.
     path('reports/', include('reports.urls')),
     path('', include('referral.urls')),
 ]
