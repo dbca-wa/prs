@@ -1,6 +1,6 @@
 git+git://github.com/dbca-wa/dbca-utils@1.0.0
 psycopg2-binary==2.8.2
-Django==2.1.9
+Django==2.1.10
 django-extensions==2.1.9
 django-dotenv==1.4.2
 dj-database-url==0.5.0
@@ -8,9 +8,9 @@ gunicorn==19.9.0
 dj-static==0.0.6
 django-crispy-forms==1.7.2
 webtemplate-dbca==0.6.0
-django-reversion==3.0.2
+django-reversion==3.0.4
 django-tastypie==0.14.2
-django-taggit==0.23.0
+django-taggit==1.1.0
 django-model-utils==3.1.2
 django-storages==1.7.1
 django-bootstrap-pagination==1.6.4
@@ -26,6 +26,6 @@ openpyxl==2.6.2
 xmltodict==0.11.0
 shapely==1.6.4
 raven==6.10.0
-djangorestframework==3.9.0
+djangorestframework==3.9.4
 #extract-msg==0.21.0
 git+git://github.com/ropable/msg-extractor@master#egg=extract-msg
