@@ -279,21 +279,19 @@ def borgcollector_harvest(request, publishes=["prs_locations"]):
 
 
 def overdue_task_email():
-    """A utility function to send an email to each user with tasks that are
-    overdue.
+    """A utility function to send an email to each user with tasks that are overdue.
     """
     from django.contrib.auth.models import Group
     from .models import TaskState, Task
 
     prs_grp = Group.objects.get(name=settings.PRS_USER_GROUP)
     users = prs_grp.user_set.filter(is_active=True)
-    users = users.filter(username="AshleyF")
     ongoing_states = TaskState.objects.current().filter(is_ongoing=True)
 
     # For each user, send an email if they have any incomplete tasks that
     # are in an 'ongoing' state (i.e. not stopped).
     subject = "PRS overdue task notification"
-    from_email = "PRS-Alerts@dpaw.wa.gov.au"
+    from_email = settings.APPLICATION_ALERTS_EMAIL
 
     for user in users:
         ongoing_tasks = Task.objects.current().filter(
