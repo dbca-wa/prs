@@ -93,7 +93,7 @@ class EmailedReferral(models.Model):
         if Referral.objects.current().filter(reference__iexact=reference):
             # Note if the the reference no. exists in PRS already.
             s = 'Referral ref. {} is already in database; using existing referral'.format(reference)
-            logger.info()
+            logger.info(s)
             self.log = self.log + '{}\n'.format(s)
             actions.append('{} {}'.format(datetime.now().isoformat(), s))
             new_ref = Referral.objects.current().filter(reference__iexact=reference).order_by('-pk').first()
