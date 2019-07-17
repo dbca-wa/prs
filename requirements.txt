@@ -25,7 +25,7 @@ django-downloadview==1.9
 openpyxl==2.6.2
 xmltodict==0.11.0
 shapely==1.6.4
-raven==6.10.0
+#sentry-sdk==0.10.2
 djangorestframework==3.9.4
 #extract-msg==0.21.0
 git+git://github.com/ropable/msg-extractor@master#egg=extract-msg
