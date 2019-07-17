@@ -268,12 +268,12 @@ class EmailedReferral(models.Model):
                     poly = Polygon(f['geometry']['rings'][0])
                     geom = GEOSGeometry(poly.wkt)
                     new_loc = Location(
-                        address_no=int(a['NUMBER_FROM']) if a['NUMBER_FROM'] else None,
-                        address_suffix=a['NUMBER_FROM_SUFFIX'],
-                        road_name=a['STREET_NAME'],
-                        road_suffix=a['STREET_SUFFIX'],
-                        locality=a['SUBURB'],
-                        postcode=a['POSTCODE'],
+                        address_no=int(l['NUMBER_FROM']) if l['NUMBER_FROM'] else None,
+                        address_suffix=l['NUMBER_FROM_SUFFIX'],
+                        road_name=l['STREET_NAME'],
+                        road_suffix=l['STREET_SUFFIX'],
+                        locality=l['SUBURB'],
+                        postcode=l['POSTCODE'],
                         referral=new_ref,
                         poly=geom
                     )
