@@ -1897,9 +1897,10 @@ class UserProfile(models.Model):
         # Reverse the list, then iterate through it until we open a non-deleted referral.
         ref_history.reverse()
         for i in ref_history:
-            r = Referral.objects.get(pk=i[0])
-            if not r.effective_to:  # Referral hasn't been deleted.
-                return r
+            if Referral.objects.current().filter(pk=i[0]).exists():
+                return Referral.objects.get(pk=i[0])
+        # Edge case: user history contains nothing but deleted referrals.
+        return None
 
     def is_prs_user(self):
         """Returns group membership of the PRS user group.
@@ -1907,7 +1908,7 @@ class UserProfile(models.Model):
         return self.user.groups.filter(name=settings.PRS_USER_GROUP).exists()
 
     def is_power_user(self):
-        """Returns group membership of the PRS power user group.
+        """Returns group membership of the PRS power user group (or is_superuser==True).
         """
         return self.user.is_superuser or self.user.groups.filter(name=settings.PRS_POWER_USER_GROUP).exists()
 
