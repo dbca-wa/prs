@@ -19,7 +19,7 @@ var mapboxStreets = L.tileLayer.wms(
     geoserver_wms_url,
     {
         crs: L.CRS.EPSG4326,
-        layers: 'dpaw:mapbox_streets',
+        layers: 'dbca:mapbox-streets',
         tileSize: 1024,
         format: 'image/jpeg',
         tiled: true,
