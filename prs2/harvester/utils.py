@@ -66,9 +66,11 @@ def harvest_email(uid, message):
     """Harvest a passed-in UID and email message.
     Abort if UID exists in the database already.
     """
-    if EmailedReferral.objects.filter(email_uid=str(uid)).exists():
-        LOGGER.warning('Email UID {} already present; aborting'.format(uid))
-        return False
+    # Mailbox email uid has become unreliable for distinguishing emails.
+    # We'll rely on the reference number to not end up with duplicates.
+    #if EmailedReferral.objects.filter(email_uid=str(uid)).exists():
+    #    LOGGER.warning('Email UID {} already present; aborting'.format(uid))
+    #    return False
     if message.is_multipart():  # Should always be True.
         parts = [i for i in message.walk()]
     else:
@@ -172,11 +174,11 @@ def harvest_unread_emails(from_email):
             if isinstance(uid, bytes):
                 uid = uid.decode('utf-8')
             # Fetch email message.
-            if EmailedReferral.objects.filter(email_uid=str(uid)).exists():
-                # Already harvested? Mark it as read.
-                LOGGER.info('Email UID {} already present in database, marking as read'.format(uid))
-                status, response = email_mark_read(imap, uid)
-                continue
+            #if EmailedReferral.objects.filter(email_uid=str(uid)).exists():
+            #    # Already harvested? Mark it as read.
+            #    LOGGER.info('Email UID {} already present in database, marking as read'.format(uid))
+            #    status, response = email_mark_read(imap, uid)
+            #    continue
             LOGGER.info('Fetching email UID {}'.format(uid))
             status, message = fetch_email(imap, uid)
             if status != 'OK':
