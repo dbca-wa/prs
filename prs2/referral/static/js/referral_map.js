@@ -59,7 +59,7 @@ var prsLocations = L.tileLayer.wms(
     geoserver_wms_url,
     {
         crs: L.CRS.EPSG4326,
-        layers: 'dpaw:prs_locations',
+        layers: 'dbca:prs_locations',
         opacity: 0.75,
         tileSize: 1024,
         format: 'image/png',
