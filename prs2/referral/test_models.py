@@ -14,6 +14,7 @@ from referral.models import (
     NoteType, ReferralType, Referral, Task, Record, Note, Condition, Location,
     Bookmark, Clearance, Agency, ConditionCategory, UserProfile, ModelCondition,
     RelatedReferral, LocalGovernment)
+from referral.utils import user_referral_history
 User = get_user_model()
 
 
@@ -816,3 +817,29 @@ class RelatedReferralTest(PrsTestCase):
         ref1, ref2 = q[0], q[1]
         ref1.add_relationship(ref2)
         self.obj = RelatedReferral.objects.all()[0]
+
+
+class UserProfileTest(PrsTestCase):
+
+    def test_is_prs_user(self):
+        self.assertFalse(self.admin_user.userprofile.is_prs_user())
+        self.assertTrue(self.p_user.userprofile.is_prs_user())
+        self.assertTrue(self.n_user.userprofile.is_prs_user())
+        self.assertFalse(self.ro_user.userprofile.is_prs_user())
+
+    def test_is_power_user(self):
+        self.assertTrue(self.admin_user.userprofile.is_power_user())
+        self.assertTrue(self.p_user.userprofile.is_power_user())
+        self.assertFalse(self.n_user.userprofile.is_power_user())
+        self.assertFalse(self.ro_user.userprofile.is_power_user())
+
+    def test_last_referral(self):
+        # User with no referral history.
+        self.assertFalse(self.n_user.userprofile.last_referral())
+        # Give the user a referral history.
+        ref = Referral.objects.first()
+        user_referral_history(self.n_user, ref)
+        self.assertEqual(self.n_user.userprofile.last_referral(), ref)
+        # Deleted referrals should not be returned for history.
+        ref.delete()
+        self.assertFalse(self.n_user.userprofile.last_referral())

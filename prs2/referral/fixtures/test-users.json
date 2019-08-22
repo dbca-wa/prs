@@ -11,7 +11,7 @@
         "groups": [],
         "user_permissions": [],
         "password": "",
-        "email": "asi@dpaw.wa.gov.au"
+        "email": "asi@dbca.wa.gov.au"
     },
     "model": "auth.user"
 },
@@ -27,7 +27,7 @@
         "groups": [],
         "user_permissions": [],
         "password": "",
-        "email": "readonlyuser@dpaw.wa.gov.au"
+        "email": "readonlyuser@dbca.wa.gov.au"
     },
     "model": "auth.user"
 },
@@ -47,7 +47,7 @@
         ],
         "user_permissions": [],
         "password": "",
-        "email": "normaluser@dpaw.wa.gov.au"
+        "email": "normaluser@dbca.wa.gov.au"
     },
     "model": "auth.user"
 },
@@ -62,12 +62,15 @@
         "is_staff": false,
         "groups": [
             [
+                "PRS user"
+            ],
+            [
                 "PRS power user"
             ]
         ],
         "user_permissions": [],
         "password": "",
-        "email": "poweruser@dpaw.wa.gov.au"
+        "email": "poweruser@dbca.wa.gov.au"
     },
     "model": "auth.user"
 }
