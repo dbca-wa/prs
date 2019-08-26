@@ -268,7 +268,6 @@ class EmailedReferral(models.Model):
                     poly = Polygon(f['geometry']['rings'][0])
                     geom = GEOSGeometry(poly.wkt)
                     new_loc = Location(
-                        address_no=int(l['NUMBER_FROM']) if l['NUMBER_FROM'] else None,
                         address_suffix=l['NUMBER_FROM_SUFFIX'],
                         road_name=l['STREET_NAME'],
                         road_suffix=l['STREET_SUFFIX'],
@@ -277,6 +276,10 @@ class EmailedReferral(models.Model):
                         referral=new_ref,
                         poly=geom
                     )
+                    try:  # NUMBER_FROM XML fields started to contain non-integer values :(
+                        new_loc.address_no = int(l['NUMBER_FROM']) if l['NUMBER_FROM'] else None
+                    except:
+                        pass  # Just ignore the value if it can't be parsed as an integer.
                     new_loc.save()
                     new_locations.append(new_loc)
                     s = 'New PRS location generated: {}'.format(new_loc)

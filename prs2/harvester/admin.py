@@ -1,4 +1,4 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from harvester.models import EmailedReferral, EmailAttachment, RegionAssignee
@@ -6,6 +6,27 @@ from harvester.models import EmailedReferral, EmailAttachment, RegionAssignee
 
 @admin.register(EmailedReferral)
 class EmailedReferralAdmin(admin.ModelAdmin):
+
+    def harvest_referral(modeladmin, request, queryset):
+        """A custom admin action to call an EmailedReferral object harvest() method.
+        """
+        for er in queryset:
+            actions = []
+            if not er.processed:
+                try:
+                    actions.append(er.harvest())
+                except Exception:
+                    actions.append('Emailed referral {} failed to import; notify the custodian to investigate'.format(er))
+            else:
+                actions.append('Emailed referral {} is already processed'.format(er))
+            msg = ''
+            for action in actions:
+                msg += '{}\n'.format(action)
+            messages.success(request, msg)
+
+    harvest_referral.short_description = 'Run the harvest function for selected emailed referrals'
+
+    actions = [harvest_referral]
     date_hierarchy = 'received'
     list_display = (
         'received', 'from_email', 'subject', 'harvested', 'attachments',
