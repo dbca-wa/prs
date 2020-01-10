@@ -1,7 +1,7 @@
 from datetime import datetime
 from django.conf import settings
 from django.contrib.auth.models import User, Group
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets
 from taggit.models import Tag
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.filters import OrderingFilter
@@ -19,67 +19,52 @@ class StandardResultsSetPagination(LimitOffsetPagination):
     max_page_size = 100
 
 
-"""
-Viewsets for models, all readonly.
-"""
-
-
 class DopTriggerView(viewsets.ReadOnlyModelViewSet):
-    permission_classes = (permissions.IsAuthenticated,)
     queryset = DopTrigger.objects.current().filter(public=True)
     serializer_class = serializer.DopTriggerSerializer
 
 
 class RegionView(viewsets.ReadOnlyModelViewSet):
-    permission_classes = (permissions.IsAuthenticated,)
     queryset = Region.objects.current().filter(public=True)
     serializer_class = serializer.RegionSerializer
 
 
 class OrganisationTypeView(viewsets.ReadOnlyModelViewSet):
-    permission_classes = (permissions.IsAuthenticated,)
     queryset = OrganisationType.objects.current().filter(public=True)
     serializer_class = serializer.OrganisationTypeSerializer
 
 
 class OrganisationView(viewsets.ReadOnlyModelViewSet):
-    permission_classes = (permissions.IsAuthenticated,)
     queryset = Organisation.objects.current().filter(public=True)
     serializer_class = serializer.OrganisationSerializer
 
 
 class TaskStateView(viewsets.ReadOnlyModelViewSet):
-    permission_classes = (permissions.IsAuthenticated,)
     queryset = TaskState.objects.current().filter(public=True)
     serializer_class = serializer.TaskStateSerializer
 
 
 class TaskTypeView(viewsets.ReadOnlyModelViewSet):
-    permission_classes = (permissions.IsAuthenticated,)
     queryset = TaskType.objects.current()
     serializer_class = serializer.TaskTypeSerializer
 
 
 class ReferralTypeView(viewsets.ReadOnlyModelViewSet):
-    permission_classes = (permissions.IsAuthenticated,)
     queryset = ReferralType.objects.current().filter(public=True)
     serializer_class = serializer.ReferralTypeSerializer
 
 
 class NoteTypeView(viewsets.ReadOnlyModelViewSet):
-    permission_classes = (permissions.IsAuthenticated,)
     queryset = NoteType.objects.current().filter(public=True)
     serializer_class = serializer.NoteTypeSerializer
 
 
 class AgencyView(viewsets.ReadOnlyModelViewSet):
-    permission_classes = (permissions.IsAuthenticated,)
     queryset = Agency.objects.current().filter(public=True)
     serializer_class = serializer.AgencySerializer
 
 
 class ReferralView(viewsets.ReadOnlyModelViewSet):
-    permission_classes = (permissions.IsAuthenticated,)
     serializer_class = serializer.ReferralSerializer
     pagination_class = StandardResultsSetPagination
 
@@ -114,7 +99,6 @@ class ReferralView(viewsets.ReadOnlyModelViewSet):
 
 
 class TaskView(viewsets.ReadOnlyModelViewSet):
-    permission_classes = (permissions.IsAuthenticated,)
     serializer_class = serializer.TaskSerializer
     pagination_class = StandardResultsSetPagination
 
@@ -145,37 +129,31 @@ class TaskView(viewsets.ReadOnlyModelViewSet):
 
 
 class RecordView(viewsets.ReadOnlyModelViewSet):
-    permission_classes = (permissions.IsAuthenticated,)
     queryset = Record.objects.current()
     serializer_class = serializer.RecordSerializer
 
 
 class NoteView(viewsets.ReadOnlyModelViewSet):
-    permission_classes = (permissions.IsAuthenticated,)
     queryset = Note.objects.current()
     serializer_class = serializer.NoteSerializer
 
 
 class ConditionCategoryView(viewsets.ReadOnlyModelViewSet):
-    permission_classes = (permissions.IsAuthenticated,)
     queryset = ConditionCategory.objects.current().filter(public=True)
     serializer_class = serializer.ConditionCategorySerializer
 
 
 class ModelConditionView(viewsets.ReadOnlyModelViewSet):
-    permission_classes = (permissions.IsAuthenticated,)
     queryset = ModelCondition.objects.current()
     serializer_class = serializer.ModelConditionSerializer
 
 
 class ConditionView(viewsets.ReadOnlyModelViewSet):
-    permission_classes = (permissions.IsAuthenticated,)
     queryset = Condition.objects.current()
     serializer_class = serializer.ConditionSerializer
 
 
 class ClearanceView(viewsets.ReadOnlyModelViewSet):
-    permission_classes = (permissions.IsAuthenticated,)
     serializer_class = serializer.ClearanceSerializer
     pagination_class = StandardResultsSetPagination
 
@@ -203,26 +181,22 @@ class ClearanceView(viewsets.ReadOnlyModelViewSet):
 
 
 class LocationView(viewsets.ReadOnlyModelViewSet):
-    permission_classes = (permissions.IsAuthenticated,)
     queryset = Location.objects.current()
     serializer_class = serializer.LocationSerializer
 
 
 class UserProfileView(viewsets.ReadOnlyModelViewSet):
-    permission_classes = (permissions.IsAuthenticated,)
     queryset = UserProfile.objects.all()
     serializer_class = serializer.UserProfileSerializer
 
 
 class GroupView(viewsets.ReadOnlyModelViewSet):
-    permission_classes = (permissions.IsAuthenticated,)
     queryset = Group.objects.all()
     serializer_class = serializer.GroupSerializer
 
 
 class UserView(viewsets.ReadOnlyModelViewSet):
     filter_backends = (OrderingFilter,)
-    permission_classes = (permissions.IsAuthenticated,)
     try:
         # Queryset should only return active users in the "PRS user" group.
         prs_user = Group.objects.get_or_create(name=settings.PRS_USER_GROUP)[0]
@@ -234,6 +208,5 @@ class UserView(viewsets.ReadOnlyModelViewSet):
 
 class TagView(viewsets.ReadOnlyModelViewSet):
     filter_backends = (OrderingFilter,)
-    permission_classes = (permissions.IsAuthenticated,)
     queryset = Tag.objects.all()
     serializer_class = serializer.TagSerializer

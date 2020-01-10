@@ -223,5 +223,6 @@ if env('SENTRY_DSN', False):
 # django-rest-framework configuration
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.AllowAny'],
     'PAGE_SIZE': 100
 }

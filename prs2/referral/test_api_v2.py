@@ -17,7 +17,7 @@ class PrsAPI2Test(PrsTestCase):
             url = reverse('referral_api:' + i + '-list')
             self.client.logout()
             response = self.client.get(url)  # Anonymous user
-            self.assertEqual(response.status_code, 403)
+            self.assertEqual(response.status_code, 200)
             self.client.login(username='normaluser', password='pass')
             response = self.client.get(url)
             self.assertEqual(response.status_code, 200)
@@ -44,4 +44,4 @@ class PrsAPI2Test(PrsTestCase):
             self.assertEqual(response.status_code, 200)
             self.client.logout()
             response = self.client.get(url)
-            self.assertEqual(response.status_code, 403)
+            self.assertEqual(response.status_code, 200)
