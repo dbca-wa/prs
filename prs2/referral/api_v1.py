@@ -1,7 +1,7 @@
 from django.db.models import signals
 from django.contrib.auth import get_user_model
 from tastypie import fields
-from tastypie.authentication import BasicAuthentication, ApiKeyAuthentication, SessionAuthentication, MultiAuthentication
+from tastypie.authentication import Authentication
 from tastypie.cache import SimpleCache
 from tastypie.models import create_api_key
 from tastypie.resources import ModelResource, ALL_WITH_RELATIONS
@@ -30,7 +30,7 @@ def generate_meta(klass, overrides={}):
     """Utility function to generate a standard ModelResource Meta class.
     """
     metaitems = {
-        'authentication': MultiAuthentication(ApiKeyAuthentication(), BasicAuthentication(), SessionAuthentication()),
+        'authentication': Authentication(),  # No auth required (read-only API).
         'queryset': klass.objects.all(),
         'resource_name': klass._meta.model_name,
         'filtering': generate_filtering(klass),
@@ -70,7 +70,7 @@ class TaskStateResource(ModelResource):
         'excludes': ['created', 'effective_to', 'modified']
     })
     task_type = fields.ToOneField(
-        'referral.api.TaskTypeResource', attribute='task_type', full=False,
+        'referral.api_v1.TaskTypeResource', attribute='task_type', full=False,
         null=True, blank=True)
 
 
@@ -80,7 +80,7 @@ class TaskTypeResource(ModelResource):
         'excludes': ['created', 'effective_to', 'modified']
     })
     initial_state = fields.ToOneField(
-        'referral.api.TaskStateResource', attribute='initial_state', full=False,
+        'referral.api_v1.TaskStateResource', attribute='initial_state', full=False,
         null=True, blank=True)
 
 
