@@ -17,7 +17,7 @@ branches:
         - master
 env:
     global:
-        - SECRET_KEY=SecretKeyForTravis
+        - SECRET_KEY="SecretKeyForTravis"
         - DATABASE_URL="postgis://postgres@localhost:5432/travis_ci_test"
 before_install:
     - docker build -t dbcawa/prs .

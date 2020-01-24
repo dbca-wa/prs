@@ -47,7 +47,7 @@ var slipRoads = L.tileLayer.wms(
     geoserver_wms_url,
     {
         crs: L.CRS.EPSG4326,
-        layers: 'landgate:roads_lgate_195',
+        layers: 'landgate:roads_slip',
         tileSize: 1024,
         format: 'image/png',
         tiled: true,

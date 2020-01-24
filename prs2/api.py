@@ -1,5 +1,5 @@
 from django.conf import settings
-from referral import api as referral_api
+from referral import api_v1 as referral_api_v1
 from taggit.models import Tag
 from tastypie.api import Api
 from tastypie.authentication import SessionAuthentication
@@ -39,25 +39,25 @@ v2_api.register('tag', api_v2.TagView, base_name='tag')
 
 # v1 API
 v1_api = Api(api_name='v1')
-v1_api.register(referral_api.DopTriggerResource())
-v1_api.register(referral_api.RegionResource())
-v1_api.register(referral_api.OrganisationTypeResource())
-v1_api.register(referral_api.OrganisationResource())
-v1_api.register(referral_api.TaskStateResource())
-v1_api.register(referral_api.TaskTypeResource())
-v1_api.register(referral_api.ReferralTypeResource())
-v1_api.register(referral_api.NoteTypeResource())
-v1_api.register(referral_api.AgencyResource())
-v1_api.register(referral_api.ReferralResource())
-v1_api.register(referral_api.TaskResource())
-v1_api.register(referral_api.RecordResource())
-v1_api.register(referral_api.NoteResource())
-v1_api.register(referral_api.ConditionCategoryResource())
-v1_api.register(referral_api.ModelConditionResource())
-v1_api.register(referral_api.ConditionResource())
-v1_api.register(referral_api.ClearanceResource())
-v1_api.register(referral_api.LocationResource())
-v1_api.register(referral_api.UserProfileResource())
+v1_api.register(referral_api_v1.DopTriggerResource())
+v1_api.register(referral_api_v1.RegionResource())
+v1_api.register(referral_api_v1.OrganisationTypeResource())
+v1_api.register(referral_api_v1.OrganisationResource())
+v1_api.register(referral_api_v1.TaskStateResource())
+v1_api.register(referral_api_v1.TaskTypeResource())
+v1_api.register(referral_api_v1.ReferralTypeResource())
+v1_api.register(referral_api_v1.NoteTypeResource())
+v1_api.register(referral_api_v1.AgencyResource())
+v1_api.register(referral_api_v1.ReferralResource())
+v1_api.register(referral_api_v1.TaskResource())
+v1_api.register(referral_api_v1.RecordResource())
+v1_api.register(referral_api_v1.NoteResource())
+v1_api.register(referral_api_v1.ConditionCategoryResource())
+v1_api.register(referral_api_v1.ModelConditionResource())
+v1_api.register(referral_api_v1.ConditionResource())
+v1_api.register(referral_api_v1.ClearanceResource())
+v1_api.register(referral_api_v1.LocationResource())
+v1_api.register(referral_api_v1.UserProfileResource())
 
 
 # Register the contrib.auth.models models as resources.

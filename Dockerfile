@@ -15,11 +15,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Install the project.
 FROM python_libs_prs
-COPY gunicorn.ini manage.py ./
+COPY gunicorn.py manage.py ./
 COPY prs2 ./prs2
 RUN python manage.py collectstatic --noinput
 # Run the application as the www-data user.
 USER www-data
 EXPOSE 8080
 HEALTHCHECK --interval=1m --timeout=5s --start-period=10s --retries=3 CMD ["wget", "-q", "-O", "-", "http://localhost:8080/healthcheck/"]
-CMD ["gunicorn", "prs2.wsgi", "--config", "gunicorn.ini"]
+CMD ["gunicorn", "prs2.wsgi", "--config", "gunicorn.py"]

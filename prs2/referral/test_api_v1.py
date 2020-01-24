@@ -6,7 +6,7 @@ API_MODELS = [
     'agency', 'clearance', 'condition', 'conditioncategory', 'doptrigger',
     'location', 'note', 'notetype', 'organisation', 'organisationtype',
     'record', 'referral', 'referraltype', 'region', 'task', 'taskstate',
-    'tasktype', 'userprofile', 'user', 'tag', 'modelcondition']
+    'tasktype', 'userprofile', 'modelcondition']
 
 
 class PrsAPITest(PrsTestCase):
@@ -19,7 +19,7 @@ class PrsAPITest(PrsTestCase):
                 'api_dispatch_list', kwargs={'resource_name': i, 'api_name': 'v1'})
             self.client.logout()
             response = self.client.get(url)  # Anonymous user
-            self.assertEqual(response.status_code, 401)
+            self.assertEqual(response.status_code, 200)
             self.client.login(username='normaluser', password='pass')
             response = self.client.get(url)
             self.assertEqual(response.status_code, 200)
@@ -49,5 +49,5 @@ class PrsAPITest(PrsTestCase):
             response = self.client.get(url)
             self.assertEqual(response.status_code, 200)
             self.client.logout()
-            response = self.client.get(url)
-            self.assertEqual(response.status_code, 401)
+            response = self.client.get(url)  # Anonymous user
+            self.assertEqual(response.status_code, 200)
