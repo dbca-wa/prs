@@ -27,5 +27,5 @@ xmltodict==0.11.0
 shapely==1.6.4
 sentry-sdk==0.10.2
 djangorestframework==3.10.3
-#extract-msg==0.21.0
-git+git://github.com/ropable/msg-extractor@master#egg=extract-msg
+extract-msg==0.23.3
+#git+git://github.com/ropable/msg-extractor@master#egg=extract-msg
