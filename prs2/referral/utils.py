@@ -8,7 +8,6 @@ from django.db.models import Q
 from django.db.models.base import ModelBase
 from django.utils.encoding import smart_text
 from django.utils.safestring import mark_safe
-from django.utils import six
 import json
 from reversion.models import Version
 import re
@@ -169,7 +168,7 @@ def user_referral_history(user, referral):
     # or a list of lists (new-style).
     for i in ref_history:
         # Firstly if the item is a string, convert that to a list ([val, DATE]).
-        if isinstance(i, six.text_type):
+        if isinstance(i, str):
             i = [int(i), datetime.strftime(datetime.today(), "%d-%m-%Y")]
         # If the referral that was passed in exists in the current list, pass (don't append it).
         if referral.id == i[0]:

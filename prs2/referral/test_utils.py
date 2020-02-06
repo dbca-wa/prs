@@ -3,7 +3,6 @@ from django.conf import settings
 from django.db.models.base import ModelBase
 from django.db.models.query import QuerySet
 from django.test import RequestFactory
-from django.utils import six
 from extract_msg import Message
 from pathlib import Path
 from referral.models import Referral, Task, Record
@@ -102,7 +101,7 @@ class UtilsTest(PrsTestCase):
         """
         pairs = [('/A', 'A'), ('/A/B', 'B'), ('', 'C',)]
         crumbs = breadcrumbs_li(pairs)
-        self.assertTrue(isinstance(crumbs, six.text_type))
+        self.assertTrue(isinstance(crumbs, str))
 
     def test_update_revision_history(self):
         """Test update_revision_history, for coverage :P
@@ -121,7 +120,7 @@ class UtilsTest(PrsTestCase):
         get = r.get('/filter', {'q': "test filter  string  to 'normalise'"})
         ret = filter_queryset(get, Referral, Referral.objects.all())
         self.assertTrue(isinstance(ret[0], QuerySet))
-        self.assertTrue(isinstance(ret[1], six.text_type))
+        self.assertTrue(isinstance(ret[1], str))
 
     def test_user_task_history(self):
         """Test the user_task_history inserts correct data to a user profile

@@ -5,7 +5,6 @@ from django.contrib.gis.db import models
 from django.urls import reverse
 from django.db.models import FileField
 from django.utils import timezone
-from django.utils.encoding import python_2_unicode_compatible
 import magic
 from reversion.revisions import create_revision, set_comment
 import threading
@@ -23,7 +22,6 @@ class ActiveModelManager(models.Manager):
         return self.filter(effective_to__isnull=False)
 
 
-@python_2_unicode_compatible
 class Audit(models.Model):
 
     class Meta:

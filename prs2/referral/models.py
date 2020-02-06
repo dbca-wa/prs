@@ -12,11 +12,9 @@ from django.core.validators import MaxLengthValidator
 from django.db.models import Q
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils.encoding import python_2_unicode_compatible
 from django.utils.safestring import mark_safe
 from extract_msg import Message
 from lxml.html import clean, fromstring
-from model_utils import Choices
 from taggit.managers import TaggableManager
 from unidecode import unidecode
 
@@ -25,19 +23,18 @@ from referral.utils import smart_truncate, dewordify_text, as_row_subtract_refer
 
 
 # Australian state choices, for addresses.
-AU_STATE_CHOICES = Choices(
-    (1, "act", ("ACT")),
-    (2, "nsw", ("NSW")),
-    (3, "nt", ("NT")),
-    (4, "qld", ("QLD")),
-    (5, "sa", ("SA")),
-    (6, "tas", ("TAS")),
-    (7, "vic", ("VIC")),
-    (8, "wa", ("WA")),
+AU_STATE_CHOICES = (
+    (1, "ACT"),
+    (2, "NSW"),
+    (3, "NT"),
+    (4, "QLD"),
+    (5, "SA"),
+    (6, "TAS"),
+    (7, "VIC"),
+    (8, "WA"),
 )
 
 
-@python_2_unicode_compatible
 class ReferralLookup(ActiveModel, Audit):
     """Abstract model type for lookup-table objects.
     """
@@ -187,7 +184,7 @@ class Organisation(ReferralLookup):
     suburb = models.CharField(
         max_length=100, null=True, blank=True, validators=[MaxLengthValidator(100)]
     )
-    state = models.IntegerField(choices=AU_STATE_CHOICES, default=AU_STATE_CHOICES.wa)
+    state = models.IntegerField(choices=AU_STATE_CHOICES, default=8)
     postcode = models.CharField(
         max_length=4, null=True, blank=True, validators=[MaxLengthValidator(4)]
     )
@@ -312,7 +309,6 @@ class Agency(ReferralLookup):
         verbose_name_plural = "agencies"
 
 
-@python_2_unicode_compatible
 class ReferralBaseModel(ActiveModel, Audit):
     """
     Base abstract model class for object types that are not lookups.
@@ -585,7 +581,6 @@ class Referral(ReferralBaseModel):
         })
 
 
-@python_2_unicode_compatible
 class RelatedReferral(models.Model):
     """
     Intermediate class for relationships between Referral objects.
@@ -1545,7 +1540,6 @@ class ClearanceManager(models.Manager):
         return self.filter(task__effective_to__isnull=False)
 
 
-@python_2_unicode_compatible
 class Clearance(models.Model):
     """
     Intermediate class for relationships between Condition and Task objects.
@@ -1872,7 +1866,6 @@ class Bookmark(ReferralBaseModel):
         return mark_safe(template.format(**d))
 
 
-@python_2_unicode_compatible
 class UserProfile(models.Model):
     """
     An extension of the Django auth model, to add additional fields to each User
