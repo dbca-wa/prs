@@ -214,7 +214,7 @@ LOGGING = {
 TASTYPIE_DEFAULT_FORMATS = ['json']
 
 # crispy_forms settings
-CRISPY_TEMPLATE_PACK = 'bootstrap3'
+CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
 # Sentry configuration
 if env('SENTRY_DSN', ''):

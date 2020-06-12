@@ -731,7 +731,7 @@ description = "Base HTML templates for DBCA Django projects"
 name = "webtemplate-dbca"
 optional = false
 python-versions = "*"
-version = "1.2.0"
+version = "1.2.1"
 
 [package.dependencies]
 Django = ">=2.1"
@@ -763,7 +763,7 @@ python-versions = "*"
 version = "0.11.0"
 
 [metadata]
-content-hash = "d2290c222880bc1c734e7a71ad06390316bc862cfc14ed241a7da1e5d0f0bef1"
+content-hash = "262d05500ae40ea3101475800baea1942875701627f2fa6df1000b630389d3d2"
 python-versions = "^3.7"
 
 [metadata.files]
@@ -1149,7 +1149,7 @@ webob = [
     {file = "WebOb-1.8.6.tar.gz", hash = "sha256:aa3a917ed752ba3e0b242234b2a373f9c4e2a75d35291dcbe977649bd21fd108"},
 ]
 webtemplate-dbca = [
-    {file = "webtemplate-dbca-1.2.0.tar.gz", hash = "sha256:bb9742493c4773e1d60c60e730fd4690e2003f92ec4946d18cb0f549d19f5911"},
+    {file = "webtemplate-dbca-1.2.1.tar.gz", hash = "sha256:ff6f9e56fc96f8f50d1baa4b5e77cebb789a7e753dee8628892e3eb8513d8d54"},
 ]
 webtest = [
     {file = "WebTest-2.0.35-py2.py3-none-any.whl", hash = "sha256:44ddfe99b5eca4cf07675e7222c81dd624d22f9a26035d2b93dc8862dc1153c6"},

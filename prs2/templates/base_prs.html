@@ -1,64 +1,71 @@
-{% extends "webtemplate_dbca/base.html" %}
+{% extends "webtemplate_dbca/base_b4.html" %}
 {% load cache %}
 {% load static %}
 
 {% block extra_style %}
 {{ block.super }}
-<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-{% endblock %}
-
-{% block navbar_logo %}
-<img class="navbar-brand hidden-xs" src="{% static 'img/dpaw_logo_small.png' %}">
-{% endblock %}
-
-{% block navbar_site_title %}
-{% cache 600 base_title %}
-<a class="navbar-brand visible-xs visible-sm" href="{% url 'site_home' %}">{{ site_acronym }}</a>
-<a class="navbar-brand hidden-xs hidden-sm" href="{% url 'site_home' %}">{{ site_title }}</a>
-{% endcache %}
+<style>
+    .footer {
+        background-color: #f5f5f5;
+    }
+</style>
 {% endblock %}
 
 {% block navbar_links %}
-{% cache 600 navbar_search_links %}
-<li class="dropdown">
-    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Search <span class="caret"></span></a>
-    <ul class="dropdown-menu" role="menu">
-        <li><a href="{% url 'prs_object_list' model='referrals' %}" title="Referrals">Referrals</a></li>
-        <li><a href="{% url 'prs_object_list' model='tasks' %}" title="Tasks">Tasks</a></li>
-        <li><a href="{% url 'prs_object_list' model='notes' %}" title="Notes">Notes</a></li>
-        <li><a href="{% url 'prs_object_list' model='conditions' %}" title="Conditions">Conditions</a></li>
-        <li><a href="{% url 'prs_object_list' model='records' %}" title="Records">Records</a></li>
-        <li><a href="{% url 'prs_object_list' model='locations' %}" title="Locations">Locations</a></li>
-        <li><a href="{% url 'prs_object_list' model='clearances' %}" title="Clearances">Clearances</a></li>
-        <li class="divider"></li>
-        <li><a href="{% url 'prs_general_search' %}" title="Search all">Search all</a></li>
-    </ul>
-</li>
-{% endcache %}
-<li><a href="{% url 'reports' %}" title="Reports">Reports</a></li>
-{% block navbar_auth %}
-<li class="dropdown">
-    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">{% firstof user.get_full_name user.username %} <span class="caret"></span></a>
-    <ul class="dropdown-menu" role="menu">
-        {% if user.is_superuser %}
-        <li><a href="{% url 'admin:index' %}" title="Administration">Administration</a></li>
-        {% endif %}
-        {% if prs_power_user %}
-        <li><a href="{% url 'tag_replace' %}" title="Tag replace">Tag replace</a></li>
-        <li class="divider"></li>
-        {% endif %}
-        {% if last_referral %}
-        <li><a href="{% url 'referral_detail' pk=last_referral.pk %}" title="Last referral">Last referral: {{ last_referral.pk }}</a></li>
-        {% endif %}
-        <li><a href="{% url 'referral_recent' %}" title="Recent referrals">Recent referrals</a></li>
-        <li><a href="{% url 'prs_object_list' model='bookmarks' %}" title="Bookmarks">Bookmarks</a></li>
-        <li><a href="{% url 'stopped_tasks_list' %}" title="Stopped tasks">Stopped tasks</a></li>
-        <li><a href="{% url 'help_page' %}" title="Help">Help</a></li>
-        {#<li><a href="{% url 'logout' %}" title="Log out">Log out</a></li>#}
-    </ul>
-</li>
-<li class="active is_prs_user"><a href="{% url 'referral_create' %}" title="Create a new referral"><strong>Create</strong></a></li>
-{% endblock navbar_auth %}
+<ul class="navbar-nav ml-auto">
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="navbarSearchDropdown" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+            Search <span class="caret"></span>
+        </a>
+        <div class="dropdown-menu" aria-labelledby="navbarSearchDropdown">
+        <a class="dropdown-item" href="{% url 'prs_object_list' model='referrals' %}" title="Referrals">Referrals</a>
+        <a class="dropdown-item" href="{% url 'prs_object_list' model='tasks' %}" title="Tasks">Tasks</a>
+        <a class="dropdown-item" href="{% url 'prs_object_list' model='notes' %}" title="Notes">Notes</a>
+        <a class="dropdown-item" href="{% url 'prs_object_list' model='conditions' %}" title="Conditions">Conditions</a>
+        <a class="dropdown-item" href="{% url 'prs_object_list' model='records' %}" title="Records">Records</a>
+        <a class="dropdown-item" href="{% url 'prs_object_list' model='locations' %}" title="Locations">Locations</a>
+        <a class="dropdown-item" href="{% url 'prs_object_list' model='clearances' %}" title="Clearances">Clearances</a>
+        <div class="dropdown-divider"></div>
+        <a class="dropdown-item" href="{% url 'prs_general_search' %}" title="Search all">Search all</a>
+    </li>
+
+    <li class="nav-item">
+        <a class="nav-item nav-link" href="{% url 'reports' %}" title="Reports">Reports</a>
+    </li>
+
+    {% block navbar_auth %}
+    {% if user.is_authenticated %}
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="navbarAuthDropdown" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+            {% firstof user.get_full_name user.email %} <span class="caret"></span>
+        </a>
+        <div class="dropdown-menu" aria-labelledby="navbarAuthDropdown">
+            {% if user.is_superuser %}
+            <a class="dropdown-item" href="{% url 'admin:index' %}" title="Administration">Administration</a>
+            {% endif %}
+            {% if prs_power_user %}
+            <a class="dropdown-item" href="{% url 'tag_replace' %}" title="Tag replace">Tag replace</a>
+            <div class="dropdown-divider"></div>
+            {% endif %}
+            {% if last_referral %}
+            <a class="dropdown-item" href="{% url 'referral_detail' pk=last_referral.pk %}" title="Last referral">Last referral: {{ last_referral.pk }}</a>
+            {% endif %}
+
+            <a class="dropdown-item" href="{% url 'referral_recent' %}" title="Recent referrals">Recent referrals</a>
+            <a class="dropdown-item" href="{% url 'prs_object_list' model='bookmarks' %}" title="Bookmarks">Bookmarks</a>
+            <a class="dropdown-item" href="{% url 'stopped_tasks_list' %}" title="Stopped tasks">Stopped tasks</a>
+            <a class="dropdown-item" href="{% url 'help_page' %}" title="Help">Help</a>
+            {#<li><a class="dropdown-item" href="{% url 'logout' %}" title="Log out">Log out</a>#}
+        </div>
+    </li>
+    <a class="btn btn-light" href="{% url 'referral_create' %}" title="Create a new referral"><strong>Create</strong></a>
+    {% else %}
+    <li class="nav-item">
+        <a href="{% url 'login' %}">Log in</a>
+    </li>
+    {% endif %}
+    {% endblock navbar_auth %}
+</ul>
 {% endblock navbar_links %}
 
 {% block page_content %}
@@ -66,7 +73,7 @@
     <!-- Breadcrumbs -->
     {% if breadcrumb_trail %}
     <div class="row">
-        <div class="hidden-xs col-xs-12">
+        <div class="col d-none d-sm-block">
             <ol class="breadcrumb">
                 {{ breadcrumb_trail|safe }}
             </ol>
@@ -77,7 +84,7 @@
     <!-- Messages  -->
     {% if messages %}
     <div class="row">
-        <div class="col-xs-12">
+        <div class="col">
             {% for message in messages %}
             <div class="alert{% if message.tags %} alert-{{ message.tags }}{% endif %}">
                 {{ message|safe }}
@@ -88,7 +95,7 @@
     {% endif %}
 
     <div class="row">
-        <div class="col-xs-12">
+        <div class="col">
             {% block page_content_inner %}{% endblock %}
         </div>
     </div>
@@ -96,16 +103,20 @@
 {% endblock %}
 
 {% block page_footer %}
-{% cache 600 footer %}
-<hr>
-<div class="container-fluid text-center">
-    <div class="row">
-        <div class="col-xs-12">
-            <small>v{{ version_no }} &copy; Department of Biodiversity, Conservation and Attractions</small>
+<footer class="footer mt-auto py-3">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm">
+                <small>
+                Version: {{ version_no }}
+                </small>
+            </div>
+            <div class="col-sm">
+                <small class="float-right">&copy; Department of Biodiversity, Conservation and Attractions</small>
+            </div>
         </div>
     </div>
-</div>
-{% endcache %}
+</footer>
 {% endblock %}
 
 {% block extra_js %}
