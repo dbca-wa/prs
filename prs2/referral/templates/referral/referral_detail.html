@@ -73,7 +73,7 @@
                             {{ ref.type }}, ref. {{ ref.reference }} (referral ID {{ ref.pk }})
                         </a>
                         {% if prs_user %}
-                            <button type="submit" class="btn btn-warning">
+                            <button type="submit" class="btn">
                                 <i class="far fa-trash-alt"></i>
                             </button>
                         {% endif %}
@@ -111,11 +111,13 @@
             </div>
         </div>
         <div class="col-sm-12 col-md-4">
+            {% if prs_user %}
             <div id="file-uploader">
                 <form action="{% url 'referral_record_upload' pk=object.pk %}" class="dropzone" id="id_referral_dropzone">
                     <div class="dz-message">Drop files here or click to upload.</div>
                 </form>
             </div>
+            {% endif %}
         </div>
     </div><!-- /.row -->
 
@@ -259,11 +261,6 @@ Dropzone.options.idReferralDropzone = {
 <script type="text/javascript">
     // Document ready events
     $(function() {
-        // Hide the Dropzone element if not a PRS user.
-        var is_prs_user = true ? "{{ prs_user }}" == "True" : false
-        if (!is_prs_user) {
-            $("#file-uploader").hide();
-        };
         // Initialise all DataTables.
         $.fn.dataTable.moment("dd MMM YYYY", "en-AU");
         $(".prs-object-table").each(function(idx) {

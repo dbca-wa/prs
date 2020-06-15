@@ -725,55 +725,54 @@ class Task(ReferralBaseModel):
         d["state"] = self.state
         return mark_safe(template.format(**d))
 
-    def as_row_actions(self):
-        """
-        Returns a HTML table cell containing icons with links to suitable
+    def as_row_actions(self, user):
+        """Returns a HTML table cell containing icons with links to suitable
         actions for the task object (e.g. stop/start, complete, etc.)
-
-        html attr class="is_prs_user_action" is used by javascript in the template to
-        check prs_user permissions and disables Actions for readonly users.
         """
-        d = copy(self.__dict__)
-        if self.state.name == "Stopped":
-            template = (
-                """<td><a class="is_prs_user_action" href="{start_url}" title="Start"><i class="fa fa-play"></i></a></td>"""
-            )
-            d["start_url"] = reverse(
-                "task_action", kwargs={"pk": self.pk, "action": "start"}
-            )
-        elif not self.complete_date:
-            template = (
-                """<td><a class="is_prs_user_action" href="{edit_url}" title="Edit"><i class="fa fa-pencil"></i></a>"""
-            )
-            template += (
-                """ <a class="is_prs_user_action" href="{complete_url}" title="Complete"><i class="fa fa-check-square-o"></i></a>"""
-            )
-            template += """
-                <a class="is_prs_user_action" href="{stop_url}" title="Stop"><i class="fa fa-stop"></i></a>
-                <a class="is_prs_user_action" href="{reassign_url}" title="Reassign"><i class="fa fa-share"></i></a>
-                <a class="is_prs_user_action" href="{cancel_url}" title="Cancel"><i class="fa fa-ban"></i></a>
-                <a class="is_prs_user_action" href="{delete_url}" title="Delete"><i class="fa fa-trash-o"></i></a></td>"""
-            d["edit_url"] = reverse(
-                "task_action", kwargs={"pk": self.pk, "action": "update"}
-            )
-            d["reassign_url"] = reverse(
-                "task_action", kwargs={"pk": self.pk, "action": "reassign"}
-            )
-            d["complete_url"] = reverse(
-                "task_action", kwargs={"pk": self.pk, "action": "complete"}
-            )
-            d["stop_url"] = reverse(
-                "task_action", kwargs={"pk": self.pk, "action": "stop"}
-            )
-            d["cancel_url"] = reverse(
-                "task_action", kwargs={"pk": self.pk, "action": "cancel"}
-            )
-            d["delete_url"] = reverse(
-                "prs_object_delete", kwargs={"pk": self.pk, "model": "task"}
-            )
+        if user.userprofile.is_prs_user():
+            d = copy(self.__dict__)
+            if self.state.name == "Stopped":
+                template = (
+                    """<td><a href="{start_url}" title="Start"><i class="fa fa-play"></i></a></td>"""
+                )
+                d["start_url"] = reverse(
+                    "task_action", kwargs={"pk": self.pk, "action": "start"}
+                )
+            elif not self.complete_date:
+                template = (
+                    """<td><a href="{edit_url}" title="Edit"><i class="fa fa-pencil"></i></a>"""
+                )
+                template += (
+                    """ <a href="{complete_url}" title="Complete"><i class="fa fa-check-square-o"></i></a>"""
+                )
+                template += """
+                    <a href="{stop_url}" title="Stop"><i class="fa fa-stop"></i></a>
+                    <a href="{reassign_url}" title="Reassign"><i class="fa fa-share"></i></a>
+                    <a href="{cancel_url}" title="Cancel"><i class="fa fa-ban"></i></a>
+                    <a href="{delete_url}" title="Delete"><i class="fa fa-trash-o"></i></a></td>"""
+                d["edit_url"] = reverse(
+                    "task_action", kwargs={"pk": self.pk, "action": "update"}
+                )
+                d["reassign_url"] = reverse(
+                    "task_action", kwargs={"pk": self.pk, "action": "reassign"}
+                )
+                d["complete_url"] = reverse(
+                    "task_action", kwargs={"pk": self.pk, "action": "complete"}
+                )
+                d["stop_url"] = reverse(
+                    "task_action", kwargs={"pk": self.pk, "action": "stop"}
+                )
+                d["cancel_url"] = reverse(
+                    "task_action", kwargs={"pk": self.pk, "action": "cancel"}
+                )
+                d["delete_url"] = reverse(
+                    "prs_object_delete", kwargs={"pk": self.pk, "model": "task"}
+                )
+            else:
+                template = "<td></td>"
+            return mark_safe(template.format(**d))
         else:
-            template = "<td></td>"
-        return mark_safe(template.format(**d))
+            return mark_safe("<td></td>")
 
     def as_row_minus_referral(self):
         """
@@ -1110,24 +1109,23 @@ class Record(ReferralBaseModel):
             d["filesize"] = ""
         return mark_safe(template.format(**d))
 
-    def as_row_actions(self):
-        """
-        Returns a HTML table cell containing icons with links to suitable
+    def as_row_actions(self, user):
+        """Returns a HTML table cell containing icons with links to suitable
         actions for the record object (edit, delete, etc.)
-
-        html attr class="is_prs_user_action" is used by javascript in the template to
-        check prs_user permissions and disables Actions for readonly users.
         """
-        template = """<td><a class="is_prs_user_action" href="{edit_url}" title="Edit"><i class="fa fa-pencil"></i></a>
-            <a class="is_prs_user_action" href="{delete_url}" title="Delete"><i class="fa fa-trash-o"></i></a></td>"""
-        d = copy(self.__dict__)
-        d["edit_url"] = reverse(
-            "prs_object_update", kwargs={"pk": self.pk, "model": "records"}
-        )
-        d["delete_url"] = reverse(
-            "prs_object_delete", kwargs={"pk": self.pk, "model": "records"}
-        )
-        return mark_safe(template.format(**d))
+        if user.userprofile.is_prs_user():
+            template = """<td><a class="is_prs_user_action" href="{edit_url}" title="Edit"><i class="fa fa-pencil"></i></a>
+                <a class="is_prs_user_action" href="{delete_url}" title="Delete"><i class="fa fa-trash-o"></i></a></td>"""
+            d = copy(self.__dict__)
+            d["edit_url"] = reverse(
+                "prs_object_update", kwargs={"pk": self.pk, "model": "records"}
+            )
+            d["delete_url"] = reverse(
+                "prs_object_delete", kwargs={"pk": self.pk, "model": "records"}
+            )
+            return mark_safe(template.format(**d))
+        else:
+            return mark_safe("<td></td>")
 
     def as_row_minus_referral(self):
         """Removes the HTML cell containing the parent referral details.
@@ -1257,23 +1255,23 @@ class Note(ReferralBaseModel):
         d["referral"] = self.referral
         return mark_safe(template.format(**d))
 
-    def as_row_actions(self):
+    def as_row_actions(self, user):
         """Returns a HTML table cell containing icons with links to suitable
         actions for the note object (edit, delete, etc.)
-
-        html attr class="is_prs_user_action" is used by javascript in the template to
-        check prs_user permissions and disables Actions for readonly users.
         """
-        template = """<td><a class="is_prs_user_action" href="{edit_url}" title="Edit"><i class="fa fa-pencil"></i></a>
-            <a class="is_prs_user_action" href="{delete_url}" title="Delete"><i class="fa fa-trash-o"></i></a></td>"""
-        d = copy(self.__dict__)
-        d["edit_url"] = reverse(
-            "prs_object_update", kwargs={"pk": self.pk, "model": "notes"}
-        )
-        d["delete_url"] = reverse(
-            "prs_object_delete", kwargs={"pk": self.pk, "model": "notes"}
-        )
-        return mark_safe(template.format(**d))
+        if user.userprofile.is_prs_user():
+            d = copy(self.__dict__)
+            template = """<td><a class="is_prs_user_action" href="{edit_url}" title="Edit"><i class="fa fa-pencil"></i></a>
+                <a class="is_prs_user_action" href="{delete_url}" title="Delete"><i class="fa fa-trash-o"></i></a></td>"""
+            d["edit_url"] = reverse(
+                "prs_object_update", kwargs={"pk": self.pk, "model": "notes"}
+            )
+            d["delete_url"] = reverse(
+                "prs_object_delete", kwargs={"pk": self.pk, "model": "notes"}
+            )
+            return mark_safe(template.format(**d))
+        else:
+            return mark_safe("<td></td>")
 
     def as_row_minus_referral(self):
         """Removes the HTML cell containing the parent referral details.
@@ -1448,27 +1446,27 @@ class Condition(ReferralBaseModel):
         d["referral"] = self.referral or ""
         return mark_safe(template.format(**d))
 
-    def as_row_actions(self):
+    def as_row_actions(self, user):
         """Returns a HTML table cell containing icons with links to suitable
         actions for the condition object (edit, delete, etc.)
-
-        html attr class="is_prs_user_action" is used by javascript in the template to
-        check prs_user permissions and disables Actions for readonly users.
         """
-        template = """<td><a class="is_prs_user_action" href="{add_clearance_url}" title="Add clearance"><i class="fa fa-plus"></i></a>
-            <a class="is_prs_user_action" href="{edit_url}" title="Edit"><i class="fa fa-pencil"></i></a>
-            <a class="is_prs_user_action" href="{delete_url}" title="Delete"><i class="fa fa-trash-o"></i></a></td>"""
-        d = copy(self.__dict__)
-        d["add_clearance_url"] = reverse(
-            "condition_clearance_add", kwargs={"pk": self.pk}
-        )
-        d["edit_url"] = reverse(
-            "prs_object_update", kwargs={"pk": self.pk, "model": "conditions"}
-        )
-        d["delete_url"] = reverse(
-            "prs_object_delete", kwargs={"pk": self.pk, "model": "conditions"}
-        )
-        return mark_safe(template.format(**d))
+        if user.userprofile.is_prs_user():
+            template = """<td><a class="is_prs_user_action" href="{add_clearance_url}" title="Add clearance"><i class="fa fa-plus"></i></a>
+                <a class="is_prs_user_action" href="{edit_url}" title="Edit"><i class="fa fa-pencil"></i></a>
+                <a class="is_prs_user_action" href="{delete_url}" title="Delete"><i class="fa fa-trash-o"></i></a></td>"""
+            d = copy(self.__dict__)
+            d["add_clearance_url"] = reverse(
+                "condition_clearance_add", kwargs={"pk": self.pk}
+            )
+            d["edit_url"] = reverse(
+                "prs_object_update", kwargs={"pk": self.pk, "model": "conditions"}
+            )
+            d["delete_url"] = reverse(
+                "prs_object_delete", kwargs={"pk": self.pk, "model": "conditions"}
+            )
+            return mark_safe(template.format(**d))
+        else:
+            return mark_safe("<td></td>")
 
     def as_row_minus_referral(self):
         """
@@ -1734,23 +1732,23 @@ class Location(ReferralBaseModel):
         d["referral"] = self.referral
         return mark_safe(template.format(**d))
 
-    def as_row_actions(self):
+    def as_row_actions(self, user):
         """Returns a HTML table cell containing icons with links to suitable
         actions for the location object (edit, delete, etc.)
-
-        html attr class="is_prs_user_action" is used by javascript in the template to
-        check prs_user permissions and disables Actions for readonly users.
         """
-        template = """<td><a class="is_prs_user_action" href="{edit_url}" title="Edit"><i class="fa fa-pencil"></i></a>
-            <a class="is_prs_user_action" href="{delete_url}" title="Delete"><i class="fa fa-trash-o"></i></a></td>"""
-        d = copy(self.__dict__)
-        d["edit_url"] = reverse(
-            "prs_object_update", kwargs={"pk": self.pk, "model": "locations"}
-        )
-        d["delete_url"] = reverse(
-            "prs_object_delete", kwargs={"pk": self.pk, "model": "locations"}
-        )
-        return mark_safe(template.format(**d))
+        if user.userprofile.is_prs_user():
+            template = """<td><a class="is_prs_user_action" href="{edit_url}" title="Edit"><i class="fa fa-pencil"></i></a>
+                <a class="is_prs_user_action" href="{delete_url}" title="Delete"><i class="fa fa-trash-o"></i></a></td>"""
+            d = copy(self.__dict__)
+            d["edit_url"] = reverse(
+                "prs_object_update", kwargs={"pk": self.pk, "model": "locations"}
+            )
+            d["delete_url"] = reverse(
+                "prs_object_delete", kwargs={"pk": self.pk, "model": "locations"}
+            )
+            return mark_safe(template.format(**d))
+        else:
+            return mark_safe("<td></td>")
 
     def as_row_minus_referral(self):
         """Removes the HTML cell containing the parent referral details.
