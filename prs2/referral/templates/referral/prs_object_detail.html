@@ -1,5 +1,4 @@
 {% extends "base_prs.html" %}
-{% load cache %}
 {% load static %}
 
 {% block extra_style %}
@@ -54,31 +53,35 @@
     </div>
 </li>
 {% elif object_type == 'note' %}
-{% cache 600 note_navbar_links object.pk request.user.username %}
-<li class="dropdown">
-    <a id="id-menu-note" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Note <span class="caret"></span></a>
-    <ul class="dropdown-menu" role="menu">
-        <a href="{% url 'prs_object_update' model='notes' pk=object.id %}">Update note</a>
-        <a href="{% url 'prs_object_delete' model='notes' pk=object.id %}">Delete note</a>
-        <a href="{% url 'referral_create_child_related' pk=object.referral.id id=object.id model='note' type='addnewrecord' %}">Add a new record to this note</a>
-        <a href="{% url 'referral_create_child_related' pk=object.referral.id id=object.id model='note' type='addrecord' %}">Add existing record(s) to this note</a>
-        <li><a href="{% url 'prs_object_history' model='notes' pk=object.id %}">History</a>
-    </ul>
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" href="#" id="noteDetailNavbarDropdown" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+        Note <span class="caret"></span>
+    </a>
+    <div class="dropdown-menu" aria-labelledby="noteDetailNavbarDropdown">
+        {% if prs_user %}
+            <a class="dropdown-item" href="{% url 'prs_object_update' model='notes' pk=object.id %}">Update note</a>
+            <a class="dropdown-item" href="{% url 'prs_object_delete' model='notes' pk=object.id %}">Delete note</a>
+            <a class="dropdown-item" href="{% url 'referral_create_child_related' pk=object.referral.id id=object.id model='note' type='addnewrecord' %}">Add a new record to this note</a>
+            <a class="dropdown-item" href="{% url 'referral_create_child_related' pk=object.referral.id id=object.id model='note' type='addrecord' %}">Add existing record(s) to this note</a>
+        {% endif %}
+        <a class="dropdown-item" href="{% url 'prs_object_history' model='notes' pk=object.id %}">History</a>
+    </div>
 </li>
-{% endcache %}
 {% elif object_type == 'record' %}
-{% cache 600 record_navbar_links object.pk request.user.username %}
-<li class="dropdown">
-    <a id="id-menu-record" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Record <span class="caret"></span></a>
-    <ul class="dropdown-menu" role="menu">
-        <a href="{% url 'prs_object_update' model='records' pk=object.id %}">Update record</a>
-        <a href="{% url 'prs_object_delete' model='records' pk=object.id %}">Delete record</a>
-        <a href="{% url 'referral_create_child_related' pk=object.referral.id id=object.id model='record' type='addnewnote' %}">Add a new note to this record</a>
-        <a href="{% url 'referral_create_child_related' pk=object.referral.id id=object.id model='record' type='addnote' %}">Add existing note(s) to this record</a>
-        <li><a href="{% url 'prs_object_history' model='records' pk=object.id %}">History</a>
-    </ul>
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" href="#" id="recordDetailNavbarDropdown" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+        Record <span class="caret"></span>
+    </a>
+    <div class="dropdown-menu" aria-labelledby="recordDetailNavbarDropdown">
+        {% if prs_user %}
+            <a class="dropdown-item" href="{% url 'prs_object_update' model='records' pk=object.id %}">Update record</a>
+            <a class="dropdown-item" href="{% url 'prs_object_delete' model='records' pk=object.id %}">Delete record</a>
+            <a class="dropdown-item" href="{% url 'referral_create_child_related' pk=object.referral.id id=object.id model='record' type='addnewnote' %}">Add a new note to this record</a>
+            <a class="dropdown-item" href="{% url 'referral_create_child_related' pk=object.referral.id id=object.id model='record' type='addnote' %}">Add existing note(s) to this record</a>
+        {% endif %}
+        <a class="dropdown-item" href="{% url 'prs_object_history' model='records' pk=object.id %}">History</a>
+    </div>
 </li>
-{% endcache %}
 {% elif object_type == 'location' %}
 <li class="nav-item dropdown">
     <a class="nav-link dropdown-toggle" href="#" id="locationDetailNavbarDropdown" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
@@ -93,17 +96,19 @@
     </div>
 </li>
 {% elif object_type == 'condition' %}
-{% cache 600 condition_navbar_links object.pk request.user.username %}
-<li class="dropdown">
-    <a id="id-menu-condition" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Condition <span class="caret"></span></a>
-    <ul class="dropdown-menu" role="menu">
-        <a href="{% url 'prs_object_update' model='conditions' pk=object.id %}">Update condition</a>
-        <a href="{% url 'prs_object_delete' model='conditions' pk=object.id %}">Delete condition</a>
-        <a href="{% url 'condition_clearance_add' pk=object.id %}">Add a clearance request</a>
-        <li><a href="{% url 'prs_object_history' model='conditions' pk=object.id %}">History</a>
-    </ul>
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" href="#" id="conditionDetailNavbarDropdown"  data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+        Condition <span class="caret"></span>
+    </a>
+    <div class="dropdown-menu" aria-labelledby="conditionDetailNavbarDropdown">
+        {% if prs_user %}
+            <a class="dropdown-item" href="{% url 'prs_object_update' model='conditions' pk=object.id %}">Update condition</a>
+            <a class="dropdown-item" href="{% url 'prs_object_delete' model='conditions' pk=object.id %}">Delete condition</a>
+            <a class="dropdown-item" href="{% url 'condition_clearance_add' pk=object.id %}">Add a clearance request</a>
+        {% endif %}
+        <a class="dropdown-item" href="{% url 'prs_object_history' model='conditions' pk=object.id %}">History</a>
+    </div>
 </li>
-{% endcache %}
 {% endif %}
 {% endblock %}
 
