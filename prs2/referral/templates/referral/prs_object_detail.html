@@ -7,8 +7,9 @@
 <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/datatables/1.10.9/css/dataTables.bootstrap.min.css">
 <link rel="stylesheet" type="text/css" href="{% static 'css/prs_datatables.css' %}" />
 {% if geojson_locations %}
-<link rel="stylesheet" href="//api.mapbox.com/mapbox.js/v2.2.1/mapbox.css" />
-<link rel="stylesheet" href="{% static 'css/leaflet-search.css' %}" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mapbox.js/3.3.1/mapbox.min.css" integrity="sha256-In35bXEWybU1ap9AaTzR+Oan+5DZFnhaddUcg72dhF0=" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.css" integrity="sha256-RTALnHN76PJ32RJx2mxggy+RUt9TIRV+mfPLSLbI75A=" crossorigin="anonymous" />
+<link rel="stylesheet" type="text/css" href="{% static 'css/leaflet-search.css' %}" />
 {% endif %}
 <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/dropzone/5.1.1/min/dropzone.min.css">
 <link rel="stylesheet" href="{% static 'css/prs_dropzone.css' %}" />
@@ -38,7 +39,7 @@
             {% if can_complete %}
                 <a class="dropdown-item" href="{% url 'task_action' pk=object.pk action='complete' %}">Complete task</a>
             {% else %}
-                <a class="dropdown-item" href="#" id="id_complete" title="{{can_complete_msg}}" style="color:grey">Complete task</a>
+                <a class="dropdown-item" href="#" id="id_complete" title="{{ can_complete_msg }}" style="color:grey">Complete task</a>
             {% endif %}
             <a class="dropdown-item" href="{% url 'task_action' pk=object.pk action='cancel' %}">Cancel task</a>
             <a class="dropdown-item" href="{% url 'task_action' pk=object.pk action='reassign' %}">Reassign task</a>
@@ -79,16 +80,18 @@
 </li>
 {% endcache %}
 {% elif object_type == 'location' %}
-{% cache 600 location_navbar_links object.pk request.user.username %}
-<li class="dropdown">
-    <a id="id-menu-location" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Location <span class="caret"></span></a>
-    <ul class="dropdown-menu" role="menu">
-        <a href="{% url 'prs_object_update' model='locations' pk=object.id %}">Update location</a>
-        <a href="{% url 'prs_object_delete' model='locations' pk=object.id %}">Delete location</a>
-        <li><a href="{% url 'prs_object_history' model='locations' pk=object.id %}">History</a>
-    </ul>
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" href="#" id="locationDetailNavbarDropdown" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+        Location <span class="caret"></span>
+    </a>
+    <div class="dropdown-menu" aria-labelledby="locationDetailNavbarDropdown">
+        {% if prs_user %}
+            <a class="dropdown-item" href="{% url 'prs_object_update' model='locations' pk=object.id %}">Update location</a>
+            <a class="dropdown-item" href="{% url 'prs_object_delete' model='locations' pk=object.id %}">Delete location</a>
+        {% endif %}
+        <a class="dropdown-item" href="{% url 'prs_object_history' model='locations' pk=object.id %}">History</a>
+    </div>
 </li>
-{% endcache %}
 {% elif object_type == 'condition' %}
 {% cache 600 condition_navbar_links object.pk request.user.username %}
 <li class="dropdown">
@@ -105,7 +108,9 @@
 {% endblock %}
 
 {% block page_content_inner %}
-<div class="alert alert-danger hidden" id="complete_msg">{{can_complete_msg}}</div>
+{% if can_complete %}
+<div class="alert alert-danger hidden" id="complete_msg">{{ can_complete_msg }}</div>
+{% endif %}
 <div id="object-details">
 
 <!-- Object details -->
@@ -220,9 +225,9 @@
 
 {% if geojson_locations %}
 <div class="row">
-    <div class="col-xs-12">
-        <div id="map"></div>
-    </div><!-- /.col-xs-12-->
+    <div class="col">
+        <div class="card card-body" id="map"></div>
+    </div>
 </div>
 {% endif %}
 {% endblock page_content_inner %}
@@ -235,7 +240,8 @@
 <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
 <script type="text/javascript" src="{% static 'js/datetime-moment.js' %}"></script>
 {% if geojson_locations %}
-<script src="//api.mapbox.com/mapbox.js/v2.2.2/mapbox.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mapbox.js/3.3.1/mapbox.js" integrity="sha256-oXEqjWuC/jlnMsEvnx5CC50C3O9dILhUsz8dIzkcbGI=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.js" integrity="sha256-6H5xWuqlbGtfk8UL9eMYmp14brCbCw1ZZialT8fHLRE=" crossorigin="anonymous"></script>
 <script src="{% static 'js/leaflet-search.min.js' %}"></script>
 <script>
     // Set global variables (needs to happen before loading referral_map.js)
@@ -244,6 +250,8 @@
 </script>
 <script src="{% static 'js/referral_map.js' %}"></script>
 <script>
+    // Add a fullscreen control to the map.
+    L.control.fullscreen().addTo(map);
     // Add Location polygons to the map display and zoom to their bounds.
     var geojsonFeatures = JSON.parse('{{ geojson_locations|escapejs }}');
     var locationsLayer = L.geoJson(null, {
@@ -273,13 +281,13 @@
     };
 </script>
 <script type="text/javascript" charset="utf-8">
-    $("#id_complete").click(function() {
-       $('#complete_msg').removeClass('hidden');
-    });
-</script>
-<script type="text/javascript">
     // Document ready events
     $(function() {
+        {% if can_complete %}
+            $("#id_complete").click(function() {
+               $('#complete_msg').removeClass('hidden');
+            });
+        {% endif %}
         // Hide the Dropzone element if not a PRS user.
         var is_prs_user = true ? "{{ prs_user }}" == "True" : false
         if (!is_prs_user) {

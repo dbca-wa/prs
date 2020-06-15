@@ -6,8 +6,8 @@
 {% block extra_style %}
 {{ block.super }}
 {% if geojson_locations %}
-<link rel="stylesheet" type="text/css" href="//api.mapbox.com/mapbox.js/v3.1.1/mapbox.css" />
-<link rel="stylesheet" type="text/css" href="//api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/leaflet.fullscreen.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mapbox.js/3.3.1/mapbox.min.css" integrity="sha256-In35bXEWybU1ap9AaTzR+Oan+5DZFnhaddUcg72dhF0=" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.css" integrity="sha256-RTALnHN76PJ32RJx2mxggy+RUt9TIRV+mfPLSLbI75A=" crossorigin="anonymous" />
 <link rel="stylesheet" type="text/css" href="{% static 'css/leaflet-search.css' %}" />
 {% endif %}
 <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/dropzone/5.1.1/min/dropzone.min.css">
@@ -191,29 +191,28 @@
 {% endif %}
 
 {% if geojson_locations %}
+<hr>
 <div class="row">
     <div class="col">
-        <button class="btn btn-primary" role="button" data-toggle="collapse" data-target="#id_collapseMap" aria-expanded="false" aria-controls="id_collapseMap">
-            Show/hide locations
-        </button>
-    </div>
-</div>
-
-<div class="collapse" id="id_collapseMap">
-    <div class="row">
-        <div class="col">
-            <div id="map"></div>
+        <p>
+            <button class="btn btn-primary" role="button" data-toggle="collapse" data-target="#id_collapseMap" aria-expanded="true" aria-controls="id_collapseMap">
+                Show/hide locations
+            </button>
+        </p>
+        <div class="collapse show" id="id_collapseMap">
+            <div class="card card-body" id="map"></div>
         </div>
     </div>
 </div>
+
 {% endif %}
 {% endblock page_content_inner %}
 
 {% block extra_js %}
 {{ block.super }}
 {% if geojson_locations %}
-<script src="//api.mapbox.com/mapbox.js/v3.1.1/mapbox.js"></script>
-<script src="//api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/Leaflet.fullscreen.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mapbox.js/3.3.1/mapbox.js" integrity="sha256-oXEqjWuC/jlnMsEvnx5CC50C3O9dILhUsz8dIzkcbGI=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.js" integrity="sha256-6H5xWuqlbGtfk8UL9eMYmp14brCbCw1ZZialT8fHLRE=" crossorigin="anonymous"></script>
 <script src="{% static 'js/leaflet-search.min.js' %}"></script>
 <script>
     // Set global variables (needs to happen before loading referral_map.js)
@@ -279,9 +278,5 @@ Dropzone.options.idReferralDropzone = {
             });
         });
     });
-    {% if geojson_locations %}
-    // Hide the map viewer by default.
-    $("#id_collapseMap").collapse("hide");
-    {% endif %}
 </script>
 {% endblock extra_js %}
