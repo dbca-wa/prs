@@ -21,10 +21,10 @@ env:
         - DATABASE_URL="postgis://postgres@localhost:5432/travis_ci_test"
 before_install:
     - docker build -t dbcawa/prs .
-install:
     - pip install --upgrade pip
-    - pip install --upgrade setuptools
-    - pip install -r requirements.txt
+    - pip install poetry
+install:
+    - poetry install --verbose --no-interaction --no-ansi
 before_script:
     - psql -U postgres -c "create database travis_ci_test;"
     - psql -U postgres -d travis_ci_test -c "create extension postgis;"
