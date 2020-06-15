@@ -126,17 +126,4 @@
 {% block extra_js %}
 <script src="{% static 'js/startswith.js' %}"></script>
 {{ block.super }}
-<script type="text/javascript">
-    // disable url links if user has readonly access (returns true if user is_superuser!)
-    $(function() {
-        var is_prs_user = true ? "{{ prs_user }}" == "True" : false
-        if (!is_prs_user) {
-            // html added via models.py 'def as_row_actions()'
-            $('.is_prs_user_action').each(function(i, item) {
-                item.style="color:grey;";
-                item.href="#";
-            });
-        }
-    });
-</script>
 {% endblock extra_js %}

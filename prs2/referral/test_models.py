@@ -90,7 +90,7 @@ class PrsTestCase(TestCase):
                 Clearance, condition=mixer.SELECT, task=mixer.SELECT)
             mixer.cycle(2).blend(Location, referral=mixer.SELECT)
             # Generate some geometry in one Location.
-            loc = Location.objects.all()[0]
+            loc = Location.objects.first()
             loc.poly = Polygon(((0.0, 0.0), (0.0, 50.0), (50.0, 50.0), (50.0, 0.0), (0.0, 0.0)))
             loc.save()
             mixer.cycle(2).blend(Bookmark, referral=mixer.SELECT, user=mixer.SELECT)
@@ -103,7 +103,7 @@ class ReferralLookupModelTest(PrsTestCase):
 
     def setUp(self):
         super(ReferralLookupModelTest, self).setUp()
-        self.obj = DopTrigger.objects.all()[0]
+        self.obj = DopTrigger.objects.first()
 
     def test_get_absolute_url(self):
         """Test ReferralLookupModel get_absolute_url() method
@@ -149,7 +149,7 @@ class ReferralBaseModelTest(PrsTestCase):
 
     def setUp(self):
         super(ReferralBaseModelTest, self).setUp()
-        self.obj = Referral.objects.all()[0]
+        self.obj = Referral.objects.first()
 
     def test_get_absolute_url(self):
         """Test ReferralBaseModel get_absolute_url() method
@@ -164,7 +164,7 @@ class OrganisationTest(PrsTestCase):
     def test_as_tbody(self):
         """Test the Organisation model as_tbody() method
         """
-        org = Organisation.objects.all()[0]
+        org = Organisation.objects.first()
         tbody = org.as_tbody()
         # Object name will be in returned output.
         self.assertIsNot(tbody.find(org.name), -1)
@@ -295,7 +295,7 @@ class TaskTest(PrsTestCase):
     def test_as_row(self):
         """Test the Task model as_row() method.
         """
-        t = Task.objects.all()[0]
+        t = Task.objects.first()
         # Test that the return string contains task type and
         # absolute URL, plus referral absolute URL.
         row = t.as_row()
@@ -313,10 +313,10 @@ class TaskTest(PrsTestCase):
     def test_as_row_actions(self):
         """Test the Task model as_row_actions() method.
         """
-        t = Task.objects.all()[0]
+        t = Task.objects.first()
         t.state = TaskState.objects.get(name='In progress')
         t.save()
-        row = t.as_row_actions()
+        row = t.as_row_actions(self.n_user)
         # Non-stopped tasks should have a bunch of options, but not 'Start'
         self.assertIs(row.find('Start'), -1)
         self.assertIsNot(row.find('Edit'), -1)
@@ -328,7 +328,7 @@ class TaskTest(PrsTestCase):
         t.state = TaskState.objects.get(name='Stopped')
         t.stop_date = date.today()
         t.save()
-        row = t.as_row_actions()
+        row = t.as_row_actions(self.n_user)
         self.assertIsNot(row.find('Start'), -1)
         self.assertIs(row.find('Edit'), -1)
         self.assertIs(row.find('Complete'), -1)
@@ -339,7 +339,7 @@ class TaskTest(PrsTestCase):
         t.state = TaskState.objects.get(name='Completed')
         t.complete_date = date.today()
         t.save()
-        row = t.as_row_actions()
+        row = t.as_row_actions(self.n_user)
         self.assertIs(row.find('Start'), -1)
         self.assertIs(row.find('Edit'), -1)
         self.assertIs(row.find('Complete'), -1)
@@ -350,7 +350,7 @@ class TaskTest(PrsTestCase):
     def test_as_row_minus_referral(self):
         """Test the Task model as_row_minus_referral() method.
         """
-        t = Task.objects.all()[0]
+        t = Task.objects.first()
         row = t.as_row_minus_referral()
         self.assertIs(row.find(t.referral.get_absolute_url()), -1)
         self.assertIs(row.find('class="referral-id-cell"'), -1)
@@ -358,7 +358,7 @@ class TaskTest(PrsTestCase):
     def test_is_overdue(self):
         """Test the Task model is_overdue property.
         """
-        t = Task.objects.all()[0]
+        t = Task.objects.first()
         t.due_date = date.today() + timedelta(7)  # Future
         t.save()
         self.assertFalse(t.is_overdue)
@@ -372,7 +372,7 @@ class TaskTest(PrsTestCase):
     def test_is_stopped(self):
         """Test the Task model is_stopped property.
         """
-        t = Task.objects.all()[0]
+        t = Task.objects.first()
         t.state = TaskState.objects.get(name='In progress')
         t.save()
         self.assertFalse(t.is_stopped)
@@ -384,7 +384,7 @@ class TaskTest(PrsTestCase):
     def test_as_row_for_site_home(self):
         """Test the Task model as_row_for_site_home() method.
         """
-        t = Task.objects.all()[0]
+        t = Task.objects.first()
         t.state = TaskState.objects.get(name='In progress')
         t.save()
         row = t.as_row_for_site_home()
@@ -415,7 +415,7 @@ class TaskTest(PrsTestCase):
     def test_as_row_for_index_print(self):
         """Test the Task model as_row_for_index_print() method.
         """
-        t = Task.objects.all()[0]
+        t = Task.objects.first()
         row = t.as_row_for_index_print()
         # Row should never contain the icon cell.
         self.assertIs(row.find('<td class="action-icons-cell">'), -1)
@@ -433,7 +433,7 @@ class TaskTest(PrsTestCase):
     def test_as_tbody(self):
         """Test the Task model as_tbody() method
         """
-        t = Task.objects.all()[0]
+        t = Task.objects.first()
         body = t.as_tbody()
         self.assertIsNot(body.find(t.type.name), -1)
         self.assertIsNot(body.find(t.state.name), -1)
@@ -450,7 +450,7 @@ class TaskTest(PrsTestCase):
     def test_email_user(self):
         """Test the Task model email_user() method.
         """
-        t = Task.objects.all()[0]
+        t = Task.objects.first()
         t.assigned_user = self.n_user
         t.save()
         t.email_user()
@@ -468,7 +468,7 @@ class RecordTest(PrsTestCase):
         super(RecordTest, self).setUp()
         # Create a temp file in the MEDIA_ROOT directory.
         self.tmp_f = open(settings.MEDIA_ROOT + '/test.txt', 'a')
-        self.r = Record.objects.all()[0]
+        self.r = Record.objects.first()
 
     def tearDown(self):
         # Clean up the temp file.
@@ -524,7 +524,7 @@ class RecordTest(PrsTestCase):
     def test_as_row_actions(self):
         """Test the Record model as_row_actions() method.
         """
-        row = self.r.as_row_actions()
+        row = self.r.as_row_actions(self.n_user)
         self.assertIsNot(row.find('Edit'), -1)
         self.assertIsNot(row.find('Delete'), -1)
 
@@ -556,7 +556,7 @@ class NoteTest(PrsTestCase):
     def test_save(self):
         """Test the Note model save() override.
         """
-        n = Note.objects.all()[0]
+        n = Note.objects.first()
         n.note_html = 'foo ' * 100
         n.note = 'foo ' * 100  # We normally only edit note_html
         n.save()
@@ -570,7 +570,7 @@ class NoteTest(PrsTestCase):
     def test_short_code(self):
         """Test the Note model short_note property.
         """
-        n = Note.objects.all()[0]
+        n = Note.objects.first()
         # Ensure that the text is lengthy.
         n.note_html = '<p>{}</p>'.format('foo ' * 1000)
         n.save()
@@ -588,7 +588,7 @@ class NoteTest(PrsTestCase):
         """
         # Test that the return string contains record name and
         # absolute URL, plus referral absolute URL.
-        n = Note.objects.all()[0]
+        n = Note.objects.first()
         row = n.as_row()
         self.assertIsNot(row.find(n.get_absolute_url()), -1)
         self.assertIsNot(row.find(n.referral.get_absolute_url()), -1)
@@ -603,15 +603,15 @@ class NoteTest(PrsTestCase):
     def test_as_row_actions(self):
         """Test the Note model as_row_actions() method.
         """
-        n = Note.objects.all()[0]
-        row = n.as_row_actions()
+        n = Note.objects.first()
+        row = n.as_row_actions(self.n_user)
         self.assertIsNot(row.find('Edit'), -1)
         self.assertIsNot(row.find('Delete'), -1)
 
     def test_as_row_minus_referral(self):
         """Test the Note model as_row_minus_referral() method.
         """
-        n = Note.objects.all()[0]
+        n = Note.objects.first()
         row = n.as_row_minus_referral()
         self.assertIs(row.find(n.referral.get_absolute_url()), -1)
         self.assertIs(row.find('class="referral-id-cell"'), -1)
@@ -619,7 +619,7 @@ class NoteTest(PrsTestCase):
     def test_as_tbody(self):
         """Test the Note mode as_tbody() method.
         """
-        n = Note.objects.all()[0]
+        n = Note.objects.first()
         body = n.as_tbody()
         self.assertIsNot(body.find(n.note_html), -1)
         # Change some field values, for coverage.
@@ -637,7 +637,7 @@ class ConditionTest(PrsTestCase):
     def test_save(self):
         """Test the Condition model save() override.
         """
-        c = Condition.objects.all()[0]
+        c = Condition.objects.first()
         c.condition_html = '<div class="MsoNormal">Test</div>'
         c.proposed_condition_html = '<span lang="EN-AU">Test</span>'
         c.save()
@@ -649,7 +649,7 @@ class ConditionTest(PrsTestCase):
     def test_blank_condition(self):
         """Test if a condition can be saved without any text.
         """
-        c = Condition.objects.all()[0]
+        c = Condition.objects.first()
         c.proposed_condition_html = ''
         c.condition_html = ''
         c.save()
@@ -661,7 +661,7 @@ class ConditionTest(PrsTestCase):
         """
         # Test that the return string contains condition absolute URL,
         # plus referral absolute URL.
-        c = Condition.objects.all()[0]
+        c = Condition.objects.first()
         c.proposed_condition_html = '<span lang="EN-AU">Test</span>'
         c.save()
         row = c.as_row()
@@ -669,7 +669,7 @@ class ConditionTest(PrsTestCase):
         self.assertIsNot(row.find(c.referral.get_absolute_url()), -1)
         self.assertIsNot(row.find(c.condition), -1)
         # Change some field values, for coverage.
-        cat = ConditionCategory.objects.all()[0]
+        cat = ConditionCategory.objects.first()
         c.referral = None
         c.category = cat
         c.save()
@@ -679,8 +679,8 @@ class ConditionTest(PrsTestCase):
     def test_as_row_actions(self):
         """Test the Condition model as_row_actions() method.
         """
-        c = Condition.objects.all()[0]
-        row = c.as_row_actions()
+        c = Condition.objects.first()
+        row = c.as_row_actions(self.n_user)
         self.assertIsNot(row.find('Edit'), -1)
         self.assertIsNot(row.find('Delete'), -1)
         url = reverse('condition_clearance_add', kwargs={'pk': c.pk})
@@ -689,7 +689,7 @@ class ConditionTest(PrsTestCase):
     def test_as_tbody(self):
         """Test the Condition mode as_tbody() method.
         """
-        c = Condition.objects.all()[0]
+        c = Condition.objects.first()
         body = c.as_tbody()
         self.assertIsNot(body.find(c.referral.get_absolute_url()), -1)
         # Change some field values, for coverage.
@@ -702,7 +702,7 @@ class ConditionTest(PrsTestCase):
     def test_add_clearance(self):
         """
         """
-        c = Condition.objects.all()[0]
+        c = Condition.objects.first()
         t = mixer.blend(Task, type=mixer.SELECT, referral=mixer.SELECT, state=mixer.SELECT)
         clear = c.add_clearance(t)
         self.assertIsInstance(clear, Clearance)
@@ -719,7 +719,7 @@ class ClearanceTest(PrsTestCase):
     def test_as_row(self):
         """Test the Clearance model as_row() method.
         """
-        c = Clearance.objects.all()[0]
+        c = Clearance.objects.first()
         row = c.as_row()
         self.assertIsNot(row.find(c.task.referral.get_absolute_url()), -1)
         # Change some field values, for coverage.
@@ -733,7 +733,7 @@ class ClearanceTest(PrsTestCase):
     def test_as_tbody(self):
         """Test the Clearance model as_tbody() method.
         """
-        c = Clearance.objects.all()[0]
+        c = Clearance.objects.first()
         body = c.as_tbody()
         self.assertIsNot(body.find(c.task.referral.get_absolute_url()), -1)
 
@@ -745,7 +745,7 @@ class LocationTest(PrsTestCase):
     def test_nice_address(self):
         """Test the Location model nice_address() method
         """
-        loc = Location.objects.all()[0]
+        loc = Location.objects.first()
         loc.address_no = '1'
         loc.address_suffix = 'A'
         loc.lot_no = '10'
@@ -764,22 +764,22 @@ class LocationTest(PrsTestCase):
     def test_as_row(self):
         """Test the Location model as_row() method.
         """
-        loc = Location.objects.all()[0]
+        loc = Location.objects.first()
         row = loc.as_row()
         self.assertIsNot(row.find(loc.referral.get_absolute_url()), -1)
 
     def test_as_row_actions(self):
         """Test the Location model as_row_actions() method.
         """
-        loc = Location.objects.all()[0]
-        row = loc.as_row_actions()
+        loc = Location.objects.first()
+        row = loc.as_row_actions(self.n_user)
         self.assertIsNot(row.find('Edit'), -1)
         self.assertIsNot(row.find('Delete'), -1)
 
     def test_as_row_minus_referral(self):
         """Test the Location model as_row_minus_referral() method.
         """
-        loc = Location.objects.all()[0]
+        loc = Location.objects.first()
         row = loc.as_row_minus_referral()
         self.assertIs(row.find(loc.referral.get_absolute_url()), -1)
         self.assertIs(row.find('class="referral-id-cell"'), -1)
@@ -787,7 +787,7 @@ class LocationTest(PrsTestCase):
     def test_as_tbody(self):
         """Test the Location mode as_tbody() method.
         """
-        loc = Location.objects.all()[0]
+        loc = Location.objects.first()
         body = loc.as_tbody()
         self.assertIsNot(body.find(loc.referral.get_absolute_url()), -1)
 
@@ -797,14 +797,14 @@ class BookmarkTest(PrsTestCase):
     def test_as_row(self):
         """Test the Bookmark model as_row() method.
         """
-        b = Bookmark.objects.all()[0]
+        b = Bookmark.objects.first()
         row = b.as_row()
         self.assertIsNot(row.find(b.referral.get_absolute_url()), -1)
 
     def test_as_tbody(self):
         """Test the Bookmark mode as_tbody() method.
         """
-        b = Bookmark.objects.all()[0]
+        b = Bookmark.objects.first()
         body = b.as_tbody()
         self.assertIsNot(body.find(b.referral.get_absolute_url()), -1)
 
@@ -816,7 +816,7 @@ class RelatedReferralTest(PrsTestCase):
         q = Referral.objects.all().order_by('pk')
         ref1, ref2 = q[0], q[1]
         ref1.add_relationship(ref2)
-        self.obj = RelatedReferral.objects.all()[0]
+        self.obj = RelatedReferral.objects.first()
 
 
 class UserProfileTest(PrsTestCase):
