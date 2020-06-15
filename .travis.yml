@@ -11,6 +11,7 @@ addons:
     postgresql: "10"
     apt:
         packages:
+            - gdal-bin
             - postgresql-10-postgis-2.4
 branches:
     only:
