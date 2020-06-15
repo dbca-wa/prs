@@ -4,6 +4,8 @@
 
 {% block extra_style %}
 {{ block.super }}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.0-2/css/fontawesome.min.css" integrity="sha256-CaAu1oJhcLBPo4TnfEZ8fdP+O4mpoVBQ6zyZCs2x7+o=" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.0-2/css/all.min.css" integrity="sha256-46r060N2LrChLLb5zowXQ72/iKKNiw/lAmygmHExk/o=" crossorigin="anonymous" />
 <style>
     .footer {
         background-color: #f5f5f5;
@@ -13,20 +15,22 @@
 
 {% block navbar_links %}
 <ul class="navbar-nav ml-auto">
+    {% block navbar_item_extra %}{% endblock navbar_item_extra %}
     <li class="nav-item dropdown">
         <a class="nav-link dropdown-toggle" href="#" id="navbarSearchDropdown" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
             Search <span class="caret"></span>
         </a>
         <div class="dropdown-menu" aria-labelledby="navbarSearchDropdown">
-        <a class="dropdown-item" href="{% url 'prs_object_list' model='referrals' %}" title="Referrals">Referrals</a>
-        <a class="dropdown-item" href="{% url 'prs_object_list' model='tasks' %}" title="Tasks">Tasks</a>
-        <a class="dropdown-item" href="{% url 'prs_object_list' model='notes' %}" title="Notes">Notes</a>
-        <a class="dropdown-item" href="{% url 'prs_object_list' model='conditions' %}" title="Conditions">Conditions</a>
-        <a class="dropdown-item" href="{% url 'prs_object_list' model='records' %}" title="Records">Records</a>
-        <a class="dropdown-item" href="{% url 'prs_object_list' model='locations' %}" title="Locations">Locations</a>
-        <a class="dropdown-item" href="{% url 'prs_object_list' model='clearances' %}" title="Clearances">Clearances</a>
-        <div class="dropdown-divider"></div>
-        <a class="dropdown-item" href="{% url 'prs_general_search' %}" title="Search all">Search all</a>
+            <a class="dropdown-item" href="{% url 'prs_object_list' model='referrals' %}" title="Referrals">Referrals</a>
+            <a class="dropdown-item" href="{% url 'prs_object_list' model='tasks' %}" title="Tasks">Tasks</a>
+            <a class="dropdown-item" href="{% url 'prs_object_list' model='notes' %}" title="Notes">Notes</a>
+            <a class="dropdown-item" href="{% url 'prs_object_list' model='conditions' %}" title="Conditions">Conditions</a>
+            <a class="dropdown-item" href="{% url 'prs_object_list' model='records' %}" title="Records">Records</a>
+            <a class="dropdown-item" href="{% url 'prs_object_list' model='locations' %}" title="Locations">Locations</a>
+            <a class="dropdown-item" href="{% url 'prs_object_list' model='clearances' %}" title="Clearances">Clearances</a>
+            <div class="dropdown-divider"></div>
+            <a class="dropdown-item" href="{% url 'prs_general_search' %}" title="Search all">Search all</a>
+        </div>
     </li>
 
     <li class="nav-item">
@@ -69,37 +73,37 @@
 {% endblock navbar_links %}
 
 {% block page_content %}
-<div class="container-fluid">
-    <!-- Breadcrumbs -->
-    {% if breadcrumb_trail %}
-    <div class="row">
-        <div class="col d-none d-sm-block">
+    {% block breadcrumb_nav %}
+        {% if breadcrumb_trail %}
+        <!-- Breadcrumbs -->
+        <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
                 {{ breadcrumb_trail|safe }}
             </ol>
-        </div>
-    </div>
-    {% endif %}
+        </nav>
+        {% endif %}
+    {% endblock breadcrumb_nav %}
 
-    <!-- Messages  -->
-    {% if messages %}
-    <div class="row">
-        <div class="col">
-            {% for message in messages %}
-            <div class="alert{% if message.tags %} alert-{{ message.tags }}{% endif %}">
-                {{ message|safe }}
+    <div class="container-fluid">
+        <!-- Messages  -->
+        {% if messages %}
+        <div class="row">
+            <div class="col">
+                {% for message in messages %}
+                <div class="alert{% if message.tags %} alert-{{ message.tags }}{% endif %}">
+                    {{ message|safe }}
+                </div>
+                {% endfor %}
             </div>
-            {% endfor %}
         </div>
-    </div>
-    {% endif %}
+        {% endif %}
 
-    <div class="row">
-        <div class="col">
-            {% block page_content_inner %}{% endblock %}
+        <div class="row">
+            <div class="col">
+                {% block page_content_inner %}{% endblock %}
+            </div>
         </div>
     </div>
-</div>
 {% endblock %}
 
 {% block page_footer %}
@@ -127,20 +131,10 @@
     $(function() {
         var is_prs_user = true ? "{{ prs_user }}" == "True" : false
         if (!is_prs_user) {
-            // Header menu items, in referral_details.html and prs_object_detail.html
-            $('.is_prs_user').addClass("disabled");
-            $('.is_prs_user').contents().each(function(i, item) {
-                item.href="#";
-            });
             // html added via models.py 'def as_row_actions()'
             $('.is_prs_user_action').each(function(i, item) {
                 item.style="color:grey;";
                 item.href="#";
-            });
-            // Delete 'related referrals' btn, in referral_details.html
-            $('.is_prs_user_btn').prop('disabled', true)
-            $('.is_prs_user_btn').each(function(i, item) {
-                item.style="color:grey";
             });
         }
     });

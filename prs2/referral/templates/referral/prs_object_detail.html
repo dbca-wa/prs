@@ -21,43 +21,47 @@
 {% block sidebar_content %}{% include object_tools_template %}{% endblock %}
 {% endif %}
 
-{% block navbar_links %}
+{% block navbar_item_extra %}
 {% if object_type == 'task' %}
-<li class="dropdown">
-    <a id="id-menu-task" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Task <span class="caret"></span></a>
-    <ul class="dropdown-menu" role="menu">
-        <li class="is_prs_user"><a href="{% url 'task_action' pk=object.pk action='update' %}">Update task</a></li>
-        {% if task_stopped %}
-        <li class="is_prs_user"><a href="{% url 'task_action' pk=object.pk action='start' %}">Start task</a></li>
-        {% else %}
-        <li class="is_prs_user"><a href="{% url 'task_action' pk=object.pk action='stop' %}">Stop task</a></li>
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" href="#" id="taskDetailNavbarDropdown" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+        Task <span class="caret"></span>
+    </a>
+    <div class="dropdown-menu" aria-labelledby="taskDetailNavbarDropdown">
+        {% if prs_user %}
+            <a class="dropdown-item" href="{% url 'task_action' pk=object.pk action='update' %}">Update task</a>
+            {% if task_stopped %}
+                <a class="dropdown-item" href="{% url 'task_action' pk=object.pk action='start' %}">Start task</a>
+            {% else %}
+                <a class="dropdown-item" href="{% url 'task_action' pk=object.pk action='stop' %}">Stop task</a>
+            {% endif %}
+            {% if can_complete %}
+                <a class="dropdown-item" href="{% url 'task_action' pk=object.pk action='complete' %}">Complete task</a>
+            {% else %}
+                <a class="dropdown-item" href="#" id="id_complete" title="{{can_complete_msg}}" style="color:grey">Complete task</a>
+            {% endif %}
+            <a class="dropdown-item" href="{% url 'task_action' pk=object.pk action='cancel' %}">Cancel task</a>
+            <a class="dropdown-item" href="{% url 'task_action' pk=object.pk action='reassign' %}">Reassign task</a>
+            <a class="dropdown-item" href="{% url 'task_action' pk=object.pk action='inherit' %}">Inherit task</a>
+            <a class="dropdown-item" href="{% url 'referral_create_child_related' pk=object.referral.pk id=object.id model='task' type='addnewrecord' %}">Add a new record to this task</a>
+            <a class="dropdown-item" href="{% url 'referral_create_child_related' pk=object.referral.pk id=object.id model='task' type='addrecord' %}">Add existing record(s) to this task</a>
+            <a class="dropdown-item" href="{% url 'referral_create_child_related' pk=object.referral.pk id=object.id model='task' type='addnewnote' %}">Add a new note to this task</a>
+            <a class="dropdown-item" href="{% url 'referral_create_child_related' pk=object.referral.pk id=object.id model='task' type='addnote' %}">Add existing note(s) to this task</a>
+            <a class="dropdown-item" href="{% url 'prs_object_delete' model='tasks' pk=object.pk %}">Delete task</a>
         {% endif %}
-        {% if can_complete %}
-          <li class="is_prs_user"><a href="{% url 'task_action' pk=object.pk action='complete' %}">Complete task</a></li>
-        {% else %}
-          <li class="is_prs_user"><a href="#" id="id_complete" title="{{can_complete_msg}}" style="color:grey">Complete task</a></li>
-        {% endif %}
-        <li class="is_prs_user"><a href="{% url 'task_action' pk=object.pk action='cancel' %}">Cancel task</a></li>
-        <li class="is_prs_user"><a href="{% url 'task_action' pk=object.pk action='reassign' %}">Reassign task</a></li>
-        <li class="is_prs_user"><a href="{% url 'task_action' pk=object.pk action='inherit' %}">Inherit task</a></li>
-        <li class="is_prs_user"><a href="{% url 'referral_create_child_related' pk=object.referral.pk id=object.id model='task' type='addnewrecord' %}">Add a new record to this task</a></li>
-        <li class="is_prs_user"><a href="{% url 'referral_create_child_related' pk=object.referral.pk id=object.id model='task' type='addrecord' %}">Add existing record(s) to this task</a></li>
-        <li class="is_prs_user"><a href="{% url 'referral_create_child_related' pk=object.referral.pk id=object.id model='task' type='addnewnote' %}">Add a new note to this task</a></li>
-        <li class="is_prs_user"><a href="{% url 'referral_create_child_related' pk=object.referral.pk id=object.id model='task' type='addnote' %}">Add existing note(s) to this task</a></li>
-        <li class="is_prs_user"><a href="{% url 'prs_object_delete' model='tasks' pk=object.pk %}">Delete task</a></li>
-        <li><a href="{% url 'prs_object_history' model='tasks' pk=object.pk %}">History</a></li>
-    </ul>
+        <a class="dropdown-item" href="{% url 'prs_object_history' model='tasks' pk=object.pk %}">History</a>
+    </div>
 </li>
 {% elif object_type == 'note' %}
 {% cache 600 note_navbar_links object.pk request.user.username %}
 <li class="dropdown">
     <a id="id-menu-note" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Note <span class="caret"></span></a>
     <ul class="dropdown-menu" role="menu">
-        <li class="is_prs_user"><a href="{% url 'prs_object_update' model='notes' pk=object.id %}">Update note</a></li>
-        <li class="is_prs_user"><a href="{% url 'prs_object_delete' model='notes' pk=object.id %}">Delete note</a></li>
-        <li class="is_prs_user"><a href="{% url 'referral_create_child_related' pk=object.referral.id id=object.id model='note' type='addnewrecord' %}">Add a new record to this note</a></li>
-        <li class="is_prs_user"><a href="{% url 'referral_create_child_related' pk=object.referral.id id=object.id model='note' type='addrecord' %}">Add existing record(s) to this note</a></li>
-        <li><a href="{% url 'prs_object_history' model='notes' pk=object.id %}">History</a></li>
+        <a href="{% url 'prs_object_update' model='notes' pk=object.id %}">Update note</a>
+        <a href="{% url 'prs_object_delete' model='notes' pk=object.id %}">Delete note</a>
+        <a href="{% url 'referral_create_child_related' pk=object.referral.id id=object.id model='note' type='addnewrecord' %}">Add a new record to this note</a>
+        <a href="{% url 'referral_create_child_related' pk=object.referral.id id=object.id model='note' type='addrecord' %}">Add existing record(s) to this note</a>
+        <li><a href="{% url 'prs_object_history' model='notes' pk=object.id %}">History</a>
     </ul>
 </li>
 {% endcache %}
@@ -66,11 +70,11 @@
 <li class="dropdown">
     <a id="id-menu-record" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Record <span class="caret"></span></a>
     <ul class="dropdown-menu" role="menu">
-        <li class="is_prs_user"><a href="{% url 'prs_object_update' model='records' pk=object.id %}">Update record</a></li>
-        <li class="is_prs_user"><a href="{% url 'prs_object_delete' model='records' pk=object.id %}">Delete record</a></li>
-        <li class="is_prs_user"><a href="{% url 'referral_create_child_related' pk=object.referral.id id=object.id model='record' type='addnewnote' %}">Add a new note to this record</a></li>
-        <li class="is_prs_user"><a href="{% url 'referral_create_child_related' pk=object.referral.id id=object.id model='record' type='addnote' %}">Add existing note(s) to this record</a></li>
-        <li><a href="{% url 'prs_object_history' model='records' pk=object.id %}">History</a></li>
+        <a href="{% url 'prs_object_update' model='records' pk=object.id %}">Update record</a>
+        <a href="{% url 'prs_object_delete' model='records' pk=object.id %}">Delete record</a>
+        <a href="{% url 'referral_create_child_related' pk=object.referral.id id=object.id model='record' type='addnewnote' %}">Add a new note to this record</a>
+        <a href="{% url 'referral_create_child_related' pk=object.referral.id id=object.id model='record' type='addnote' %}">Add existing note(s) to this record</a>
+        <li><a href="{% url 'prs_object_history' model='records' pk=object.id %}">History</a>
     </ul>
 </li>
 {% endcache %}
@@ -79,9 +83,9 @@
 <li class="dropdown">
     <a id="id-menu-location" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Location <span class="caret"></span></a>
     <ul class="dropdown-menu" role="menu">
-        <li class="is_prs_user"><a href="{% url 'prs_object_update' model='locations' pk=object.id %}">Update location</a></li>
-        <li class="is_prs_user"><a href="{% url 'prs_object_delete' model='locations' pk=object.id %}">Delete location</a></li>
-        <li><a href="{% url 'prs_object_history' model='locations' pk=object.id %}">History</a></li>
+        <a href="{% url 'prs_object_update' model='locations' pk=object.id %}">Update location</a>
+        <a href="{% url 'prs_object_delete' model='locations' pk=object.id %}">Delete location</a>
+        <li><a href="{% url 'prs_object_history' model='locations' pk=object.id %}">History</a>
     </ul>
 </li>
 {% endcache %}
@@ -90,15 +94,14 @@
 <li class="dropdown">
     <a id="id-menu-condition" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Condition <span class="caret"></span></a>
     <ul class="dropdown-menu" role="menu">
-        <li class="is_prs_user"><a href="{% url 'prs_object_update' model='conditions' pk=object.id %}">Update condition</a></li>
-        <li class="is_prs_user"><a href="{% url 'prs_object_delete' model='conditions' pk=object.id %}">Delete condition</a></li>
-        <li class="is_prs_user"><a href="{% url 'condition_clearance_add' pk=object.id %}">Add a clearance request</a></li>
-        <li><a href="{% url 'prs_object_history' model='conditions' pk=object.id %}">History</a></li>
+        <a href="{% url 'prs_object_update' model='conditions' pk=object.id %}">Update condition</a>
+        <a href="{% url 'prs_object_delete' model='conditions' pk=object.id %}">Delete condition</a>
+        <a href="{% url 'condition_clearance_add' pk=object.id %}">Add a clearance request</a>
+        <li><a href="{% url 'prs_object_history' model='conditions' pk=object.id %}">History</a>
     </ul>
 </li>
 {% endcache %}
 {% endif %}
-{{ block.super }}
 {% endblock %}
 
 {% block page_content_inner %}
