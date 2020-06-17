@@ -63,7 +63,7 @@ class ReferralLookup(ActiveModel, Audit):
         self.name = unidecode(self.name)
         if self.description:
             self.description = unidecode(self.description)
-        super(ReferralLookup, self).save(force_insert, force_update)
+        super().save(force_insert, force_update)
 
     def get_absolute_url(self):
         return reverse(
@@ -437,7 +437,7 @@ class Referral(ReferralBaseModel):
             self.description = unidecode(self.description)
         if self.address:
             self.address = unidecode(self.address)
-        super(Referral, self).save(force_insert, force_update)
+        super().save(force_insert, force_update)
 
     def get_absolute_url(self):
         return reverse("referral_detail", kwargs={"pk": self.pk})
@@ -682,7 +682,7 @@ class Task(ReferralBaseModel):
         """
         if self.description:
             self.description = unidecode(self.description)
-        super(Task, self).save(force_insert, force_update)
+        super().save(force_insert, force_update)
 
     def as_row(self):
         """
@@ -1027,7 +1027,7 @@ class Record(ReferralBaseModel):
         self.name = unidecode(self.name)
         if self.description:
             self.description = unidecode(self.description)
-        super(Record, self).save(force_insert, force_update)
+        super().save(force_insert, force_update)
 
         # If the file is a .MSG we take the sent date of the email and use it for order_date.
         if self.extension == "MSG":
@@ -1211,7 +1211,7 @@ class Note(ReferralBaseModel):
         # Strip HTML tags and save as plain text.
         t = fromstring(self.note_html)
         self.note = t.text_content().strip()
-        super(Note, self).save(force_insert, force_update)
+        super().save(force_insert, force_update)
 
     @property
     def short_note(self, x=12):
@@ -1405,7 +1405,7 @@ class Condition(ReferralBaseModel):
         else:
             self.proposed_condition_html = ""
             self.proposed_condition = ""
-        super(Condition, self).save(force_insert, force_update)
+        super().save(force_insert, force_update)
 
     def as_row(self):
         """
@@ -1702,7 +1702,7 @@ class Location(ReferralBaseModel):
         Overide the standard save method; inserts nice_address into address_string field.
         """
         self.address_string = self.nice_address.lower()
-        super(Location, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     def as_row(self):
         """
@@ -1821,7 +1821,7 @@ class Bookmark(ReferralBaseModel):
         """
         if self.description:
             self.description = unidecode(self.description)
-        super(Bookmark, self).save(force_insert, force_update)
+        super().save(force_insert, force_update)
 
     def as_row(self):
         """
