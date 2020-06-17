@@ -1298,18 +1298,16 @@ class ReferralReferenceSearch(PrsObjectList):
 
     def get_queryset(self):
         object_count = 0
-        if self.request.is_ajax():
-            q = self.request.GET.get("q")
-            queryset = Referral.objects.current().filter(Q(reference__contains=q))
-            object_count = queryset.count()
-            # If we have a lot of results, slice and return the first twenty only.
-            if object_count > 20:
-                queryset = queryset[0:19]
-            return queryset
-        return Referral.objects.none()
+        q = self.request.GET.get("q")
+        queryset = Referral.objects.current().filter(Q(reference__contains=q))
+        object_count = queryset.count()
+        # If we have a lot of results, slice and return the first twenty only.
+        if object_count > 20:
+            queryset = queryset[0:19]
+        return queryset
 
     def get_context_data(self, **kwargs):
-        context = super(ReferralReferenceSearch, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         context["object_count"] = self.object_list.count()
         return context
 
