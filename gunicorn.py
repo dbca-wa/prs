@@ -8,6 +8,7 @@ workers = min(multiprocessing.cpu_count() * 2 + 1, 16)
 max_requests = 2048
 max_requests_jitter = 256
 preload_app = True
+# Set longer timeout for workers
 timeout = 600
 # Disable access logging.
 accesslog = None

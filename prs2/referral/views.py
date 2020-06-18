@@ -111,7 +111,7 @@ class SiteHome(LoginRequiredMixin, ListView):
             return "site_home.html"
 
     def get_context_data(self, **kwargs):
-        context = super(SiteHome, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         context["stopped_tasks"] = self.stopped_tasks
         context["headers"] = copy(Task.headers_site_home)
         if not self.stopped_tasks:
@@ -134,7 +134,7 @@ class HelpPage(TemplateView):
     template_name = "help_page.html"
 
     def get_context_data(self, **kwargs):
-        context = super(HelpPage, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         context["page_title"] = " | ".join([settings.APPLICATION_ACRONYM, "Help"])
         links = [(reverse("site_home"), "Home"), (None, "Help")]
         context["breadcrumb_trail"] = breadcrumbs_li(links)
@@ -149,7 +149,7 @@ class GeneralSearch(PrsObjectList):
     template_name = "referral/prs_general_search.html"
 
     def get_context_data(self, **kwargs):
-        context = super(GeneralSearch, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         context["page_title"] = " | ".join([settings.APPLICATION_ACRONYM, "Search"])
         links = [(reverse("site_home"), "Home"), (None, "Search")]
         context["breadcrumb_trail"] = breadcrumbs_li(links)
@@ -190,7 +190,7 @@ class ReferralCreate(PrsObjectCreate):
     template_name = "referral/referral_create.html"
 
     def get_context_data(self, **kwargs):
-        context = super(ReferralCreate, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         links = [
             (reverse("site_home"), "Home"),
             (reverse("prs_object_list", kwargs={"model": "referrals"}), "Referrals"),
@@ -206,7 +206,7 @@ class ReferralCreate(PrsObjectCreate):
         return context
 
     def get_initial(self):
-        initial = super(ReferralCreate, self).get_initial()
+        initial = super().get_initial()
         initial["assigned_user"] = self.request.user
         try:
             initial["referring_org"] = Organisation.objects.current().get(
@@ -302,13 +302,13 @@ class ReferralDetail(PrsObjectDetail):
             self.related_model = kwargs["related_model"]
         else:
             self.related_model = "tasks"
-        return super(ReferralDetail, self).dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
 
     def get_template_names(self):
         if "print" in self.request.GET:
             if self.request.GET["print"] == "notes":
                 return ["referral/referral_notes_print.html"]
-        return super(ReferralDetail, self).get_template_names()
+        return super().get_template_names()
 
     def get(self, request, *args, **kwargs):
         ref = self.get_object()
@@ -329,10 +329,10 @@ class ReferralDetail(PrsObjectDetail):
         # Call user_referral_history with the current referral.
         user_referral_history(request.user, ref)
 
-        return super(ReferralDetail, self).get(request, *args, **kwargs)
+        return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
-        context = super(ReferralDetail, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         ref = self.get_object()
         context["title"] = "REFERRAL DETAILS: {}".format(ref.pk)
         context["page_title"] = "PRS | Referrals | {}".format(ref.pk)
@@ -362,7 +362,7 @@ class ReferralDetail(PrsObjectDetail):
                 thead = "".join(["<th>{}</th>".format(h) for h in headers])
                 rows = [
                     "<tr>{}{}</tr>".format(
-                        o.as_row_minus_referral(), o.as_row_actions()
+                        o.as_row_minus_referral(), o.as_row_actions(self.request.user)
                     )
                     for o in obj_qs
                 ]
@@ -396,7 +396,7 @@ class ReferralCreateChild(PrsObjectCreate):
     """
 
     def get_context_data(self, **kwargs):
-        context = super(ReferralCreateChild, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         referral_id = self.parent_referral.pk
         child_model = is_model_or_string(self.kwargs["model"].capitalize())
         if "id" in self.kwargs:  # Relating to existing object.
@@ -442,7 +442,7 @@ class ReferralCreateChild(PrsObjectCreate):
         return context
 
     def get_form_kwargs(self):
-        kwargs = super(ReferralCreateChild, self).get_form_kwargs()
+        kwargs = super().get_form_kwargs()
         referral = self.parent_referral
         if "clearance" in self.kwargs.values():
             kwargs["condition_choices"] = self.get_condition_choices()
@@ -461,13 +461,13 @@ class ReferralCreateChild(PrsObjectCreate):
         if "clearance" in self.kwargs.values() and not self.get_condition_choices():
             messages.error(self.request, "This referral has no approval conditions!")
             return HttpResponseRedirect(self.get_success_url())
-        return super(ReferralCreateChild, self).get(request, *args, **kwargs)
+        return super().get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         # If the user clicked Cancel, redirect to the referral detail page.
         if request.POST.get("cancel"):
             return HttpResponseRedirect(self.parent_referral.get_absolute_url())
-        return super(ReferralCreateChild, self).post(request, *args, **kwargs)
+        return super().post(request, *args, **kwargs)
 
     def form_valid(self, form):
         self.object = form.save(commit=False)
@@ -787,7 +787,7 @@ class LocationCreate(ReferralCreateChild):
     def get_context_data(self, **kwargs):
         # Standard view context data.
         self.kwargs["model"] = "location"  # Append to kwargs
-        context = super(LocationCreate, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         ref = self.parent_referral
         links = [
             (reverse("site_home"), "Home"),
@@ -896,13 +896,13 @@ class LocationIntersects(PrsObjectCreate):
         return reverse("referral_detail", kwargs={"pk": self.parent_referral.pk})
 
     def get_form_kwargs(self):
-        kwargs = super(LocationIntersects, self).get_form_kwargs()
+        kwargs = super().get_form_kwargs()
         kwargs["referral"] = self.parent_referral
         kwargs["referrals"] = self.referral_intersecting_locations()
         return kwargs
 
     def get_context_data(self, **kwargs):
-        context = super(LocationIntersects, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         referral = self.parent_referral
         links = [
             (reverse("site_home"), "Home"),
@@ -918,7 +918,7 @@ class LocationIntersects(PrsObjectCreate):
         # If the user clicked Cancel, redirect to the referral detail page.
         if request.POST.get("cancel"):
             return HttpResponseRedirect(self.get_success_url())
-        return super(LocationIntersects, self).post(request, *args, **kwargs)
+        return super().post(request, *args, **kwargs)
 
     def form_valid(self, form):
         # For each intersecting referral chosen, add a relationship
@@ -979,7 +979,7 @@ class RecordUpload(LoginRequiredMixin, View):
                     }
                 )
             )
-        return super(RecordUpload, self).dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
 
     def get_parent_object(self):
         if self.parent_referral:
@@ -1081,7 +1081,7 @@ class TaskAction(PrsObjectUpdate):
             )
             messages.warning(self.request, msg)
             return redirect(task.get_absolute_url())
-        return super(TaskAction, self).get(request, *args, **kwargs)
+        return super().get(request, *args, **kwargs)
 
     def get_form_class(self):
         action = self.kwargs["action"]
@@ -1103,7 +1103,7 @@ class TaskAction(PrsObjectUpdate):
             return TaskForm
 
     def get_context_data(self, **kwargs):
-        context = super(TaskAction, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         # Create a breadcrumb trail: Home[URL] > Tasks[URL] > ID[URL] > Action
         action = self.kwargs["action"]
         obj = self.get_object()
@@ -1135,7 +1135,7 @@ class TaskAction(PrsObjectUpdate):
         # If the user clicked Cancel, redirect back to the site home page.
         if request.POST.get("cancel"):
             return redirect("site_home")
-        return super(TaskAction, self).post(request, *args, **kwargs)
+        return super().post(request, *args, **kwargs)
 
     def form_valid(self, form):
         action = self.kwargs["action"]
@@ -1227,7 +1227,7 @@ class TaskAction(PrsObjectUpdate):
 
         obj.modifier = self.request.user
         obj.save()
-        return super(TaskAction, self).form_valid(form)
+        return super().form_valid(form)
 
 
 class ReferralDownloadView(ObjectDownloadView):
@@ -1271,7 +1271,7 @@ class ReferralRecent(PrsObjectList):
             return Referral.objects.none()
 
     def get_context_data(self, **kwargs):
-        context = super(ReferralRecent, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         title = "Recent referrals"
         context["page_title"] = " | ".join([settings.APPLICATION_ACRONYM, title])
         links = [
@@ -1298,18 +1298,16 @@ class ReferralReferenceSearch(PrsObjectList):
 
     def get_queryset(self):
         object_count = 0
-        if self.request.is_ajax():
-            q = self.request.GET.get("q")
-            queryset = Referral.objects.current().filter(Q(reference__contains=q))
-            object_count = queryset.count()
-            # If we have a lot of results, slice and return the first twenty only.
-            if object_count > 20:
-                queryset = queryset[0:19]
-            return queryset
-        return Referral.objects.none()
+        q = self.request.GET.get("q")
+        queryset = Referral.objects.current().filter(Q(reference__contains=q))
+        object_count = queryset.count()
+        # If we have a lot of results, slice and return the first twenty only.
+        if object_count > 20:
+            queryset = queryset[0:19]
+        return queryset
 
     def get_context_data(self, **kwargs):
-        context = super(ReferralReferenceSearch, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         context["object_count"] = self.object_list.count()
         return context
 
@@ -1328,7 +1326,7 @@ class TagList(PrsObjectList):
         if request.is_ajax() or "json" in request.GET:
             loc = [str(i) for i in self.get_queryset().values_list("name", flat=True)]
             return JsonResponse(loc, safe=False)
-        return super(TagList, self).get(request, *args, **kwargs)
+        return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
         return Tag.objects.all().order_by("name")
@@ -1346,10 +1344,10 @@ class TagReplace(LoginRequiredMixin, FormView):
             return HttpResponseForbidden(
                 "You do not have permission to use this function."
             )
-        return super(TagReplace, self).dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
-        context = super(TagReplace, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         context["page_title"] = " | ".join(
             [settings.APPLICATION_ACRONYM, "Replace tag"]
         )
@@ -1360,7 +1358,7 @@ class TagReplace(LoginRequiredMixin, FormView):
         # If the user clicks "Cancel", redirect to the tags list view.
         if request.POST.get("cancel"):
             return HttpResponseRedirect(reverse("tag_list"))
-        return super(TagReplace, self).post(request, *args, **kwargs)
+        return super().post(request, *args, **kwargs)
 
     def form_valid(self, form):
         d = form.cleaned_data
@@ -1386,14 +1384,14 @@ class ReferralTagged(PrsObjectList):
     model = Referral
 
     def get_queryset(self):
-        qs = super(ReferralTagged, self).get_queryset()
+        qs = super().get_queryset()
         # Filter queryset by the tag.
         tag = Tag.objects.get(slug=self.kwargs["slug"])
         qs = qs.filter(tags__in=[tag]).distinct()
         return qs
 
     def get_context_data(self, **kwargs):
-        context = super(ReferralTagged, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         tag = Tag.objects.get(slug=self.kwargs["slug"])
         title = "Referrals tagged: {}".format(tag.name)
         context["page_title"] = " | ".join([settings.APPLICATION_ACRONYM, title])
@@ -1413,7 +1411,7 @@ class BookmarkList(PrsObjectList):
     model = Bookmark
 
     def get_queryset(self):
-        qs = super(BookmarkList, self).get_queryset()
+        qs = super().get_queryset()
         qs = qs.filter(user=self.request.user)
         return qs
 
@@ -1428,7 +1426,7 @@ class ReferralDelete(PrsObjectDelete):
     def get_context_data(self, **kwargs):
         ref = self.get_object()
 
-        context = super(ReferralDelete, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         context["object"] = ref
         context["object_type_plural"] = self.model._meta.verbose_name_plural
         context["object_type"] = self.model._meta.verbose_name
@@ -1498,11 +1496,11 @@ class ReferralRelate(PrsObjectList):
 
     def get_queryset(self):
         # Exclude parent object from queryset.
-        qs = super(ReferralRelate, self).get_queryset()
+        qs = super().get_queryset()
         return qs.exclude(pk=self.get_object().pk)
 
     def get_context_data(self, **kwargs):
-        context = super(ReferralRelate, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         title = "Add a related referral"
         context["object_type_plural"] = title.upper()
         context["page_title"] = " | ".join([settings.APPLICATION_ACRONYM, title])
@@ -1556,7 +1554,7 @@ class ConditionClearanceCreate(PrsObjectCreate):
     template_name = "referral/change_form.html"
 
     def get_form_kwargs(self):
-        kwargs = super(ConditionClearanceCreate, self).get_form_kwargs()
+        kwargs = super().get_form_kwargs()
         condition = get_object_or_404(Condition, pk=self.kwargs["pk"])
         kwargs.update({"condition": condition})
         return kwargs
@@ -1565,7 +1563,7 @@ class ConditionClearanceCreate(PrsObjectCreate):
         return Condition.objects.current().get(pk=self.kwargs.get("pk"))
 
     def get_context_data(self, **kwargs):
-        context = super(ConditionClearanceCreate, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         obj = self.get_object()
         context["title"] = "CREATE A CLEARANCE REQUEST"
         title = "Create clearance request"
@@ -1582,7 +1580,7 @@ class ConditionClearanceCreate(PrsObjectCreate):
         return context
 
     def get_initial(self):
-        initial = super(ConditionClearanceCreate, self).get_initial()
+        initial = super().get_initial()
         obj = self.get_object()
         initial["assigned_user"] = self.request.user
         initial["description"] = obj.condition
@@ -1597,7 +1595,7 @@ class ConditionClearanceCreate(PrsObjectCreate):
                     "prs_object_detail", kwargs={"pk": obj.pk, "model": "conditions"}
                 )
             )
-        return super(ConditionClearanceCreate, self).post(request, *args, **kwargs)
+        return super().post(request, *args, **kwargs)
 
     def form_valid(self, form):
         obj = self.get_object()
@@ -1696,7 +1694,60 @@ class HealthCheckView(TemplateView):
     template_name = "healthcheck.html"
 
     def get_context_data(self, **kwargs):
-        context = super(HealthCheckView, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         context["page_title"] = "PRS application status"
         context["status"] = "HEALTHY"
         return context
+
+
+class HasuraAuthWebhook(View):
+
+    def get(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            hasura_vars = {
+                "X-Hasura-User-Id": str(request.user.pk),
+                "X-Hasura-Role": "user",
+            }
+            return HttpResponse(json.dumps(hasura_vars), content_type="application/json")
+        else:
+            hasura_vars = {
+                "X-Hasura-Role": "anonymous",
+            }
+            return HttpResponse(json.dumps(hasura_vars), content_type="application/json")
+            #return HttpResponse("Unauthorized", status=401)
+
+
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth import authenticate, login
+
+
+@csrf_exempt
+def userAuth(request):
+    reqBody = json.loads(request.body)
+    requiredFields = ['username', 'password']
+    for field in requiredFields:
+        if field not in reqBody or not reqBody[field]:
+            return HttpResponse(json.dumps({'message': 'Required field not available ( username, password )'}), status=401)
+    user = authenticate(request, username=reqBody['username'], password=reqBody['password'])
+    if user is not None:
+        login(request, user)
+        login_response = {
+            'token': request.session.session_key,
+            'user_id': request.session['_auth_user_id'],
+            'message': 'authenticated',
+        }
+        return HttpResponse(json.dumps(login_response), 'application/json')
+    else:
+        return HttpResponse('Invalid credentials!', status=401)
+
+
+@csrf_exempt
+def inspectUser(request):
+    if (request.user.is_authenticated):
+        responseObj = {
+            'x-hasura-role': 'user',
+            'x-hasura-user-id': str(request.user.id)
+        }
+        return HttpResponse(json.dumps(responseObj))
+    else:
+        return HttpResponse('User not logged in', status=401)

@@ -54,14 +54,14 @@ class PrsObjectList(LoginRequiredMixin, ListView):
         # is_model_or_string() returns None if the model doesn't exist.
         if not self.model:
             return HttpResponseBadRequest("Not a model.")
-        return super(PrsObjectList, self).dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
         """
         Define the queryset of objects to return.
         By default, the queryset return recently-modified ones objects first.
         """
-        qs = super(PrsObjectList, self).get_queryset()
+        qs = super().get_queryset()
         if "effective_to" in [f.name for f in self.model._meta.get_fields()]:
             qs = qs.filter(effective_to=None)
         # Did we pass in a search string? If so, filter the queryset and
@@ -79,7 +79,7 @@ class PrsObjectList(LoginRequiredMixin, ListView):
         return qs.distinct()
 
     def get_context_data(self, **kwargs):
-        context = super(PrsObjectList, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         # Pass model headers.
         if hasattr(self.model, "headers"):
             context["object_list_headers"] = self.model.headers
@@ -117,11 +117,11 @@ class PrsObjectCreate(LoginRequiredMixin, CreateView):
         # kwargs must include a Model class, or a string.
         if "model" in kwargs:
             self.model = is_model_or_string(kwargs["model"])
-        return super(PrsObjectCreate, self).dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         # Standard view context data.
-        context = super(PrsObjectCreate, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         m = self.model._meta
         model_type = m.verbose_name.capitalize()
         context["model_type"] = model_type
@@ -157,7 +157,7 @@ class PrsObjectCreate(LoginRequiredMixin, CreateView):
         # If the user clicked Cancel, redirect back to the site home page.
         if request.POST.get("cancel"):
             return redirect("site_home")
-        return super(PrsObjectCreate, self).post(request, *args, **kwargs)
+        return super().post(request, *args, **kwargs)
 
     def form_valid(self, form):
         # Saves the form instance, sets the current object for the view,
@@ -196,12 +196,12 @@ class PrsObjectDetail(LoginRequiredMixin, DetailView):
         # kwargs must include a Model class, or a string.
         if "model" in kwargs:
             self.model = is_model_or_string(kwargs["model"])
-        return super(PrsObjectDetail, self).dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         from referral.models import Task, Record, Note, Location
 
-        context = super(PrsObjectDetail, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         context["object_type"] = self.model._meta.verbose_name
         context["object_type_plural"] = self.model._meta.verbose_name_plural
         # Does this model type have a tools template?
@@ -299,7 +299,7 @@ class PrsObjectUpdate(LoginRequiredMixin, UpdateView):
         # kwargs must include a Model class, or a string.
         if "model" in kwargs:
             self.model = is_model_or_string(kwargs["model"])
-        return super(PrsObjectUpdate, self).dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
 
     def get_form_class(self):
         # If we haven't defined form_class, use the class in FORMS_MAP.
@@ -308,7 +308,7 @@ class PrsObjectUpdate(LoginRequiredMixin, UpdateView):
         return self.form_class
 
     def get_context_data(self, **kwargs):
-        context = super(PrsObjectUpdate, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         obj = self.get_object()
         context["title"] = "UPDATE {}".format(obj._meta.object_name).upper()
         context["page_title"] = "PRS | {} | {} | Update".format(
@@ -339,7 +339,7 @@ class PrsObjectUpdate(LoginRequiredMixin, UpdateView):
         # If the user clicks "Cancel", redirect back to the object URL.
         if request.POST.get("cancel"):
             return redirect(self.get_object().get_absolute_url())
-        return super(PrsObjectUpdate, self).post(request, *args, **kwargs)
+        return super().post(request, *args, **kwargs)
 
     def form_valid(self, form):
         self.object = form.save()
@@ -360,10 +360,10 @@ class PrsObjectHistory(PrsObjectDetail):
         # kwargs must include a Model class, or a string.
         if "model" in kwargs:
             self.model = is_model_or_string(kwargs["model"])
-        return super(PrsObjectHistory, self).dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
-        context = super(PrsObjectHistory, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         obj = self.get_object()
         context["title"] = "CHANGE HISTORY: {}".format(obj)
         context["page_title"] = " | ".join(
@@ -414,10 +414,10 @@ class PrsObjectDelete(LoginRequiredMixin, DeleteView):
         # kwargs must include a Model class, or a string.
         if "model" in kwargs:
             self.model = is_model_or_string(kwargs["model"])
-        return super(PrsObjectDelete, self).dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
-        context = super(PrsObjectDelete, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         context["object_type"] = self.model._meta.verbose_name
         obj = self.get_object()
         context["title"] = "DELETE {}".format(obj._meta.object_name.upper())
@@ -459,7 +459,7 @@ class PrsObjectDelete(LoginRequiredMixin, DeleteView):
         # If the user clicked "Cancel", redirect to the object's URL.
         if request.POST.get("cancel"):
             return redirect(self.get_object().get_absolute_url())
-        return super(PrsObjectDelete, self).post(request, *args, **kwargs)
+        return super().post(request, *args, **kwargs)
 
     def delete(self, request, *args, **kwargs):
         """
@@ -511,7 +511,7 @@ class PrsObjectTag(View):
                 "Object tag view {} must be called with an "
                 "model.".format(self.__class__.__name__)
             )
-        return super(PrsObjectTag, self).dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
         return self.model._default_manager.all()

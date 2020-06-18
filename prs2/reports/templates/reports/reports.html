@@ -2,109 +2,100 @@
 
 {% block extra_style %}
 {{ block.super }}
-<link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/datatables/1.10.9/css/dataTables.bootstrap.min.css">
-<link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.4.1/css/bootstrap-datepicker.min.css">
-<link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.min.css">
-<link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/select2-bootstrap-css/1.4.6/select2-bootstrap.min.css">
- <!-- CSS hack to prevent DataTables from adding a horizontal scrollbar to object table -->
-
-<style>
-
-.dataTables_wrapper {
-    table-layout:fixed;
-    width: 99% !important;
-}
-</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.20/css/dataTables.bootstrap4.min.css" integrity="sha256-F+DaKAClQut87heMIC6oThARMuWne8+WzxIDT7jXuPA=" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css" integrity="sha256-siyOpF/pBWUPgIcQi17TLBkjvNgNQArcmwJB8YvkAgg=" crossorigin="anonymous" />
 {% endblock %}
 
 {% block page_content_inner %}
 <div class="row">
-    <div class="col-xs-12">
+    <div class="col">
         <div id="modal-spinner"></div>
+
         <!-- Navigation tabs -->
         <ul class="nav nav-tabs" role="tablist">
-            <li role="presentation" class="active">
-                <a id="id_referrals_tab" href="#tab_referrals" aria-controls="tab_referrals" role="tab" data-toggle="tab">Referrals</a>
+            <li class="nav-item">
+                <a class="nav-link active" id="id_referrals_tab" href="#tab_referrals" aria-controls="tab_referrals" aria-selected="true" role="tab" data-toggle="tab">Referrals</a>
             </li>
-            <li role="presentation">
-                <a id="id_clearances_tab" href="#tab_clearances" aria-controls="tab_clearances" role="tab" data-toggle="tab">Clearance Requests</a>
+            <li class="nav-item">
+                <a class="nav-link" id="id_clearances_tab" href="#tab_clearances" aria-controls="tab_clearances" aria-selected="false" role="tab" data-toggle="tab">Clearance Requests</a>
             </li>
-            <li role="presentation">
-                <a id="id_tasks_tab" href="#tab_tasks" aria-controls="tab_tasks" role="tab" data-toggle="tab">Tasks</a>
+            <li class="nav-item">
+                <a class="nav-link" id="id_tasks_tab" href="#tab_tasks" aria-controls="tab_tasks" aria-selected="false" role="tab" data-toggle="tab">Tasks</a>
             </li>
         </ul>
+
         <div class="tab-content">
-            <div role="tabpanel" class="tab-pane fade in active" id="tab_referrals">
             <!-- Referrals result panel -->
+            <div role="tabpanel" class="tab-pane fade show active" id="tab_referrals" aria-labelledby="id_referrals_tab">
+
                 <!-- Filters row -->
                 <div class="row">
-                    <div class="col-xs-12">
-                        <div class="panel-group" id="filter-panel-referrals">
-                            <div class="panel panel-default">
-                                <div class="panel-heading">
-                                    <h4 class="panel-title">FILTER REFERRALS
-                                        <a data-toggle="collapse" data-parent="#filter-panel-referrals" href="#collapseFiltersReferrals">
-                                            (click to collapse/expand)
-                                        </a>
-                                    </h4>
-                                </div>
-                                <!-- /.panel-heading -->
-                                <div id="collapseFiltersReferrals" class="panel-collapse collapse in">
-                                    <div class="panel-body">
-                                        <form class="form-horizontal" role="form">
-                                            <div class="form-group">
-                                                <label for="filter-region-referral"
-                                                       class="col-lg-1 col-sm-2 col-xs-12 control-label">Region</label>
-                                                <div class="col-lg-3 col-sm-4 col-xs-12">
+                    <div class="col">
+                        <div class="card" id="filter-panel-referrals">
+
+                            <div class="card-header" id="referralFilterCardHeading">
+                                <h5 class="mb-0">
+                                    <button class="btn btn-link" data-toggle="collapse" data-target="#collapseFiltersReferrals" aria-expanded="false" aria-controls="collapseFiltersReferrals">
+                                        Filter referrals (click to collapse/expand)
+                                    </button>
+                                </h5>
+                            </div><!-- /.card-header -->
+
+                            <div id="collapseFiltersReferrals" class="collapse" aria-labelledby="referralFilterCardHeading">
+                                <div class="card-body">
+                                    <form>
+                                        <div class="row">
+                                            <div class="col">
+                                                <div class="form-group">
+                                                    <label for="filter-region-referral">Region</label>
                                                     <select class="form-control" id="filter-region-referral"></select>
-                                                </div>
-                                                <label for="filter-organisation-referral"
-                                                       class="col-lg-1 col-sm-2 col-xs-12 control-label">Referrer</label>
-                                                <div class="col-lg-3 col-sm-4 col-xs-12">
-                                                    <select class="form-control" id="filter-organisation-referral"></select>
-                                                </div>
-                                                <label for="filter-referralType"
-                                                       class="col-lg-1 col-sm-2 col-xs-12 control-label">Type</label>
-                                                <div class="col-lg-3 col-sm-4 col-xs-12">
-                                                    <select class="form-control" id="filter-referralType"></select>
-                                                </div>
-                                            </div><!-- /.form-group -->
-                                            <div class="form-group">
-                                                <label for="filter-dateFrom-referral"
-                                                       class="col-lg-1 col-sm-2 col-xs-12 control-label">From date referred</label>
-                                                <div class="col-lg-3 col-sm-4">
+                                                </div><!-- /.form-group -->
+                                                <div class="form-group">
+                                                    <label for="filter-dateFrom-referral">From date referred</label>
                                                     <input class="form-control dateinput" id="filter-fromDate-referral">
-                                                </div>
-                                                <label for="filter-dateTo-referral"
-                                                       class="col-lg-1 col-sm-2 col-xs-12 control-label">To date referred</label>
-                                                <div class="col-lg-3 col-sm-4">
+                                                </div><!-- /.form-group -->
+                                            </div><!-- .col -->
+                                            <div class="col">
+                                                <div class="form-group">
+                                                    <label for="filter-organisation-referral">Referrer</label>
+                                                    <select class="form-control" id="filter-organisation-referral"></select>
+                                                </div><!-- /.form-group -->
+                                                <div class="form-group">
+                                                    <label for="filter-dateTo-referral">To date referred</label>
                                                     <input class="form-control dateinput" id="filter-toDate-referral">
-                                                </div>
-                                                <label for="filter-referralTags"
-                                                       class="col-lg-1 col-sm-2 col-xs-12 control-label">Tags</label>
-                                                <div class="col-lg-3 col-sm-4">
-                                                    <select multiple="multiple" class="form-control" id="filter-referralTags"></select>
-                                                </div>
-                                            </div><!-- /.form-group -->
-                                        </form><!-- /.form-horizontal -->
-                                    </div> <!-- /.panel-body -->
-                                </div><!-- /.panel-collapse collapse in -->
-                            </div><!-- /.panel panel-default-->
-                        </div><!-- /.panel-group -->
-                    </div><!-- /.col-xs-12 -->
+                                                </div><!-- /.form-group -->
+                                            </div><!-- .col -->
+                                            <div class="col">
+                                                <div class="form-group">
+                                                    <label for="filter-referralType">Type</label>
+                                                    <select class="form-control" id="filter-referralType"></select>
+                                                </div><!-- /.form-group -->
+                                                <div class="form-group">
+                                                    <label for="filter-referralTag">Tag</label>
+                                                    <select class="form-control" id="filter-referralTag"></select>
+                                                </div><!-- /.form-group -->
+                                            </div><!-- .col -->
+                                        </div><!-- .row -->
+                                    </form>
+                                </div> <!-- /.card-body -->
+                            </div><!-- /.collapse -->
+
+                        </div><!-- /.card -->
+                    </div><!-- /.col -->
                 </div><!-- /.row -->
+
                 <!-- Download button row-->
                 <div class="row">
-                    <div class="col-xs-12 text-right">
-                        <a href="#" type="button" class="btn btn-primary"
-                                   id="id_download_referrals">Download referrals</a>
-                    </div><!-- /.col-xs-12 -->
+                    <div class="col">
+                        <a id="id_download_referrals" href="#" type="button" class="btn btn-primary float-right">Download referrals</a>
+                    </div><!-- /.col -->
                 </div><!-- /.row -->
+
                 <!-- DataTable row-->
                 <div class="row">
-                    <div class="col-xs-12">
+                    <div class="col">
                         <div id="id-div-datatable-referrals">
-                            <table id="referralsTable" class="table table-striped table-bordered table-condensed">
+                            <table id="referralsTable" class="table table-sm table-striped table-bordered">
                                 <thead>
                                     <tr>
                                         <th>Referral ID</th>
@@ -119,77 +110,78 @@
                                 </thead>
                                 <tbody></tbody>
                             </table>
-                        </div><!-- /.table-resposive -->
-                    </div><!-- /.col-xs-12 -->
+                        </div>
+                    </div><!-- /.col -->
                 </div><!-- /.row -->
             </div><!-- /.tab-pane -->
 
-            <div role="tabpanel" class="tab-pane fade" id="tab_clearances">
             <!-- Clearances result panel -->
+            <div role="tabpanel" class="tab-pane fade" id="tab_clearances" aria-labelledby="id_clearances_tab">
+
                 <!-- Filters row -->
                 <div class="row">
-                    <div class="col-xs-12">
-                        <div class="panel-group" id="filter-panel-clearances">
-                            <div class="panel panel-default">
-                                <div class="panel-heading">
-                                    <h4 class="panel-title">FILTER CLEARANCE REQUESTS
-                                        <a data-toggle="collapse" data-parent="#filter-panel-clearances" href="#collapseFiltersClearances">
-                                            (click to collapse/expand)
-                                        </a>
-                                    </h4>
-                                </div>
-                                <!-- /.panel-heading -->
-                                <div id="collapseFiltersClearances" class="panel-collapse collapse in">
-                                    <div class="panel-body">
-                                        <form class="form-horizontal" role="form">
-                                            <div class="form-group">
-                                                <label for="filter-region-clearance"
-                                                       class="col-lg-1 col-sm-2 col-xs-12 control-label">Region</label>
-                                                <div class="col-lg-3 col-sm-4 col-xs-12">
+                    <div class="col">
+                        <div class="card" id="filter-panel-clearances">
+
+                            <div class="card-header" id="clearanceFilterCardHeading">
+                                <h5 class="mb-0">
+                                    <button class="btn btn-link" data-toggle="collapse" data-target="#collapseFiltersClearances" aria-expanded="false" aria-controls="collapseFiltersClearances">
+                                        Filter clearance requests (click to collapse/expand)
+                                    </button>
+                                </h5>
+                            </div><!-- /.card-header -->
+
+                            <div id="collapseFiltersClearances" class="collapse" aria-labelledby="clearanceFilterCardHeading">
+                                <div class="card-body">
+                                    <form>
+                                        <div class="row">
+                                            <div class="col">
+                                                <div class="form-group">
+                                                    <label for="filter-region-clearance">Region</label>
                                                     <select class="form-control" id="filter-region-clearance"></select>
-                                                </div>
-                                                <label for="filter-organisation-clearance"
-                                                       class="col-lg-1 col-sm-2 col-xs-12 control-label">Referrer</label>
-                                                <div class="col-lg-3 col-sm-4 col-xs-12">
-                                                    <select class="form-control" id="filter-organisation-clearance"></select>
-                                                </div>
-                                                <label for="filter-taskState-clearance"
-                                                       class="col-lg-1 col-sm-2 col-xs-12 control-label">Status</label>
-                                                <div class="col-lg-3 col-sm-4 col-xs-12">
-                                                    <select class="form-control" id="filter-taskState-clearance"></select>
-                                                </div>
-                                            </div><!-- /.form-group -->
-                                            <div class="form-group">
-                                                <label for="filter-dateFrom-clearance"
-                                                       class="col-lg-1 col-sm-2 col-xs-12 control-label">From date started</label>
-                                                <div class="col-lg-3 col-sm-4">
+                                                </div><!-- /.form-group -->
+                                                <div class="form-group">
+                                                    <label for="filter-dateFrom-clearance">From date started</label>
                                                     <input class="form-control dateinput" id="filter-fromDate-clearance">
-                                                </div>
-                                                <label for="filter-dateTo-clearance"
-                                                       class="col-lg-1 col-sm-2 col-xs-12 control-label">To date started</label>
-                                                <div class="col-lg-3 col-sm-4">
+                                                </div><!-- /.form-group -->
+                                            </div><!-- .col -->
+                                            <div class="col">
+                                                <div class="form-group">
+                                                    <label for="filter-organisation-clearance">Referrer</label>
+                                                    <select class="form-control" id="filter-organisation-clearance"></select>
+                                                </div><!-- /.form-group -->
+                                                <div class="form-group">
+                                                    <label for="filter-dateTo-clearance">To date started</label>
                                                     <input class="form-control dateinput" id="filter-toDate-clearance">
-                                                </div>
-                                            </div><!-- /.form-group -->
-                                        </form><!-- /.form-horizontal -->
-                                    </div> <!-- /.panel-body -->
-                                </div><!-- /.panel-collapse collapse in -->
-                            </div><!-- /.panel panel-default-->
-                        </div><!-- /.panel-group -->
-                    </div><!-- /.col-xs-12 -->
+                                                </div><!-- /.form-group -->
+                                            </div><!-- .col -->
+                                            <div class="col">
+                                                <div class="form-group">
+                                                    <label for="filter-taskState-clearance">Status</label>
+                                                    <select class="form-control" id="filter-taskState-clearance"></select>
+                                                </div><!-- /.form-group -->
+                                            </div><!-- .col -->
+                                        </div><!-- /.row -->
+                                    </form>
+                                </div> <!-- /.card-body -->
+                            </div><!-- /.collapse -->
+
+                        </div><!-- /.card -->
+                    </div><!-- /.col -->
                 </div><!-- /.row -->
+
                 <!-- Download button row-->
                 <div class="row">
-                    <div class="col-xs-12 text-right">
-                        <a href="#" type="button" class="btn btn-primary"
-                                   id="id_download_clearances">Download clearance requests</a>
-                    </div><!-- /.col-xs-12 -->
+                    <div class="col">
+                        <a id="id_download_clearances" href="#" type="button" class="btn btn-primary float-right">Download clearance requests</a>
+                    </div><!-- /.col -->
                 </div><!-- /.row -->
+
                 <!-- DataTable row-->
                 <div class="row">
-                    <div class="col-xs-12">
+                    <div class="col">
                         <div id="id-div-datatable-clearances">
-                            <table id="clearancesTable" class="table table-striped table-bordered table-condensed">
+                            <table id="clearancesTable" class="table table-sm table-striped table-bordered">
                                 <thead>
                                     <tr>
                                         <th>Referral ID</th>
@@ -206,81 +198,81 @@
                                 <tbody></tbody>
                             </table>
                         </div>
-                    </div><!-- /.col-xs-12 -->
+                    </div><!-- /.col -->
                 </div><!-- /.row -->
             </div><!-- /.tab-pane -->
 
             <!-- Tasks result panel -->
-            <div role="tabpanel" class="tab-pane fade" id="tab_tasks">
+            <div role="tabpanel" class="tab-pane fade" id="tab_tasks" aria-labelledby="id_tasks_tab">
+
                 <!-- Filters row -->
                 <div class="row">
-                    <div class="col-xs-12">
-                        <div class="panel-group" id="filter-panel-tasks">
-                            <div class="panel panel-default">
-                                <div class="panel-heading">
-                                    <h4 class="panel-title">FILTER TASKS
-                                        <a data-toggle="collapse" data-parent="#filter-panel-tasks" href="#collapseFiltersTasks">
-                                            (click to collapse/expand)
-                                        </a>
-                                    </h4>
-                                </div>
-                                <!-- /.panel-heading -->
-                                <div id="collapseFiltersTasks" class="panel-collapse collapse in">
-                                    <div class="panel-body">
-                                        <form class="form-horizontal" role="form">
-                                            <div class="form-group">
-                                                <label for="filter-region-task"
-                                                       class="col-lg-1 col-sm-2 col-xs-12 control-label">Region</label>
-                                                <div class="col-lg-3 col-sm-4 col-xs-12">
+                    <div class="col">
+                        <div class="card" id="filter-panel-tasks">
+
+                            <div class="card-header" id="taskFilterCardHeading">
+                                <h5 class="mb-0">
+                                    <button class="btn btn-link" data-toggle="collapse" data-target="#collapseFiltersTasks" aria-expanded="false" aria-controls="collapseFiltersTasks">
+                                        Filter tasks (click to collapse/expand)
+                                    </button>
+                                </h5>
+                            </div><!-- /.card-header -->
+
+                            <div id="collapseFiltersTasks" class="collapse" aria-labelledby="taskFilterCardHeading">
+                                <div class="card-body">
+                                    <form>
+                                        <div class="row">
+                                            <div class="col">
+                                                <div class="form-group">
+                                                    <label for="filter-region-task">Region</label>
                                                     <select class="form-control" id="filter-region-task"></select>
-                                                </div>
-                                                <label for="filter-assigned"
-                                                       class="col-lg-1 col-sm-2 col-xs-12 control-label">Assigned user</label>
-                                                <div class="col-lg-3 col-sm-4 col-xs-12">
-                                                    <select class="form-control" id="filter-assigned"></select>
-                                                </div>
-                                                <label for="filter-taskType"
-                                                       class="col-lg-1 col-sm-2 col-xs-12 control-label">Type</label>
-                                                <div class="col-lg-3 col-sm-4 col-xs-12">
-                                                    <select class="form-control" id="filter-taskType"></select>
-                                                </div>
-                                            </div><!-- /.form-group -->
-                                            <div class="form-group">
-                                                <label for="filter-taskState-task"
-                                                       class="col-lg-1 col-sm-2 col-xs-12 control-label">Status</label>
-                                                <div class="col-lg-3 col-sm-4 col-xs-12">
+                                                </div><!-- /.form-group -->
+                                                <div class="form-group">
+                                                    <label for="filter-taskState-task">Status</label>
                                                     <select class="form-control" id="filter-taskState-task"></select>
-                                                </div>
-                                                <label for="filter-dateFrom-task"
-                                                       class="col-lg-1 col-sm-2 col-xs-12 control-label">From date started</label>
-                                                <div class="col-lg-3 col-sm-4">
+                                                </div><!-- /.form-group -->
+                                            </div><!-- .col -->
+                                            <div class="col">
+                                                <div class="form-group">
+                                                    <label for="filter-assigned">Assigned user</label>
+                                                    <select class="form-control" id="filter-assigned"></select>
+                                                </div><!-- /.form-group -->
+                                                <div class="form-group">
+                                                    <label for="filter-dateFrom-task">From date started</label>
                                                     <input class="form-control dateinput" id="filter-fromDate-task">
-                                                </div>
-                                                <label for="filter-dateTo-task"
-                                                       class="col-lg-1 col-sm-2 col-xs-12 control-label">To date started</label>
-                                                <div class="col-lg-3 col-sm-4">
+                                                </div><!-- /.form-group -->
+                                            </div><!-- .col -->
+                                            <div class="col">
+                                                <div class="form-group">
+                                                    <label for="filter-taskType">Type</label>
+                                                    <select class="form-control" id="filter-taskType"></select>
+                                                </div><!-- /.form-group -->
+                                                <div class="form-group">
+                                                    <label for="filter-dateTo-task">To date started</label>
                                                     <input class="form-control dateinput" id="filter-toDate-task">
-                                                </div>
-                                            </div><!-- /.form-group -->
-                                        </form><!-- /.form-horizontal -->
-                                    </div> <!-- /.panel-body -->
-                                </div><!-- /.panel-collapse collapse in -->
-                            </div><!-- /.panel panel-default-->
-                        </div><!-- /.panel-group -->
+                                                </div><!-- /.form-group -->
+                                            </div><!-- .col -->
+                                        </div><!-- /.row-->
+                                    </form>
+                                </div> <!-- /.card-body -->
+                            </div><!-- /.collapse -->
+
+                        </div><!-- /.card -->
                     </div><!-- /.col-xs-12 -->
                 </div><!-- /.row -->
+
                 <!-- Download button row-->
                 <div class="row">
-                    <div class="col-xs-12 text-right">
-                        <a href="#" type="button" class="btn btn-primary"
-                                   id="id_download_tasks">Download tasks</a>
-                    </div><!-- /.col-xs-12 -->
+                    <div class="col">
+                        <a id="id_download_tasks" href="#" type="button" class="btn btn-primary float-right">Download tasks</a>
+                    </div><!-- /.col -->
                 </div><!-- /.row -->
+
                 <!-- DataTable row-->
                 <div class="row">
-                    <div class="col-xs-12">
+                    <div class="col">
                         <div id="id-div-datatable-tasks">
-                            <table id="tasksTable" class="table table-striped table-bordered table-condensed">
+                            <table id="tasksTable" class="table table-sm table-striped table-bordered">
                                 <thead>
                                     <tr>
                                         <th>Referral ID</th>
@@ -298,13 +290,13 @@
                                 <tbody></tbody>
                             </table>
                         </div>
-                    </div><!-- /.col-xs-12 -->
+                    </div><!-- /.col -->
                 </div><!-- /.row -->
+
             </div><!-- /.tab-pane -->
         </div><!-- /.tab-content -->
 
-
-    </div><!-- /.col-xs-12 -->
+    </div><!-- /.col -->
 </div><!-- /.row -->
 
 <div id="id-div-result-panel">
@@ -313,13 +305,12 @@
 
 {% block extra_js %}
 {{ block.super }}
-<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.4/lodash.min.js"></script>
-<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/datatables/1.10.9/js/jquery.dataTables.min.js"></script>
-<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/datatables/1.10.9/js/dataTables.bootstrap.min.js"></script>
-<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.4.1/js/bootstrap-datepicker.min.js"></script>
-<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/spin.js/2.3.2/spin.min.js"></script>
-<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/js/select2.min.js"></script>
-<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.15/lodash.min.js" integrity="sha256-VeNaFBVDhoX3H+gJ37DpT/nTuZTdjYro9yBruHjVmoQ=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.20/js/jquery.dataTables.min.js" integrity="sha256-L4cf7m/cgC51e7BFPxQcKZcXryzSju7VYBKJLOKPHvQ=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.20/js/dataTables.bootstrap4.min.js" integrity="sha256-A8HQsn/9uXt+VRkaLhWtj7KMC8bYT76r3IB7iTqDtLo=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js" integrity="sha256-bqVeqGdJ7h/lYPq6xrPv/YGzMEb6dNxlfiTUHSgRCp8=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/spin.js/2.3.2/spin.min.js" integrity="sha256-PieqE0QdEDMppwXrTzSZQr6tWFX3W5KkyRVyF1zN3eg=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.26.0/moment.min.js" integrity="sha256-5oApc/wMda1ntIEK4qoWJ4YItnV4fBHMwywunj8gPqc=" crossorigin="anonymous"></script>
 <script type="text/javascript">
     const refListUrl = "{% url 'prs_object_list' model='referrals' %}";
     const spinner = new Spinner({scale: 3, top: '120px'});
@@ -405,7 +396,7 @@
     }
 
     function updateTags() {
-        var el = $("select#filter-referralTags").get(0);
+        var el = $("select#filter-referralTag").get(0);
         var url = "{% url 'referral_api:tag-list' %}";
         var filters = {"format": "json", "ordering": "name"};
         _updateSelectOptions(el, url, filters);
@@ -434,9 +425,10 @@
         if (toDate) {
             $.extend(data, {"referral_date__lte": moment(toDate, "D/M/YYYY").format("YYYY-MM-DD")});
         }
-        var tags = $("#filter-referralTags").val();
-        if (tags.length > 0) {
-            $.extend(data, {"tags__id__in": tags.join(",")});
+        var tags = $("#filter-referralTag").val();
+        if (tags) {
+            $.extend(data, {"tags__id__in": tags});
+            //$.extend(data, {"tags__id__in": tags.join(",")});
         }
         return data;
     }
@@ -734,11 +726,8 @@
         updateAssignedUser();
         updateTags();
 
-        // Initialise tag select widgets.
-        $("#filter-referralTags").select2();
-
         // Onchange events for Referral filters.
-        $("#filter-region-referral, #filter-organisation-referral, #filter-referralType, #filter-referralTags").change(function () {
+        $("#filter-region-referral, #filter-organisation-referral, #filter-referralType, #filter-referralTag").change(function () {
             startSpinner();
             refDataTable.ajax.reload();
         });

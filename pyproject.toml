@@ -1,0 +1,45 @@
+[tool.poetry]
+name = "prs"
+version = "2.5.0"
+description = "Planning Referral System corporate application"
+authors = ["Ashley Felton <ashley.felton@dbca.wa.gov.au>"]
+license = "Apache-2.0"
+
+[tool.poetry.dependencies]
+python = "^3.7"
+Django = "3.0.7"
+psycopg2-binary = "2.8.4"
+dbca-utils = "1.1.1"
+django-dotenv = "1.4.2"
+dj-database-url = "0.5.0"
+gunicorn = "20.0.4"
+dj-static = "0.0.6"
+django-crispy-forms = "1.8.1"
+webtemplate-dbca = "1.2.1"
+django-reversion = "3.0.5"
+django-tastypie = "0.14.3"
+django-taggit = "1.2.0"
+django-bootstrap-pagination = "1.7.1"
+Unidecode = "1.1.1"
+Pillow = "6.2.2"
+python-magic = "0.4.15"
+lxml = "4.4.1"
+django-downloadview = "2.1.1"
+openpyxl = "2.6.3"
+xmltodict = "0.11.0"
+shapely = "1.6.4"
+sentry-sdk = "0.13.5"
+djangorestframework = "3.11.0"
+extract-msg = "0.23.3"
+django-extensions = "2.2.6"
+
+[tool.poetry.dev-dependencies]
+coverage = "4.5.1"
+mixer = "6.1.3"
+django-webtest = "1.9.7"
+ipdb = "^0.13.2"
+ipython = "^7.15.0"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"

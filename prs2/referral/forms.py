@@ -22,11 +22,10 @@ class OrganisationChoiceField(forms.ModelChoiceField):
     '''
 
     def __init__(self, *args, **kwargs):
-        qs = Organisation.objects.current().filter(public=True)
-        kwargs['queryset'] = qs.order_by('list_name')
+        kwargs['queryset'] = Organisation.objects.current().filter(public=True).order_by('list_name')
         kwargs['help_text'] = 'The referring organisation or individual.'
         kwargs['label'] = 'Referrer'
-        super(OrganisationChoiceField, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def label_from_instance(self, obj):
         return obj.list_name
@@ -36,7 +35,7 @@ class RecordChoiceField(forms.ModelMultipleChoiceField):
 
     def __init__(self, *args, **kwargs):
         kwargs['queryset'] = Record.objects.none()
-        super(RecordChoiceField, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def label_from_instance(self, obj):
         if obj.order_date:
@@ -57,7 +56,7 @@ class RegionMultipleChoiceField(forms.ModelMultipleChoiceField):
         kwargs['label'] = 'Region(s)'
         kwargs['widget'] = forms.SelectMultiple(
             attrs={'data-placeholder': 'Select region(s)...'})
-        super(RegionMultipleChoiceField, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 
 class DopTriggerMultipleChoiceField(forms.ModelMultipleChoiceField):
@@ -68,7 +67,7 @@ class DopTriggerMultipleChoiceField(forms.ModelMultipleChoiceField):
         kwargs['label'] = 'DoP trigger(s)'
         kwargs['widget'] = forms.SelectMultiple(
             attrs={'data-placeholder': 'Select trigger(s)...'})
-        super(DopTriggerMultipleChoiceField, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 
 class TaskTypeChoiceField(forms.ModelChoiceField):
@@ -76,7 +75,7 @@ class TaskTypeChoiceField(forms.ModelChoiceField):
     def __init__(self, *args, **kwargs):
         kwargs['label'] = 'Task type'
         kwargs['queryset'] = TaskType.objects.current().filter(public=True)
-        super(TaskTypeChoiceField, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 
 class PRSUserChoiceField(forms.ModelChoiceField):
@@ -86,7 +85,7 @@ class PRSUserChoiceField(forms.ModelChoiceField):
     def __init__(self, *args, **kwargs):
         users = User.objects.filter(groups__name__in=['PRS user'], is_active=True)
         kwargs['queryset'] = users.order_by('username')
-        super(PRSUserChoiceField, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def label_from_instance(self, obj):
         if obj.get_full_name():
@@ -103,7 +102,7 @@ class PRSUserMultipleChoiceField(forms.ModelMultipleChoiceField):
         users = User.objects.filter(
             groups__name__in=['PRS user', 'PRS power user'], is_active=True)
         kwargs['queryset'] = users.order_by('username')
-        super(PRSUserMultipleChoiceField, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def label_from_instance(self, obj):
         if obj.get_full_name():
@@ -124,30 +123,31 @@ class TaskOutcomeField(forms.ModelChoiceField):
         state_qs = state_qs.order_by('name')
         kwargs['queryset'] = state_qs
         kwargs['help_text'] = 'The final outcome for this task.'
-        super(TaskOutcomeField, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 
 class BaseFormHelper(FormHelper):
     """Base FormHelper class, with common options set.
     """
     def __init__(self, *args, **kwargs):
-        super(BaseFormHelper, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.form_class = 'form-horizontal'
         self.form_method = 'POST'
         self.label_class = 'col-xs-12 col-sm-4 col-md-3 col-lg-2'
         self.field_class = 'col-xs-12 col-sm-8 col-md-6 col-lg-4'
         self.help_text_inline = True
+        self.attrs = {'novalidate': ''}
 
 
 class BaseForm(forms.ModelForm):
     """Base ModelForm class for referral models.
     """
     save_button = Submit('save', 'Save', css_class='btn-lg')
-    cancel_button = Submit('cancel', 'Cancel')
+    cancel_button = Submit('cancel', 'Cancel', css_class='btn-secondary')
 
     def __init__(self, *args, **kwargs):
         self.helper = BaseFormHelper()
-        super(BaseForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     class Meta:
         exclude = ['created', 'modified', 'creator', 'modifier', 'effective_to']
@@ -169,7 +169,7 @@ class ReferralForm(BaseForm):
         input_formats=settings.DATE_INPUT_FORMATS)
 
     def __init__(self, *args, **kwargs):
-        super(ReferralForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['type'].queryset = ReferralType.objects.current()
         self.fields['reference'].label = 'Referrers reference'
         self.fields['file_no'].label = 'File no.'
@@ -202,8 +202,8 @@ class ReferralCreateForm(ReferralForm):
     """
     due_date = forms.DateField(
         required=False,
-        help_text='''Optional. Date that the referral must be actioned by (
-            system will set a due date of 42 days if no date is chosen).''',
+        help_text='''Optional. Date that the referral must be actioned by
+            (system will set a due date of 42 days if no date is chosen).''',
         widget=forms.DateInput(format='%d/%m/%Y'),
         input_formats=settings.DATE_INPUT_FORMATS)
     task_type = TaskTypeChoiceField()
@@ -217,7 +217,7 @@ class ReferralCreateForm(ReferralForm):
         help_text='Email the assigned user a notification about this referral.')
 
     def __init__(self, *args, **kwargs):
-        super(ReferralCreateForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['referring_org'].help_text = '''The referring organisation
             or individual. Fill in the Referrer first. <a href="{}">Click here
             </a> to create a new referrer (you will be taken to a new screen
@@ -229,10 +229,10 @@ class ReferralCreateForm(ReferralForm):
             be added.'''
         self.fields['address'].help_text = '''[Searchable] Insert physical
             address of the proposal.'''
-        self.fields['type'].label = '''<a class="btn btn-info"
+        self.fields['type'].label = '''<button type="button" class="btn btn-primary"
             data-toggle="modal" data-target="#refTypeModal">
-            <span class="glyphicon glyphicon-info-sign"></span>
-            Referral type</a>'''
+            <i class="far fa-question-circle"></i>
+            Referral type</button>'''
         self.fields['task_type'].help_text = '''Select a task from the list.
             Normally, the default task 'Assess a referral' is appropriate.
             Please note that to enter a clearance request, a referral will first
@@ -243,9 +243,7 @@ class ReferralCreateForm(ReferralForm):
         self.helper.layout = Layout(
             'referring_org', 'reference', 'description', 'address', 'lga',
             'referral_date', 'due_date', 'type', 'task_type', 'assigned_user',
-            # Hack to make crispy_forms output proper HTML for Bootstrap 3:
-            PrependedText('email_user', ''),
-            'regions', 'dop_triggers', 'file_no',
+            'email_user', 'regions', 'dop_triggers', 'file_no',
             Div(
                 self.save_button,
                 self.cancel_button,
@@ -257,7 +255,7 @@ class ReferralCreateForm(ReferralForm):
 class ReferralUpdateForm(ReferralForm):
 
     def __init__(self, *args, **kwargs):
-        super(ReferralUpdateForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         # Define the form layout.
         self.helper.layout = Layout(
             'referring_org', 'reference', 'description', 'address', 'lga',
@@ -272,7 +270,7 @@ class ReferralUpdateForm(ReferralForm):
 class OrganisationForm(BaseForm):
 
     def __init__(self, *args, **kwargs):
-        super(OrganisationForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['name'].help_text = 'The name of the referrer.'
         # Define the form layout.
         layout = Layout(
@@ -291,7 +289,7 @@ class OrganisationForm(BaseForm):
     def clean(self):
         '''Validate the name field; cannot have any (new) duplicates.
         '''
-        cleaned_data = super(OrganisationForm, self).clean()
+        cleaned_data = super().clean()
         if not self.instance.pk and 'name' in cleaned_data:  # Adding/changing the name
             if Organisation.objects.current().filter(name=cleaned_data['name']).exists():
                 raise ValidationError({'name': 'An organisation with that name already exists!'})
@@ -302,7 +300,7 @@ class NoteForm(BaseForm):
     """
 
     def __init__(self, *args, **kwargs):
-        super(NoteForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         # Set note_html required = False so client-side validation doesn't fail.
         self.fields['note_html'].required = False
         self.fields['order_date'].initial = datetime.today().strftime('%d/%m/%Y')
@@ -328,7 +326,7 @@ class NoteAddExistingForm(BaseForm):
     notes = forms.ModelMultipleChoiceField(queryset=None)
 
     def __init__(self, referral, *args, **kwargs):
-        super(NoteAddExistingForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['notes'].queryset = Note.objects.current().filter(referral=referral)
         self.helper = BaseFormHelper()
         layout = Layout(
@@ -355,7 +353,7 @@ class RecordForm(BaseForm):
     '''
 
     def __init__(self, *args, **kwargs):
-        super(RecordForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['order_date'].widget = forms.DateInput(format='%d/%m/%Y')
         self.fields['order_date'].input_formats = settings.DATE_INPUT_FORMATS
         self.fields['uploaded_file'].max_length = 220  # Allow 35 characters for the filepath
@@ -372,7 +370,7 @@ class RecordForm(BaseForm):
         exclude = BaseForm.Meta.exclude + ['referral']
 
     def clean(self):
-        cleaned_data = super(RecordForm, self).clean()
+        cleaned_data = super().clean()
         u = cleaned_data.get('uploaded_file')
         if u and hasattr(u, 'content_type') and u.content_type not in settings.ALLOWED_UPLOAD_TYPES:
             self._errors['uploaded_file'] = self.error_class(['File type is not permitted.'])
@@ -390,7 +388,7 @@ class RecordCreateForm(RecordForm):
     '''
 
     def __init__(self, *args, **kwargs):
-        super(RecordCreateForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['order_date'].initial = datetime.today().strftime('%d/%m/%Y')
         self.fields['infobase_id'].help_text = '''To link to an Infobase record,
             enter the Infobase object ID exactly as it appears in Infobase (i.e.
@@ -411,7 +409,7 @@ class RecordCreateForm(RecordForm):
         Custom validation: User must choose upload file or input infobase id.
         One or both MUST be present.
         '''
-        cleaned_data = super(RecordCreateForm, self).clean()
+        cleaned_data = super().clean()
         uploaded_file = cleaned_data.get('uploaded_file')
         infobase_id = cleaned_data.get('infobase_id')
         msg = 'Please choose a file to upload AND/OR input an Infobase ID.'
@@ -430,7 +428,7 @@ class CustomFormHelper(BaseFormHelper):
     TODO: this is a bad solution for making a single field widget wider.
     """
     def __init__(self, *args, **kwargs):
-        super(CustomFormHelper, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.field_class = 'col-xs-12 col-sm-8 col-md-9 col-lg-10'
 
 
@@ -440,7 +438,7 @@ class RecordAddExistingForm(BaseForm):
     records = RecordChoiceField(queryset=None)
 
     def __init__(self, referral, *args, **kwargs):
-        super(RecordAddExistingForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['records'].queryset = Record.objects.current().filter(referral=referral)
         self.helper = CustomFormHelper()
         layout = Layout(
@@ -459,7 +457,7 @@ class RecordAddExistingForm(BaseForm):
 class TagMultipleChoiceField(forms.ModelMultipleChoiceField):
     def __init__(self, *args, **kwargs):
         kwargs['queryset'] = Tag.objects.all().order_by('name')
-        super(TagMultipleChoiceField, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 
 class TaskCompleteForm(BaseForm):
@@ -476,7 +474,7 @@ class TaskCompleteForm(BaseForm):
         multiple options.''')
 
     def __init__(self, *args, **kwargs):
-        super(TaskCompleteForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['state'] = TaskOutcomeField(task_type=self.instance.type)
         self.fields['complete_date'].input_formats = settings.DATE_INPUT_FORMATS
         self.fields['complete_date'].required = True
@@ -517,7 +515,7 @@ class TaskStopForm(BaseForm):
         help_text='Date on which this task was stopped.')
 
     def __init__(self, *args, **kwargs):
-        super(TaskStopForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['description'].required = True
         self.fields['description'].help_text = '''Please describe why the
             task was stopped.'''
@@ -545,7 +543,7 @@ class TaskStartForm(BaseForm):
     '''
 
     def __init__(self, *args, **kwargs):
-        super(TaskStartForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['due_date'].widget = forms.DateInput(format='%d/%m/%Y')
         self.fields['due_date'].input_formats = settings.DATE_INPUT_FORMATS
         self.fields['due_date'].required = True
@@ -582,7 +580,7 @@ class TaskReassignForm(BaseForm):
         help_text='Email the assigned user a notification about this task.')
 
     def __init__(self, *args, **kwargs):
-        super(TaskReassignForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['assigned_user'] = PRSUserChoiceField()
         self.fields['due_date'].widget = forms.DateInput(format='%d/%m/%Y')
         self.fields['due_date'].input_formats = settings.DATE_INPUT_FORMATS
@@ -610,7 +608,7 @@ class TaskCancelForm(BaseForm):
     '''
 
     def __init__(self, *args, **kwargs):
-        super(TaskCancelForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['description'].help_text = '''Please record why the task
             was cancelled (optional).'''
         layout = Layout(
@@ -642,7 +640,7 @@ class TaskForm(BaseForm):
     '''
 
     def __init__(self, *args, **kwargs):
-        super(TaskForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['assigned_user'] = PRSUserChoiceField()
         self.fields['type'].queryset = TaskType.objects.current()
         self.fields['start_date'].required = True
@@ -709,7 +707,7 @@ class TaskInheritForm(BaseForm):
     '''
 
     def __init__(self, *args, **kwargs):
-        super(TaskInheritForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         layout = Layout('description')
         layout = Layout(
             'description',
@@ -741,7 +739,7 @@ class TaskCreateForm(BaseForm):
         help_text='Email the assigned user a notification about this referral.')
 
     def __init__(self, *args, **kwargs):
-        super(TaskCreateForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['assigned_user'] = PRSUserChoiceField()
         self.fields['start_date'].required = True
         self.fields['start_date'].input_formats = settings.DATE_INPUT_FORMATS
@@ -770,7 +768,7 @@ class TaskCreateForm(BaseForm):
 class LocationForm(BaseForm):
 
     def __init__(self, *args, **kwargs):
-        super(LocationForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         layout = Layout(
             'address_no', 'address_suffix', 'road_name', 'road_suffix',
             'locality', 'postcode', 'lot_no',
@@ -796,7 +794,7 @@ class ConditionForm(BaseForm):
     '''
 
     def __init__(self, *args, **kwargs):
-        super(ConditionForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['category'].queryset = ConditionCategory.objects.current()
         self.fields['identifier'].label = 'Condition no.'
         layout = Layout(
@@ -818,7 +816,7 @@ class ModelConditionChoiceField(forms.ModelChoiceField):
 
     def __init__(self, *args, **kwargs):
         kwargs['queryset'] = ModelCondition.objects.current().order_by('identifier')
-        super(ModelConditionChoiceField, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def label_from_instance(self, obj):
         return '{} {}'.format(obj.identifier, obj.condition)
@@ -838,7 +836,7 @@ class ConditionCreateForm(ConditionForm):
         field where it may be edited as required.''')
 
     def __init__(self, *args, **kwargs):
-        super(ConditionCreateForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         help_html = HTML('''<p>Add a subdivision or development condition that
             requires a clearance. Add additional conditions separately by
             clicking <strong>Save and add another</strong>.</p>''')
@@ -886,7 +884,7 @@ class TaskClearanceCreateForm(BaseForm):
             Will default to 42 days if no date is specified.''')
 
     def __init__(self, condition_choices, *args, **kwargs):
-        super(TaskClearanceCreateForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['conditions'].choices = condition_choices
         self.fields['assigned_user'] = PRSUserChoiceField()
         self.fields['assigned_user'].help_text = 'User to which to assign the clearance task(s).'
@@ -938,7 +936,7 @@ class ClearanceCreateForm(BaseForm):
             Will default to 45 days from today if no date is specifed.''')
 
     def __init__(self, condition=None, *args, **kwargs):
-        super(ClearanceCreateForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         cond_text_html = HTML('''
             <div id="div_id_condition_text" class="form-group">
                 <label for="id_condition_text" class="control-label col-xs-12 col-sm-4 col-md-3 col-lg-2">Approved condition</label>
@@ -978,7 +976,7 @@ class BookmarkForm(BaseForm):
     '''
 
     def __init__(self, *args, **kwargs):
-        super(BookmarkForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['description'].required = True
         layout = Layout(
             'description',
@@ -1012,7 +1010,7 @@ class IntersectingReferralForm(BaseForm):
         required=False)
 
     def __init__(self, referral, referrals, *args, **kwargs):
-        super(IntersectingReferralForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['related_refs'].queryset = referrals
         html = HTML('''<p>The new location intersects other locations associated with different referrals.
             Please select any referrals that you want to relate to referral {0} ({1}):</p>'''.format(referral.id, referral.type))
@@ -1046,7 +1044,7 @@ class TagReplaceForm(forms.Form):
                 self.save_button, self.cancel_button,
                 css_class='col-sm-offset-4 col-md-offset-3 col-lg-offset-2')
         )
-        super(TagReplaceForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 
 # The following dictionary contains info about customised forms for editing different model types.

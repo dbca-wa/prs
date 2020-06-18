@@ -17,6 +17,9 @@ DEBUG = env('DEBUG', False)
 SECRET_KEY = env('SECRET_KEY', 'PlaceholderSecretKey')
 CSRF_COOKIE_SECURE = env('CSRF_COOKIE_SECURE', False)
 SESSION_COOKIE_SECURE = env('SESSION_COOKIE_SECURE', False)
+SECURE_SSL_REDIRECT = env('SECURE_SSL_REDIRECT', False)
+SECURE_REFERRER_POLICY = env('SECURE_REFERRER_POLICY', None)
+SECURE_HSTS_SECONDS = env('SECURE_HSTS_SECONDS', 0)
 if not DEBUG:
     ALLOWED_HOSTS = env('ALLOWED_DOMAINS', 'localhost').split(',')
 else:
@@ -90,7 +93,7 @@ LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 APPLICATION_TITLE = 'Planning Referral System'
 APPLICATION_ACRONYM = 'PRS'
-APPLICATION_VERSION_NO = '2.4.24'
+APPLICATION_VERSION_NO = '2.5.0'
 APPLICATION_ALERTS_EMAIL = 'PRS-Alerts@dbca.wa.gov.au'
 SITE_URL = env('SITE_URL', 'localhost')
 PRS_USER_GROUP = env('PRS_USER_GROUP', 'PRS user')
@@ -214,10 +217,10 @@ LOGGING = {
 TASTYPIE_DEFAULT_FORMATS = ['json']
 
 # crispy_forms settings
-CRISPY_TEMPLATE_PACK = 'bootstrap3'
+CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
 # Sentry configuration
-if env('SENTRY_DSN', False):
+if env('SENTRY_DSN', ''):
     SENTRY_CONFIG = {'dsn': env('SENTRY_DSN')}
 
 # django-rest-framework configuration

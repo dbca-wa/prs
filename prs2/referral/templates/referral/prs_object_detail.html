@@ -1,16 +1,16 @@
 {% extends "base_prs.html" %}
-{% load cache %}
-{% load static from staticfiles %}
+{% load static %}
 
 {% block extra_style %}
 {{ block.super }}
-<link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/datatables/1.10.9/css/dataTables.bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.20/css/dataTables.bootstrap4.min.css" integrity="sha256-F+DaKAClQut87heMIC6oThARMuWne8+WzxIDT7jXuPA=" crossorigin="anonymous" />
 <link rel="stylesheet" type="text/css" href="{% static 'css/prs_datatables.css' %}" />
 {% if geojson_locations %}
-<link rel="stylesheet" href="//api.mapbox.com/mapbox.js/v2.2.1/mapbox.css" />
-<link rel="stylesheet" href="{% static 'css/leaflet-search.css' %}" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mapbox.js/3.3.1/mapbox.min.css" integrity="sha256-In35bXEWybU1ap9AaTzR+Oan+5DZFnhaddUcg72dhF0=" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.css" integrity="sha256-RTALnHN76PJ32RJx2mxggy+RUt9TIRV+mfPLSLbI75A=" crossorigin="anonymous" />
+<link rel="stylesheet" type="text/css" href="{% static 'css/leaflet-search.css' %}" />
 {% endif %}
-<link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/dropzone/5.1.1/min/dropzone.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.1/min/basic.min.css" integrity="sha256-RvDmZ4ZtPtrWmZdibCa80jCE32m21xuR5SuW6zfJaW4=" crossorigin="anonymous" />
 <link rel="stylesheet" href="{% static 'css/prs_dropzone.css' %}" />
 <style>
     #map { width:100%; height: 480px;}
@@ -21,88 +21,101 @@
 {% block sidebar_content %}{% include object_tools_template %}{% endblock %}
 {% endif %}
 
-{% block navbar_links %}
+{% block navbar_item_extra %}
 {% if object_type == 'task' %}
-<li class="dropdown">
-    <a id="id-menu-task" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Task <span class="caret"></span></a>
-    <ul class="dropdown-menu" role="menu">
-        <li class="is_prs_user"><a href="{% url 'task_action' pk=object.pk action='update' %}">Update task</a></li>
-        {% if task_stopped %}
-        <li class="is_prs_user"><a href="{% url 'task_action' pk=object.pk action='start' %}">Start task</a></li>
-        {% else %}
-        <li class="is_prs_user"><a href="{% url 'task_action' pk=object.pk action='stop' %}">Stop task</a></li>
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" href="#" id="taskDetailNavbarDropdown" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+        Task <span class="caret"></span>
+    </a>
+    <div class="dropdown-menu" aria-labelledby="taskDetailNavbarDropdown">
+        {% if prs_user %}
+            <a class="dropdown-item" href="{% url 'task_action' pk=object.pk action='update' %}">Update task</a>
+            {% if task_stopped %}
+                <a class="dropdown-item" href="{% url 'task_action' pk=object.pk action='start' %}">Start task</a>
+            {% else %}
+                <a class="dropdown-item" href="{% url 'task_action' pk=object.pk action='stop' %}">Stop task</a>
+            {% endif %}
+            {% if can_complete %}
+                <a class="dropdown-item" href="{% url 'task_action' pk=object.pk action='complete' %}">Complete task</a>
+            {% else %}
+                <a class="dropdown-item" href="#" id="id_complete" title="{{ can_complete_msg }}" style="color:grey">Complete task</a>
+            {% endif %}
+            <a class="dropdown-item" href="{% url 'task_action' pk=object.pk action='cancel' %}">Cancel task</a>
+            <a class="dropdown-item" href="{% url 'task_action' pk=object.pk action='reassign' %}">Reassign task</a>
+            <a class="dropdown-item" href="{% url 'task_action' pk=object.pk action='inherit' %}">Inherit task</a>
+            <a class="dropdown-item" href="{% url 'referral_create_child_related' pk=object.referral.pk id=object.id model='task' type='addnewrecord' %}">Add a new record to this task</a>
+            <a class="dropdown-item" href="{% url 'referral_create_child_related' pk=object.referral.pk id=object.id model='task' type='addrecord' %}">Add existing record(s) to this task</a>
+            <a class="dropdown-item" href="{% url 'referral_create_child_related' pk=object.referral.pk id=object.id model='task' type='addnewnote' %}">Add a new note to this task</a>
+            <a class="dropdown-item" href="{% url 'referral_create_child_related' pk=object.referral.pk id=object.id model='task' type='addnote' %}">Add existing note(s) to this task</a>
+            <a class="dropdown-item" href="{% url 'prs_object_delete' model='tasks' pk=object.pk %}">Delete task</a>
         {% endif %}
-        {% if can_complete %}
-          <li class="is_prs_user"><a href="{% url 'task_action' pk=object.pk action='complete' %}">Complete task</a></li>
-        {% else %}
-          <li class="is_prs_user"><a href="#" id="id_complete" title="{{can_complete_msg}}" style="color:grey">Complete task</a></li>
-        {% endif %}
-        <li class="is_prs_user"><a href="{% url 'task_action' pk=object.pk action='cancel' %}">Cancel task</a></li>
-        <li class="is_prs_user"><a href="{% url 'task_action' pk=object.pk action='reassign' %}">Reassign task</a></li>
-        <li class="is_prs_user"><a href="{% url 'task_action' pk=object.pk action='inherit' %}">Inherit task</a></li>
-        <li class="is_prs_user"><a href="{% url 'referral_create_child_related' pk=object.referral.pk id=object.id model='task' type='addnewrecord' %}">Add a new record to this task</a></li>
-        <li class="is_prs_user"><a href="{% url 'referral_create_child_related' pk=object.referral.pk id=object.id model='task' type='addrecord' %}">Add existing record(s) to this task</a></li>
-        <li class="is_prs_user"><a href="{% url 'referral_create_child_related' pk=object.referral.pk id=object.id model='task' type='addnewnote' %}">Add a new note to this task</a></li>
-        <li class="is_prs_user"><a href="{% url 'referral_create_child_related' pk=object.referral.pk id=object.id model='task' type='addnote' %}">Add existing note(s) to this task</a></li>
-        <li class="is_prs_user"><a href="{% url 'prs_object_delete' model='tasks' pk=object.pk %}">Delete task</a></li>
-        <li><a href="{% url 'prs_object_history' model='tasks' pk=object.pk %}">History</a></li>
-    </ul>
+        <a class="dropdown-item" href="{% url 'prs_object_history' model='tasks' pk=object.pk %}">History</a>
+    </div>
 </li>
 {% elif object_type == 'note' %}
-{% cache 600 note_navbar_links object.pk request.user.username %}
-<li class="dropdown">
-    <a id="id-menu-note" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Note <span class="caret"></span></a>
-    <ul class="dropdown-menu" role="menu">
-        <li class="is_prs_user"><a href="{% url 'prs_object_update' model='notes' pk=object.id %}">Update note</a></li>
-        <li class="is_prs_user"><a href="{% url 'prs_object_delete' model='notes' pk=object.id %}">Delete note</a></li>
-        <li class="is_prs_user"><a href="{% url 'referral_create_child_related' pk=object.referral.id id=object.id model='note' type='addnewrecord' %}">Add a new record to this note</a></li>
-        <li class="is_prs_user"><a href="{% url 'referral_create_child_related' pk=object.referral.id id=object.id model='note' type='addrecord' %}">Add existing record(s) to this note</a></li>
-        <li><a href="{% url 'prs_object_history' model='notes' pk=object.id %}">History</a></li>
-    </ul>
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" href="#" id="noteDetailNavbarDropdown" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+        Note <span class="caret"></span>
+    </a>
+    <div class="dropdown-menu" aria-labelledby="noteDetailNavbarDropdown">
+        {% if prs_user %}
+            <a class="dropdown-item" href="{% url 'prs_object_update' model='notes' pk=object.id %}">Update note</a>
+            <a class="dropdown-item" href="{% url 'prs_object_delete' model='notes' pk=object.id %}">Delete note</a>
+            <a class="dropdown-item" href="{% url 'referral_create_child_related' pk=object.referral.id id=object.id model='note' type='addnewrecord' %}">Add a new record to this note</a>
+            <a class="dropdown-item" href="{% url 'referral_create_child_related' pk=object.referral.id id=object.id model='note' type='addrecord' %}">Add existing record(s) to this note</a>
+        {% endif %}
+        <a class="dropdown-item" href="{% url 'prs_object_history' model='notes' pk=object.id %}">History</a>
+    </div>
 </li>
-{% endcache %}
 {% elif object_type == 'record' %}
-{% cache 600 record_navbar_links object.pk request.user.username %}
-<li class="dropdown">
-    <a id="id-menu-record" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Record <span class="caret"></span></a>
-    <ul class="dropdown-menu" role="menu">
-        <li class="is_prs_user"><a href="{% url 'prs_object_update' model='records' pk=object.id %}">Update record</a></li>
-        <li class="is_prs_user"><a href="{% url 'prs_object_delete' model='records' pk=object.id %}">Delete record</a></li>
-        <li class="is_prs_user"><a href="{% url 'referral_create_child_related' pk=object.referral.id id=object.id model='record' type='addnewnote' %}">Add a new note to this record</a></li>
-        <li class="is_prs_user"><a href="{% url 'referral_create_child_related' pk=object.referral.id id=object.id model='record' type='addnote' %}">Add existing note(s) to this record</a></li>
-        <li><a href="{% url 'prs_object_history' model='records' pk=object.id %}">History</a></li>
-    </ul>
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" href="#" id="recordDetailNavbarDropdown" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+        Record <span class="caret"></span>
+    </a>
+    <div class="dropdown-menu" aria-labelledby="recordDetailNavbarDropdown">
+        {% if prs_user %}
+            <a class="dropdown-item" href="{% url 'prs_object_update' model='records' pk=object.id %}">Update record</a>
+            <a class="dropdown-item" href="{% url 'prs_object_delete' model='records' pk=object.id %}">Delete record</a>
+            <a class="dropdown-item" href="{% url 'referral_create_child_related' pk=object.referral.id id=object.id model='record' type='addnewnote' %}">Add a new note to this record</a>
+            <a class="dropdown-item" href="{% url 'referral_create_child_related' pk=object.referral.id id=object.id model='record' type='addnote' %}">Add existing note(s) to this record</a>
+        {% endif %}
+        <a class="dropdown-item" href="{% url 'prs_object_history' model='records' pk=object.id %}">History</a>
+    </div>
 </li>
-{% endcache %}
 {% elif object_type == 'location' %}
-{% cache 600 location_navbar_links object.pk request.user.username %}
-<li class="dropdown">
-    <a id="id-menu-location" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Location <span class="caret"></span></a>
-    <ul class="dropdown-menu" role="menu">
-        <li class="is_prs_user"><a href="{% url 'prs_object_update' model='locations' pk=object.id %}">Update location</a></li>
-        <li class="is_prs_user"><a href="{% url 'prs_object_delete' model='locations' pk=object.id %}">Delete location</a></li>
-        <li><a href="{% url 'prs_object_history' model='locations' pk=object.id %}">History</a></li>
-    </ul>
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" href="#" id="locationDetailNavbarDropdown" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+        Location <span class="caret"></span>
+    </a>
+    <div class="dropdown-menu" aria-labelledby="locationDetailNavbarDropdown">
+        {% if prs_user %}
+            <a class="dropdown-item" href="{% url 'prs_object_update' model='locations' pk=object.id %}">Update location</a>
+            <a class="dropdown-item" href="{% url 'prs_object_delete' model='locations' pk=object.id %}">Delete location</a>
+        {% endif %}
+        <a class="dropdown-item" href="{% url 'prs_object_history' model='locations' pk=object.id %}">History</a>
+    </div>
 </li>
-{% endcache %}
 {% elif object_type == 'condition' %}
-{% cache 600 condition_navbar_links object.pk request.user.username %}
-<li class="dropdown">
-    <a id="id-menu-condition" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Condition <span class="caret"></span></a>
-    <ul class="dropdown-menu" role="menu">
-        <li class="is_prs_user"><a href="{% url 'prs_object_update' model='conditions' pk=object.id %}">Update condition</a></li>
-        <li class="is_prs_user"><a href="{% url 'prs_object_delete' model='conditions' pk=object.id %}">Delete condition</a></li>
-        <li class="is_prs_user"><a href="{% url 'condition_clearance_add' pk=object.id %}">Add a clearance request</a></li>
-        <li><a href="{% url 'prs_object_history' model='conditions' pk=object.id %}">History</a></li>
-    </ul>
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" href="#" id="conditionDetailNavbarDropdown"  data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+        Condition <span class="caret"></span>
+    </a>
+    <div class="dropdown-menu" aria-labelledby="conditionDetailNavbarDropdown">
+        {% if prs_user %}
+            <a class="dropdown-item" href="{% url 'prs_object_update' model='conditions' pk=object.id %}">Update condition</a>
+            <a class="dropdown-item" href="{% url 'prs_object_delete' model='conditions' pk=object.id %}">Delete condition</a>
+            <a class="dropdown-item" href="{% url 'condition_clearance_add' pk=object.id %}">Add a clearance request</a>
+        {% endif %}
+        <a class="dropdown-item" href="{% url 'prs_object_history' model='conditions' pk=object.id %}">History</a>
+    </div>
 </li>
-{% endcache %}
 {% endif %}
-{{ block.super }}
 {% endblock %}
 
 {% block page_content_inner %}
-<div class="alert alert-danger hidden" id="complete_msg">{{can_complete_msg}}</div>
+{% if can_complete %}
+<div class="alert alert-danger hidden" id="complete_msg">{{ can_complete_msg }}</div>
+{% endif %}
 <div id="object-details">
 
 <!-- Object details -->
@@ -217,22 +230,23 @@
 
 {% if geojson_locations %}
 <div class="row">
-    <div class="col-xs-12">
-        <div id="map"></div>
-    </div><!-- /.col-xs-12-->
+    <div class="col">
+        <div class="card card-body" id="map"></div>
+    </div>
 </div>
 {% endif %}
 {% endblock page_content_inner %}
 
 {% block extra_js %}
 {{ block.super }}
-<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/dropzone/5.1.1/min/dropzone.min.js"></script>
-<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/datatables/1.10.9/js/jquery.dataTables.min.js"></script>
-<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/datatables/1.10.9/js/dataTables.bootstrap.min.js"></script>
-<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.1/dropzone.min.js" integrity="sha256-fegGeSK7Ez4lvniVEiz1nKMx9pYtlLwPNRPf6uc8d+8=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.20/js/jquery.dataTables.min.js" integrity="sha256-L4cf7m/cgC51e7BFPxQcKZcXryzSju7VYBKJLOKPHvQ=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.20/js/dataTables.bootstrap.min.js" integrity="sha256-lq/mLZPNqOQ0CHcWc0svPG23XfVdJTc4fhGCNr8lvag=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.26.0/moment.min.js" integrity="sha256-5oApc/wMda1ntIEK4qoWJ4YItnV4fBHMwywunj8gPqc=" crossorigin="anonymous"></script>
 <script type="text/javascript" src="{% static 'js/datetime-moment.js' %}"></script>
 {% if geojson_locations %}
-<script src="//api.mapbox.com/mapbox.js/v2.2.2/mapbox.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mapbox.js/3.3.1/mapbox.js" integrity="sha256-oXEqjWuC/jlnMsEvnx5CC50C3O9dILhUsz8dIzkcbGI=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.js" integrity="sha256-6H5xWuqlbGtfk8UL9eMYmp14brCbCw1ZZialT8fHLRE=" crossorigin="anonymous"></script>
 <script src="{% static 'js/leaflet-search.min.js' %}"></script>
 <script>
     // Set global variables (needs to happen before loading referral_map.js)
@@ -241,6 +255,8 @@
 </script>
 <script src="{% static 'js/referral_map.js' %}"></script>
 <script>
+    // Add a fullscreen control to the map.
+    L.control.fullscreen().addTo(map);
     // Add Location polygons to the map display and zoom to their bounds.
     var geojsonFeatures = JSON.parse('{{ geojson_locations|escapejs }}');
     var locationsLayer = L.geoJson(null, {
@@ -251,12 +267,12 @@
     locationsLayer.addTo(map);
 </script>
 {% endif %}
-<script>
+<script type="text/javascript" charset="utf-8">
     // Configure file upload Dropzone element - needs to happen outside of $(function(){}).
     Dropzone.options.idRecordDropzone = {
         paramName: "file",
         acceptedFiles: ".tif,.jpg,.jpeg,.gif,.png,.doc,.docx,.xls,.xlsx,.csv,.pdf,.txt,.zip,.msg,.qgs",
-        timeout: 600000,  // 10 minutes is ms.
+        timeout: 600000,  // 10 minutes in ms.
         maxFilesize: 2048,  // 2 GB file size limit.
         init: function() {
             this.on("uploadprogress", function(file, progress) {
@@ -268,15 +284,13 @@
             });
         },
     };
-</script>
-<script type="text/javascript" charset="utf-8">
-    $("#id_complete").click(function() {
-       $('#complete_msg').removeClass('hidden');
-    });
-</script>
-<script type="text/javascript">
     // Document ready events
     $(function() {
+        {% if can_complete %}
+            $("#id_complete").click(function() {
+               $('#complete_msg').removeClass('hidden');
+            });
+        {% endif %}
         // Hide the Dropzone element if not a PRS user.
         var is_prs_user = true ? "{{ prs_user }}" == "True" : false
         if (!is_prs_user) {

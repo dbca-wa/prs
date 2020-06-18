@@ -4,7 +4,6 @@ from django.contrib.auth import get_user_model
 from django.contrib.gis.geos import GEOSGeometry, Point
 from django.core.files.base import ContentFile
 from django.db import models
-from django.utils.encoding import python_2_unicode_compatible
 import logging
 from shapely.geometry import Polygon
 import xmltodict
@@ -16,7 +15,6 @@ from referral.models import (
 logger = logging.getLogger('harvester')
 
 
-@python_2_unicode_compatible
 class EmailedReferral(models.Model):
     """A model to record details about emailed planning referrals.
     """
@@ -370,7 +368,6 @@ class EmailedReferral(models.Model):
         return actions
 
 
-@python_2_unicode_compatible
 class EmailAttachment(models.Model):
     """A saved email file attachment.
     """
@@ -394,7 +391,6 @@ class EmailAttachment(models.Model):
         return d
 
 
-@python_2_unicode_compatible
 class RegionAssignee(models.Model):
     """A model to define which user will be assigned any generated referrals
     for a region.

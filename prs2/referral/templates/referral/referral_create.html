@@ -1,10 +1,10 @@
 {% extends "base_prs.html" %}
-{% load static from staticfiles %}
+{% load static %}
 {% load crispy_forms_tags %}
 
 {% block extra_style %}
 {{ block.super }}
-<link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.4.1/css/bootstrap-datepicker.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css" integrity="sha256-siyOpF/pBWUPgIcQi17TLBkjvNgNQArcmwJB8YvkAgg=" crossorigin="anonymous" />
 {% endblock %}
 
 {% block page_content_inner %}
@@ -16,18 +16,20 @@
 {% crispy form %}
 
 <!-- Referral Types modal -->
-<div id="refTypeModal" class="modal fade in" tabindex="-1" role="dialog" aria-labelledby="refTypeModalLabel" aria-hidden="false">
-    <div class="modal-dialog modal-lg">
+<div id="refTypeModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="refTypeModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                <h4 class="modal-title" id="refTypemodalLabel">Referral types (definitions)</h4>
+                <h5 class="modal-title" id="refTypemodalLabel">Referral types (definitions)</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             <div class="modal-body">
                 {% include "referral/referral_type_modal.html" %}
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
             </div>
         </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
@@ -36,7 +38,7 @@
 
 {% block extra_js %}
 {{ block.super }}
-<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.4.1/js/bootstrap-datepicker.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js" integrity="sha256-bqVeqGdJ7h/lYPq6xrPv/YGzMEb6dNxlfiTUHSgRCp8=" crossorigin="anonymous"></script>
 <script type="text/javascript">
     // Initialise popovers.
     $("[data-toggle=popover]").popover({container: "body"});

@@ -119,7 +119,7 @@ class SiteHomeTest(PrsViewsTestCase):
         """
         url = reverse('site_home')
         response = self.client.get(url)
-        link = b'<a href="/admin/" title="Administration">Administration</a>'
+        link = b'<a class="dropdown-item" href="/admin/" title="Administration">Administration</a>'
         self.assertIs(response.content.find(link), -1)
         # Log in as admin user
         self.client.logout()

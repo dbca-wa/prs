@@ -8,7 +8,6 @@ from django.db.models import Q
 from django.db.models.base import ModelBase
 from django.utils.encoding import smart_text
 from django.utils.safestring import mark_safe
-from django.utils import six
 import json
 from reversion.models import Version
 import re
@@ -94,16 +93,17 @@ def dewordify_text(txt):
 def breadcrumbs_li(links):
     """Returns HTML: an unordered list of URLs (no surrounding <ul> tags).
     ``links`` should be a iterable of tuples (URL, text).
+    Reference: https://getbootstrap.com/docs/4.1/components/breadcrumb/
     """
     crumbs = ""
-    li_str = '<li><a href="{}">{}</a></li>'
-    li_str_last = '<li class="active"><span>{}</span></li>'
+    li_str = '<li class="breadcrumb-item"><a href="{}">{}</a></li>'
+    li_str_active = '<li class="breadcrumb-item active"><span>{}</span></li>'
     # Iterate over the list, except for the last item.
     if len(links) > 1:
         for i in links[:-1]:
             crumbs += li_str.format(i[0], i[1])
-    # Add the last item.
-    crumbs += li_str_last.format(links[-1][1])
+    # Add the final "active" item.
+    crumbs += li_str_active.format(links[-1][1])
     return crumbs
 
 
@@ -169,7 +169,7 @@ def user_referral_history(user, referral):
     # or a list of lists (new-style).
     for i in ref_history:
         # Firstly if the item is a string, convert that to a list ([val, DATE]).
-        if isinstance(i, six.text_type):
+        if isinstance(i, str):
             i = [int(i), datetime.strftime(datetime.today(), "%d-%m-%Y")]
         # If the referral that was passed in exists in the current list, pass (don't append it).
         if referral.id == i[0]:

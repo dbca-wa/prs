@@ -2,6 +2,7 @@ from django.urls import path
 from referral.models import Referral, Record, Task
 from referral import views
 
+
 # URL patterns for Referral objects
 urlpatterns = [
     path("referrals/create/", views.ReferralCreate.as_view(), name="referral_create"),
@@ -34,6 +35,13 @@ urlpatterns += [
     path("records/<int:pk>/infobase/", views.InfobaseShortcut.as_view(), name="infobase_shortcut"),
     path("records/<int:pk>/download/", views.ReferralDownloadView.as_view(model=Record, file_field="uploaded_file"), name="download_record"),
     path("records/<int:pk>/upload/", views.RecordUpload.as_view(), name="record_upload"),
+]
+
+# Patterns to test Hasura auth.
+urlpatterns += [
+    path("hasura/", views.HasuraAuthWebhook.as_view(), name="hasura_auth_webhook"),
+    path('auth/', views.userAuth, name='userAuth'),
+    path('validate_request/', views.inspectUser, name='inspectUser'),
 ]
 
 # Other static/functional URLs
