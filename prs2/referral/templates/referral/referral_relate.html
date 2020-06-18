@@ -20,7 +20,7 @@
                     <form method="post" action="{% url 'referral_relate' pk=referral.id %}?ref_pk={{ object.pk }}&create=true">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-link">
-                            <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                            <i class="fas fa-plus"></i>
                         </button>
                     </form>
                 </td>
