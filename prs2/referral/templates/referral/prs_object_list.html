@@ -27,22 +27,20 @@
 {% if object_list %}
     {% if page_obj.has_other_pages %}{% bootstrap_paginate page_obj range=10 show_prev_next="true" show_first_last="true" %}{% endif %}
     {% block object_list_table %}
-    <div class="table-responsive">
-        <table class="table table-striped table-bordered table-condensed prs-object-table">
-            <thead>
-                <tr>
-                {% for header in object_list_headers %}
-                    <th>{{ header }}</th>
-                {% endfor %}
-                </tr>
-            </thead>
-            <tbody>
-            {% for object in object_list %}
-                <tr>{{ object.as_row }}</tr>
+    <table class="table table-striped table-bordered table-sm prs-object-table">
+        <thead>
+            <tr>
+            {% for header in object_list_headers %}
+                <th>{{ header }}</th>
             {% endfor %}
-            </tbody>
-        </table>
-    </div>
+            </tr>
+        </thead>
+        <tbody>
+        {% for object in object_list %}
+            <tr>{{ object.as_row }}</tr>
+        {% endfor %}
+        </tbody>
+    </table>
     {% endblock object_list_table %}
     {% if page_obj.has_other_pages %}{% bootstrap_paginate page_obj range=10 show_prev_next="true" show_first_last="true" %}{% endif %}
 {% endif %}
@@ -53,7 +51,7 @@
 {{ block.super }}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.20/js/jquery.dataTables.min.js" integrity="sha256-L4cf7m/cgC51e7BFPxQcKZcXryzSju7VYBKJLOKPHvQ=" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.20/js/dataTables.bootstrap.min.js" integrity="sha256-lq/mLZPNqOQ0CHcWc0svPG23XfVdJTc4fhGCNr8lvag=" crossorigin="anonymous"></script>
-<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.26.0/moment.min.js" integrity="sha256-5oApc/wMda1ntIEK4qoWJ4YItnV4fBHMwywunj8gPqc=" crossorigin="anonymous"></script>
 <script type="text/javascript" src="{% static 'js/datetime-moment.js' %}"></script>
 <link rel="stylesheet" type="text/css" href="" />
 <script type="text/javascript">
