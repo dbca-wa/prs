@@ -222,7 +222,7 @@ def email_harvest_actions(to_emails, actions):
     Accepts a list of emails and list of actions to append.
     """
     subject = 'PRS emailed referral harvest log {}'.format(date.today().strftime('%x'))
-    from_email = 'PRS-Alerts@dpaw.wa.gov.au'
+    from_email = 'PRS-Alerts@dbca.wa.gov.au'
     text_content = '''This is an automated message to summarise harvest
     actions undertaken for emailed referrals.\n
     Actions:\n'''
