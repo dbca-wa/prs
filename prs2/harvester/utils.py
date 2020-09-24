@@ -149,6 +149,13 @@ def email_mark_unread(imap, uid):
     return status, response
 
 
+def email_delete(imap, uid):
+    """Flag an email for deletion and then call the expunge method.
+    """
+    status, response = imap.store(str(uid), '+FLAGS', '\Deleted')
+    return status, response
+
+
 def harvest_unread_emails(from_email):
     """Download a list of unread email from the specified email address and
     harvest each one.
@@ -187,14 +194,18 @@ def harvest_unread_emails(from_email):
             LOGGER.info('Harvesting email UID {}'.format(uid))
             actions.append('{} Harvesting email UID {}'.format(datetime.now().isoformat(), uid))
             harvest_email(uid, message)
-            # Mark email as read.
+            # Mark email 'read' and for deletion.
             status, response = email_mark_read(imap, uid)
             if status == 'OK':
                 LOGGER.info('Email UID {} was marked as "Read"'.format(uid))
+            status, response = email_delete(imap, uid)
+            if status == 'OK':
+                LOGGER.info('Email UID {} was marked for deletion'.format(uid))
 
         LOGGER.info('Harvest process completed ({})'.format(from_email))
         actions.append('{} Harvest process completed ({})'.format(datetime.now().isoformat(), from_email))
 
+    imap.expunge()
     imap.logout()
     return actions
 
@@ -222,7 +233,7 @@ def email_harvest_actions(to_emails, actions):
     Accepts a list of emails and list of actions to append.
     """
     subject = 'PRS emailed referral harvest log {}'.format(date.today().strftime('%x'))
-    from_email = 'PRS-Alerts@dpaw.wa.gov.au'
+    from_email = 'PRS-Alerts@dbca.wa.gov.au'
     text_content = '''This is an automated message to summarise harvest
     actions undertaken for emailed referrals.\n
     Actions:\n'''

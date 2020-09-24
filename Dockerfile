@@ -1,5 +1,5 @@
 # Prepare the base environment.
-FROM python:3.7-slim-buster as builder_base_prs
+FROM python:3.7.8-slim-buster as builder_base_prs
 MAINTAINER asi@dbca.wa.gov.au
 RUN apt-get update -y \
   && apt-get upgrade -y \

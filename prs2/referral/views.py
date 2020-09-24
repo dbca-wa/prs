@@ -51,7 +51,7 @@ from referral.utils import (
     user_referral_history,
     prs_user,
     is_prs_power_user,
-    #borgcollector_harvest,
+    # borgcollector_harvest,
 )
 from referral.forms import (
     ReferralCreateForm,
@@ -93,6 +93,7 @@ logger = logging.getLogger("prs")
 class SiteHome(LoginRequiredMixin, ListView):
     """Site home page view. Returns an object list of tasks (ongoing or stopped).
     """
+
     stopped_tasks = False
     printable = False
 
@@ -131,6 +132,7 @@ class SiteHome(LoginRequiredMixin, ListView):
 class HelpPage(TemplateView):
     """Help page (static template view).
     """
+
     template_name = "help_page.html"
 
     def get_context_data(self, **kwargs):
@@ -145,6 +147,7 @@ class GeneralSearch(PrsObjectList):
     """A search view that filters multiple object types: Referrals, Notes,
     Records, Conditions and Tasks.
     """
+
     model = Referral
     template_name = "referral/prs_general_search.html"
 
@@ -185,6 +188,7 @@ class GeneralSearch(PrsObjectList):
 class ReferralCreate(PrsObjectCreate):
     """Dedicated create view for new referrals.
     """
+
     model = Referral
     form_class = ReferralCreateForm
     template_name = "referral/referral_create.html"
@@ -291,6 +295,7 @@ class ReferralDetail(PrsObjectDetail):
     """Detail view for a single referral. Also includes a queryset of related/
     child objects in context.
     """
+
     model = Referral
     related_model = None
     template_name = "referral/referral_detail.html"
@@ -776,6 +781,7 @@ class LocationCreate(ReferralCreateChild):
     """Specialist view to allow selection of locations from cadastre, or
     digitisation of a spatial area.
     """
+
     model = Location
     form_class = LocationForm
     template_name = "referral/location_create.html"
@@ -848,11 +854,11 @@ class LocationCreate(ReferralCreateChild):
         # Call the Borg Collector publish API endpoint to create a manual job
         # to update the prs_locations layer.
         # FIXME: don't call the Borg API at present (broken).
-        #resp = borgcollector_harvest(self.request)
-        #logger.info(
+        # resp = borgcollector_harvest(self.request)
+        # logger.info(
         #    "Borg Collector API response status was {}".format(resp.status_code)
-        #)
-        #logger.info("Borg Collector API response: {}".format(resp.content))
+        # )
+        # logger.info("Borg Collector API response: {}".format(resp.content))
 
         # Test for intersecting locations.
         intersecting_locations = self.polygon_intersects(locations)
@@ -963,6 +969,7 @@ class RecordUpload(LoginRequiredMixin, View):
     Files can be uploaded on a Referral (creates a new child Record), or
     directly on a Record (updates it to replace any previous uploaded file).
     """
+
     http_method_names = ["post"]
     parent_referral = False
 
@@ -988,6 +995,8 @@ class RecordUpload(LoginRequiredMixin, View):
             return Record.objects.get(pk=self.kwargs["pk"])
 
     def post(self, request, *args, **kargs):
+        if not "file" in request.FILES:
+            return HttpResponse(json.dumps({"success": False}))
         f = request.FILES["file"]
         if self.parent_referral:
             rec = Record(
@@ -1021,6 +1030,7 @@ class TaskAction(PrsObjectUpdate):
     addrecord, addnewrecord, addnote, addnewnote
     NOTE: does not include the 'delete' action (handled by separate view).
     """
+
     model = Task
     template_name = "referral/change_form.html"
     action = None
@@ -1073,7 +1083,11 @@ class TaskAction(PrsObjectUpdate):
                 "Utilities infrastructure & roads",
             ]
         )
-        if action == "complete" and task.referral.type in trigger_ref_type and not task.referral.has_location:
+        if (
+            action == "complete"
+            and task.referral.type in trigger_ref_type
+            and not task.referral.has_location
+        ):
             msg = """You are unable to complete this task without first
                 recording location(s) on the referral.
                 <a href="{}">Click here to create location(s).</a>""".format(
@@ -1192,7 +1206,11 @@ class TaskAction(PrsObjectUpdate):
                         "Subdivision",
                     ]
                 )
-                if obj.state in trigger_outcome and obj.referral.type in trigger_ref_type and not obj.referral.has_proposed_condition:
+                if (
+                    obj.state in trigger_outcome
+                    and obj.referral.type in trigger_ref_type
+                    and not obj.referral.has_proposed_condition
+                ):
                     msg = """You are unable to complete this task as 'Response
                         with condition' without first recording proposed
                         condition(s) on the referral.
@@ -1256,6 +1274,7 @@ class ReferralRecent(PrsObjectList):
     """Override the general-purpose list view to return only referrals in the
     user's recent history.
     """
+
     model = Referral
     paginate_by = None
     template_name = "referral/referral_recent.html"
@@ -1293,6 +1312,7 @@ class ReferralReferenceSearch(PrsObjectList):
     E.g. if the new referrals reference in "1234", this view will return all
     existing referrals with "1234" inside their reference too.
     """
+
     model = Referral
     template_name = "referral/referral_reference_search.html"
 
@@ -1315,6 +1335,7 @@ class ReferralReferenceSearch(PrsObjectList):
 class TagList(PrsObjectList):
     """Custom view to return a readonly list of tags (rendered HTML or JSON).
     """
+
     model = Tag
     template_name = "referral/tag_list.html"
     http_method_names = ["get", "options"]
@@ -1336,6 +1357,7 @@ class TagReplace(LoginRequiredMixin, FormView):
     """Custom view to replace all instances of a tag with another.
     NOTE: only users in the 'PRS power user' group can access this view.
     """
+
     form_class = TagReplaceForm
     template_name = "referral/change_form.html"
 
@@ -1381,6 +1403,7 @@ class TagReplace(LoginRequiredMixin, FormView):
 class ReferralTagged(PrsObjectList):
     """Override the Referral model list view to filter tagged objects.
     """
+
     model = Referral
 
     def get_queryset(self):
@@ -1408,6 +1431,7 @@ class ReferralTagged(PrsObjectList):
 class BookmarkList(PrsObjectList):
     """Override to default object list to only show current user bookmarks.
     """
+
     model = Bookmark
 
     def get_queryset(self):
@@ -1477,17 +1501,18 @@ class ReferralDelete(PrsObjectDelete):
         # FIXME: don't call the Borg API at present (broken).
         # Call the Borg Collector publish API endpoint to create a manual job
         # to update the prs_locations layer.
-        #resp = borgcollector_harvest(self.request)
-        #logger.info(
+        # resp = borgcollector_harvest(self.request)
+        # logger.info(
         #    "Borg Collector API response status was {}".format(resp.status_code)
-        #)
-        #logger.info("Borg Collector API response: {}".format(resp.content))
+        # )
+        # logger.info("Borg Collector API response: {}".format(resp.content))
         return redirect("site_home")
 
 
 class ReferralRelate(PrsObjectList):
     """Custom list view to search referrals to relate together.
     """
+
     model = Referral
     template_name = "referral/referral_relate.html"
 
@@ -1549,6 +1574,7 @@ class ConditionClearanceCreate(PrsObjectCreate):
     This view opens the form for adding a new condition clearance to the database.
     ``pk`` is the PK of the Condition to which the clearance request is being made.
     """
+
     model = Condition
     form_class = ClearanceCreateForm
     template_name = "referral/change_form.html"
@@ -1646,19 +1672,31 @@ class ConditionClearanceCreate(PrsObjectCreate):
             msg.send(fail_silently=True)
 
         # Business rule: for each new clearance request, email the MANAGERS user list.
-        subject = 'PRS referral {} - new condition clearance request notification'.format(clearance_task.referral.pk)
-        from_email = 'PRS-Alerts@dbca.wa.gov.au'
+        subject = "PRS referral {} - new condition clearance request notification".format(
+            clearance_task.referral.pk
+        )
+        from_email = "PRS-Alerts@dbca.wa.gov.au"
         to_email = [i[1] for i in settings.MANAGERS]
-        text_content = 'This is an automated message to let you know that the following clearance request was just created:\n'
-        html_content = '<p>This is an automated message to let you know that the following clearance request was just created:</p>'
-        text_content += '* Task ID {}\n'.format(clearance_task.pk)
-        html_content += '<p><a href="{}">Task ID {}</a></p>'.format(settings.SITE_URL + clearance_task.get_absolute_url(), clearance_task.pk)
-        text_content += 'The clearance task was created by {}.\n'.format(clearance_task.creator.get_full_name())
-        html_content += '<p>The clearance task was created by {}.</p>'.format(clearance_task.creator.get_full_name())
-        text_content += 'This is an automatically-generated email - please do not reply.\n'
-        html_content += '<p>This is an automatically-generated email - please do not reply.</p>'
+        text_content = "This is an automated message to let you know that the following clearance request was just created:\n"
+        html_content = "<p>This is an automated message to let you know that the following clearance request was just created:</p>"
+        text_content += "* Task ID {}\n".format(clearance_task.pk)
+        html_content += '<p><a href="{}">Task ID {}</a></p>'.format(
+            settings.SITE_URL + clearance_task.get_absolute_url(), clearance_task.pk
+        )
+        text_content += "The clearance task was created by {}.\n".format(
+            clearance_task.creator.get_full_name()
+        )
+        html_content += "<p>The clearance task was created by {}.</p>".format(
+            clearance_task.creator.get_full_name()
+        )
+        text_content += (
+            "This is an automatically-generated email - please do not reply.\n"
+        )
+        html_content += (
+            "<p>This is an automatically-generated email - please do not reply.</p>"
+        )
         msg = EmailMultiAlternatives(subject, text_content, from_email, to_email)
-        msg.attach_alternative(html_content, 'text/html')
+        msg.attach_alternative(html_content, "text/html")
         # Email should fail gracefully - i.e. no Exception raised on failure.
         msg.send(fail_silently=True)
 
@@ -1691,6 +1729,7 @@ class InfobaseShortcut(View):
 class HealthCheckView(TemplateView):
     """A basic template view not requiring auth, used for service monitoring.
     """
+
     template_name = "healthcheck.html"
 
     def get_context_data(self, **kwargs):
@@ -1701,20 +1740,23 @@ class HealthCheckView(TemplateView):
 
 
 class HasuraAuthWebhook(View):
-
     def get(self, request, *args, **kwargs):
         if request.user.is_authenticated:
             hasura_vars = {
                 "X-Hasura-User-Id": str(request.user.pk),
                 "X-Hasura-Role": "user",
             }
-            return HttpResponse(json.dumps(hasura_vars), content_type="application/json")
+            return HttpResponse(
+                json.dumps(hasura_vars), content_type="application/json"
+            )
         else:
             hasura_vars = {
                 "X-Hasura-Role": "anonymous",
             }
-            return HttpResponse(json.dumps(hasura_vars), content_type="application/json")
-            #return HttpResponse("Unauthorized", status=401)
+            return HttpResponse(
+                json.dumps(hasura_vars), content_type="application/json"
+            )
+            # return HttpResponse("Unauthorized", status=401)
 
 
 from django.views.decorators.csrf import csrf_exempt
@@ -1724,30 +1766,37 @@ from django.contrib.auth import authenticate, login
 @csrf_exempt
 def userAuth(request):
     reqBody = json.loads(request.body)
-    requiredFields = ['username', 'password']
+    requiredFields = ["username", "password"]
     for field in requiredFields:
         if field not in reqBody or not reqBody[field]:
-            return HttpResponse(json.dumps({'message': 'Required field not available ( username, password )'}), status=401)
-    user = authenticate(request, username=reqBody['username'], password=reqBody['password'])
+            return HttpResponse(
+                json.dumps(
+                    {"message": "Required field not available ( username, password )"}
+                ),
+                status=401,
+            )
+    user = authenticate(
+        request, username=reqBody["username"], password=reqBody["password"]
+    )
     if user is not None:
         login(request, user)
         login_response = {
-            'token': request.session.session_key,
-            'user_id': request.session['_auth_user_id'],
-            'message': 'authenticated',
+            "token": request.session.session_key,
+            "user_id": request.session["_auth_user_id"],
+            "message": "authenticated",
         }
-        return HttpResponse(json.dumps(login_response), 'application/json')
+        return HttpResponse(json.dumps(login_response), "application/json")
     else:
-        return HttpResponse('Invalid credentials!', status=401)
+        return HttpResponse("Invalid credentials!", status=401)
 
 
 @csrf_exempt
 def inspectUser(request):
-    if (request.user.is_authenticated):
+    if request.user.is_authenticated:
         responseObj = {
-            'x-hasura-role': 'user',
-            'x-hasura-user-id': str(request.user.id)
+            "x-hasura-role": "user",
+            "x-hasura-user-id": str(request.user.id),
         }
         return HttpResponse(json.dumps(responseObj))
     else:
-        return HttpResponse('User not logged in', status=401)
+        return HttpResponse("User not logged in", status=401)

@@ -143,7 +143,7 @@ class OrganisationType(ReferralLookup):
 
 class Organisation(ReferralLookup):
     """
-    Lookup table of Organisations that send planning referrals to DPaW.
+    Lookup table of Organisations that send planning referrals to the department.
     """
     type = models.ForeignKey(
         OrganisationType, on_delete=models.PROTECT, help_text="The organisation type."
