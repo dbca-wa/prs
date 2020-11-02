@@ -23,7 +23,7 @@
     <a class="nav-link dropdown-toggle" href="#" id="referralDetailNavbarDropdown" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
         Referral <span class="caret"></span>
     </a>
-    <div class="dropdown-menu" aria-labelledby="referralDetailNavbarDropdown">
+    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="referralDetailNavbarDropdown">
         {% if prs_user %}
             <a class="dropdown-item" href="{% url 'referral_create_child' pk=referral.pk model='note' %}" title="Add note">Add a note</a>
             <a class="dropdown-item" href="{% url 'referral_create_child' pk=referral.pk model='record' %}" title="Add record">Add a record</a>

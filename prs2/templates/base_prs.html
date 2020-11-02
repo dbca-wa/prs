@@ -46,7 +46,7 @@
         <a class="nav-link dropdown-toggle" href="#" id="navbarSearchDropdown" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
             Search <span class="caret"></span>
         </a>
-        <div class="dropdown-menu" aria-labelledby="navbarSearchDropdown">
+        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarSearchDropdown">
             <a class="dropdown-item" href="{% url 'prs_object_list' model='referrals' %}" title="Referrals">Referrals</a>
             <a class="dropdown-item" href="{% url 'prs_object_list' model='tasks' %}" title="Tasks">Tasks</a>
             <a class="dropdown-item" href="{% url 'prs_object_list' model='notes' %}" title="Notes">Notes</a>
@@ -69,7 +69,7 @@
         <a class="nav-link dropdown-toggle" href="#" id="navbarAuthDropdown" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
             {% firstof user.get_full_name user.email %} <span class="caret"></span>
         </a>
-        <div class="dropdown-menu" aria-labelledby="navbarAuthDropdown">
+        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarAuthDropdown">
             {% if user.is_superuser %}
             <a class="dropdown-item" href="{% url 'admin:index' %}" title="Administration">Administration</a>
             {% endif %}
