@@ -10,9 +10,35 @@
     .footer {
         background-color: #f5f5f5;
     }
+    .navbar-custom {
+        background-color: #317589;
+    }
+    /* Change the brand and text color */
+    .navbar-custom .navbar-brand,
+    .navbar-custom .navbar-text {
+        color: rgb(255,255,255);
+    }
+    /* Change the link color */
+    .navbar-custom .navbar-nav .nav-link {
+        color: rgba(255,255,255,.7);
+    }
+    /* Change the color of active or hovered links */
+    .navbar-custom .nav-item.active .nav-link,
+    .navbar-custom .nav-item:hover .nav-link {
+        color: #ffffff;
+    }
+    /* Change the color of the navbar toggle button */
+    .custom-toggler .navbar-toggler-icon {
+      background-image: url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 32 32' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='rgba(255,255,255, 0.7)' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 8h24M4 16h24M4 24h24'/%3E%3C/svg%3E");
+    }
+    .custom-toggler.navbar-toggler {
+      border-color: rgb(255,255,255);
+    }
 </style>
 {% endblock %}
 
+{% block navbar_class %}navbar fixed-top navbar-expand-sm navbar-custom{% endblock %}
+{% block navbar_button_class %}navbar-toggler custom-toggler{% endblock %}
 {% block navbar_links %}
 <ul class="navbar-nav ml-auto">
     {% block navbar_item_extra %}{% endblock navbar_item_extra %}
@@ -20,7 +46,7 @@
         <a class="nav-link dropdown-toggle" href="#" id="navbarSearchDropdown" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
             Search <span class="caret"></span>
         </a>
-        <div class="dropdown-menu" aria-labelledby="navbarSearchDropdown">
+        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarSearchDropdown">
             <a class="dropdown-item" href="{% url 'prs_object_list' model='referrals' %}" title="Referrals">Referrals</a>
             <a class="dropdown-item" href="{% url 'prs_object_list' model='tasks' %}" title="Tasks">Tasks</a>
             <a class="dropdown-item" href="{% url 'prs_object_list' model='notes' %}" title="Notes">Notes</a>
@@ -43,7 +69,7 @@
         <a class="nav-link dropdown-toggle" href="#" id="navbarAuthDropdown" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
             {% firstof user.get_full_name user.email %} <span class="caret"></span>
         </a>
-        <div class="dropdown-menu" aria-labelledby="navbarAuthDropdown">
+        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarAuthDropdown">
             {% if user.is_superuser %}
             <a class="dropdown-item" href="{% url 'admin:index' %}" title="Administration">Administration</a>
             {% endif %}
