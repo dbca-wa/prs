@@ -17,7 +17,7 @@
         <div class="container-fluid">
             <div class="row">
                 <div class="col">
-                    <div class="card card-body" id="map" style="width: 100%; height: 100vh;"></div>
+                    <div class="card card-body" id="map" style="width: 1024px; height: 1024px;"></div>
                 </div>
             </div>
         </div>
@@ -27,12 +27,14 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin="anonymous"></script>
         <script>
             var landgateOrthomosaic = new L.tileLayer.wms(
-                'https://kmi.dbca.wa.gov.au/geoserver/gwc/service/wms',
+                'https://kmi.dbca.wa.gov.au/geoserver/ows',
                 {
-                    crs: L.CRS.EPSG4326,
+                    crs: L.CRS.EPSG3857,
+                    //crs: L.CRS.EPSG4326,
                     layers: 'landgate:virtual_mosaic',
-                    tileSize: 1024,
-                    format: 'image/jpeg',
+                    //tileSize: 1024,
+                    tileSize: 512,
+                    //format: 'image/jpeg',
                     tiled: true,
                     version: '1.1.1'
                 }
@@ -40,18 +42,20 @@
             var mapboxBaseLayer = new L.tileLayer(
               'https://api.mapbox.com/styles/v1/dpawasi/ckigwmxrx606g19msw0g882gj/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoiZHBhd2FzaSIsImEiOiJjanpreGZvOG4wbmdrM2J1aWN1OGJ1YmdtIn0.hyyU5V0KG0wdu3g5gm0_jw',
               {
-                //crs: L.CRS.EPSG3857,
+                crs: L.CRS.EPSG3857,
                 //tms: true,
-                tileSize: 512
+                tileSize: 512,
               }
             );
             var cadastre = new L.tileLayer.wms(
-                'https://kmi.dbca.wa.gov.au/geoserver/gwc/service/wms',
+                'https://kmi.dbca.wa.gov.au/geoserver/ows',
                 {
-                    crs: L.CRS.EPSG4326,
+                    crs: L.CRS.EPSG3857,
+                    //crs: L.CRS.EPSG4326,
                     layers: 'cddp:cadastre',
                     styles: 'cddp:cadastre.cadastre_prs',
-                    tileSize: 1024,
+                    //tileSize: 1024,
+                    tileSize: 512,
                     format: 'image/png',
                     tiled: true,
                     transparent: true,
@@ -61,11 +65,12 @@
 
             // Define map.
             var map = L.map('map', {
-                crs: L.CRS.EPSG4326,
-                center: [-31.96, 115.87],
-                zoom: 16,
+                crs: L.CRS.EPSG3857,
+                //crs: L.CRS.EPSG4326,
+                //center: [-31.96, 115.87],
+                //zoom: 16,
                 //minZoom: 5,
-                maxZoom: 18,
+                //maxZoom: 18,
                 layers: [mapboxBaseLayer],  // Sets default selections.
             });
 
@@ -84,6 +89,7 @@
             // Add location polygons to the map display and zoom to their bounds.
             var geojsonFeatures = {
                 "type": "FeatureCollection",
+                "crs": {"type": "name", "properties": {"name": "EPSG:3857"}},
                 "features": [
                     {
                         "type": "Feature",
