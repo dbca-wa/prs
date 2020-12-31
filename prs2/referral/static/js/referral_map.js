@@ -10,7 +10,7 @@ var landgateOrthomosaic = L.tileLayer.wms(
         crs: L.CRS.EPSG4326,
         layers: 'landgate:virtual_mosaic',
         tileSize: 1024,
-        format: 'image/jpeg',
+        format: 'image/png',
         tiled: true,
         version: '1.1.1'
     }
@@ -21,7 +21,7 @@ var mapboxStreets = L.tileLayer.wms(
         crs: L.CRS.EPSG4326,
         layers: 'dbca:mapbox-streets',
         tileSize: 1024,
-        format: 'image/jpeg',
+        format: 'image/png',
         tiled: true,
         version: '1.1.1'
     }
@@ -94,8 +94,8 @@ var map = L.map('map', {
 
 // Define layer groups.
 var baseMaps = {
-    "Landgate Orthomosaic": landgateOrthomosaic,
-    "OpenStreetMap Streets": mapboxStreets,
+    "Landgate orthomosaic": landgateOrthomosaic,
+    "Mapbox streets": mapboxStreets,
     "No base layer": empty
 };
 var overlayMaps = {
