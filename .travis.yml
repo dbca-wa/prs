@@ -1,18 +1,17 @@
 dist: bionic
-sudo: required
 language: python
 cache: pip
 python:
-    - 3.7
+    - "3.8"
 services:
     - postgresql
     - docker
 addons:
-    postgresql: "10"
+    postgresql: "11"
     apt:
         packages:
+            - postgresql-11-postgis-2.5
             - gdal-bin
-            - postgresql-10-postgis-2.4
 branches:
     only:
         - master
@@ -22,10 +21,9 @@ env:
         - DATABASE_URL="postgis://postgres@localhost:5432/travis_ci_test"
 before_install:
     - docker build -t dbcawa/prs .
-    - pip install --upgrade pip
     - pip install poetry
 install:
-    - poetry install --verbose --no-interaction --no-ansi
+    - poetry install --no-dev --no-interaction --no-ansi
 before_script:
     - psql -U postgres -c "create database travis_ci_test;"
     - psql -U postgres -d travis_ci_test -c "create extension postgis;"
