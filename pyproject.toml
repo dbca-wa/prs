@@ -6,7 +6,7 @@ authors = ["Ashley Felton <ashley.felton@dbca.wa.gov.au>"]
 license = "Apache-2.0"
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.8"
 Django = "3.0.10"
 psycopg2-binary = "2.8.6"
 dbca-utils = "1.1.1"
@@ -22,7 +22,7 @@ django-bootstrap-pagination = "1.7.1"
 Unidecode = "1.1.1"
 Pillow = "8.1.0"
 python-magic = "0.4.18"
-lxml = "4.5.2"
+lxml = "4.6.2"
 django-downloadview = "2.1.1"
 openpyxl = "3.0.5"
 xmltodict = "0.12.0"
