@@ -394,6 +394,12 @@ class ReferralDetail(PrsObjectDetail):
         return context
 
 
+class ReferralMap(TemplateView):
+    """Throwaway template view, for testing.
+    """
+    template_name = "referral/referral_detail_leaflet.html"
+
+
 class ReferralCreateChild(PrsObjectCreate):
     """View to create 'child' objects for a referral, e.g. a Task or Note.
     Also allows the creation of relationships between children (e.g relating

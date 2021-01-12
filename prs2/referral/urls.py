@@ -9,6 +9,7 @@ urlpatterns = [
     path("referrals/recent/", views.ReferralRecent.as_view(), name="referral_recent"),
     path("referrals/tagged/<slug>/", views.ReferralTagged.as_view(), name="referral_tagged"),
     path("referrals/reference-search/", views.ReferralReferenceSearch.as_view(), name="referral_reference_search"),
+    path("referrals/map/", views.ReferralMap.as_view(), name="referral_map"),
     path("referrals/<int:pk>/", views.ReferralDetail.as_view(), name="referral_detail"),
     path("referrals/<int:pk>/relate/", views.ReferralRelate.as_view(), name="referral_relate"),
     path("referrals/<int:pk>/history/", views.PrsObjectHistory.as_view(model=Referral), name="prs_object_history"),

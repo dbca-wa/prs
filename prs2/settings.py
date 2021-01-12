@@ -219,10 +219,6 @@ TASTYPIE_DEFAULT_FORMATS = ['json']
 # crispy_forms settings
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
-# Sentry configuration
-if env('SENTRY_DSN', ''):
-    SENTRY_CONFIG = {'dsn': env('SENTRY_DSN')}
-
 # django-rest-framework configuration
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
