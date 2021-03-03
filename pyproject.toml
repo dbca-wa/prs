@@ -37,7 +37,7 @@ django-webtest = "1.9.7"
 
 [tool.poetry.dev-dependencies]
 ipdb = "^0.13.2"
-ipython = "^7.15.0"
+ipython = "^7.20.0"
 
 [build-system]
 requires = ["poetry>=0.12"]

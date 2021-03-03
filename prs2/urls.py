@@ -4,6 +4,7 @@ from django.contrib import admin
 from django.contrib.auth.views import LoginView, LogoutView
 from django.views.generic.base import RedirectView
 from api import v1_api, v2_api
+from .views import StatusView
 
 admin.autodiscover()
 
@@ -21,5 +22,6 @@ urlpatterns = [
     path('api/v2/', include((v2_api.urls, 'referral_api'), namespace='api_drf_v2')),
     path('api/', include(v1_api.urls)),  # Tastypie will prefix '/api/v1/' automatically.
     path('reports/', include('reports.urls')),
+    path('status/', StatusView.as_view(), name='status'),
     path('', include('referral.urls')),
 ]
