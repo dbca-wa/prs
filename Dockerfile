@@ -1,5 +1,5 @@
 # Prepare the base environment.
-FROM python:3.8.6-slim-buster as builder_base_prs
+FROM python:3.8.8-slim-buster as builder_base_prs
 MAINTAINER asi@dbca.wa.gov.au
 RUN apt-get update -y \
   && apt-get upgrade -y \
@@ -10,7 +10,7 @@ RUN apt-get update -y \
 # Install Python libs using poetry.
 FROM builder_base_prs as python_libs_prs
 WORKDIR /app
-ENV POETRY_VERSION=1.0.5
+ENV POETRY_VERSION=1.1.5
 RUN pip install "poetry==$POETRY_VERSION"
 RUN python -m venv /venv
 COPY poetry.lock pyproject.toml /app/
