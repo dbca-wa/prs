@@ -237,8 +237,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.1/dropzone.min.js" integrity="sha256-fegGeSK7Ez4lvniVEiz1nKMx9pYtlLwPNRPf6uc8d+8=" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.20/js/jquery.dataTables.min.js" integrity="sha256-L4cf7m/cgC51e7BFPxQcKZcXryzSju7VYBKJLOKPHvQ=" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.20/js/dataTables.bootstrap.min.js" integrity="sha256-lq/mLZPNqOQ0CHcWc0svPG23XfVdJTc4fhGCNr8lvag=" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.26.0/moment.min.js" integrity="sha256-5oApc/wMda1ntIEK4qoWJ4YItnV4fBHMwywunj8gPqc=" crossorigin="anonymous"></script>
-<script type="text/javascript" src="{% static 'js/datetime-moment.js' %}"></script>
 <script type="text/javascript">
     // Configure file upload Dropzone element - needs to happen outside of $(function(){}).
     Dropzone.options.idReferralDropzone = {
@@ -259,7 +257,6 @@
     // Document ready events
     $(function() {
         // Initialise all DataTables.
-        $.fn.dataTable.moment("dd MMM YYYY", "en-AU");
         $(".prs-object-table").each(function(idx) {
             $(this).DataTable({
                 "autoWidth": false,

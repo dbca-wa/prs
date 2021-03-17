@@ -242,8 +242,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.1/dropzone.min.js" integrity="sha256-fegGeSK7Ez4lvniVEiz1nKMx9pYtlLwPNRPf6uc8d+8=" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.20/js/jquery.dataTables.min.js" integrity="sha256-L4cf7m/cgC51e7BFPxQcKZcXryzSju7VYBKJLOKPHvQ=" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.20/js/dataTables.bootstrap.min.js" integrity="sha256-lq/mLZPNqOQ0CHcWc0svPG23XfVdJTc4fhGCNr8lvag=" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.26.0/moment.min.js" integrity="sha256-5oApc/wMda1ntIEK4qoWJ4YItnV4fBHMwywunj8gPqc=" crossorigin="anonymous"></script>
-<script type="text/javascript" src="{% static 'js/datetime-moment.js' %}"></script>
 {% if geojson_locations %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mapbox.js/3.3.1/mapbox.js" integrity="sha256-oXEqjWuC/jlnMsEvnx5CC50C3O9dILhUsz8dIzkcbGI=" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.js" integrity="sha256-6H5xWuqlbGtfk8UL9eMYmp14brCbCw1ZZialT8fHLRE=" crossorigin="anonymous"></script>
@@ -297,7 +295,6 @@
             $("#file-uploader").hide();
         };
         // Initialise the DataTable.
-        $.fn.dataTable.moment("dd MMM YYYY", "en-AU");
         var dataTable = $(".related-objects-table").DataTable({
             "autoWidth": false,
             "info": false,

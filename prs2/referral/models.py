@@ -80,7 +80,9 @@ class ReferralLookup(ActiveModel, Audit):
         Remember to enclose output of this function in <tr> tags.
         """
         template = (
-            '<td><a href="{url}">{name}</a></td><td>{description}</td><td>{modified}</td>'
+            """<td><a href="{url}">{name}</a></td>
+            <td>{description}</td>
+            <td><span style="display:none">{modified_ts} </span>{modified}</td>"""
         )
         d = copy(self.__dict__)
         d["url"] = self.get_absolute_url()
@@ -89,6 +91,7 @@ class ReferralLookup(ActiveModel, Audit):
         else:
             d["description"] = ""
         d["modified"] = self.modified.strftime("%d %b %Y")
+        d["modified_ts"] = self.modified.isoformat()
         return mark_safe(template.format(**d))
 
     def as_tbody(self):
@@ -486,7 +489,7 @@ class Referral(ReferralBaseModel):
         Remember to enclose this function in <tr> tags.
         """
         template = """<td><a href="{url}">{id}</a></td>
-            <td>{referral_date}</td>
+            <td><span style="display:none">{referral_date_ts} </span>{referral_date}</td>
             <td>{description}</td></td>
             <td>{address}</td>
             <td>{reference}</td>
@@ -498,7 +501,12 @@ class Referral(ReferralBaseModel):
         d["type"] = self.type
         d["regions"] = self.regions_str
         d["referring_org"] = self.referring_org
-        d["referral_date"] = self.referral_date.strftime("%d %b %Y") or ""
+        if self.referral_date:
+            d["referral_date"] = self.referral_date.strftime("%d %b %Y")
+            d["referral_date_ts"] = self.referral_date.isoformat()
+        else:
+            d["referral_date"] = ""
+            d["referral_date_ts"] = ""
         if self.address:
             d["address"] = unidecode(self.address)
         else:
@@ -695,9 +703,9 @@ class Task(ReferralBaseModel):
             <td>{address}</td>
             <td class="referral-id-cell"><a href="{referral_url}">{referral}</a></td>
             <td>{assigned_user}</td>
-            <td>{start_date}</td>
-            <td>{due_date}</td>
-            <td>{complete_date}</td>
+            <td><span style="display:none">{start_date_ts} </span>{start_date}</td>
+            <td><span style="display:none">{due_date_ts} </span>{due_date}</td>
+            <td><span style="display:none">{complete_date_ts} </span>{complete_date}</td>
             <td>{state}</td>"""
         d = copy(self.__dict__)
         d["url"] = self.get_absolute_url()
@@ -712,16 +720,22 @@ class Task(ReferralBaseModel):
         d["assigned_user"] = self.assigned_user.get_full_name()
         if self.start_date:
             d["start_date"] = self.start_date.strftime("%d %b %Y")
+            d["start_date_ts"] = self.start_date.isoformat()
         else:
             d["start_date"] = ""
+            d["start_date_ts"] = ""
         if self.due_date:
             d["due_date"] = self.due_date.strftime("%d %b %Y")
+            d["due_date_ts"] = self.due_date.isoformat()
         else:
             d["due_date"] = ""
+            d["due_date_ts"] = ""
         if self.complete_date:
             d["complete_date"] = self.complete_date.strftime("%d %b %Y")
+            d["complete_date_ts"] = self.complete_date.isoformat()
         else:
             d["complete_date"] = ""
+            d["complete_date_ts"] = ""
         d["state"] = self.state
         return mark_safe(template.format(**d))
 
@@ -815,7 +829,7 @@ class Task(ReferralBaseModel):
             <td>{type}</td>
             <td>{referring_org}</td>
             <td>{reference}</td>
-            <td>{due_date}</td>"""
+            <td><span style="display:none">{due_date_ts} </span>{due_date}</td>"""
         if (
             self.is_stopped
         ):  # Render a different set of action icons if the task is stopped.
@@ -845,8 +859,10 @@ class Task(ReferralBaseModel):
             d["address"] = ""
         if self.due_date:
             d["due_date"] = self.due_date.strftime("%d %b %Y")
+            d["due_date_ts"] = self.due_date.isoformat()
         else:
             d["due_date"] = ""
+            d["due_date_ts"] = ""
         d["start_url"] = reverse(
             "task_action", kwargs={"pk": self.pk, "action": "start"}
         )
@@ -1076,7 +1092,7 @@ class Record(ReferralBaseModel):
         Remember to enclose this function in <tr> tags.
         """
         template = """<td><a href="{url}">Open</a></td>
-            <td>{order_date}</td>
+            <td><span style="display:none">{order_date_ts} </span>{order_date}</td>
             <td>{name}</td>
             <td><a href="{infobase_url}">{infobase_id}</a></td>
             <td class="referral-id-cell"><a href="{referral_url}">{referral}</a></td>
@@ -1086,8 +1102,10 @@ class Record(ReferralBaseModel):
         d["url"] = self.get_absolute_url()
         if self.order_date:
             d["order_date"] = self.order_date.strftime("%d %b %Y")
+            d["order_date_ts"] = self.order_date.isoformat()
         else:
             d["order_date"] = ""
+            d["order_date_ts"] = ""
         d["referral_url"] = self.referral.get_absolute_url()
         d["referral"] = self.referral
         if self.infobase_id:
@@ -1231,7 +1249,7 @@ class Note(ReferralBaseModel):
         template = """<td><a href="{url}">Open</a></td>
             <td>{type}</td>
             <td>{creator}</td>
-            <td>{order_date}</td>
+            <td><span style="display:none">{order_date_ts} </span>{order_date}</td>
             <td>{note}</td>
             <td class="referral-id-cell"><a href="{referral_url}">{referral}</a></td>"""
         d = copy(self.__dict__)
@@ -1245,8 +1263,10 @@ class Note(ReferralBaseModel):
         d["creator"] = self.creator.get_full_name()
         if self.order_date:
             d["order_date"] = self.order_date.strftime("%d %b %Y")
+            d["order_date_ts"] = self.order_date.isoformat()
         else:
             d["order_date"] = ""
+            d["order_date_ts"] = ""
         d["note"] = smart_truncate(unidecode(self.note), length=400)
         d["referral_url"] = self.referral.get_absolute_url()
         d["referral"] = self.referral
