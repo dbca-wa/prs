@@ -10,7 +10,7 @@
 <link rel="stylesheet" type="text/css" href="{% static 'css/leaflet-search.css' %}" />
 {% endif %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.1/min/basic.min.css" integrity="sha256-RvDmZ4ZtPtrWmZdibCa80jCE32m21xuR5SuW6zfJaW4=" crossorigin="anonymous" />
-<link rel="stylesheet" type="text/css" href="{% static 'css/prs_dropzone.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static 'css/prs_dropzone_5.7.1.css' %}" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.20/css/dataTables.bootstrap4.min.css" integrity="sha256-F+DaKAClQut87heMIC6oThARMuWne8+WzxIDT7jXuPA=" crossorigin="anonymous" />
 <link rel="stylesheet" type="text/css" href="{% static 'css/prs_datatables.css' %}" />
 <style>
@@ -176,7 +176,7 @@
                         href="#tab_conditions"
                         aria-controls="tab_conditions"
                         aria-selected="{% if rel_model == 'conditions' %}true{% else %}false{% endif %}">
-                        {% if conditions_count %}<strong>Conditions ({{ condition_count }})</strong>{% else %}Conditions{% endif %}
+                        {% if condition_count %}<strong>Conditions ({{ condition_count }})</strong>{% else %}Conditions{% endif %}
                     </a>
                 </li>
             </ul>
@@ -237,8 +237,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.1/dropzone.min.js" integrity="sha256-fegGeSK7Ez4lvniVEiz1nKMx9pYtlLwPNRPf6uc8d+8=" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.20/js/jquery.dataTables.min.js" integrity="sha256-L4cf7m/cgC51e7BFPxQcKZcXryzSju7VYBKJLOKPHvQ=" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.20/js/dataTables.bootstrap.min.js" integrity="sha256-lq/mLZPNqOQ0CHcWc0svPG23XfVdJTc4fhGCNr8lvag=" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.26.0/moment.min.js" integrity="sha256-5oApc/wMda1ntIEK4qoWJ4YItnV4fBHMwywunj8gPqc=" crossorigin="anonymous"></script>
-<script type="text/javascript" src="{% static 'js/datetime-moment.js' %}"></script>
 <script type="text/javascript">
     // Configure file upload Dropzone element - needs to happen outside of $(function(){}).
     Dropzone.options.idReferralDropzone = {
@@ -259,7 +257,6 @@
     // Document ready events
     $(function() {
         // Initialise all DataTables.
-        $.fn.dataTable.moment("dd MMM YYYY", "en-AU");
         $(".prs-object-table").each(function(idx) {
             $(this).DataTable({
                 "autoWidth": false,
