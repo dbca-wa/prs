@@ -246,6 +246,14 @@ django = ">=2.2"
 
 [[package]]
 category = "main"
+description = "Additional EBCDIC codecs"
+name = "ebcdic"
+optional = false
+python-versions = "*"
+version = "1.1.1"
+
+[[package]]
+category = "main"
 description = "An implementation of lxml.xmlfile for the standard library"
 name = "et-xmlfile"
 optional = false
@@ -258,13 +266,14 @@ description = "Extracts emails and attachments saved in Microsoft Outlook's .msg
 name = "extract-msg"
 optional = false
 python-versions = "*"
-version = "0.27.4"
+version = "0.28.7"
 
 [package.dependencies]
-compressed-rtf = "1.0.6"
+compressed-rtf = ">=1.0.6"
+ebcdic = ">=1.1.1"
 imapclient = "2.1.0"
-olefile = "0.46"
-tzlocal = "1.5.1"
+olefile = ">=0.46"
+tzlocal = ">=2.1"
 
 [[package]]
 category = "main"
@@ -508,7 +517,7 @@ version = "2.8.6"
 [[package]]
 category = "dev"
 description = "Run a subprocess in a pseudo terminal"
-marker = "python_version > \"3.6\" and sys_platform != \"win32\" or sys_platform != \"win32\""
+marker = "python_version > \"3.6\" and sys_platform != \"win32\" or sys_platform != \"win32\" or python_version > \"3.6\" and sys_platform != \"win32\" and (python_version > \"3.6\" and sys_platform != \"win32\" or sys_platform != \"win32\")"
 name = "ptyprocess"
 optional = false
 python-versions = "*"
@@ -662,7 +671,7 @@ description = "tzinfo object for the local timezone"
 name = "tzlocal"
 optional = false
 python-versions = "*"
-version = "1.5.1"
+version = "2.1"
 
 [package.dependencies]
 pytz = "*"
@@ -758,7 +767,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "0.12.0"
 
 [metadata]
-content-hash = "c7d6c43257c06693f7938b71bcaea0387592e6c681ee36ba149f55883e000dd7"
+content-hash = "a483df6cac3070ae78b45b984b36dc55b66a5a9fdc2f9c0959ca7009c9132c05"
 python-versions = "^3.8"
 
 [metadata.files]
@@ -893,12 +902,15 @@ djangorestframework = [
     {file = "djangorestframework-3.12.1-py3-none-any.whl", hash = "sha256:5c5071fcbad6dce16f566d492015c829ddb0df42965d488b878594aabc3aed21"},
     {file = "djangorestframework-3.12.1.tar.gz", hash = "sha256:d54452aedebb4b650254ca092f9f4f5df947cb1de6ab245d817b08b4f4156249"},
 ]
+ebcdic = [
+    {file = "ebcdic-1.1.1-py2.py3-none-any.whl", hash = "sha256:33b4cb729bc2d0bf46cc1847b0e5946897cb8d3f53520c5b9aa5fa98d7e735f1"},
+]
 et-xmlfile = [
     {file = "et_xmlfile-1.0.1.tar.gz", hash = "sha256:614d9722d572f6246302c4491846d2c393c199cfa4edc9af593437691683335b"},
 ]
 extract-msg = [
-    {file = "extract_msg-0.27.4-py2.py3-none-any.whl", hash = "sha256:93f68b793f773ecae4d3e2f9b9318d6f5153d68330fe5d3fbd38f8abed82533d"},
-    {file = "extract_msg-0.27.4.tar.gz", hash = "sha256:66f6e9badd17546868ecf5a3e4292b5fd31e264327a3bf5848ac835967fae438"},
+    {file = "extract_msg-0.28.7-py2.py3-none-any.whl", hash = "sha256:6ad2702bef86e6c1b8505e2993c7f3d37a1f3d140903138ee2df4a299dd2a29c"},
+    {file = "extract_msg-0.28.7.tar.gz", hash = "sha256:7ebdbd7863a3699080a69f71ec0cd30ed9bfee70bad9acc6a8e6abe9523c78c0"},
 ]
 faker = [
     {file = "Faker-0.9.1-py2.py3-none-any.whl", hash = "sha256:74b32991f8e08e4f2f84858b919eca253becfaec4b3fa5fcff7fdbd70d5d78b1"},
@@ -1141,7 +1153,8 @@ traitlets = [
     {file = "traitlets-5.0.5.tar.gz", hash = "sha256:178f4ce988f69189f7e523337a3e11d91c786ded9360174a3d9ca83e79bc5396"},
 ]
 tzlocal = [
-    {file = "tzlocal-1.5.1.tar.gz", hash = "sha256:4ebeb848845ac898da6519b9b31879cf13b6626f7184c496037b818e238f2c4e"},
+    {file = "tzlocal-2.1-py2.py3-none-any.whl", hash = "sha256:e2cb6c6b5b604af38597403e9852872d7f534962ae2954c7f35efcb1ccacf4a4"},
+    {file = "tzlocal-2.1.tar.gz", hash = "sha256:643c97c5294aedc737780a49d9df30889321cbe1204eac2c2ec6134035a92e44"},
 ]
 unidecode = [
     {file = "Unidecode-1.1.1-py2.py3-none-any.whl", hash = "sha256:1d7a042116536098d05d599ef2b8616759f02985c85b4fef50c78a5aaf10822a"},
