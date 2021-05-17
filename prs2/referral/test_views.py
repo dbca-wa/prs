@@ -946,16 +946,17 @@ class TaskActionTest(PrsViewsTestCase):
     def test_cant_complete_task_without_location(self):
         """Test rule that some tasks can't be completed without a location on the referral
         """
-        # First, ensure that the parent referral is a specific type.
-        self.task.referral.type = ReferralType.objects.get(name='Subdivision')
-        self.task.referral.save()
-        # Ensure that no locations exist on the parent referral.
-        for loc in self.task.referral.location_set.all():
-            loc.delete()
-        url = reverse('task_action', kwargs={'pk': self.task.pk, 'action': 'complete'})
-        response = self.client.get(url)
-        # Response should be a redirect to the task URL.
-        self.assertRedirects(response, self.task.get_absolute_url())
+        for ref_type in ["Development application", "Subdivision", "Clearing Permit - DWER"]:
+            # First, ensure that the parent referral is a specific type.
+            self.task.referral.type = ReferralType.objects.get(name=ref_type)
+            self.task.referral.save()
+            # Ensure that no locations exist on the parent referral.
+            for loc in self.task.referral.location_set.all():
+                loc.delete()
+            url = reverse('task_action', kwargs={'pk': self.task.pk, 'action': 'complete'})
+            response = self.client.get(url)
+            # Response should be a redirect to the task URL.
+            self.assertRedirects(response, self.task.get_absolute_url())
 
 
 class ReferralRelateTest(PrsViewsTestCase):

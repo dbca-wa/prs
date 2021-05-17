@@ -65,6 +65,7 @@ class PrsTestCase(TestCase):
         mixer.blend(
             ReferralType, name='Development application',
             slug='development-application')
+        mixer.blend(ReferralType, name='Clearing Permit - DWER', slug='clearing-permit-dwer')
         mixer.cycle(2).blend(ReferralType, initial_task=mixer.SELECT)
         mixer.cycle(2).blend(NoteType)
         mixer.cycle(2).blend(Agency)
