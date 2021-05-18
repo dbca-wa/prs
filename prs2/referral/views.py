@@ -1087,6 +1087,8 @@ class TaskAction(PrsObjectUpdate):
                 "Structure Plan",
                 "Subdivision",
                 "Utilities infrastructure & roads",
+                "Clearing Permit - DMIRS",
+                "Clearing Permit - DWER",
             ]
         )
         if (
@@ -1201,7 +1203,6 @@ class TaskAction(PrsObjectUpdate):
         elif action == "complete":
             if obj.type.name == "Assess a referral":
                 # Rule: proposed condition is mandatory for some 'Assess' task outcomes.
-                # Ref PPRS-127.
                 trigger_outcome = TaskState.objects.filter(
                     name__in=["Response with condition"]
                 )
@@ -1229,7 +1230,6 @@ class TaskAction(PrsObjectUpdate):
                     messages.warning(self.request, mark_safe(msg))
                     return redirect(obj.get_absolute_url())
                 # Rule: >0 Tags are mandatory for some 'Assess' task outcomes.
-                # Ref PPRS-103.
                 trigger_outcome = TaskState.objects.filter(
                     name__in=[
                         "Insufficient information provided",
