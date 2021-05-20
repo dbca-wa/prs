@@ -6,7 +6,7 @@ authors = ["Ashley Felton <ashley.felton@dbca.wa.gov.au>"]
 license = "Apache-2.0"
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.9"
 Django = "3.1.6"
 psycopg2-binary = "2.8.6"
 dbca-utils = "1.1.1"
@@ -36,9 +36,9 @@ mixer = "6.1.3"
 django-webtest = "1.9.7"
 
 [tool.poetry.dev-dependencies]
+ipython = "^7.23.0"
 ipdb = "^0.13.2"
-ipython = "^7.20.0"
 
 [build-system]
-requires = ["poetry>=0.12"]
+requires = ["poetry>=1.1.6"]
 build-backend = "poetry.masonry.api"
