@@ -14,6 +14,7 @@ sys.path.insert(0, PROJECT_DIR)
 
 # Application definition
 DEBUG = env('DEBUG', False)
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 SECRET_KEY = env('SECRET_KEY', 'PlaceholderSecretKey')
 CSRF_COOKIE_SECURE = env('CSRF_COOKIE_SECURE', False)
 SESSION_COOKIE_SECURE = env('SESSION_COOKIE_SECURE', False)
@@ -93,7 +94,7 @@ LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 APPLICATION_TITLE = 'Planning Referral System'
 APPLICATION_ACRONYM = 'PRS'
-APPLICATION_VERSION_NO = '2.5.3'
+APPLICATION_VERSION_NO = '2.5.4'
 APPLICATION_ALERTS_EMAIL = 'PRS-Alerts@dbca.wa.gov.au'
 SITE_URL = env('SITE_URL', 'localhost')
 PRS_USER_GROUP = env('PRS_USER_GROUP', 'PRS user')
@@ -141,9 +142,8 @@ DATABASES = {
 }
 
 # Internationalization
-LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Australia/Perth'
-USE_I18N = True
+USE_I18N = False
 USE_L10N = True
 USE_TZ = True
 # Sensible AU date input formats
