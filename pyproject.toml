@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "prs"
-version = "2.5.3"
+version = "2.5.4"
 description = "Planning Referral System corporate application"
 authors = ["Ashley Felton <ashley.felton@dbca.wa.gov.au>"]
 license = "Apache-2.0"
