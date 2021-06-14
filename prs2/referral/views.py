@@ -331,6 +331,13 @@ class ReferralDetail(PrsObjectDetail):
             resp = HttpResponse(content, content_type="application/x-qgis-project")
             resp["Content-Disposition"] = 'attachment; filename="{}"'.format(fn)
             return resp
+        elif "generate_gpkg" in request.GET and ref.location_set.current().exists():
+            content = ref.generate_gpkg()
+            fn = "prs_referral_{}.gpkg".format(ref.pk)
+            resp = HttpResponse(content, content_type="application/x-sqlite3")
+            resp["Content-Disposition"] = 'attachment; filename="{}"'.format(fn)
+            return resp
+
         # Call user_referral_history with the current referral.
         user_referral_history(request.user, ref)
 

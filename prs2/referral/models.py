@@ -15,6 +15,12 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 from extract_msg import Message
 from lxml.html import clean, fromstring
+from pygeopkg.core.geopkg import GeoPackage
+from pygeopkg.core.srs import SRS
+from pygeopkg.core.field import Field
+from pygeopkg.shared.enumeration import GeometryType, SQLFieldTypes
+from pygeopkg.shared.constants import SHAPE
+from pygeopkg.conversion.to_geopkg_geom import point_lists_to_gpkg_polygon, make_gpkg_geom_header
 from taggit.managers import TaggableManager
 from unidecode import unidecode
 
@@ -587,6 +593,29 @@ class Referral(ReferralBaseModel):
             'REFERRAL_PK': self.pk,
             'GEOSERVER_WFS_URL': settings.GEOSERVER_WFS_URL
         })
+
+    def generate_gpkg(self):
+        path = '/tmp/prs_referral_{}.gpkg'.format(self.pk)
+        gpkg = GeoPackage.create(path, flavor='EPSG')
+        srs_wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]'
+        srs = SRS("WGS 84", "EPSG", 4326, srs_wkt)
+        fields = (
+            # Field('modified', SQLFieldTypes.datetime),  # datetime caused the create_feature_class step to throw an exception.
+            Field('referral_id', SQLFieldTypes.integer),
+            Field('referral_type', SQLFieldTypes.text),
+            Field('referral_reference', SQLFieldTypes.text),
+            Field('referring_org', SQLFieldTypes.text),
+        )
+        fc = gpkg.create_feature_class('prs_referrals', srs, fields=fields, shape_type=GeometryType.polygon)
+        field_names = [SHAPE, 'referral_id', 'referral_type', 'referral_reference', 'referring_org']
+        rows = []
+        # We have to use the point_lists_to_gpkg_polygon function to insert WKB into the geopkg.
+        hdr = make_gpkg_geom_header(4326)
+        for loc in self.location_set.current().filter(poly__isnull=False):
+            gpkg_wkb = point_lists_to_gpkg_polygon(hdr, loc.poly.coords)
+            rows.append((gpkg_wkb, loc.referral.pk, loc.referral.type.name, loc.referral.reference, loc.referral.referring_org.name))
+        fc.insert_rows(field_names, rows)
+        return open(path, 'rb')  # Return the gpkg file object.
 
 
 class RelatedReferral(models.Model):
