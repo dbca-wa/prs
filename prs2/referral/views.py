@@ -337,6 +337,12 @@ class ReferralDetail(PrsObjectDetail):
             resp = HttpResponse(content, content_type="application/x-sqlite3")
             resp["Content-Disposition"] = 'attachment; filename="{}"'.format(fn)
             return resp
+        elif "generate_geojson" in request.GET and ref.location_set.current().exists():
+            content = ref.generate_geojson()
+            fn = "prs_referral_{}.geojson".format(ref.pk)
+            resp = HttpResponse(content, content_type="application/geo+json")
+            resp["Content-Disposition"] = 'attachment; filename="{}"'.format(fn)
+            return resp
 
         # Call user_referral_history with the current referral.
         user_referral_history(request.user, ref)

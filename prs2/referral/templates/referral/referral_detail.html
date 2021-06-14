@@ -40,6 +40,7 @@
             <a class="dropdown-item" href="{% url 'referral_detail' pk=referral.pk %}?generate_qgis=true" title="Generate QGIS layer (v2.8)">Generate QGIS layer (v2.8)</a>
             <a class="dropdown-item" href="{% url 'referral_detail' pk=referral.pk %}?generate_qgis=true&qgis_ver=2_16" title="Generate QGIS layer (v2.16+)">Generate QGIS layer (v2.16+)</a>
             <a class="dropdown-item" href="{% url 'referral_detail' pk=referral.pk %}?generate_gpkg=true" title="Generate Geopackage">Generate Geopackage</a>
+            <a class="dropdown-item" href="{% url 'referral_detail' pk=referral.pk %}?generate_geojson=true" title="Generate GeoJSON">Generate GeoJSON</a>
         {% endif %}
         {% if prs_power_user %}
             <a class="dropdown-item" href="{% url 'referral_delete' pk=referral.pk %}" title="Delete referral">Delete referral</a>
