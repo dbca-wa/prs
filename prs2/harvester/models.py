@@ -1,11 +1,10 @@
 from datetime import datetime, timedelta
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.gis.geos import GEOSGeometry, Point
+from django.contrib.gis.geos import GEOSGeometry, Polygon, Point
 from django.core.files.base import ContentFile
 from django.db import models
 import logging
-from shapely.geometry import Polygon
 import xmltodict
 
 from referral.models import (
