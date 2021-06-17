@@ -17,6 +17,7 @@
                     ({{ version.revision.comment }})</p>
                 {% endif %}
             {% endfor %}
+            {% if multi_versions %}
             <hr>
             <h3>Previous versions:</h3>
             {# Only show object revisions after the latest one. #}
@@ -29,6 +30,7 @@
                 </table>
                 <br>
             {% endfor %}
+            {% endif %}
         </div>
 {% endblock %}
 
