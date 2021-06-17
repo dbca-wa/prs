@@ -389,7 +389,7 @@ class PrsObjectHistory(PrsObjectDetail):
         )
         # Get all object versions
         versions = Version.objects.get_for_object(obj).order_by("-id")
-        context["obj_versions"] = [v._object_version for v in versions]
+        context["obj_versions"] = [(v._object_version, v.revision) for v in versions]
         context["multi_versions"] = len(versions) > 1  # True/False
         return context
 
