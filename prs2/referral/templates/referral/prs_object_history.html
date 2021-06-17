@@ -10,7 +10,7 @@
             {% for version in obj_versions %}
                 {% if forloop.first %}
                 <table class="table table-striped table-bordered table-condensed">
-                    <p>{{ version.object_version.object.as_tbody }}</p>
+                    <p>{{ version.object.as_tbody }}</p>
                 </table>
                     <p style="font-size:10px;">Created by {{ version.revision.user.get_full_name }} at
                     {{ version.revision.date_created|date:"d M Y, H:i"}}
@@ -23,7 +23,7 @@
             {# Only show object revisions after the latest one. #}
             {% for version in obj_versions|slice:"1:" %}
                 <table class="table table-striped table-bordered table-condensed">
-                <p>{{ version.object_version.object.as_tbody }}</p>
+                <p>{{ version.object.as_tbody }}</p>
                 <p style="font-size:10px;">Created by {{ version.revision.user.get_full_name }} at
                 {{ version.revision.date_created|date:"d M Y, H:i"}}
                 {% if not forloop.last %}({{ version.revision.comment }}){% endif %}</p>
