@@ -10,9 +10,6 @@ from reversion.revisions import create_revision, set_comment
 import threading
 
 
-INITIAL_COMMENT = 'Initial version.'
-
-
 class ActiveModelManager(models.Manager):
 
     def current(self):
