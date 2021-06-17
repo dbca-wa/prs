@@ -1,11 +1,11 @@
 from datetime import datetime, timedelta
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.gis.geos import GEOSGeometry, Point
+from django.contrib.gis.geos import GEOSGeometry, Polygon, Point
 from django.core.files.base import ContentFile
 from django.db import models
 import logging
-from shapely.geometry import Polygon
+from reversion.revisions import create_revision, set_comment
 import xmltodict
 
 from referral.models import (
@@ -206,9 +206,11 @@ class EmailedReferral(models.Model):
         new_ref.referring_org = wapc
         new_ref.reference = reference
         new_ref.description = app['DEVELOPMENT_DESCRIPTION'] if 'DEVELOPMENT_DESCRIPTION' in app else ''
-        new_ref.referral_date = self.received
+        new_ref.referral_date = self.received.date()
         new_ref.address = app['LOCATION'] if 'LOCATION' in app else ''
-        new_ref.save()
+        with create_revision():
+            new_ref.save()
+            set_comment('Initial version.')
 
         if referral_preexists:
             s = 'PRS referral updated: {}'.format(new_ref)
@@ -278,7 +280,9 @@ class EmailedReferral(models.Model):
                         new_loc.address_no = int(l['NUMBER_FROM']) if l['NUMBER_FROM'] else None
                     except:
                         pass  # Just ignore the value if it can't be parsed as an integer.
-                    new_loc.save()
+                    with create_revision():
+                        new_loc.save()
+                        set_comment('Initial version.')
                     new_locations.append(new_loc)
                     s = 'New PRS location generated: {}'.format(new_loc)
                     logger.info(s)
@@ -318,7 +322,9 @@ class EmailedReferral(models.Model):
             else:
                 due = datetime.today() + timedelta(assess_task.target_days)
             new_task.due_date = due
-            new_task.save()
+            with create_revision():
+                new_task.save()
+                set_comment('Initial version.')
             s = 'New PRS task generated: {} assigned to {}'.format(new_task, assigned.get_full_name())
             logger.info(s)
             self.log = self.log + '{}\n'.format(s)
@@ -338,7 +344,9 @@ class EmailedReferral(models.Model):
             file_name = 'emailed_referral_{}.html'.format(reference)
             new_file = ContentFile(self.body)
             new_record.uploaded_file.save(file_name, new_file)
-            new_record.save()
+            with create_revision():
+                new_record.save()
+                set_comment('Initial version.')
             s = 'New PRS record generated: {}'.format(new_record)
             logger.info(s)
             self.log = self.log + '{}\n'.format(s)

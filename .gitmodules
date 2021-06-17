@@ -1,0 +1,3 @@
+[submodule "pygeopkg"]
+	path = pygeopkg
+	url = https://github.com/realiii/pygeopkg.git

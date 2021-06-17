@@ -1,8 +1,5 @@
 # Planning Referral System
 
-[![Build
-Status](https://travis-ci.org/dbca-wa/prs.svg?branch=master)](https://travis-ci.org/dbca-wa/prs)
-
 This project is the Department of Biodiversity, Conservation and Attractions
 [Planning Referral System](https://prs.dbca.wa.gov.au/) corporate application.
 
