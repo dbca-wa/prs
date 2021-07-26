@@ -1102,6 +1102,11 @@ class TaskAction(PrsObjectUpdate):
                 "Utilities infrastructure & roads",
                 "Clearing Permit - DMIRS",
                 "Clearing Permit - DWER",
+                "LSU - Amendments to Reserves or UCL",
+                "LSU - Leases or easements over crown land",
+                "LSU - Road actions",
+                "LSU - s91 licences",
+                "LSU - s121 diversification permits",
             ]
         )
         if (
