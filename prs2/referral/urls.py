@@ -9,7 +9,6 @@ urlpatterns = [
     path("referrals/recent/", views.ReferralRecent.as_view(), name="referral_recent"),
     path("referrals/tagged/<slug>/", views.ReferralTagged.as_view(), name="referral_tagged"),
     path("referrals/reference-search/", views.ReferralReferenceSearch.as_view(), name="referral_reference_search"),
-    path("referrals/map/", views.ReferralMap.as_view(), name="referral_map"),
     path("referrals/<int:pk>/", views.ReferralDetail.as_view(), name="referral_detail"),
     path("referrals/<int:pk>/relate/", views.ReferralRelate.as_view(), name="referral_relate"),
     path("referrals/<int:pk>/history/", views.PrsObjectHistory.as_view(model=Referral), name="prs_object_history"),
@@ -36,13 +35,6 @@ urlpatterns += [
     path("records/<int:pk>/infobase/", views.InfobaseShortcut.as_view(), name="infobase_shortcut"),
     path("records/<int:pk>/download/", views.ReferralDownloadView.as_view(model=Record, file_field="uploaded_file"), name="download_record"),
     path("records/<int:pk>/upload/", views.RecordUpload.as_view(), name="record_upload"),
-]
-
-# Patterns to test Hasura auth.
-urlpatterns += [
-    path("hasura/", views.HasuraAuthWebhook.as_view(), name="hasura_auth_webhook"),
-    path('auth/', views.userAuth, name='userAuth'),
-    path('validate_request/', views.inspectUser, name='inspectUser'),
 ]
 
 # Other static/functional URLs
