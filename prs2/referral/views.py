@@ -407,12 +407,6 @@ class ReferralDetail(PrsObjectDetail):
         return context
 
 
-class ReferralMap(TemplateView):
-    """Throwaway template view, for testing.
-    """
-    template_name = "referral/referral_detail_leaflet.html"
-
-
 class ReferralCreateChild(PrsObjectCreate):
     """View to create 'child' objects for a referral, e.g. a Task or Note.
     Also allows the creation of relationships between children (e.g relating
@@ -1102,6 +1096,11 @@ class TaskAction(PrsObjectUpdate):
                 "Utilities infrastructure & roads",
                 "Clearing Permit - DMIRS",
                 "Clearing Permit - DWER",
+                "LSU - Amendments to Reserves or UCL",
+                "LSU - Leases or easements over crown land",
+                "LSU - Road actions",
+                "LSU - s91 licences",
+                "LSU - s121 diversification permits",
             ]
         )
         if (
@@ -1756,66 +1755,3 @@ class HealthCheckView(TemplateView):
         context["page_title"] = "PRS application status"
         context["status"] = "HEALTHY"
         return context
-
-
-class HasuraAuthWebhook(View):
-    def get(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
-            hasura_vars = {
-                "X-Hasura-User-Id": str(request.user.pk),
-                "X-Hasura-Role": "user",
-            }
-            return HttpResponse(
-                json.dumps(hasura_vars), content_type="application/json"
-            )
-        else:
-            hasura_vars = {
-                "X-Hasura-Role": "anonymous",
-            }
-            return HttpResponse(
-                json.dumps(hasura_vars), content_type="application/json"
-            )
-            # return HttpResponse("Unauthorized", status=401)
-
-
-from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth import authenticate, login
-
-
-@csrf_exempt
-def userAuth(request):
-    reqBody = json.loads(request.body)
-    requiredFields = ["username", "password"]
-    for field in requiredFields:
-        if field not in reqBody or not reqBody[field]:
-            return HttpResponse(
-                json.dumps(
-                    {"message": "Required field not available ( username, password )"}
-                ),
-                status=401,
-            )
-    user = authenticate(
-        request, username=reqBody["username"], password=reqBody["password"]
-    )
-    if user is not None:
-        login(request, user)
-        login_response = {
-            "token": request.session.session_key,
-            "user_id": request.session["_auth_user_id"],
-            "message": "authenticated",
-        }
-        return HttpResponse(json.dumps(login_response), "application/json")
-    else:
-        return HttpResponse("Invalid credentials!", status=401)
-
-
-@csrf_exempt
-def inspectUser(request):
-    if request.user.is_authenticated:
-        responseObj = {
-            "x-hasura-role": "user",
-            "x-hasura-user-id": str(request.user.id),
-        }
-        return HttpResponse(json.dumps(responseObj))
-    else:
-        return HttpResponse("User not logged in", status=401)
