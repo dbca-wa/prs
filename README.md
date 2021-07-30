@@ -81,4 +81,4 @@ To obtain coverage reports:
 
 To build a new Docker image from the `Dockerfile`:
 
-    docker image build -t dbcawa/prs .
+    docker image build -t ghcr.io/dbca-wa/prs .
