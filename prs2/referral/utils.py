@@ -12,6 +12,7 @@ import json
 from reversion.models import Version
 import re
 import requests
+import typesense
 from unidecode import unidecode
 
 
@@ -329,3 +330,57 @@ def overdue_task_email():
             msg.send(fail_silently=True)
 
     return True
+
+
+def typesense_client():
+    client = typesense.Client({
+        'nodes': [{
+            'host': settings.TYPESENSE_HOST,
+            'port': settings.TYPESENSE_PORT,
+            'protocol': settings.TYPESENSE_PROTOCOL,
+        }],
+        'api_key': settings.TYPESENSE_API_KEY,
+        'connection_timeout_seconds': 2
+    })
+    return client
+
+
+def typesense_collections(client):
+    referrals_schema = {
+        'name': 'referrals',
+        'fields': [
+            {'name': 'referral_id', 'type': 'int32'},
+            {'name': 'type', 'type': 'string', 'facet': True},
+            {'name': 'referring_org', 'type': 'string', 'facet': True},
+            {'name': 'referral_year', 'type': 'int32', 'facet': True},
+            {'name': 'regions', 'type': 'string[]', 'facet': True},
+            {'name': 'reference', 'type': 'string'},
+            {'name': 'description', 'type': 'string'},
+            {'name': 'address', 'type': 'string'},
+            {'name': 'point', 'type': 'geopoint', 'optional': True},
+            {'name': 'lga', 'type': 'string', 'facet': True},
+            {'name': 'dop_triggers', 'type': 'string[]', 'facet': True},
+        ],
+        'default_sorting_field': 'referral_id'
+    }
+    client.collections.create(referrals_schema)
+
+
+def typesense_documents(client):
+    from referral.models import Referral
+    for ref in Referral.objects.current():
+        ref_document = {
+            'referral_id': ref.pk,
+            'type': ref.type.name,
+            'referring_org': ref.referring_org.name,
+            'referral_year': ref.referral_date.year,
+            'regions': [i.name for i in ref.regions.all()],
+            'reference': ref.reference if ref.reference else '',
+            'description': ref.description if ref.description else '',
+            'address': ref.address if ref.address else '',
+            'lga': ref.lga.name if ref.lga else '',
+            'dop_triggers': [i.name for i in ref.dop_triggers.all()],
+        }
+        if ref.point:
+            ref_document['point'] = [ref.point.x, ref.point.y]
+        client.collections['referrals'].documents.upsert(ref_document)
