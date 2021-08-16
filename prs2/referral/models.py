@@ -6,6 +6,7 @@ import os
 from django.conf import settings
 from django.contrib.auth.signals import user_logged_in
 from django.contrib.gis.db import models
+from django.contrib.gis.geos import GeometryCollection
 from django.core.exceptions import SuspiciousFileOperation
 from django.core.mail import EmailMultiAlternatives
 from django.core.validators import MaxLengthValidator
@@ -442,11 +443,15 @@ class Referral(ReferralBaseModel):
 
     def save(self, force_insert=False, force_update=False, *args, **kwargs):
         """Overide save to cleanse text input to the description, address fields.
+        Also set the point field value based on any assocated Location objects.
         """
         if self.description:
             self.description = unidecode(self.description)
         if self.address:
             self.address = unidecode(self.address)
+        if self.location_set.current().exists():
+            collection = GeometryCollection([l.poly for l in self.location_set.current() if l.poly])
+            self.point = collection.centroid
         super().save(force_insert, force_update)
 
     def get_absolute_url(self):
