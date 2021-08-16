@@ -225,3 +225,9 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.AllowAny'],
     'PAGE_SIZE': 100
 }
+
+# Typesense config
+TYPESENSE_API_KEY = env('TYPESENSE_API_KEY', 'PlaceholderAPIKey')
+TYPESENSE_HOST = env('TYPESENSE_HOST', 'localhost')
+TYPESENSE_PORT = env('TYPESENSE_PORT', '8108')
+TYPESENSE_PROTOCOL = env('TYPESENSE_PROTOCOL', 'http')
