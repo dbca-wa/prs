@@ -49,6 +49,7 @@ INSTALLED_APPS = (
     'referral',
     'reports',
     'harvester',
+    'indexer',
 )
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -229,5 +230,5 @@ REST_FRAMEWORK = {
 # Typesense config
 TYPESENSE_API_KEY = env('TYPESENSE_API_KEY', 'PlaceholderAPIKey')
 TYPESENSE_HOST = env('TYPESENSE_HOST', 'localhost')
-TYPESENSE_PORT = env('TYPESENSE_PORT', '8108')
+TYPESENSE_PORT = env('TYPESENSE_PORT', 8108)
 TYPESENSE_PROTOCOL = env('TYPESENSE_PROTOCOL', 'http')
