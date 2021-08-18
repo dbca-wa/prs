@@ -86,6 +86,7 @@ from referral.views_base import (
     PrsObjectHistory,
     PrsObjectTag,
 )
+from indexer.utils import typesense_client
 
 logger = logging.getLogger("prs")
 
@@ -129,7 +130,7 @@ class SiteHome(LoginRequiredMixin, ListView):
         return context
 
 
-class HelpPage(TemplateView):
+class HelpPage(LoginRequiredMixin, TemplateView):
     """Help page (static template view).
     """
 
@@ -140,6 +141,44 @@ class HelpPage(TemplateView):
         context["page_title"] = " | ".join([settings.APPLICATION_ACRONYM, "Help"])
         links = [(reverse("site_home"), "Home"), (None, "Help")]
         context["breadcrumb_trail"] = breadcrumbs_li(links)
+        return context
+
+
+class GeneralSearchIndexed(LoginRequiredMixin, TemplateView):
+    template_name = "referral/prs_search_indexed.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["page_title"] = " | ".join([settings.APPLICATION_ACRONYM, "Search"])
+        links = [(reverse("site_home"), "Home"), (None, "Search")]
+        context["breadcrumb_trail"] = breadcrumbs_li(links)
+        # Search results
+        if "q" in self.request.GET and self.request.GET["q"]:
+            context["query_string"] = self.request.GET["q"]
+            context["query"] = True
+            client = typesense_client()
+            referrals_q = {
+                'q': self.request.GET["q"],
+                'query_by': 'reference,description,address,type,referring_org,lga',
+                'sort_by': 'referral_id:desc',
+                'num_typos': 1,
+            }
+            context["referrals"] = client.collections["referrals"].documents.search(referrals_q)
+            referral_triggers_q = {
+                'q': self.request.GET["q"],
+                'query_by': 'dop_triggers',
+                'num_typos': 0,
+                'sort_by': 'referral_id:desc',
+            }
+            context["referral_triggers"] = client.collections["referrals"].documents.search(referral_triggers_q)
+            records_q = {
+                'q': self.request.GET["q"],
+                'query_by': 'name,description,file_name,file_content',
+                'sort_by': 'record_id:desc',
+                'num_typos': 1,
+            }
+            context["records"] = client.collections["records"].documents.search(records_q)
+
         return context
 
 
