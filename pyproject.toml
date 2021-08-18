@@ -36,6 +36,7 @@ django-webtest = "1.9.7"
 geojson = "2.5.0"
 typesense = "0.13.0"
 "pdfminer.six" = "20201018"
+docx2txt = "0.8"
 
 [tool.poetry.dev-dependencies]
 ipython = "^7.23.0"

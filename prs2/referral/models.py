@@ -1093,7 +1093,7 @@ class Record(ReferralBaseModel):
     def save(self, force_insert=False, force_update=False, *args, **kwargs):
         """Overide save() to cleanse text input fields.
         """
-        self.name = unidecode(self.name)
+        self.name = unidecode(self.name).replace('\r\n', '').strip()
         if self.description:
             self.description = unidecode(self.description)
         super().save(force_insert, force_update)

@@ -13,6 +13,7 @@ REFERRALS_SCHEMA = {
         {'name': 'point', 'type': 'geopoint', 'optional': True},
         {'name': 'lga', 'type': 'string', 'facet': True},
         {'name': 'dop_triggers', 'type': 'string[]', 'facet': True},
+        {'name': 'url', 'type': 'string'},
     ],
     'default_sorting_field': 'referral_id'
 }
@@ -28,6 +29,7 @@ RECORDS_SCHEMA = {
         {'name': 'file_name', 'type': 'string', 'optional': True},
         {'name': 'file_type', 'type': 'string', 'facet': True, 'optional': True},
         {'name': 'file_content', 'type': 'string', 'optional': True},
+        {'name': 'url', 'type': 'string'},
     ],
     'default_sorting_field': 'record_id'
 }
