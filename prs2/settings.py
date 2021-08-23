@@ -46,6 +46,7 @@ INSTALLED_APPS = (
     'tastypie',
     'webtemplate_dbca',
     'rest_framework',
+    'django_q',
     'referral',
     'reports',
     'harvester',
@@ -178,38 +179,20 @@ LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
-        'console': {'format': '%(asctime)s %(name)-12s %(message)s'},
-        'verbose': {'format': '%(asctime)s %(levelname)-8s %(message)s'},
+        'verbose': {'format': '%(asctime)s %(name)-12s %(message)s'},
     },
     'handlers': {
         'console': {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
-            'formatter': 'console'
-        },
-        'harvester': {
-            'level': 'INFO',
-            'class': 'logging.StreamHandler',
-            'formatter': 'console'
+            'formatter': 'verbose'
         },
     },
     'loggers': {
-        'django': {
+        '': {
             'handlers': ['console'],
+            'level': 'INFO',
             'propagate': True,
-        },
-        'django.request': {
-            'handlers': ['console'],
-            'level': 'WARNING',
-            'propagate': False,
-        },
-        'prs': {
-            'handlers': ['console'],
-            'level': 'INFO'
-        },
-        'harvester': {
-            'handlers': ['harvester'],
-            'level': 'INFO'
         },
     }
 }
@@ -232,3 +215,18 @@ TYPESENSE_API_KEY = env('TYPESENSE_API_KEY', 'PlaceholderAPIKey')
 TYPESENSE_HOST = env('TYPESENSE_HOST', 'localhost')
 TYPESENSE_PORT = env('TYPESENSE_PORT', 8108)
 TYPESENSE_PROTOCOL = env('TYPESENSE_PROTOCOL', 'http')
+TYPESENSE_CONN_TIMEOUT = env('TYPESENSE_CONN_TIMEOUT', 2)
+
+
+# Django Q configuration
+Q_CLUSTER = {
+    'name': 'prs-tasks',
+    'workers': 4,
+    'compress': True,
+    'timeout': 120,
+    'retry': 180,
+    'max_attempts': 10,
+    'queue_limit': 50,
+    'recycle': 200,
+    'orm': 'default',
+}

@@ -1,8 +1,6 @@
 from copy import copy
 from datetime import date
 from dateutil.parser import parse
-import json
-import os
 from django.conf import settings
 from django.contrib.auth.signals import user_logged_in
 from django.contrib.gis.db import models
@@ -14,9 +12,12 @@ from django.db.models import Q
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.safestring import mark_safe
+from django_q.tasks import async_task
 from extract_msg import Message
 from geojson import Feature, Polygon, FeatureCollection, dumps
+import json
 from lxml.html import clean, fromstring
+import os
 from pygeopkg.core.geopkg import GeoPackage
 from pygeopkg.core.srs import SRS
 from pygeopkg.core.field import Field
@@ -453,6 +454,13 @@ class Referral(ReferralBaseModel):
             collection = GeometryCollection([l.poly for l in self.location_set.current() if l.poly])
             self.point = collection.centroid
         super().save(force_insert, force_update)
+
+        # Index the referral.
+        try:
+            async_task("indexer.utils.typesense_index_referral", self)
+        except Exception as ex:
+            # Indexing failure should never block or return an exception. Log the error to stdout.
+            print(f"ERROR during indexing referral {self}")
 
     def get_absolute_url(self):
         return reverse("referral_detail", kwargs={"pk": self.pk})
@@ -1106,6 +1114,13 @@ class Record(ReferralBaseModel):
                 if date and self.order_date != date:
                     self.order_date = date
                     self.save()
+
+        # Index the record.
+        try:
+            async_task("indexer.utils.typesense_index_record", self)
+        except Exception as ex:
+            # Indexing failure should never block or return an exception. Log the error to stdout.
+            print(f"ERROR during indexing record {self}")
 
     @property
     def filename(self):
