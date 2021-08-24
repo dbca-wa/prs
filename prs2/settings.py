@@ -179,7 +179,7 @@ LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
-        'verbose': {'format': '%(asctime)s %(name)-12s %(message)s'},
+        'verbose': {'format': '%(asctime)s %(levelname)-8s %(name)-12s %(message)s'},
     },
     'handlers': {
         'console': {
