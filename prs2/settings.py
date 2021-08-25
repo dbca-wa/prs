@@ -174,25 +174,25 @@ STATICFILES_DIRS = (os.path.join(BASE_DIR, 'prs2', 'static'),)
 # This is required to add context variables to all templates:
 STATIC_CONTEXT_VARS = {}
 
-# Logging settings - log to stdout/stderr
+# Logging settings - log to stdout
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
-        'verbose': {'format': '%(asctime)s %(levelname)-8s %(name)-12s %(message)s'},
+        'verbose': {'format': '%(asctime)s %(levelname)-12s %(message)s'},
     },
     'handlers': {
         'console': {
-            'level': 'INFO',
             'class': 'logging.StreamHandler',
-            'formatter': 'verbose'
+            'formatter': 'verbose',
+            'stream': sys.stdout,
+            'level': 'INFO',
         },
     },
     'loggers': {
         '': {
             'handlers': ['console'],
             'level': 'INFO',
-            'propagate': True,
         },
     }
 }
