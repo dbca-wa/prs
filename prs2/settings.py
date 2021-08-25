@@ -172,43 +172,25 @@ STATICFILES_DIRS = (os.path.join(BASE_DIR, 'prs2', 'static'),)
 # This is required to add context variables to all templates:
 STATIC_CONTEXT_VARS = {}
 
-# Logging settings - log to stdout/stderr
+# Logging settings - log to stdout
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
-        'console': {'format': '%(asctime)s %(name)-12s %(message)s'},
-        'verbose': {'format': '%(asctime)s %(levelname)-8s %(message)s'},
+        'verbose': {'format': '%(asctime)s %(levelname)-12s %(message)s'},
     },
     'handlers': {
         'console': {
-            'level': 'INFO',
             'class': 'logging.StreamHandler',
-            'formatter': 'console'
-        },
-        'harvester': {
+            'formatter': 'verbose',
+            'stream': sys.stdout,
             'level': 'INFO',
-            'class': 'logging.StreamHandler',
-            'formatter': 'console'
         },
     },
     'loggers': {
-        'django': {
+        '': {
             'handlers': ['console'],
-            'propagate': True,
-        },
-        'django.request': {
-            'handlers': ['console'],
-            'level': 'WARNING',
-            'propagate': False,
-        },
-        'prs': {
-            'handlers': ['console'],
-            'level': 'INFO'
-        },
-        'harvester': {
-            'handlers': ['harvester'],
-            'level': 'INFO'
+            'level': 'INFO',
         },
     }
 }

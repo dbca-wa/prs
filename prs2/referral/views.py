@@ -87,7 +87,7 @@ from referral.views_base import (
     PrsObjectTag,
 )
 
-logger = logging.getLogger("prs")
+LOGGER = logging.getLogger("prs")
 
 
 class SiteHome(LoginRequiredMixin, ListView):
@@ -868,10 +868,10 @@ class LocationCreate(ReferralCreateChild):
         # to update the prs_locations layer.
         # FIXME: don't call the Borg API at present (broken).
         # resp = borgcollector_harvest(self.request)
-        # logger.info(
+        # LOGGER.info(
         #    "Borg Collector API response status was {}".format(resp.status_code)
         # )
-        # logger.info("Borg Collector API response: {}".format(resp.content))
+        # LOGGER.info("Borg Collector API response: {}".format(resp.content))
 
         # Test for intersecting locations.
         intersecting_locations = self.polygon_intersects(locations)
@@ -1520,10 +1520,10 @@ class ReferralDelete(PrsObjectDelete):
         # Call the Borg Collector publish API endpoint to create a manual job
         # to update the prs_locations layer.
         # resp = borgcollector_harvest(self.request)
-        # logger.info(
+        # LOGGER.info(
         #    "Borg Collector API response status was {}".format(resp.status_code)
         # )
-        # logger.info("Borg Collector API response: {}".format(resp.content))
+        # LOGGER.info("Borg Collector API response: {}".format(resp.content))
         return redirect("site_home")
 
 
