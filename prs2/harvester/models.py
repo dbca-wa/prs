@@ -33,6 +33,11 @@ class EmailedReferral(models.Model):
     def __str__(self):
         return self.subject
 
+    def save(self, force_insert=False, force_update=False, *args, **kwargs):
+        self.subject = self.subject.replace('\r\n', '').strip()
+        self.body = self.body.replace('=\r\n', '').replace('=E2=80=93', '-').strip()
+        super().save(force_insert, force_update)
+
     def harvest(self, create_tasks=True, create_locations=True, create_records=True, assignee=False):
         """Undertake the harvest process for this emailed referral.
         """
