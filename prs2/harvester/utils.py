@@ -66,11 +66,6 @@ def harvest_email(uid, message):
     """Harvest a passed-in UID and email message.
     Abort if UID exists in the database already.
     """
-    # Mailbox email uid has become unreliable for distinguishing emails.
-    # We'll rely on the reference number to not end up with duplicates.
-    #if EmailedReferral.objects.filter(email_uid=str(uid)).exists():
-    #    LOGGER.warning('Email UID {} already present; aborting'.format(uid))
-    #    return False
     if message.is_multipart():  # Should always be True.
         parts = [i for i in message.walk()]
     else:
@@ -150,7 +145,7 @@ def email_mark_unread(imap, uid):
 
 
 def email_delete(imap, uid):
-    """Flag an email for deletion and then call the expunge method.
+    """Flag an email for deletion.
     """
     status, response = imap.store(str(uid), '+FLAGS', '\Deleted')
     return status, response
@@ -158,7 +153,7 @@ def email_delete(imap, uid):
 
 def harvest_unread_emails(from_email):
     """Download a list of unread email from the specified email address and
-    harvest each one.
+    harvest each one. Empty the mailbox of deleted emails on completion.
     """
     actions = []
     imap = get_imap()

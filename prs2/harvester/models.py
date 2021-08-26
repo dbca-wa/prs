@@ -12,7 +12,7 @@ from referral.models import (
     Referral, Record, Region, ReferralType, Agency, Organisation, DopTrigger,
     TaskType, Task, Location, LocalGovernment)
 
-logger = logging.getLogger('harvester')
+LOGGER = logging.getLogger('harvester')
 
 
 class EmailedReferral(models.Model):
@@ -32,6 +32,11 @@ class EmailedReferral(models.Model):
 
     def __str__(self):
         return self.subject
+
+    def save(self, force_insert=False, force_update=False, *args, **kwargs):
+        self.subject = self.subject.replace('\r\n', '').strip()
+        self.body = self.body.replace('=\r\n', '').replace('=E2=80=93', '-').strip()
+        super().save(force_insert, force_update)
 
     def harvest(self, create_tasks=True, create_locations=True, create_records=True, assignee=False):
         """Undertake the harvest process for this emailed referral.
@@ -56,7 +61,7 @@ class EmailedReferral(models.Model):
         # Emails without attachments are usually reminder notices.
         if not attachments.exists():
             s = 'Skipping harvested referral {} (no attachments)'.format(self)
-            logger.info(s)
+            LOGGER.info(s)
             self.log = s
             self.processed = True
             self.save()
@@ -65,7 +70,7 @@ class EmailedReferral(models.Model):
         # Must be an attachment named 'Application.xml' present to import.
         if not attachments.filter(name__istartswith='application.xml'):
             s = 'Skipping harvested referral {} (no XML attachment)'.format(self.pk)
-            logger.info(s)
+            LOGGER.info(s)
             self.log = s
             self.processed = True
             self.save()
@@ -78,8 +83,8 @@ class EmailedReferral(models.Model):
             d = xmltodict.parse(xml_file.attachment.read())
         except Exception as e:
             s = 'Harvested referral {} parsing of application.xml failed'.format(self.pk)
-            logger.error(s)
-            logger.exception(e)
+            LOGGER.error(s)
+            LOGGER.exception(e)
             self.log = self.log + '{}\n{}\n'.format(s, e)
             self.processed = True
             self.save()
@@ -91,7 +96,7 @@ class EmailedReferral(models.Model):
         if Referral.objects.current().filter(reference__iexact=reference):
             # Note if the the reference no. exists in PRS already.
             s = 'Referral ref. {} is already in database; using existing referral'.format(reference)
-            logger.info(s)
+            LOGGER.info(s)
             self.log = self.log + '{}\n'.format(s)
             actions.append('{} {}'.format(datetime.now().isoformat(), s))
             new_ref = Referral.objects.current().filter(reference__iexact=reference).order_by('-pk').first()
@@ -99,7 +104,7 @@ class EmailedReferral(models.Model):
         else:
             # No match with existing references.
             s = 'Importing harvested referral ref. {} as new entity'.format(reference)
-            logger.info(s)
+            LOGGER.info(s)
             self.log = '{}\n'.format(s)
             actions.append('{} {}'.format(datetime.now().isoformat(), s))
             new_ref = Referral(reference=reference)
@@ -110,7 +115,7 @@ class EmailedReferral(models.Model):
             ref_type = ReferralType.objects.filter(name__istartswith=app['APP_TYPE'])[0]
         except Exception:
             s = 'Referral type {} is not recognised type; skipping'.format(app['APP_TYPE'])
-            logger.warning(s)
+            LOGGER.warning(s)
             self.log = self.log + '{}\n'.format(s)
             self.processed = True
             self.save()
@@ -138,7 +143,7 @@ class EmailedReferral(models.Model):
                     intersected_region = True
                 except Exception:
                     s = 'Address long/lat could not be parsed ({}, {})'.format(a['LONGITUDE'], a['LATITUDE'])
-                    logger.warning(s)
+                    LOGGER.warning(s)
                     self.log = self.log + '{}\n'.format(s)
                     actions.append('{} {}'.format(datetime.now().isoformat(), s))
                     intersected_region = False
@@ -161,16 +166,16 @@ class EmailedReferral(models.Model):
                                                 regions.append(r)
                         s = 'Address PIN {} returned geometry from SLIP'.format(a['PIN'])
                         self.log = self.log + '{}\n'.format(s)
-                        logger.info(s)
+                        LOGGER.info(s)
                     except Exception as e:
                         s = 'Error querying Landgate SLIP for spatial data (referral ref. {})'.format(reference)
-                        logger.error(s)
-                        logger.error(resp.content)
-                        logger.exception(e)
+                        LOGGER.error(s)
+                        LOGGER.error(resp.content)
+                        LOGGER.exception(e)
                         self.log = self.log + '{}\n{}\n{}\n'.format(s, resp.content, e)
                 else:
                     s = 'Address PIN could not be parsed ({})'.format(a['PIN'])
-                    logger.warning(s)
+                    LOGGER.warning(s)
                     self.log = self.log + '{}\n'.format(s)
         regions = set(regions)
         # Business rules:
@@ -181,13 +186,13 @@ class EmailedReferral(models.Model):
             region = Region.objects.get(name='Swan')
             assigned = assignee_default
             s = 'No regions were intersected, defaulting to {} ({})'.format(region, assigned)
-            logger.warning(s)
+            LOGGER.info(s)
             self.log = self.log + '{}\n'.format(s)
         elif len(regions) > 1:
             region = Region.objects.get(name='Swan')
             assigned = assignee_default
             s = '>1 regions were intersected ({}), defaulting to {} ({})'.format(regions, region, assigned)
-            logger.warning(s)
+            LOGGER.info(s)
             self.log = self.log + '{}\n'.format(s)
         else:
             region = regions.pop()
@@ -195,7 +200,7 @@ class EmailedReferral(models.Model):
                 assigned = RegionAssignee.objects.get(region=region).user
             except Exception:
                 s = 'No default assignee set for {}, defaulting to {}'.format(region, assignee_default)
-                logger.warning(s)
+                LOGGER.info(s)
                 self.log = self.log + '{}\n'.format(s)
                 actions.append('{} {}'.format(datetime.now().isoformat(), s))
                 assigned = assignee_default
@@ -214,12 +219,12 @@ class EmailedReferral(models.Model):
 
         if referral_preexists:
             s = 'PRS referral updated: {}'.format(new_ref)
-            logger.info(s)
+            LOGGER.info(s)
             self.log = self.log + '{}\n'.format(s)
             actions.append('{} {}'.format(datetime.now().isoformat(), s))
         else:
             s = 'New PRS referral generated: {}'.format(new_ref)
-            logger.info(s)
+            LOGGER.info(s)
             self.log = self.log + '{}\n'.format(s)
             actions.append('{} {}'.format(datetime.now().isoformat(), s))
 
@@ -231,7 +236,7 @@ class EmailedReferral(models.Model):
             new_ref.save()
         except Exception:
             s = 'LGA {} was not recognised'.format(app['LOCAL_GOVERNMENT'])
-            logger.warning(s)
+            LOGGER.warning(s)
             self.log = self.log + '{}\n'.format(s)
             actions.append('{} {}'.format(datetime.now().isoformat(), s))
 
@@ -285,7 +290,7 @@ class EmailedReferral(models.Model):
                         set_comment('Initial version.')
                     new_locations.append(new_loc)
                     s = 'New PRS location generated: {}'.format(new_loc)
-                    logger.info(s)
+                    LOGGER.info(s)
                     self.log = self.log + '{}\n'.format(s)
                     actions.append('{} {}'.format(datetime.now().isoformat(), s))
 
@@ -300,7 +305,7 @@ class EmailedReferral(models.Model):
                 if l.referral.pk != new_ref.pk:
                     new_ref.add_relationship(l.referral)
                     s = 'New referral {} related to existing referral {}'.format(new_ref.pk, l.referral.pk)
-                    logger.info(s)
+                    LOGGER.info(s)
                     self.log = self.log + '{}\n'.format(s)
                     actions.append('{} {}'.format(datetime.now().isoformat(), s))
 
@@ -326,14 +331,14 @@ class EmailedReferral(models.Model):
                 new_task.save()
                 set_comment('Initial version.')
             s = 'New PRS task generated: {} assigned to {}'.format(new_task, assigned.get_full_name())
-            logger.info(s)
+            LOGGER.info(s)
             self.log = self.log + '{}\n'.format(s)
             actions.append('{} {}'.format(datetime.now().isoformat(), s))
 
             # Email the assigned user about the new task.
             new_task.email_user()
             s = 'Task assignment email sent to {}'.format(assigned.email)
-            logger.info(s)
+            LOGGER.info(s)
             self.log = self.log + '{}\n'.format(s)
             actions.append('{} {}'.format(datetime.now().isoformat(), s))
 
@@ -348,7 +353,7 @@ class EmailedReferral(models.Model):
                 new_record.save()
                 set_comment('Initial version.')
             s = 'New PRS record generated: {}'.format(new_record)
-            logger.info(s)
+            LOGGER.info(s)
             self.log = self.log + '{}\n'.format(s)
             actions.append('{} {}'.format(datetime.now().isoformat(), s))
 
@@ -361,7 +366,7 @@ class EmailedReferral(models.Model):
                 new_record.uploaded_file.save(i.name, new_file)
                 new_record.save()
                 s = 'New PRS record generated: {}'.format(new_record)
-                logger.info(s)
+                LOGGER.info(s)
                 self.log = self.log + '{}\n'.format(s)
                 actions.append('{} {}'.format(datetime.now().isoformat(), s))
                 # Link the attachment to the new, generated record.
