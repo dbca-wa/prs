@@ -16,6 +16,7 @@ from django_q.tasks import async_task
 from extract_msg import Message
 from geojson import Feature, Polygon, FeatureCollection, dumps
 import json
+import logging
 from lxml.html import clean, fromstring
 import os
 from pygeopkg.core.geopkg import GeoPackage
@@ -31,6 +32,7 @@ from referral.base import Audit, ActiveModel
 from referral.utils import smart_truncate, dewordify_text, as_row_subtract_referral_cell
 
 
+LOGGER = logging.getLogger("prs")
 # Australian state choices, for addresses.
 AU_STATE_CHOICES = (
     (1, "ACT"),
@@ -460,7 +462,7 @@ class Referral(ReferralBaseModel):
             async_task("indexer.utils.typesense_index_referral", self)
         except Exception as ex:
             # Indexing failure should never block or return an exception. Log the error to stdout.
-            print(f"ERROR during indexing referral {self}")
+            LOGGER.exception(f"Error during indexing referral {self}")
 
     def get_absolute_url(self):
         return reverse("referral_detail", kwargs={"pk": self.pk})
@@ -752,6 +754,13 @@ class Task(ReferralBaseModel):
         if self.description:
             self.description = unidecode(self.description)
         super().save(force_insert, force_update)
+
+        # Index the task.
+        try:
+            async_task("indexer.utils.typesense_index_task", self)
+        except Exception as ex:
+            # Indexing failure should never block or return an exception. Log the error to stdout.
+            LOGGER.exception(f"Error during indexing task {self}")
 
     def as_row(self):
         """
@@ -1120,7 +1129,7 @@ class Record(ReferralBaseModel):
             async_task("indexer.utils.typesense_index_record", self)
         except Exception as ex:
             # Indexing failure should never block or return an exception. Log the error to stdout.
-            print(f"ERROR during indexing record {self}")
+            LOGGER.exception(f"Error during indexing record {self}")
 
     @property
     def filename(self):
@@ -1298,6 +1307,13 @@ class Note(ReferralBaseModel):
         t = fromstring(self.note_html)
         self.note = t.text_content().strip()
         super().save(force_insert, force_update)
+
+        # Index the note.
+        try:
+            async_task("indexer.utils.typesense_index_note", self)
+        except Exception as ex:
+            # Indexing failure should never block or return an exception. Log the error to stdout.
+            LOGGER.exception(f"Error during indexing note {self}")
 
     @property
     def short_note(self, x=12):
@@ -1494,6 +1510,12 @@ class Condition(ReferralBaseModel):
             self.proposed_condition_html = ""
             self.proposed_condition = ""
         super().save(force_insert, force_update)
+
+        # Index the condition.
+        try:
+            async_task("indexer.utils.typesense_index_condition", self)
+        except Exception as ex:
+            LOGGER.exception(f"Error during indexing condition {self}")
 
     def as_row(self):
         """

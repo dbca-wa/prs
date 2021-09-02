@@ -171,6 +171,7 @@ class GeneralSearchIndexed(LoginRequiredMixin, TemplateView):
                 'sort_by': 'referral_id:desc',
             }
             context["referral_triggers"] = client.collections["referrals"].documents.search(referral_triggers_q)
+
             records_q = {
                 'q': self.request.GET["q"],
                 'query_by': 'name,description,file_name,file_content',
@@ -178,6 +179,30 @@ class GeneralSearchIndexed(LoginRequiredMixin, TemplateView):
                 'num_typos': 1,
             }
             context["records"] = client.collections["records"].documents.search(records_q)
+
+            notes_q = {
+                'q': self.request.GET['q'],
+                'query_by': 'note',
+                'sort_by': 'note_id:desc',
+                'num_typos': 1,
+            }
+            context["notes"] = client.collections["notes"].documents.search(notes_q)
+
+            tasks_q = {
+                'q': self.request.GET['q'],
+                'query_by': 'description,assigned_user',
+                'sort_by': 'task_id:desc',
+                'num_typos': 1,
+            }
+            context["tasks"] = client.collections["tasks"].documents.search(tasks_q)
+
+            conditions_q = {
+                'q': self.request.GET['q'],
+                'query_by': 'proposed_condition,approved_condition',
+                'sort_by': 'condition_id:desc',
+                'num_typos': 1,
+            }
+            context["conditions"] = client.collections["conditions"].documents.search(conditions_q)
 
         return context
 

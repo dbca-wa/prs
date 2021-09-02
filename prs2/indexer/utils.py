@@ -38,7 +38,6 @@ def typesense_index_referral(ref, client=None):
         'address': ref.address if ref.address else '',
         'lga': ref.lga.name if ref.lga else '',
         'dop_triggers': [i.name for i in ref.dop_triggers.all()],
-        'url': ref.get_absolute_url(),
     }
     if ref.point:
         ref_document['point'] = [ref.point.x, ref.point.y]
@@ -67,7 +66,6 @@ def typesense_index_record(rec, client=None):
         'description': rec.description if rec.description else '',
         'file_name': rec.filename,
         'file_type': rec.extension,
-        'url': rec.get_absolute_url(),
     }
     # PDF document content.
     if rec.extension == 'PDF':
@@ -97,3 +95,47 @@ def typesense_index_records(client, qs=None):
         qs = Record.objects.current()
     for rec in qs:
         typesense_index_record(rec, client)
+
+
+def typesense_index_note(note, client=None):
+    """Index a single note in Typesense.
+    """
+    if not client:
+        client = typesense_client()
+
+    note_document = {
+        'note_id': note.pk,
+        'referral_id': note.referral.pk,
+        'note': note.note,
+    }
+    client.collections['notes'].documents.upsert(note_document)
+
+
+def typesense_index_task(task, client=None):
+    """Index a single task in Typesense.
+    """
+    if not client:
+        client = typesense_client()
+
+    task_document = {
+        'task_id': task.pk,
+        'referral_id': task.referral.pk,
+        'description': task.description if task.description else '',
+        'assigned_user': task.assigned_user.get_full_name(),
+    }
+    client.collections['tasks'].documents.upsert(task_document)
+
+
+def typesense_index_condition(con, client=None):
+    """Index a single condition in Typesense.
+    """
+    if not client:
+        client = typesense_client()
+
+    condition_document = {
+        'condition_id': con.pk,
+        'referral_id': con.referral.pk,
+        'proposed_condition': con.proposed_condition if con.proposed_condition else '',
+        'approved_condition': con.condition if con.condition else '',
+    }
+    client.collections['conditions'].documents.upsert(condition_document)

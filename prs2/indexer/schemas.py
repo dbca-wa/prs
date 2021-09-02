@@ -13,7 +13,6 @@ REFERRALS_SCHEMA = {
         {'name': 'point', 'type': 'geopoint', 'optional': True},
         {'name': 'lga', 'type': 'string', 'facet': True},
         {'name': 'dop_triggers', 'type': 'string[]', 'facet': True},
-        {'name': 'url', 'type': 'string'},
     ],
     'default_sorting_field': 'referral_id'
 }
@@ -29,8 +28,42 @@ RECORDS_SCHEMA = {
         {'name': 'file_name', 'type': 'string', 'optional': True},
         {'name': 'file_type', 'type': 'string', 'facet': True, 'optional': True},
         {'name': 'file_content', 'type': 'string', 'optional': True},
-        {'name': 'url', 'type': 'string'},
     ],
     'default_sorting_field': 'record_id'
 }
 # client.collections.create(RECORDS_SCHEMA)
+
+NOTES_SCHEMA = {
+    'name': 'notes',
+    'fields': [
+        {'name': 'note_id', 'type': 'int32'},
+        {'name': 'referral_id', 'type': 'int32'},
+        {'name': 'note', 'type': 'string'},
+    ],
+    'default_sorting_field': 'note_id'
+}
+# client.collections.create(NOTES_SCHEMA)
+
+TASKS_SCHEMA = {
+    'name': 'tasks',
+    'fields': [
+        {'name': 'task_id', 'type': 'int32'},
+        {'name': 'referral_id', 'type': 'int32'},
+        {'name': 'description', 'type': 'string', 'optional': True},
+        {'name': 'assigned_user', 'type': 'string'},
+    ],
+    'default_sorting_field': 'task_id'
+}
+# client.collections.create(TASKS_SCHEMA)
+
+CONDITIONS_SCHEMA = {
+    'name': 'conditions',
+    'fields': [
+        {'name': 'condition_id', 'type': 'int32'},
+        {'name': 'referral_id', 'type': 'int32'},
+        {'name': 'proposed_condition', 'type': 'string', 'optional': True},
+        {'name': 'approved_condition', 'type': 'string', 'optional': True},
+    ],
+    'default_sorting_field': 'condition_id'
+}
+# client.collections.create(CONDITIONS_SCHEMA)
