@@ -221,12 +221,13 @@ TYPESENSE_CONN_TIMEOUT = env('TYPESENSE_CONN_TIMEOUT', 2)
 # Django Q configuration
 Q_CLUSTER = {
     'name': 'prs-tasks',
-    'workers': 4,
-    'compress': True,
-    'timeout': 120,
-    'retry': 180,
-    'max_attempts': 10,
-    'bulk': 5,
-    'recycle': 200,
-    'orm': 'default',
+    'workers': env('DJANGO_Q_WORKERS', 4),
+    'recycle': env('DJANGO_Q_RECYCLE', 200),
+    'timeout': env('DJANGO_Q_TIMEOUT', 120),
+    'max_attempts': env('DJANGO_Q_MAX_ATTEMPTS', 3),
+    'retry': env('DJANGO_Q_RETRY', 180),
+    'compress': env('DJANGO_Q_COMPRESS', True),
+    'save_limit': env('DJANGO_Q_SAVE_LIMIT', 500),
+    'orm': env('DJANGO_Q_ORM', 'default'),
+    'bulk': env('DJANGO_Q_BULK', 5),
 }
