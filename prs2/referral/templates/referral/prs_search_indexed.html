@@ -1,0 +1,88 @@
+{% extends "base_prs.html" %}
+{% load bootstrap_pagination %}
+
+{% block page_content_inner %}
+<h1>SEARCH EVERYTHING (INDEXED)</h1>
+<!-- Search bar -->
+<form action="" method="get">
+    <div class="row">
+        <div class="hidden-xs col-sm-1">
+            <label for="search_field">Search:</label>
+        </div>
+        <div class="col-xs-12 col-sm-11 col-md-8">
+            <input id="search_field" type="text" class="form-control" name="q" placeholder="Search all text..." value="{{ query_string }}">
+        </div>
+    </div>
+</form>
+<hr>
+{% if query_string %}
+
+    <!-- Referrals results table -->
+    {% if referrals or referral_triggers %}
+        <h3>Referrals:</h3>
+        <ul>
+        {% for hit in referrals.hits %}
+            <li>
+                <a href="{% url 'referral_detail' pk=hit.document.referral_id %}">Referral {{ hit.document.referral_id }}</a> ({{ hit.document.referral_year }})<br>
+                {% for highlight in hit.highlights %}
+                    {{ highlight.field|capfirst }}: {{ highlight.snippet|safe }}<br>
+                {% endfor %}
+            </li>
+        {% endfor %}
+        {% for hit in referral_triggers.hits %}
+            <li>
+                <a href="{% url 'referral_detail' pk=hit.document.referral_id %}">Referral {{ hit.document.referral_id }}</a> ({{ hit.document.referral_year }})<br>
+                {% for highlight in hit.highlights %}
+                    {% for snippet in highlight.snippets %}
+                        {{ highlight.field|capfirst }}: {{ snippet|safe }}<br>
+                    {% endfor %}
+                {% endfor %}
+            </li>
+        {% endfor %}
+        </ul>
+    {% endif %}
+
+    {% if records %}
+        <h3>Records:</h3>
+        <ul>
+        {% for hit in records.hits %}
+            <li>
+                <a href="{% url 'prs_object_detail' model='record' pk=hit.document.record_id %}">Record {{ hit.document.record_id }}</a><br>
+                {% for highlight in hit.highlights %}
+                    {{ highlight.field|capfirst }}: {{ highlight.snippet|safe }}<br>
+                {% endfor %}
+            </li>
+        {% endfor %}
+        </ul>
+    {% endif %}
+
+    {% if notes %}
+        <h3>Notes:</h3>
+        <ul>
+        {% for hit in notes.hits %}
+            <li>
+                <a href="{{ hit.document.url }}">Note {{ hit.document.note_id }}</a><br>
+                {% for highlight in hit.highlights %}
+                    {{ highlight.field|capfirst }}: {{ highlight.snippet|safe }}<br>
+                {% endfor %}
+            </li>
+        {% endfor %}
+        </ul>
+    {% endif %}
+
+    {% if tasks %}
+        <h3>Tasks:</h3>
+        <ul>
+        {% for hit in tasks.hits %}
+            <li>
+                <a href="{{ hit.document.url }}">Task {{ hit.document.task_id }}</a><br>
+                {% for highlight in hit.highlights %}
+                    {{ highlight.field|capfirst }}: {{ highlight.snippet|safe }}<br>
+                {% endfor %}
+            </li>
+        {% endfor %}
+        </ul>
+    {% endif %}
+
+{% endif %}
+{% endblock %}
