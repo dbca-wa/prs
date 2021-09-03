@@ -90,7 +90,8 @@ TEMPLATES = [
 ]
 MANAGERS = (
     ('Sean Walsh', 'sean.walsh@dbca.wa.gov.au'),
-    ('Cho Lamb', 'cho.lamb@dbca.wa.gov.au'),
+    ('Michael Roberts', 'michael.roberts@dbca.wa.gov.au'),
+    # ('Cho Lamb', 'cho.lamb@dbca.wa.gov.au'),
 )
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
@@ -179,20 +180,20 @@ LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
-        'verbose': {'format': '%(asctime)s %(levelname)-12s %(message)s'},
+        'verbose': {'format': '%(asctime)s %(levelname)-12s %(name)-12s %(message)s'},
     },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
             'stream': sys.stdout,
-            'level': 'INFO',
+            'level': 'WARNING',
         },
     },
     'loggers': {
         '': {
             'handlers': ['console'],
-            'level': 'INFO',
+            'level': 'WARNING',
         },
     }
 }
