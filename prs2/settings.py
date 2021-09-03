@@ -46,9 +46,11 @@ INSTALLED_APPS = (
     'tastypie',
     'webtemplate_dbca',
     'rest_framework',
+    'django_q',
     'referral',
     'reports',
     'harvester',
+    'indexer',
 )
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -172,43 +174,25 @@ STATICFILES_DIRS = (os.path.join(BASE_DIR, 'prs2', 'static'),)
 # This is required to add context variables to all templates:
 STATIC_CONTEXT_VARS = {}
 
-# Logging settings - log to stdout/stderr
+# Logging settings - log to stdout
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
-        'console': {'format': '%(asctime)s %(name)-12s %(message)s'},
-        'verbose': {'format': '%(asctime)s %(levelname)-8s %(message)s'},
+        'verbose': {'format': '%(asctime)s %(levelname)-12s %(message)s'},
     },
     'handlers': {
         'console': {
-            'level': 'INFO',
             'class': 'logging.StreamHandler',
-            'formatter': 'console'
-        },
-        'harvester': {
+            'formatter': 'verbose',
+            'stream': sys.stdout,
             'level': 'INFO',
-            'class': 'logging.StreamHandler',
-            'formatter': 'console'
         },
     },
     'loggers': {
-        'django': {
+        '': {
             'handlers': ['console'],
-            'propagate': True,
-        },
-        'django.request': {
-            'handlers': ['console'],
-            'level': 'WARNING',
-            'propagate': False,
-        },
-        'prs': {
-            'handlers': ['console'],
-            'level': 'INFO'
-        },
-        'harvester': {
-            'handlers': ['harvester'],
-            'level': 'INFO'
+            'level': 'INFO',
         },
     }
 }
@@ -224,4 +208,26 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.AllowAny'],
     'PAGE_SIZE': 100
+}
+
+# Typesense config
+TYPESENSE_API_KEY = env('TYPESENSE_API_KEY', 'PlaceholderAPIKey')
+TYPESENSE_HOST = env('TYPESENSE_HOST', 'localhost')
+TYPESENSE_PORT = env('TYPESENSE_PORT', 8108)
+TYPESENSE_PROTOCOL = env('TYPESENSE_PROTOCOL', 'http')
+TYPESENSE_CONN_TIMEOUT = env('TYPESENSE_CONN_TIMEOUT', 2)
+
+
+# Django Q configuration
+Q_CLUSTER = {
+    'name': 'prs-tasks',
+    'workers': env('DJANGO_Q_WORKERS', 4),
+    'recycle': env('DJANGO_Q_RECYCLE', 200),
+    'timeout': env('DJANGO_Q_TIMEOUT', 120),
+    'max_attempts': env('DJANGO_Q_MAX_ATTEMPTS', 3),
+    'retry': env('DJANGO_Q_RETRY', 180),
+    'compress': env('DJANGO_Q_COMPRESS', True),
+    'save_limit': env('DJANGO_Q_SAVE_LIMIT', 500),
+    'orm': env('DJANGO_Q_ORM', 'default'),
+    'bulk': env('DJANGO_Q_BULK', 5),
 }
