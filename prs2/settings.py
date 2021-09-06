@@ -126,7 +126,6 @@ ALLOWED_UPLOAD_TYPES = [
 ]
 
 # Email settings
-ADMINS = env('ADMIN_EMAILS', 'asi@dbca.wa.gov.au').split(',')
 EMAIL_HOST = env('EMAIL_HOST', 'email.host')
 EMAIL_PORT = env('EMAIL_PORT', 25)
 REFERRAL_EMAIL_HOST = env('REFERRAL_EMAIL_HOST', 'host')
