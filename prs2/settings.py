@@ -226,8 +226,9 @@ Q_CLUSTER = {
     'timeout': env('DJANGO_Q_TIMEOUT', 120),
     'max_attempts': env('DJANGO_Q_MAX_ATTEMPTS', 3),
     'retry': env('DJANGO_Q_RETRY', 180),
-    'compress': env('DJANGO_Q_COMPRESS', True),
+    'compress': env('DJANGO_Q_COMPRESS', False),
     'save_limit': env('DJANGO_Q_SAVE_LIMIT', 500),
+    'ack_failures': env('DJANGO_Q_ACK_FAILURES', True),
     'orm': env('DJANGO_Q_ORM', 'default'),
     'bulk': env('DJANGO_Q_BULK', 5),
 }
