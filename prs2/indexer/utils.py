@@ -3,7 +3,6 @@ import docx2txt
 from extract_msg import Message
 from pdfminer import high_level
 import typesense
-from referral.models import Referral, Record
 
 
 def typesense_client():
@@ -44,15 +43,6 @@ def typesense_index_referral(ref, client=None):
     client.collections['referrals'].documents.upsert(ref_document)
 
 
-def typesense_index_referrals(client, qs=None):
-    """Index the passed-in queryset of referrals, or all of them.
-    """
-    if not qs:
-        qs = Referral.objects.current()
-    for ref in qs:
-        typesense_index_referral(ref, client)
-
-
 def typesense_index_record(rec, client=None):
     """Index a single record in Typesense.
     """
@@ -74,27 +64,16 @@ def typesense_index_record(rec, client=None):
 
     # MSG document content.
     if rec.extension == 'MSG':
-        print(f'Indexing content for {rec}')
         message = Message(rec.uploaded_file.path)
         content = '{} {}'.format(message.subject, message.body.replace('\r\n', ' '))
         rec_document['file_content'] = content.strip()
 
     # DOCX document content.
     if rec.extension == 'DOCX':
-        print(f'Indexing content for {rec}')
         content = docx2txt.process(rec.uploaded_file.path)
         rec_document['file_content'] = content.replace('\n', ' ').strip()
 
     client.collections['records'].documents.upsert(rec_document)
-
-
-def typesense_index_records(client, qs=None):
-    """Index the passed-in queryset of records, or all of them.
-    """
-    if not qs:
-        qs = Record.objects.current()
-    for rec in qs:
-        typesense_index_record(rec, client)
 
 
 def typesense_index_note(note, client=None):

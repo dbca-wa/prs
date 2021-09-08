@@ -152,6 +152,7 @@ class GeneralSearchIndexed(LoginRequiredMixin, TemplateView):
         context["page_title"] = " | ".join([settings.APPLICATION_ACRONYM, "Search"])
         links = [(reverse("site_home"), "Home"), (None, "Search")]
         context["breadcrumb_trail"] = breadcrumbs_li(links)
+
         # Search results
         if "q" in self.request.GET and self.request.GET["q"]:
             context["query_string"] = self.request.GET["q"]
@@ -164,6 +165,7 @@ class GeneralSearchIndexed(LoginRequiredMixin, TemplateView):
                 'num_typos': 1,
             }
             context["referrals"] = client.collections["referrals"].documents.search(referrals_q)
+            '''
             referral_triggers_q = {
                 'q': self.request.GET["q"],
                 'query_by': 'dop_triggers',
@@ -171,6 +173,7 @@ class GeneralSearchIndexed(LoginRequiredMixin, TemplateView):
                 'sort_by': 'referral_id:desc',
             }
             context["referral_triggers"] = client.collections["referrals"].documents.search(referral_triggers_q)
+            '''
 
             records_q = {
                 'q': self.request.GET["q"],

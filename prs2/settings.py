@@ -46,7 +46,7 @@ INSTALLED_APPS = (
     'tastypie',
     'webtemplate_dbca',
     'rest_framework',
-    'django_q',
+    'django_celery_results',
     'referral',
     'reports',
     'harvester',
@@ -90,13 +90,14 @@ TEMPLATES = [
 ]
 MANAGERS = (
     ('Sean Walsh', 'sean.walsh@dbca.wa.gov.au'),
-    ('Cho Lamb', 'cho.lamb@dbca.wa.gov.au'),
+    ('Michael Roberts', 'michael.roberts@dbca.wa.gov.au'),
+    # ('Cho Lamb', 'cho.lamb@dbca.wa.gov.au'),
 )
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 APPLICATION_TITLE = 'Planning Referral System'
 APPLICATION_ACRONYM = 'PRS'
-APPLICATION_VERSION_NO = '2.5.6'
+APPLICATION_VERSION_NO = '2.5.7'
 APPLICATION_ALERTS_EMAIL = 'PRS-Alerts@dbca.wa.gov.au'
 SITE_URL = env('SITE_URL', 'localhost')
 PRS_USER_GROUP = env('PRS_USER_GROUP', 'PRS user')
@@ -125,7 +126,6 @@ ALLOWED_UPLOAD_TYPES = [
 ]
 
 # Email settings
-ADMINS = env('ADMIN_EMAILS', 'asi@dbca.wa.gov.au').split(',')
 EMAIL_HOST = env('EMAIL_HOST', 'email.host')
 EMAIL_PORT = env('EMAIL_PORT', 25)
 REFERRAL_EMAIL_HOST = env('REFERRAL_EMAIL_HOST', 'host')
@@ -179,20 +179,20 @@ LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
-        'verbose': {'format': '%(asctime)s %(levelname)-12s %(message)s'},
+        'verbose': {'format': '%(asctime)s %(levelname)-12s %(name)-12s %(message)s'},
     },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
             'stream': sys.stdout,
-            'level': 'INFO',
+            'level': 'WARNING',
         },
     },
     'loggers': {
         '': {
             'handlers': ['console'],
-            'level': 'INFO',
+            'level': 'WARNING',
         },
     }
 }
@@ -217,17 +217,7 @@ TYPESENSE_PORT = env('TYPESENSE_PORT', 8108)
 TYPESENSE_PROTOCOL = env('TYPESENSE_PROTOCOL', 'http')
 TYPESENSE_CONN_TIMEOUT = env('TYPESENSE_CONN_TIMEOUT', 2)
 
-
-# Django Q configuration
-Q_CLUSTER = {
-    'name': 'prs-tasks',
-    'workers': env('DJANGO_Q_WORKERS', 4),
-    'recycle': env('DJANGO_Q_RECYCLE', 200),
-    'timeout': env('DJANGO_Q_TIMEOUT', 120),
-    'max_attempts': env('DJANGO_Q_MAX_ATTEMPTS', 3),
-    'retry': env('DJANGO_Q_RETRY', 180),
-    'compress': env('DJANGO_Q_COMPRESS', True),
-    'save_limit': env('DJANGO_Q_SAVE_LIMIT', 500),
-    'orm': env('DJANGO_Q_ORM', 'default'),
-    'bulk': env('DJANGO_Q_BULK', 5),
-}
+# Celery config
+BROKER_URL = env('CELERY_BROKER_URL', 'pyamqp://localhost//')
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_TIMEZONE = TIME_ZONE

@@ -12,7 +12,6 @@ from django.db.models import Q
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.safestring import mark_safe
-from django_q.tasks import async_task
 from extract_msg import Message
 from geojson import Feature, Polygon, FeatureCollection, dumps
 import json
@@ -30,6 +29,7 @@ from unidecode import unidecode
 
 from referral.base import Audit, ActiveModel
 from referral.utils import smart_truncate, dewordify_text, as_row_subtract_referral_cell
+from referral.tasks import index_object
 
 
 LOGGER = logging.getLogger("prs")
@@ -459,7 +459,7 @@ class Referral(ReferralBaseModel):
 
         # Index the referral.
         try:
-            async_task("indexer.utils.typesense_index_referral", self)
+            index_object.delay(pk=self.pk, model='referral')
         except Exception as ex:
             # Indexing failure should never block or return an exception. Log the error to stdout.
             LOGGER.exception(f"Error during indexing referral {self}")
@@ -757,7 +757,7 @@ class Task(ReferralBaseModel):
 
         # Index the task.
         try:
-            async_task("indexer.utils.typesense_index_task", self)
+            index_object.delay(pk=self.pk, model='task')
         except Exception as ex:
             # Indexing failure should never block or return an exception. Log the error to stdout.
             LOGGER.exception(f"Error during indexing task {self}")
@@ -1126,7 +1126,7 @@ class Record(ReferralBaseModel):
 
         # Index the record.
         try:
-            async_task("indexer.utils.typesense_index_record", self)
+            index_object.delay(pk=self.pk, model='record')
         except Exception as ex:
             # Indexing failure should never block or return an exception. Log the error to stdout.
             LOGGER.exception(f"Error during indexing record {self}")
@@ -1310,7 +1310,7 @@ class Note(ReferralBaseModel):
 
         # Index the note.
         try:
-            async_task("indexer.utils.typesense_index_note", self)
+            index_object.delay(pk=self.pk, model='note')
         except Exception as ex:
             # Indexing failure should never block or return an exception. Log the error to stdout.
             LOGGER.exception(f"Error during indexing note {self}")
@@ -1513,7 +1513,7 @@ class Condition(ReferralBaseModel):
 
         # Index the condition.
         try:
-            async_task("indexer.utils.typesense_index_condition", self)
+            index_object.delay(pk=self.pk, model='condition')
         except Exception as ex:
             LOGGER.exception(f"Error during indexing condition {self}")
 

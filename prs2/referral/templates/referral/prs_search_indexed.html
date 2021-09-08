@@ -29,6 +29,7 @@
                 {% endfor %}
             </li>
         {% endfor %}
+        {#
         {% for hit in referral_triggers.hits %}
             <li>
                 <a href="{% url 'referral_detail' pk=hit.document.referral_id %}">Referral {{ hit.document.referral_id }}</a> ({{ hit.document.referral_year }})<br>
@@ -39,7 +40,10 @@
                 {% endfor %}
             </li>
         {% endfor %}
+        #}
         </ul>
+    {% else %}
+    <p>Search term(s) returned no referrals.</p>
     {% endif %}
 
     {% if records %}
