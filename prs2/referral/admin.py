@@ -152,7 +152,7 @@ class TaskAdmin(ReferralBaseModelAdmin):
         "modified",
         "effective_to",
     )
-    raw_id_fields = ("creator", "modifier", "referral", "assigned_user")
+    raw_id_fields = ("creator", "modifier", "referral", "assigned_user", "records", "notes")
     date_hierarchy = "created"
     search_fields = (
         "id",

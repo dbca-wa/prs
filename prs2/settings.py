@@ -46,7 +46,7 @@ INSTALLED_APPS = (
     'tastypie',
     'webtemplate_dbca',
     'rest_framework',
-    'django_q',
+    'django_celery_results',
     'referral',
     'reports',
     'harvester',
@@ -217,19 +217,7 @@ TYPESENSE_PORT = env('TYPESENSE_PORT', 8108)
 TYPESENSE_PROTOCOL = env('TYPESENSE_PROTOCOL', 'http')
 TYPESENSE_CONN_TIMEOUT = env('TYPESENSE_CONN_TIMEOUT', 2)
 
-
-# Django Q configuration
-Q_CLUSTER = {
-    'name': 'prs-tasks',
-    'workers': env('DJANGO_Q_WORKERS', 4),
-    'recycle': env('DJANGO_Q_RECYCLE', 200),
-    'timeout': env('DJANGO_Q_TIMEOUT', 120),
-    'max_attempts': env('DJANGO_Q_MAX_ATTEMPTS', 3),
-    'retry': env('DJANGO_Q_RETRY', 180),
-    'compress': env('DJANGO_Q_COMPRESS', False),
-    'save_limit': env('DJANGO_Q_SAVE_LIMIT', 500),
-    'ack_failures': env('DJANGO_Q_ACK_FAILURES', True),
-    'orm': env('DJANGO_Q_ORM', 'default'),
-    'bulk': env('DJANGO_Q_BULK', 5),
-    'scheduler': env('DJANGO_Q_SCHEDULER', True),
-}
+# Celery config
+BROKER_URL = env('CELERY_BROKER_URL', 'pyamqp://localhost//')
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_TIMEZONE = TIME_ZONE
