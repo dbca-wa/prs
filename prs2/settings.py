@@ -231,4 +231,5 @@ Q_CLUSTER = {
     'ack_failures': env('DJANGO_Q_ACK_FAILURES', True),
     'orm': env('DJANGO_Q_ORM', 'default'),
     'bulk': env('DJANGO_Q_BULK', 5),
+    'scheduler': env('DJANGO_Q_SCHEDULER', True),
 }
