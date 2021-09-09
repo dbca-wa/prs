@@ -27,10 +27,10 @@ def typesense_index_referral(ref, client=None):
         client = typesense_client()
 
     ref_document = {
-        'referral_id': ref.pk,
+        'id': str(ref.pk),
+        'created': ref.created.timestamp(),
         'type': ref.type.name,
         'referring_org': ref.referring_org.name,
-        'referral_year': ref.referral_date.year,
         'regions': [i.name for i in ref.regions.all()],
         'reference': ref.reference if ref.reference else '',
         'description': ref.description if ref.description else '',
@@ -50,7 +50,8 @@ def typesense_index_record(rec, client=None):
         client = typesense_client()
 
     rec_document = {
-        'record_id': rec.pk,
+        'id': str(rec.pk),
+        'created': rec.created.timestamp(),
         'referral_id': rec.referral.pk,
         'name': rec.name,
         'description': rec.description if rec.description else '',
@@ -59,8 +60,13 @@ def typesense_index_record(rec, client=None):
     }
     # PDF document content.
     if rec.extension == 'PDF':
-        content = high_level.extract_text(open(rec.uploaded_file.path, 'rb'))
-        rec_document['file_content'] = content.replace('\n', ' ').strip()
+        try:
+            # PDF text extraction can be a little error-prone.
+            # In the event of an exception here, we'll just accept it and pass.
+            content = high_level.extract_text(open(rec.uploaded_file.path, 'rb'))
+            rec_document['file_content'] = content.replace('\n', ' ').strip()
+        except:
+            pass
 
     # MSG document content.
     if rec.extension == 'MSG':
@@ -83,7 +89,8 @@ def typesense_index_note(note, client=None):
         client = typesense_client()
 
     note_document = {
-        'note_id': note.pk,
+        'id': str(note.pk),
+        'created': note.created.timestamp(),
         'referral_id': note.referral.pk,
         'note': note.note,
     }
@@ -97,7 +104,8 @@ def typesense_index_task(task, client=None):
         client = typesense_client()
 
     task_document = {
-        'task_id': task.pk,
+        'id': str(task.pk),
+        'created': task.created.timestamp(),
         'referral_id': task.referral.pk,
         'description': task.description if task.description else '',
         'assigned_user': task.assigned_user.get_full_name(),
@@ -112,7 +120,8 @@ def typesense_index_condition(con, client=None):
         client = typesense_client()
 
     condition_document = {
-        'condition_id': con.pk,
+        'id': str(con.pk),
+        'created': con.created.timestamp(),
         'referral_id': con.referral.pk,
         'proposed_condition': con.proposed_condition if con.proposed_condition else '',
         'approved_condition': con.condition if con.condition else '',
