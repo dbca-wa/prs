@@ -164,7 +164,6 @@ class IndexSearch(LoginRequiredMixin, TemplateView):
         # Search results
         if "q" in self.request.GET and self.request.GET["q"]:
             context["query_string"] = self.request.GET["q"]
-            context["query"] = True
             context["search_result"] = []
             client = typesense_client()
             page = self.request.GET.get("page", 1)
@@ -228,6 +227,131 @@ class IndexSearch(LoginRequiredMixin, TemplateView):
                         "object": Condition.objects.get(pk=hit["document"]["id"]),
                         "highlights": hit["highlights"],
                     })
+
+        return context
+
+
+class IndexSearchCombined(LoginRequiredMixin, TemplateView):
+    """A combined version of the index search which returns referrals with linked objects.
+    """
+    template_name = "referral/prs_index_search_combined.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        context["page_title"] = " | ".join([settings.APPLICATION_ACRONYM, "Search everything"])
+        context["page_heading"] = "SEARCH EVERYTHING (INDEXED)"
+        links = [(reverse("site_home"), "Home"), (None, "Search everything")]
+        context["breadcrumb_trail"] = breadcrumbs_li(links)
+
+        # Search results
+        if "q" in self.request.GET and self.request.GET["q"]:
+            context["query_string"] = self.request.GET["q"]
+            context["search_result"] = []
+            context["referral_headers"] = Referral.headers
+            client = typesense_client()
+            search_q = {
+                'q': self.request.GET["q"],
+                'sort_by': 'created:desc',
+                'num_typos': 1,
+                'include_fields': 'id',
+            }
+            referrals = {}
+
+            # Referrals
+            search_q["query_by"] = "reference,description,address,type,referring_org,lga"
+            search_result = client.collections["referrals"].documents.search(search_q)
+            context["referrals_count"] = search_result["found"]
+            for hit in search_result["hits"]:
+                ref = Referral.objects.get(pk=hit["document"]["id"])
+                referrals[ref.pk] = {
+                    "referral": ref,
+                    "highlights": hit["highlights"],
+                    "records": [],
+                    "notes": [],
+                    "tasks": [],
+                    "conditions": [],
+                }
+
+            # Records
+            search_q["query_by"] = "name,description,file_name,file_content"
+            search_q["include_fields"] = "id,referral_id"
+            search_result = client.collections["records"].documents.search(search_q)
+            context["records_count"] = search_result["found"]
+            for hit in search_result["hits"]:
+                ref = Referral.objects.get(pk=hit["document"]["referral_id"])
+                if ref.pk in referrals:
+                    referrals[ref.pk]["records"].append((hit["document"]["id"], hit["highlights"][0]))
+                else:
+                    referrals[ref.pk] = {
+                        "referral": ref,
+                        "highlights": [],
+                        "records": [(hit["document"]["id"], hit["highlights"][0])],
+                        "notes": [],
+                        "tasks": [],
+                        "conditions": [],
+                    }
+
+            # Notes
+            search_q["query_by"] = "note"
+            search_q["include_fields"] = "id,referral_id"
+            search_result = client.collections["notes"].documents.search(search_q)
+            context["notes_count"] = search_result["found"]
+            for hit in search_result["hits"]:
+                ref = Referral.objects.get(pk=hit["document"]["referral_id"])
+                if ref.pk in referrals:
+                    referrals[ref.pk]["notes"].append((hit["document"]["id"], hit["highlights"][0]))
+                else:
+                    referrals[ref.pk] = {
+                        "referral": ref,
+                        "highlights": [],
+                        "records": [],
+                        "notes": [(hit["document"]["id"], hit["highlights"][0])],
+                        "tasks": [],
+                        "conditions": [],
+                    }
+
+            # Tasks
+            search_q["query_by"] = "description,assigned_user"
+            search_q["include_fields"] = "id,referral_id"
+            search_result = client.collections["tasks"].documents.search(search_q)
+            context["tasks_count"] = search_result["found"]
+            for hit in search_result["hits"]:
+                ref = Referral.objects.get(pk=hit["document"]["referral_id"])
+                if ref.pk in referrals:
+                    referrals[ref.pk]["tasks"].append((hit["document"]["id"], hit["highlights"][0]))
+                else:
+                    referrals[ref.pk] = {
+                        "referral": ref,
+                        "highlights": [],
+                        "records": [],
+                        "notes": [],
+                        "tasks": [(hit["document"]["id"], hit["highlights"][0])],
+                        "conditions": [],
+                    }
+
+            # Conditions
+            search_q["query_by"] = "proposed_condition,approved_condition"
+            search_q["include_fields"] = "id,referral_id"
+            search_result = client.collections["conditions"].documents.search(search_q)
+            context["conditions_count"] = search_result["found"]
+            for hit in search_result["hits"]:
+                ref = Referral.objects.get(pk=hit["document"]["referral_id"])
+                if ref.pk in referrals:
+                    referrals[ref.pk]["conditions"].append((hit["document"]["id"], hit["highlights"][0]))
+                else:
+                    referrals[ref.pk] = {
+                        "referral": ref,
+                        "highlights": [],
+                        "records": [],
+                        "notes": [],
+                        "tasks": [],
+                        "conditions": [(hit["document"]["id"], hit["highlights"][0])],
+                    }
+
+            # Combine the results into the template context (sort referrals by descending ID).
+            for result in sorted(referrals.items(), reverse=True):
+                context["search_result"].append(result[1])
 
         return context
 

@@ -42,6 +42,7 @@ urlpatterns += [
     path("healthcheck/", views.HealthCheckView.as_view(), name="health_check"),
     path("help/", views.HelpPage.as_view(), name="help_page"),
     path("search/", views.GeneralSearch.as_view(), name="prs_general_search"),
+    path("index/combined/", views.IndexSearchCombined.as_view(), name="prs_index_search_combined"),
     path("index/", views.IndexSearch.as_view(), name="prs_index_search"),
     path("index/<collection>/", views.IndexSearch.as_view(), name="prs_index_search"),
     path("stopped-tasks/", views.SiteHome.as_view(stopped_tasks=True), name="stopped_tasks_list"),
