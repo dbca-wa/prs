@@ -1,0 +1,56 @@
+{% extends "base_prs.html" %}
+{% load bootstrap_pagination %}
+
+{% block page_content_inner %}
+<h1>{{ page_heading }}</h1>
+<!-- Search bar -->
+<form action="" method="get">
+    <div class="row">
+        <div class="hidden-xs col-sm-1">
+            <label for="search_field">Search:</label>
+        </div>
+        <div class="col-xs-12 col-sm-11 col-md-8">
+            <input id="search_field" type="text" class="form-control" name="q" placeholder="Search all text..." value="{{ query_string }}">
+        </div>
+    </div>
+</form>
+<hr>
+{% if query_string %}
+
+    <!-- Referrals results table -->
+    {% if search_result %}
+    {% if page_obj.has_other_pages %}{% bootstrap_paginate page_obj range=10 show_prev_next="true" show_first_last="true" %}{% endif %}
+    <p>Search term(s) matched {{ search_result_count }} results:</p>
+    <div>
+    {% for result in search_result %}
+        <table class="table table-bordered table-sm">
+            <thead>
+                <tr>
+                {% for header in result_headers %}
+                    <th>{{ header }}</th>
+                {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                <tr>{{ result.object.as_row }}</tr>
+                <tr>
+                    <td colspan="{{ result_headers|length }}">
+                        Search matches:
+                        <ul>
+                            {% for highlight in result.highlights %}
+                            <li>{{ highlight.field|capfirst }}: {{ highlight.snippet|safe }}</li>
+                            {% endfor %}
+                        </ul>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    {% endfor %}
+    </div>
+    {% if page_obj.has_other_pages %}{% bootstrap_paginate page_obj range=10 show_prev_next="true" show_first_last="true" %}{% endif %}
+    {% else %}
+    <p>Search term(s) returned no results.</p>
+    {% endif %}
+
+{% endif %}
+{% endblock %}

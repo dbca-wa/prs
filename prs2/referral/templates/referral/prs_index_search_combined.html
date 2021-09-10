@@ -1,0 +1,87 @@
+{% extends "base_prs.html" %}
+
+{% block page_content_inner %}
+<h1>{{ page_heading }}</h1>
+<!-- Search bar -->
+<form action="" method="get">
+    <div class="row">
+        <div class="hidden-xs col-sm-1">
+            <label for="search_field">Search:</label>
+        </div>
+        <div class="col-xs-12 col-sm-11 col-md-8">
+            <input id="search_field" type="text" class="form-control" name="q" placeholder="Search all text..." value="{{ query_string }}">
+        </div>
+    </div>
+</form>
+<hr>
+{% if query_string %}
+
+    <!-- Referrals results table -->
+    {% if search_result %}
+    <p>
+        Search term(s) matched
+        {% if referrals_count %}<a href="{% url 'prs_index_search' collection='referrals' %}?q={{ query_string }}">{{ referrals_count }} referrals</a>{% else %}{{ referrals_count}} referrals{% endif %},
+        {% if records_count %}<a href="{% url 'prs_index_search' collection='records' %}?q={{ query_string }}">{{ records_count }} records</a>{% else %}{{ records_count }} records{% endif %},
+        {% if notes_count %}<a href="{% url 'prs_index_search' collection='notes' %}?q={{ query_string }}">{{ notes_count }} notes</a>{% else %}{{ notes_count }} notes{% endif %},
+        {% if tasks_count %}<a href="{% url 'prs_index_search' collection='tasks' %}?q={{ query_string }}">{{ tasks_count }} tasks</a>{% else %}{{ tasks_count }} tasks{% endif %} and
+        {% if conditions_count %}<a href="{% url 'prs_index_search' collection='conditions' %}?q={{ query_string }}">{{ conditions_count }} conditions</a>{% else %}{{ conditions_count }} conditions{% endif %}.
+        Partial results are displayed below.
+    </p>
+    <div>
+    {% for result in search_result %}
+        <table class="table table-bordered table-sm">
+            <thead>
+                <tr>
+                {% for header in referral_headers %}
+                    <th>{{ header }}</th>
+                {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                <tr>{{ result.referral.as_row }}</tr>
+                <tr>
+                    <td colspan="{{ referral_headers|length }}">
+                        Search matches:
+                        <ul>
+                        {% if result.highlights %}
+                            {% for highlight in result.highlights %}
+                            <li>{{ highlight.field|capfirst }}: {{ highlight.snippet|safe }}</li>
+                            {% endfor %}
+                        {% endif %}
+
+                        {% if result.records %}
+                            {% for highlight in result.records %}
+                            <li><a href="{% url 'prs_object_detail' model='records' pk=highlight.0 %}">Record {{ highlight.0 }}</a>: {{ highlight.1.snippet|safe }}</li>
+                            {% endfor %}
+                        {% endif %}
+
+                        {% if result.notes %}
+                            {% for highlight in result.notes %}
+                            <li><a href="{% url 'prs_object_detail' model='notes' pk=highlight.0 %}">Note {{ highlight.0 }}</a>: {{ highlight.1.snippet|safe }}</li>
+                            {% endfor %}
+                        {% endif %}
+
+                        {% if result.tasks %}
+                            {% for highlight in result.tasks %}
+                            <li><a href="{% url 'prs_object_detail' model='tasks' pk=highlight.0 %}">Task {{ highlight.0 }}</a>: {{ highlight.1.snippet|safe }}</li>
+                            {% endfor %}
+                        {% endif %}
+
+                        {% if result.conditions %}
+                            {% for highlight in result.conditions %}
+                            <li><a href="{% url 'prs_object_detail' model='conditions' pk=highlight.0 %}">Condition {{ highlight.0 }}</a>: {{ highlight.1.snippet|safe }}</li>
+                            {% endfor %}
+                        {% endif %}
+                        </ul>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    {% endfor %}
+    </div>
+    {% else %}
+    <p>Search term(s) returned no results.</p>
+    {% endif %}
+
+{% endif %}
+{% endblock %}
