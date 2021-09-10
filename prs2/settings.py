@@ -188,11 +188,21 @@ LOGGING = {
             'stream': sys.stdout,
             'level': 'WARNING',
         },
+        'harvester': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+            'stream': sys.stdout,
+            'level': 'INFO',
+        },
     },
     'loggers': {
         '': {
             'handlers': ['console'],
             'level': 'WARNING',
+        },
+        'harvester': {
+            'handlers': ['harvester'],
+            'level': 'INFO',
         },
     }
 }
