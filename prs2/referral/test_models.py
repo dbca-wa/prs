@@ -317,7 +317,7 @@ class TaskTest(PrsTestCase):
         t = Task.objects.first()
         t.state = TaskState.objects.get(name='In progress')
         t.save()
-        row = t.as_row_actions(self.n_user)
+        row = t.as_row_actions()
         # Non-stopped tasks should have a bunch of options, but not 'Start'
         self.assertIs(row.find('Start'), -1)
         self.assertIsNot(row.find('Edit'), -1)
@@ -329,7 +329,7 @@ class TaskTest(PrsTestCase):
         t.state = TaskState.objects.get(name='Stopped')
         t.stop_date = date.today()
         t.save()
-        row = t.as_row_actions(self.n_user)
+        row = t.as_row_actions()
         self.assertIsNot(row.find('Start'), -1)
         self.assertIs(row.find('Edit'), -1)
         self.assertIs(row.find('Complete'), -1)
@@ -340,7 +340,7 @@ class TaskTest(PrsTestCase):
         t.state = TaskState.objects.get(name='Completed')
         t.complete_date = date.today()
         t.save()
-        row = t.as_row_actions(self.n_user)
+        row = t.as_row_actions()
         self.assertIs(row.find('Start'), -1)
         self.assertIs(row.find('Edit'), -1)
         self.assertIs(row.find('Complete'), -1)
@@ -525,7 +525,7 @@ class RecordTest(PrsTestCase):
     def test_as_row_actions(self):
         """Test the Record model as_row_actions() method.
         """
-        row = self.r.as_row_actions(self.n_user)
+        row = self.r.as_row_actions()
         self.assertIsNot(row.find('Edit'), -1)
         self.assertIsNot(row.find('Delete'), -1)
 
@@ -605,7 +605,7 @@ class NoteTest(PrsTestCase):
         """Test the Note model as_row_actions() method.
         """
         n = Note.objects.first()
-        row = n.as_row_actions(self.n_user)
+        row = n.as_row_actions()
         self.assertIsNot(row.find('Edit'), -1)
         self.assertIsNot(row.find('Delete'), -1)
 
@@ -681,7 +681,7 @@ class ConditionTest(PrsTestCase):
         """Test the Condition model as_row_actions() method.
         """
         c = Condition.objects.first()
-        row = c.as_row_actions(self.n_user)
+        row = c.as_row_actions()
         self.assertIsNot(row.find('Edit'), -1)
         self.assertIsNot(row.find('Delete'), -1)
         url = reverse('condition_clearance_add', kwargs={'pk': c.pk})
@@ -773,7 +773,7 @@ class LocationTest(PrsTestCase):
         """Test the Location model as_row_actions() method.
         """
         loc = Location.objects.first()
-        row = loc.as_row_actions(self.n_user)
+        row = loc.as_row_actions()
         self.assertIsNot(row.find('Edit'), -1)
         self.assertIsNot(row.find('Delete'), -1)
 

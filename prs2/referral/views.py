@@ -593,7 +593,7 @@ class ReferralDetail(PrsObjectDetail):
                 thead = "".join(["<th>{}</th>".format(h) for h in headers])
                 rows = [
                     "<tr>{}{}</tr>".format(
-                        o.as_row_minus_referral(), o.as_row_actions(self.request.user)
+                        o.as_row_minus_referral(), o.as_row_actions()
                     )
                     for o in obj_qs
                 ]
