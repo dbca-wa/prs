@@ -23,7 +23,6 @@ RUN poetry config virtualenvs.create false \
 FROM python_libs
 COPY gunicorn.py manage.py ./
 COPY prs2 ./prs2
-COPY pygeopkg ./pygeopkg
 RUN python manage.py collectstatic --noinput
 # Run the application as the www-data user.
 USER www-data
