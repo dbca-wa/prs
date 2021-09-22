@@ -170,7 +170,7 @@ class IndexSearch(LoginRequiredMixin, TemplateView):
             search_q = {
                 'q': self.request.GET["q"],
                 'sort_by': 'created:desc',
-                'num_typos': 1,
+                'num_typos': 0,
                 'include_fields': 'id',
                 'page': page,
                 'per_page': 20,
@@ -253,7 +253,7 @@ class IndexSearchCombined(LoginRequiredMixin, TemplateView):
             search_q = {
                 'q': self.request.GET["q"],
                 'sort_by': 'created:desc',
-                'num_typos': 1,
+                'num_typos': 0,
                 'include_fields': 'id',
             }
             referrals = {}
