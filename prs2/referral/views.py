@@ -170,7 +170,7 @@ class IndexSearch(LoginRequiredMixin, TemplateView):
             search_q = {
                 'q': self.request.GET["q"],
                 'sort_by': 'created:desc',
-                'num_typos': 1,
+                'num_typos': 0,
                 'include_fields': 'id',
                 'page': page,
                 'per_page': 20,
@@ -253,7 +253,7 @@ class IndexSearchCombined(LoginRequiredMixin, TemplateView):
             search_q = {
                 'q': self.request.GET["q"],
                 'sort_by': 'created:desc',
-                'num_typos': 1,
+                'num_typos': 0,
                 'include_fields': 'id',
             }
             referrals = {}
@@ -593,7 +593,7 @@ class ReferralDetail(PrsObjectDetail):
                 thead = "".join(["<th>{}</th>".format(h) for h in headers])
                 rows = [
                     "<tr>{}{}</tr>".format(
-                        o.as_row_minus_referral(), o.as_row_actions(self.request.user)
+                        o.as_row_minus_referral(), o.as_row_actions()
                     )
                     for o in obj_qs
                 ]
