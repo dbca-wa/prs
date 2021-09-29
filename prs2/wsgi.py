@@ -13,4 +13,5 @@ dot_env = os.path.join(str(d), '.env')
 if os.path.exists(dot_env):
     dotenv.read_dotenv(dot_env)
 
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ibms_project.settings")
 application = get_wsgi_application()
