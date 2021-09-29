@@ -15,7 +15,6 @@ jobs:
     name: Run Django Tests
     runs-on: ubuntu-latest
     env:
-      SECRET_KEY: rvo87w5vgbo8w7hogvwhbgowhbg7woh5bh7wo54owvbo
       DATABASE_URL: postgis://postgres:postgres@localhost:5432/postgres
     services:
       db:
@@ -34,7 +33,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.9.6'
+          python-version: 3.9.6
       - name: Install GDAL
         run: |
           sudo apt-add-repository ppa:ubuntugis/ubuntugis-unstable
@@ -62,4 +61,5 @@ jobs:
       - name: Run tests
         run: |
           source .venv/bin/activate
-          python manage.py test
+          python manage.py collectstatic
+          python manage.py test prs2.referral.test_views
