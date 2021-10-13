@@ -53,4 +53,4 @@ jobs:
       - name: Run tests
         run: |
           source .venv/bin/activate
-          python manage.py test
+          python manage.py test --noinput --failfast -v2 prs2.referral.test_models.ReferralLookupModelTest
