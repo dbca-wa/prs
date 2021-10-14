@@ -20,7 +20,7 @@
     <!-- Referrals results table -->
     {% if search_result %}
     {% if page_obj.has_other_pages %}{% bootstrap_paginate page_obj range=10 show_prev_next="true" show_first_last="true" %}{% endif %}
-    <p>Search term(s) matched {{ search_result_count }} results:</p>
+    <p>Search returned {{ search_result_count }} result{{ search_result_count|pluralize }}:</p>
     <div>
     {% for result in search_result %}
         <table class="table table-bordered table-sm">
@@ -49,7 +49,7 @@
     </div>
     {% if page_obj.has_other_pages %}{% bootstrap_paginate page_obj range=10 show_prev_next="true" show_first_last="true" %}{% endif %}
     {% else %}
-    <p>Search term(s) returned no results.</p>
+    <p>Search returned no results.</p>
     {% endif %}
 
 {% endif %}

@@ -197,6 +197,14 @@ class IndexSearch(LoginRequiredMixin, TemplateView):
             paginator = Paginator(tuple(_ for _ in range(search_result["found"])), 20)
             context["page_obj"] = paginator.get_page(page)
 
+            # Replace underscores in search field names with spaces.
+            for hit in search_result["hits"]:
+                highlights = []
+                for highlight in hit["highlights"]:
+                    highlight["field"] = highlight["field"].replace("_", " ")
+                    highlights.append(highlight)
+                hit["highlights"] = highlights
+
             if collection == "referrals":
                 for hit in search_result["hits"]:
                     context["search_result"].append({
