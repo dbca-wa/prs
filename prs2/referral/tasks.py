@@ -11,21 +11,38 @@ def index_object(pk, model, client=None):
 
     if model == 'referral':
         from referral.models import Referral
-        referral = Referral.objects.get(pk=pk)
-        utils.typesense_index_referral(referral, client)
+        try:
+            referral = Referral.objects.get(pk=pk)
+            utils.typesense_index_referral(referral, client)
+        except Referral.DoesNotExist:
+            return
     elif model == 'record':
         from referral.models import Record
-        record = Record.objects.get(pk=pk)
-        utils.typesense_index_record(record, client)
+        try:
+            record = Record.objects.get(pk=pk)
+            utils.typesense_index_record(record, client)
+        except Record.DoesNotExist:
+            return
     elif model == 'task':
         from referral.models import Task
-        task = Task.objects.get(pk=pk)
-        utils.typesense_index_task(task, client)
+        try:
+            task = Task.objects.get(pk=pk)
+            utils.typesense_index_task(task, client)
+        except Task.DoesNotExist:
+            return
     elif model == 'note':
         from referral.models import Note
-        note = Note.objects.get(pk=pk)
-        utils.typesense_index_note(note, client)
+        try:
+            note = Note.objects.get(pk=pk)
+            utils.typesense_index_note(note, client)
+        except Note.DoesNotExist:
+            return
     elif model == 'condition':
         from referral.models import Condition
-        condition = Condition.objects.get(pk=pk)
-        utils.typesense_index_condition(condition, client)
+        try:
+            condition = Condition.objects.get(pk=pk)
+            utils.typesense_index_condition(condition, client)
+        except Condition.DoesNotExist:
+            return
+
+    return

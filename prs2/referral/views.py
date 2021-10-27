@@ -197,6 +197,14 @@ class IndexSearch(LoginRequiredMixin, TemplateView):
             paginator = Paginator(tuple(_ for _ in range(search_result["found"])), 20)
             context["page_obj"] = paginator.get_page(page)
 
+            # Replace underscores in search field names with spaces.
+            for hit in search_result["hits"]:
+                highlights = []
+                for highlight in hit["highlights"]:
+                    highlight["field"] = highlight["field"].replace("_", " ")
+                    highlights.append(highlight)
+                hit["highlights"] = highlights
+
             if collection == "referrals":
                 for hit in search_result["hits"]:
                     context["search_result"].append({
@@ -1955,16 +1963,3 @@ class InfobaseShortcut(View):
                 request, "That record is not associated with an InfoBase object ID."
             )
             return HttpResponseRedirect(record.get_absolute_url())
-
-
-class HealthCheckView(TemplateView):
-    """A basic template view not requiring auth, used for service monitoring.
-    """
-
-    template_name = "healthcheck.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["page_title"] = "PRS application status"
-        context["status"] = "HEALTHY"
-        return context

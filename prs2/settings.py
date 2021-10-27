@@ -31,6 +31,7 @@ WSGI_APPLICATION = 'prs2.wsgi.application'
 GEOSERVER_WMS_URL = env('GEOSERVER_WMS_URL', '')
 GEOSERVER_WFS_URL = env('GEOSERVER_WFS_URL', '')
 INSTALLED_APPS = (
+    'whitenoise.runserver_nostatic',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -53,7 +54,9 @@ INSTALLED_APPS = (
     'indexer',
 )
 MIDDLEWARE = [
+    'prs2.middleware.HealthCheckMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -97,7 +100,7 @@ LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 APPLICATION_TITLE = 'Planning Referral System'
 APPLICATION_ACRONYM = 'PRS'
-APPLICATION_VERSION_NO = '2.5.7'
+APPLICATION_VERSION_NO = '2.5.14'
 APPLICATION_ALERTS_EMAIL = 'PRS-Alerts@dbca.wa.gov.au'
 SITE_URL = env('SITE_URL', 'localhost')
 PRS_USER_GROUP = env('PRS_USER_GROUP', 'PRS user')
@@ -170,6 +173,8 @@ MEDIA_URL = '/media/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATIC_URL = '/static/'
 STATICFILES_DIRS = (os.path.join(BASE_DIR, 'prs2', 'static'),)
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+WHITENOISE_ROOT = STATIC_ROOT
 
 # This is required to add context variables to all templates:
 STATIC_CONTEXT_VARS = {}
