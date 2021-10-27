@@ -19,13 +19,13 @@
     <!-- Referrals results table -->
     {% if search_result %}
     <p>
-        Search returned
-        {% if referrals_count %}<a href="{% url 'prs_index_search' collection='referrals' %}?q={{ query_string }}">{{ referrals_count }} referral{{ referrals_count|pluralize }}</a>{% else %}{{ referrals_count}} referrals{% endif %},
-        {% if records_count %}<a href="{% url 'prs_index_search' collection='records' %}?q={{ query_string }}">{{ records_count }} record{{ records_count|pluralize }}</a>{% else %}{{ records_count }} records{% endif %},
-        {% if notes_count %}<a href="{% url 'prs_index_search' collection='notes' %}?q={{ query_string }}">{{ notes_count }} note{{ notes_count|pluralize }}</a>{% else %}{{ notes_count }} notes{% endif %},
-        {% if tasks_count %}<a href="{% url 'prs_index_search' collection='tasks' %}?q={{ query_string }}">{{ tasks_count }} task{{ tasks_count|pluralize }}</a>{% else %}{{ tasks_count }} tasks{% endif %} and
-        {% if conditions_count %}<a href="{% url 'prs_index_search' collection='conditions' %}?q={{ query_string }}">{{ conditions_count }} condition{{ conditions_count|pluralize }}</a>{% else %}{{ conditions_count }} conditions{% endif %}.
-        Partial results are displayed below.
+        Search results:
+        {% if referrals_count %}<a class="btn btn-primary" href="{% url 'prs_index_search' collection='referrals' %}?q={{ query_string }}">{{ referrals_count }} referral{{ referrals_count|pluralize }}</a>{% endif %}
+        {% if records_count %}<a class="btn btn-primary" href="{% url 'prs_index_search' collection='records' %}?q={{ query_string }}">{{ records_count }} record{{ records_count|pluralize }}</a>{% endif %}
+        {% if notes_count %}<a class="btn btn-primary" href="{% url 'prs_index_search' collection='notes' %}?q={{ query_string }}">{{ notes_count }} note{{ notes_count|pluralize }}</a>{% endif %}
+        {% if tasks_count %}<a class="btn btn-primary" href="{% url 'prs_index_search' collection='tasks' %}?q={{ query_string }}">{{ tasks_count }} task{{ tasks_count|pluralize }}</a>{% endif %}
+        {% if conditions_count %}<a class="btn btn-primary" href="{% url 'prs_index_search' collection='conditions' %}?q={{ query_string }}">{{ conditions_count }} condition{{ conditions_count|pluralize }}</a>{% endif %}
+        <br>Partial results are displayed below.
     </p>
     <div>
     {% for result in search_result %}
