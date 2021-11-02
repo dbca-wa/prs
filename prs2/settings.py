@@ -100,7 +100,7 @@ LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 APPLICATION_TITLE = 'Planning Referral System'
 APPLICATION_ACRONYM = 'PRS'
-APPLICATION_VERSION_NO = '2.5.14'
+APPLICATION_VERSION_NO = '2.5.15'
 APPLICATION_ALERTS_EMAIL = 'PRS-Alerts@dbca.wa.gov.au'
 SITE_URL = env('SITE_URL', 'localhost')
 PRS_USER_GROUP = env('PRS_USER_GROUP', 'PRS user')
@@ -139,6 +139,8 @@ REFERRAL_ASSIGNEE_FALLBACK = env('REFERRAL_ASSIGNEE_FALLBACK', 'admin')
 PLANNING_EMAILS = env('PLANNING_EMAILS', 'referrals@dplh.wa.gov.au').split(',')
 # Whitelist of receiving mailboxes (only harvest referrals sent to these):
 ASSESSOR_EMAILS = env('ASSESSOR_EMAILS', '').split(',')
+# Delete harvested referral emails after processing them?
+REFERRAL_EMAIL_POST_DELETE = env('REFERRAL_EMAIL_POST_DELETE', True)
 
 # Database configuration
 DATABASES = {
@@ -148,9 +150,9 @@ DATABASES = {
 
 # Internationalization
 TIME_ZONE = 'Australia/Perth'
+USE_TZ = True
 USE_I18N = False
 USE_L10N = True
-USE_TZ = True
 # Sensible AU date input formats
 DATE_INPUT_FORMATS = (
     '%d/%m/%Y',
