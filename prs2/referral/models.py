@@ -1102,7 +1102,7 @@ class Record(ReferralBaseModel):
     tools_template = "referral/record_tools.html"
 
     def __str__(self):
-        return smart_truncate(self.name, length=256)
+        return 'Record {} ({})'.format(self.pk, smart_truncate(self.name, length=256))
 
     def save(self, force_insert=False, force_update=False, *args, **kwargs):
         """Overide save() to cleanse text input fields.
