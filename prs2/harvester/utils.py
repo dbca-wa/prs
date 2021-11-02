@@ -184,13 +184,15 @@ def harvest_unread_emails(from_email):
             LOGGER.info('Harvesting email UID {}'.format(uid))
             actions.append('{} Harvesting email UID {}'.format(datetime.now().isoformat(), uid))
             harvest_email(uid, message)
-            # Mark email 'read' and for deletion.
+            # Mark email as read.
             status, response = email_mark_read(imap, uid)
             if status == 'OK':
                 LOGGER.info('Email UID {} was marked as "Read"'.format(uid))
-            status, response = email_delete(imap, uid)
-            if status == 'OK':
-                LOGGER.info('Email UID {} was marked for deletion'.format(uid))
+            # Optionally mark email for deletion.
+            if settings.REFERRAL_EMAIL_POST_DELETE:
+                status, response = email_delete(imap, uid)
+                if status == 'OK':
+                    LOGGER.info('Email UID {} was marked for deletion'.format(uid))
 
         LOGGER.info('Harvest process completed ({})'.format(from_email))
         actions.append('{} Harvest process completed ({})'.format(datetime.now().isoformat(), from_email))
