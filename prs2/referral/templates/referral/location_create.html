@@ -3,7 +3,7 @@
 
 {% block extra_head %}
 {{ block.super }}
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mapbox.js/3.3.1/mapbox.min.css" integrity="sha256-In35bXEWybU1ap9AaTzR+Oan+5DZFnhaddUcg72dhF0=" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.min.css" integrity="sha512-1xoFisiGdy9nvho8EgXuXvnpR5GAMSjFwp40gSRE3NwdUdIMIKuPa7bqoUhLD0O/5tPNhteAsE5XyyMi5reQVA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" integrity="sha256-XzD3RpaHPv7lzX9qt+2n1j5cWj48O24KsgaGYpKN8x8=" crossorigin="anonymous" />
 <link rel="stylesheet" type="text/css" href="{% static 'css/leaflet-search.css' %}" />
 <style>
@@ -27,7 +27,7 @@
 
 {% block extra_js %}
 {{ block.super }}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mapbox.js/3.3.1/mapbox.js" integrity="sha256-oXEqjWuC/jlnMsEvnx5CC50C3O9dILhUsz8dIzkcbGI=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.min.js" integrity="sha512-SeiQaaDh73yrb56sTW/RgVdi/mMqNeM2oBwubFHagc5BkixSpP1fvqF47mKzPGWYSSy4RwbBunrJBQ4Co8fRWA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js" integrity="sha256-siofc4Uwjlra3YWkwthOn8Uj69cNN4aMug/iOHNiRgs=" crossorigin="anonymous"></script>
 <script src="{% static 'js/leaflet-search.min.js' %}"></script>
 <script src="{% static 'js/wellknown.js' %}"></script>
