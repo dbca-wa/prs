@@ -64,11 +64,10 @@
     // Define WFS layer for querying.
     var cadastreWFSParams = {
         service: 'WFS',
-        version: '1.1.0',
+        version: '2.0.0',
         request: 'GetFeature',
         typeName: 'cddp:cadastre',
-        outputFormat: 'text/javascript',
-        format_options : 'callback:getJson',
+        outputFormat: 'application/json',
     };
     var cadastreWFSURL = '{{ geoserver_wfs_url }}' + L.Util.getParamString(cadastreWFSParams);
     // GeoJSON layer to store clicked-on cadastre locations.
@@ -153,8 +152,7 @@
         $.ajax({
             url: '{{ geoserver_wfs_url }}',
             data: parameters,
-            dataType: 'jsonp',
-            jsonpCallback: 'getJson',
+            dataType: 'json',
             success: function(data) {
                 // Add the first feature returned by the query to locationsLayer.
                 var fid = data.features[0]['id'];
