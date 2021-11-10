@@ -30,6 +30,8 @@ ROOT_URLCONF = 'prs2.urls'
 WSGI_APPLICATION = 'prs2.wsgi.application'
 GEOSERVER_WMS_URL = env('GEOSERVER_WMS_URL', '')
 GEOSERVER_WFS_URL = env('GEOSERVER_WFS_URL', '')
+GEOSERVER_SSO_USER = env('GEOSERVER_SSO_USER', 'username')
+GEOSERVER_SSO_PASS = env('GEOSERVER_SSO_PASS', 'password')
 INSTALLED_APPS = (
     'whitenoise.runserver_nostatic',
     'django.contrib.admin',
