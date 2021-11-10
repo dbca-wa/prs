@@ -153,6 +153,8 @@
             url: '{{ geoserver_wfs_url }}',
             data: parameters,
             dataType: 'json',
+            headers: {'Authorization': "Basic {{ geoserver_basic_auth }}"},
+            crossDomain: true,
             success: function(data) {
                 // Add the first feature returned by the query to locationsLayer.
                 var fid = data.features[0]['id'];
