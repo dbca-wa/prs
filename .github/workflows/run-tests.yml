@@ -61,7 +61,7 @@ jobs:
       - name: Run celery worker for tests
         run: |
           source .venv/bin/activate
-          celery --app prs worker --loglevel error --detach
+          celery --app prs2 worker --loglevel error --detach
       - name: Run tests
         run: |
           source .venv/bin/activate
