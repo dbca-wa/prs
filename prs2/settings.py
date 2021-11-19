@@ -32,6 +32,7 @@ GEOSERVER_WMS_URL = env('GEOSERVER_WMS_URL', '')
 GEOSERVER_WFS_URL = env('GEOSERVER_WFS_URL', '')
 GEOSERVER_SSO_USER = env('GEOSERVER_SSO_USER', 'username')
 GEOSERVER_SSO_PASS = env('GEOSERVER_SSO_PASS', 'password')
+GEOCODER_URL = env('GEOCODER_URL', '')
 INSTALLED_APPS = (
     'whitenoise.runserver_nostatic',
     'django.contrib.admin',
@@ -102,7 +103,7 @@ LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 APPLICATION_TITLE = 'Planning Referral System'
 APPLICATION_ACRONYM = 'PRS'
-APPLICATION_VERSION_NO = '2.5.16'
+APPLICATION_VERSION_NO = '2.5.17'
 APPLICATION_ALERTS_EMAIL = 'PRS-Alerts@dbca.wa.gov.au'
 SITE_URL = env('SITE_URL', 'localhost')
 PRS_USER_GROUP = env('PRS_USER_GROUP', 'PRS user')

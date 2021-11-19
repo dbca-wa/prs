@@ -1,4 +1,3 @@
-from base64 import b64encode
 from copy import copy
 from datetime import datetime, timedelta
 from django.conf import settings
@@ -1044,8 +1043,6 @@ class LocationCreate(ReferralCreateChild):
             context["geojson_locations"] = serialize(
                 "geojson", ref.location_set.current(), geometry_field="poly", srid=4283
             )
-        # Add basic auth string for querying Geoserver.
-        context["geoserver_basic_auth"] = b64encode(f'{settings.GEOSERVER_SSO_USER}:{settings.GEOSERVER_SSO_PASS}'.encode('utf-8')).decode()
         return context
 
     def get_success_url(self):
@@ -1232,7 +1229,7 @@ class RecordUpload(LoginRequiredMixin, View):
             return Record.objects.get(pk=self.kwargs["pk"])
 
     def post(self, request, *args, **kargs):
-        if not "file" in request.FILES:
+        if "file" not in request.FILES:
             return HttpResponse(json.dumps({"success": False}))
         f = request.FILES["file"]
         if self.parent_referral:
