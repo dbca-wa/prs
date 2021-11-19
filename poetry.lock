@@ -326,21 +326,6 @@ optional = false
 python-versions = "*"
 
 [[package]]
-name = "django-downloadview"
-version = "2.1.1"
-description = "Serve files with Django and reverse-proxies."
-category = "main"
-optional = false
-python-versions = "*"
-
-[package.dependencies]
-Django = ">=1.11"
-requests = "*"
-
-[package.extras]
-test = ["tox"]
-
-[[package]]
 name = "django-extensions"
 version = "3.1.3"
 description = "Extensions for Django"
@@ -1026,7 +1011,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "0e2df32585ac386cd733da459523fd57fe79db7f2e8831740d2f4c50d435007e"
+content-hash = "7ad1cdab261102e1c958fea1d9201689388fc5baac31f16928f1efe979fa774b"
 
 [metadata.files]
 amqp = [
@@ -1288,10 +1273,6 @@ django-crispy-forms = [
 django-dotenv = [
     {file = "django-dotenv-1.4.2.tar.gz", hash = "sha256:3812bb0f4876cf31f902aad140f0645e120e51ee30eb7c40c22050f58a0e4adb"},
     {file = "django_dotenv-1.4.2-py2.py3-none-any.whl", hash = "sha256:a9b1b40a70bd321acd231926acedb9bd2c5e873e33a1873b34a7276d196a765e"},
-]
-django-downloadview = [
-    {file = "django-downloadview-2.1.1.tar.gz", hash = "sha256:ff6bc2d7ea4df8b602f5b29b920e40cadd7400851c85cb67c7152b48dcb33a8b"},
-    {file = "django_downloadview-2.1.1-py3-none-any.whl", hash = "sha256:4efaa10e2fea6b1b78b3fadd5c8887cc735b0934e1210f29794c14ee6a427aa3"},
 ]
 django-extensions = [
     {file = "django-extensions-3.1.3.tar.gz", hash = "sha256:5f0fea7bf131ca303090352577a9e7f8bfbf5489bd9d9c8aea9401db28db34a0"},

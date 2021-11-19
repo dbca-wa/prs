@@ -33,7 +33,6 @@ urlpatterns += [
     path("tasks/<int:pk>/<action>/", views.TaskAction.as_view(), name="task_action"),
     path("conditions/<int:pk>/clearance/", views.ConditionClearanceCreate.as_view(), name="condition_clearance_add"),
     path("records/<int:pk>/infobase/", views.InfobaseShortcut.as_view(), name="infobase_shortcut"),
-    path("records/<int:pk>/download/", views.ReferralDownloadView.as_view(model=Record, file_field="uploaded_file"), name="download_record"),
     path("records/<int:pk>/upload/", views.RecordUpload.as_view(), name="record_upload"),
 ]
 
