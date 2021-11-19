@@ -3,6 +3,9 @@
 // NOTE: the following global variables need to be set prior to loading this script:
 // * geoserver_wms_url
 // * geoserver_wfs_url
+// * geoserver_basic_auth
+// * geocoder_url
+
 // Define tile layers.
 var landgateOrthomosaic = L.tileLayer.wms(
     geoserver_wms_url,
@@ -125,17 +128,36 @@ L.control.layers(baseMaps, overlayMaps).addTo(map);
 // Define scale bar
 L.control.scale({maxWidth: 500, imperial: false}).addTo(map);
 
+function searchGeocoder(text, response) {
+  // Use jQuery to query the Geocoder service API.
+  return $.ajax({
+    url: geocoder_url,
+    data: {q: text},
+    dataType: 'json',
+    headers: {Authorization: 'Basic ' + geoserver_basic_auth},
+    success: function(data) {
+      response(data);
+    }
+  });
+};
+
+function filterGeocoderRecords(text, records) {
+  // The stock leaflet-search function seemed to filter out all records from the response, so we override it.
+  return records;
+};
+
 // Define geocoder search input.
 map.addControl(new L.Control.Search({
-    url: 'https://caddy.dbca.wa.gov.au/api/geocode?q={s}',
-    propertyName: 'address',
-    propertyLoc: ['lat','lon'],
-    // Other variables.
-    delayType: 1000,
-    textErr: '',
-    zoom: 17,
-    circleLocation: true,
-    autoCollapse: true
+  sourceData: searchGeocoder,
+  filterData: filterGeocoderRecords,
+  propertyName: 'address',
+  propertyLoc: ['lat','lon'],
+  // Other variables.
+  delayType: 1000,
+  textErr: '',
+  zoom: 17,
+  circleLocation: true,
+  autoCollapse: true
 }));
 
 // Define a custom lot filtering form Control
@@ -193,17 +215,24 @@ $("input#id_input_lotSearch").change(function() {
 var lotsearchresults = new L.featureGroup();
 map.addLayer(lotsearchresults);
 
+// Define WFS layer for querying.
+var cadastreWFSParams = {
+    service: 'WFS',
+    version: '2.0.0',
+    request: 'GetFeature',
+    typeName: 'cddp:cadastre',
+    outputFormat: 'application/json',
+};
+
 var findLot = function(lotname) {
+    // Generate our CQL filter.
+    var filter = "survey_lot like '%" + lotname + "%' AND BBOX(wkb_geometry," + map.getBounds().toBBoxString() + ",'EPSG:4326')";
+    var parameters = L.Util.extend(cadastreWFSParams, {'cql_filter': filter});
     $.ajax({
         url: geoserver_wfs_url,
-        data: {
-            service: "WFS",
-            version: "2.0.0",
-            request: "GetFeature",
-            typeName: "cddp:cadastre",
-            outputFormat: "application/json",
-            cql_filter: "survey_lot like '%"+lotname+"%' AND BBOX(wkb_geometry," + map.getBounds().toBBoxString() + ",'EPSG:4326')"
-        },
+        data: parameters,
+        dataType: 'json',
+        headers: {Authorization: 'Basic ' + geoserver_basic_auth},
         success: function(data) {
             if (data.totalFeatures === 0 && map.getMinZoom() < map.getZoom() && confirm("Couldn't find Survey Lot containing '" + lotname + "' in viewport, zoom out and try again?")) {
                 map.zoomOut();

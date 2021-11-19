@@ -32,6 +32,7 @@ GEOSERVER_WMS_URL = env('GEOSERVER_WMS_URL', '')
 GEOSERVER_WFS_URL = env('GEOSERVER_WFS_URL', '')
 GEOSERVER_SSO_USER = env('GEOSERVER_SSO_USER', 'username')
 GEOSERVER_SSO_PASS = env('GEOSERVER_SSO_PASS', 'password')
+GEOCODER_URL = env('GEOCODER_URL', '')
 INSTALLED_APPS = (
     'whitenoise.runserver_nostatic',
     'django.contrib.admin',
