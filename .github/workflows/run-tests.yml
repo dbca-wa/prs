@@ -23,6 +23,10 @@ jobs:
         ports:
           - 5432:5432
         options: --mount type=tmpfs,destination=/var/lib/postgresql/data --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+      rabbitmq:
+        image: rabbitmq:3-alpine
+        ports:
+          - 5672:5672
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
@@ -54,8 +58,12 @@ jobs:
         run: |
           source .venv/bin/activate
           python manage.py migrate
+      - name: Run celery worker for tests
+        run: |
+          source .venv/bin/activate
+          celery --app prs2 worker --loglevel error --detach
       - name: Run tests
         run: |
           source .venv/bin/activate
           python manage.py collectstatic
-          python manage.py test --noinput --failfast
+          python manage.py test --noinput --failfast -v2
