@@ -166,10 +166,6 @@ class GeneralSearchTest(PrsViewsTestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'referral/prs_index_search_combined.html')
-        # Test the view with a query string.
-        url += '?q=foo'
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
 
 
 class ReferralDetailTest(PrsViewsTestCase):
