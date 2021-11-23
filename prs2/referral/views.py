@@ -156,7 +156,7 @@ class IndexSearch(LoginRequiredMixin, TemplateView):
             collection = "referrals"
 
         context["page_title"] = " | ".join([settings.APPLICATION_ACRONYM, f"Search {collection}"])
-        context["page_heading"] = f"SEARCH {collection} (INDEXED)".upper()
+        context["page_heading"] = f"SEARCH {collection}".upper()
         links = [(reverse("site_home"), "Home"), (None, f"Search {collection}")]
         context["breadcrumb_trail"] = breadcrumbs_li(links)
 
@@ -246,9 +246,9 @@ class IndexSearchCombined(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        context["page_title"] = " | ".join([settings.APPLICATION_ACRONYM, "Search everything"])
-        context["page_heading"] = "SEARCH EVERYTHING (INDEXED)"
-        links = [(reverse("site_home"), "Home"), (None, "Search everything")]
+        context["page_title"] = " | ".join([settings.APPLICATION_ACRONYM, "Search"])
+        context["page_heading"] = "SEARCH EVERYTHING"
+        links = [(reverse("site_home"), "Home"), (None, "Search")]
         context["breadcrumb_trail"] = breadcrumbs_li(links)
 
         # Search results

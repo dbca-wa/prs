@@ -9,7 +9,7 @@ def template_context(request):
         'site_title': settings.APPLICATION_TITLE,
         'site_acronym': settings.APPLICATION_ACRONYM,
         'version_no': settings.APPLICATION_VERSION_NO,
-        'geoserver_wms_url': settings.GEOSERVER_WMS_URL,
+        'geoserver_wmts_url': settings.GEOSERVER_WMTS_URL,
         'geoserver_wfs_url': settings.GEOSERVER_WFS_URL,
         'geoserver_basic_auth': b64encode(f'{settings.GEOSERVER_SSO_USER}:{settings.GEOSERVER_SSO_PASS}'.encode('utf-8')).decode(),
         'geocoder_url': settings.GEOCODER_URL,
