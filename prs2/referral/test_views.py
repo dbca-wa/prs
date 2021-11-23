@@ -162,14 +162,10 @@ class GeneralSearchTest(PrsViewsTestCase):
     def test_general_search(self):
         """Test that the general search page renders
         """
-        url = reverse('prs_general_search')
+        url = reverse('prs_index_search_combined')
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'referral/prs_general_search.html')
-        # Test the view with a query string.
-        url += '?q=foo'
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'referral/prs_index_search_combined.html')
 
 
 class ReferralDetailTest(PrsViewsTestCase):

@@ -1,101 +1,67 @@
 "use strict";
 
 // NOTE: the following global variables need to be set prior to loading this script:
-// * geoserver_wms_url
+// * geoserver_wmts_url
 // * geoserver_wfs_url
 // * geoserver_basic_auth
 // * geocoder_url
 
-// Define tile layers.
-var landgateOrthomosaic = L.tileLayer.wms(
-    geoserver_wms_url,
-    {
-        crs: L.CRS.EPSG4326,
-        layers: 'landgate:virtual_mosaic',
-        tileSize: 1024,
-        format: 'image/png',
-        tiled: true,
-        version: '1.1.1'
-    }
+// Define baselayer tile layers.
+const landgateOrthomosaic = L.tileLayer(
+  geoserver_wmts_url + "?service=WMTS&request=GetTile&version=1.0.0&tilematrixset=gda94&TileMatrix=gda94:{z}&TileCol={x}&TileRow={y}&format=image/png&layer=landgate:virtual_mosaic",
+  {
+    tileSize: 1024,
+    zoomOffset: -2,
+  },
 );
-var mapboxStreets = L.tileLayer.wms(
-    geoserver_wms_url,
-    {
-        crs: L.CRS.EPSG4326,
-        layers: 'dbca:mapbox-streets',
-        tileSize: 1024,
-        format: 'image/png',
-        tiled: true,
-        version: '1.1.1'
-    }
+const mapboxStreets = L.tileLayer(
+  geoserver_wmts_url + "?service=WMTS&request=GetTile&version=1.0.0&tilematrixset=gda94&TileMatrix=gda94:{z}&TileCol={x}&TileRow={y}&format=image/png&layer=dbca:mapbox-streets",
+  {
+    tileSize: 1024,
+    zoomOffset: -2,
+  },
 );
-var empty = L.tileLayer('');
-var cadastre = L.tileLayer.wms(
-    geoserver_wms_url,
-    {
-        crs: L.CRS.EPSG4326,
-        // Landgate-published cadastre:
-        //layers: 'landgate:LGATE-001',
-        // "PRS styled" internal version of cadastre:
-        layers: 'cddp:cadastre',
-        styles: 'cddp:cadastre.cadastre_prs',
-        tileSize: 1024,
-        format: 'image/png',
-        tiled: true,
-        transparent: true,
-        version: '1.1.1'
-    }
+const emptyBaselayer = L.tileLayer(
 );
-var slipRoads = L.tileLayer.wms(
-    geoserver_wms_url,
-    {
-        crs: L.CRS.EPSG4326,
-        layers: 'landgate:roads_slip',
-        tileSize: 1024,
-        format: 'image/png',
-        tiled: true,
-        transparent: true,
-        version: '1.1.1'
-    }
+
+// Define overlay tile layers.
+const cadastre = L.tileLayer(
+  geoserver_wmts_url + "?service=WMTS&request=GetTile&version=1.0.0&tilematrixset=gda94&TileMatrix=gda94:{z}&TileCol={x}&TileRow={y}&format=image/png&transparent=true&layer=cddp:cadastre&style=cddp:cadastre.cadastre_prs",
+  {
+    opacity: 0.85,
+    tileSize: 1024,
+    zoomOffset: -2,
+  },
 );
-var prsLocations = L.tileLayer.wms(
-    geoserver_wms_url,
-    {
-        crs: L.CRS.EPSG4326,
-        layers: 'dbca:prs_locations',
-        opacity: 0.75,
-        tileSize: 1024,
-        format: 'image/png',
-        tiled: true,
-        transparent: true,
-        version: '1.1.1'
-    }
+const slipRoads = L.tileLayer(
+  geoserver_wmts_url + "?service=WMTS&request=GetTile&version=1.0.0&tilematrixset=gda94&TileMatrix=gda94:{z}&TileCol={x}&TileRow={y}&format=image/png&transparent=true&layer=landgate:roads_slip",
+  {
+    opacity: 0.75,
+    tileSize: 1024,
+    zoomOffset: -2,
+  },
 );
-var dbcaTenure = L.tileLayer.wms(
-    geoserver_wms_url,
-    {
-        crs: L.CRS.EPSG4326,
-        layers: 'cddp:legislated_lands_and_waters',
-        opacity: 0.75,
-        tileSize: 1024,
-        format: 'image/png',
-        tiled: true,
-        transparent: true,
-        version: '1.1.1'
-    }
+const prsLocations = L.tileLayer(
+  geoserver_wmts_url + "?service=WMTS&request=GetTile&version=1.0.0&tilematrixset=gda94&TileMatrix=gda94:{z}&TileCol={x}&TileRow={y}&format=image/png&transparent=true&layer=dbca:prs_locations",
+  {
+    opacity: 0.75,
+  },
 );
-var regionalParks = L.tileLayer.wms(
-    geoserver_wms_url,
-    {
-        crs: L.CRS.EPSG4326,
-        layers: 'landgate:DBCA-026',
-        opacity: 0.75,
-        tileSize: 1024,
-        format: 'image/png',
-        tiled: true,
-        transparent: true,
-        version: '1.1.1'
-    }
+const dbcaTenure = L.tileLayer(
+  geoserver_wmts_url + "?service=WMTS&request=GetTile&version=1.0.0&tilematrixset=gda94&TileMatrix=gda94:{z}&TileCol={x}&TileRow={y}&format=image/png&transparent=true&layer=cddp:legislated_lands_and_waters",
+  {
+    opacity: 0.75,
+    tileSize: 1024,
+    zoomOffset: -2,
+  },
+);
+const regionalParks = L.tileLayer(
+  geoserver_wmts_url + "?service=WMTS&request=GetTile&version=1.0.0&tilematrixset=gda94&TileMatrix=gda94:{z}&TileCol={x}&TileRow={y}&format=image/png&transparent=true&layer=landgate:DBCA-026",
+  {
+    opacity: 0.75,
+    tileSize: 1024,
+    zoomOffset: -2,
+  },
 );
 
 // Define map.
@@ -112,7 +78,7 @@ var map = L.map('map', {
 var baseMaps = {
     "Landgate orthomosaic": landgateOrthomosaic,
     "Mapbox streets": mapboxStreets,
-    "No base layer": empty
+    "No base layer": emptyBaselayer,
 };
 var overlayMaps = {
     "Cadastre": cadastre,

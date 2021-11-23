@@ -1189,7 +1189,7 @@ class Record(ReferralBaseModel):
             d["infobase_url"] = ""
             d["infobase_id"] = ""
         if self.uploaded_file:
-            d["download_url"] = reverse("download_record", kwargs={"pk": self.pk})
+            d["download_url"] = self.uploaded_file.url
             d["filetype"] = self.extension
             d["filesize"] = self.filesize_str
         else:
@@ -1244,7 +1244,7 @@ class Record(ReferralBaseModel):
             d["infobase_url"] = ""
             d["infobase_id"] = ""
         if self.uploaded_file:
-            d["download_url"] = reverse("download_record", kwargs={"pk": self.pk})
+            d["download_url"] = self.uploaded_file.url
             d["filetype"] = self.extension
             d["filesize"] = self.filesize_str
         else:

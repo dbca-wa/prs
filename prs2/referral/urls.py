@@ -1,5 +1,5 @@
 from django.urls import path
-from referral.models import Referral, Record, Task
+from referral.models import Referral, Task
 from referral import views
 
 
@@ -33,15 +33,14 @@ urlpatterns += [
     path("tasks/<int:pk>/<action>/", views.TaskAction.as_view(), name="task_action"),
     path("conditions/<int:pk>/clearance/", views.ConditionClearanceCreate.as_view(), name="condition_clearance_add"),
     path("records/<int:pk>/infobase/", views.InfobaseShortcut.as_view(), name="infobase_shortcut"),
-    path("records/<int:pk>/download/", views.ReferralDownloadView.as_view(model=Record, file_field="uploaded_file"), name="download_record"),
     path("records/<int:pk>/upload/", views.RecordUpload.as_view(), name="record_upload"),
 ]
 
 # Other static/functional URLs
 urlpatterns += [
     path("help/", views.HelpPage.as_view(), name="help_page"),
-    path("search/", views.GeneralSearch.as_view(), name="prs_general_search"),
-    path("index/combined/", views.IndexSearchCombined.as_view(), name="prs_index_search_combined"),
+    # path("search/", views.GeneralSearch.as_view(), name="prs_general_search"),
+    path("search/", views.IndexSearchCombined.as_view(), name="prs_index_search_combined"),
     path("index/", views.IndexSearch.as_view(), name="prs_index_search"),
     path("index/<collection>/", views.IndexSearch.as_view(), name="prs_index_search"),
     path("stopped-tasks/", views.SiteHome.as_view(stopped_tasks=True), name="stopped_tasks_list"),
