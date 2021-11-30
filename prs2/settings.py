@@ -103,7 +103,7 @@ LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 APPLICATION_TITLE = 'Planning Referral System'
 APPLICATION_ACRONYM = 'PRS'
-APPLICATION_VERSION_NO = '2.5.18'
+APPLICATION_VERSION_NO = '2.5.19'
 APPLICATION_ALERTS_EMAIL = 'PRS-Alerts@dbca.wa.gov.au'
 SITE_URL = env('SITE_URL', 'localhost')
 PRS_USER_GROUP = env('PRS_USER_GROUP', 'PRS user')
@@ -130,6 +130,7 @@ ALLOWED_UPLOAD_TYPES = [
     'text/html',
     'text/plain'
 ]
+API_RESPONSE_CACHE_SECONDS = env('API_RESPONSE_CACHE_SECONDS', 60)
 
 # Email settings
 EMAIL_HOST = env('EMAIL_HOST', 'email.host')

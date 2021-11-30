@@ -1,4 +1,6 @@
 from django.conf import settings
+from django.urls import path
+from django.views.decorators.cache import cache_page
 from referral import api_v1 as referral_api_v1
 from taggit.models import Tag
 from tastypie.api import Api
@@ -10,6 +12,29 @@ from django.db import ProgrammingError
 from rest_framework.routers import DefaultRouter
 
 from referral import api_v2
+from referral.api_v3 import (
+    ReferralTypeAPIResource, RegionAPIResource, OrganisationAPIResource, TaskStateAPIResource,
+    TaskTypeAPIResource, UserAPIResource, TagAPIResource,
+)
+
+
+# v3 API
+v3_api = [
+    path('organisation/', cache_page(settings.API_RESPONSE_CACHE_SECONDS)(OrganisationAPIResource.as_view()), name='organisation_api_resource'),
+    path('organisation/<int:pk>/', cache_page(settings.API_RESPONSE_CACHE_SECONDS)(OrganisationAPIResource.as_view()), name='organisation_api_resource'),
+    path('referraltype/', cache_page(settings.API_RESPONSE_CACHE_SECONDS)(ReferralTypeAPIResource.as_view()), name='referraltype_api_resource'),
+    path('referraltype/<int:pk>/', cache_page(settings.API_RESPONSE_CACHE_SECONDS)(ReferralTypeAPIResource.as_view()), name='referraltype_api_resource'),
+    path('region/', cache_page(settings.API_RESPONSE_CACHE_SECONDS)(RegionAPIResource.as_view()), name='region_api_resource'),
+    path('region/<int:pk>/', cache_page(settings.API_RESPONSE_CACHE_SECONDS)(RegionAPIResource.as_view()), name='region_api_resource'),
+    path('tag/', cache_page(settings.API_RESPONSE_CACHE_SECONDS)(TagAPIResource.as_view()), name='tag_api_resource'),
+    path('tag/<int:pk>/', cache_page(settings.API_RESPONSE_CACHE_SECONDS)(TagAPIResource.as_view()), name='tag_api_resource'),
+    path('taskstate/', cache_page(settings.API_RESPONSE_CACHE_SECONDS)(TaskStateAPIResource.as_view()), name='taskstate_api_resource'),
+    path('taskstate/<int:pk>/', cache_page(settings.API_RESPONSE_CACHE_SECONDS)(TaskStateAPIResource.as_view()), name='taskstate_api_resource'),
+    path('tasktype/', cache_page(settings.API_RESPONSE_CACHE_SECONDS)(TaskTypeAPIResource.as_view()), name='tasktype_api_resource'),
+    path('tasktype/<int:pk>/', cache_page(settings.API_RESPONSE_CACHE_SECONDS)(TaskTypeAPIResource.as_view()), name='tasktype_api_resource'),
+    path('user/', cache_page(settings.API_RESPONSE_CACHE_SECONDS)(UserAPIResource.as_view()), name='user_api_resource'),
+    path('user/<int:pk>/', cache_page(settings.API_RESPONSE_CACHE_SECONDS)(UserAPIResource.as_view()), name='user_api_resource'),
+]
 
 # v2 API
 v2_api = DefaultRouter()

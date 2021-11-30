@@ -234,8 +234,8 @@
                                             </div><!-- .col -->
                                             <div class="col">
                                                 <div class="form-group">
-                                                    <label for="filter-assigned">Assigned user</label>
-                                                    <select class="form-control" id="filter-assigned"></select>
+                                                    <label for="filter-assignedUser">Assigned user</label>
+                                                    <select class="form-control" id="filter-assignedUser"></select>
                                                 </div><!-- /.form-group -->
                                                 <div class="form-group">
                                                     <label for="filter-dateFrom-task">From date started</label>
@@ -320,86 +320,24 @@
         $("#modal-spinner").append(spinner.el);
     }
 
-    function _updateSelectOptions(el, url, filters) {
-        // Utility function to replace options in a DOM select element
+    function _getSelectlistOptions(url, filters, dom_elements) {
+        // Utility function to replace options in a select element(s)
         // by querying a passed-in endpoint URL.
-        el.disabled = true;
         $.ajax({
-            type: "GET",
             url: url,
             data: filters,
             success: function (data) {
-                el.options.length = 0;
-                el.options.add(new Option('--------', ''));
-                data = JSON.parse(JSON.stringify(data));
-                for (var i in data.results) {
-                    if ('username' in data.results[i]) {  // API: user object type.
-                        el.options.add(new Option(data.results[i].first_name + " " + data.results[i].last_name, data.results[i].id));
-                    } else {
-                        el.options.add(new Option(data.results[i].name, data.results[i].id));
+                dom_elements.each(function() {
+                    this.disabled = true;
+                    this.options.length = 0;
+                    this.options.add(new Option('--------', ''));
+                    for (var i in data) {
+                        this.options.add(new Option(data[i].text, data[i].id));
                     }
-                }
+                    this.disabled = false;
+                });
             }
         });
-        el.disabled = false;
-    }
-
-    function updateRegion() {
-        var url = "{% url 'referral_api:region-list' %}";
-        var filters = {"format": "json"};
-        var el = $("select#filter-region-referral").get(0);
-        _updateSelectOptions(el, url, filters);
-        var el = $("select#filter-region-clearance").get(0);
-        _updateSelectOptions(el, url, filters);
-        var el = $("select#filter-region-task").get(0);
-        _updateSelectOptions(el, url, filters);
-
-    }
-
-    function updateOrganisation() {
-        var el = $("select#filter-organisation-referral").get(0);
-        var url = "{% url 'referral_api:organisation-list' %}";
-        var filters = {"format": "json"};
-        _updateSelectOptions(el, url, filters);
-        var el = $("select#filter-organisation-clearance").get(0);
-        _updateSelectOptions(el, url, filters);
-    }
-
-    function updateReferralType() {
-        var el = $("select#filter-referralType").get(0);
-        var url = "{% url 'referral_api:type-list' %}";
-        var filters = {"format": "json"};
-        _updateSelectOptions(el, url, filters);
-    }
-
-    function updateTaskState() {
-        var el = $("select#filter-taskState-clearance").get(0);
-        var url = "{% url 'referral_api:taskstate-list' %}";
-        var filters = {"format": "json"};
-        _updateSelectOptions(el, url, filters);
-        var el = $("select#filter-taskState-task").get(0);
-        _updateSelectOptions(el, url, filters);
-    }
-
-    function updateTaskType() {
-        var el = $("select#filter-taskType").get(0);
-        var url = "{% url 'referral_api:tasktype-list' %}";
-        var filters = {"format": "json"};
-        _updateSelectOptions(el, url, filters);
-    }
-
-    function updateAssignedUser() {
-        var el = $("select#filter-assigned").get(0);
-        var url = "{% url 'referral_api:user-list' %}";
-        var filters = {"format": "json", "ordering": "username"};
-        _updateSelectOptions(el, url, filters);
-    }
-
-    function updateTags() {
-        var el = $("select#filter-referralTag").get(0);
-        var url = "{% url 'referral_api:tag-list' %}";
-        var filters = {"format": "json", "ordering": "name"};
-        _updateSelectOptions(el, url, filters);
     }
 
     function queryReferralFilters() {
@@ -482,7 +420,7 @@
         if (toDate) {
             $.extend(data, {"start_date__lte": moment(toDate, "D/M/YYYY").format("YYYY-MM-DD")});
         }
-        var assigned = $("select#filter-assigned").val();
+        var assigned = $("select#filter-assignedUser").val();
         if (assigned) {
             $.extend(data, {"assigned_user__id": assigned});
         }
@@ -715,13 +653,14 @@
         });
 
         // Initialise filter select lists.
-        updateRegion();
-        updateReferralType();
-        updateOrganisation();
-        updateTaskState();
-        updateTaskType();
-        updateAssignedUser();
-        updateTags();
+        const selectFilters = {selectlist: ""};
+        _getSelectlistOptions("{% url 'api_v3:region_api_resource' %}", selectFilters, $("[id^=filter-region]"));
+        _getSelectlistOptions("{% url 'api_v3:referraltype_api_resource' %}", selectFilters, $("[id^=filter-referralType]"));
+        _getSelectlistOptions("{% url 'api_v3:organisation_api_resource' %}", selectFilters, $("[id^=filter-organisation]"));
+        _getSelectlistOptions("{% url 'api_v3:taskstate_api_resource' %}", selectFilters, $("[id^=filter-taskState]"));
+        _getSelectlistOptions("{% url 'api_v3:tasktype_api_resource' %}", selectFilters, $("[id^=filter-taskType]"));
+        _getSelectlistOptions("{% url 'api_v3:user_api_resource' %}", selectFilters, $("[id^=filter-assignedUser]"));
+        _getSelectlistOptions("{% url 'api_v3:tag_api_resource' %}", selectFilters, $("[id^=filter-referralTag]"));
 
         // Onchange events for Referral filters.
         $("#filter-region-referral, #filter-organisation-referral, #filter-referralType, #filter-referralTag").change(function () {
@@ -735,7 +674,7 @@
             clearDataTable.ajax.reload();
         });
         // Onchange events for Task filters.
-        $("#filter-taskType, #filter-region-task, #filter-taskState-task, #filter-assigned").change(function () {
+        $("#filter-taskType, #filter-region-task, #filter-taskState-task, #filter-assignedUser").change(function () {
             startSpinner();
             taskDataTable.ajax.reload();
         });
