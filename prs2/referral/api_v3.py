@@ -4,7 +4,7 @@ from django.http import JsonResponse
 from django.views.generic import View
 from taggit.models import Tag
 
-from .models import ReferralType, Region, Organisation, TaskState, TaskType
+from .models import ReferralType, Region, Organisation, TaskState, TaskType, Referral
 
 
 class ReferralTypeAPIResource(View):
@@ -227,3 +227,70 @@ class TagAPIResource(View):
             ]
 
         return JsonResponse(objects, safe=False)
+
+
+class ReferralAPIResource(View):
+    """An API view that returns JSON of current, active referrals.
+    This API resource is more elaborate than those above, including pagination and filtering.
+    """
+    http_method_names = ['get', 'options', 'head', 'trace']
+
+    def get(self, request, *args, **kwargs):
+        queryset = Referral.objects.current().prefetch_related('type', 'regions', 'referring_org', 'dop_triggers', 'tags', 'lga')
+
+        # Queryset filtering.
+        if 'pk' in kwargs and kwargs['pk']:  # Allow filtering by object PK.
+            queryset = queryset.filter(pk=kwargs['pk'])
+        if 'region__id' in self.request.GET and self.request.GET['region__id']:
+            queryset = queryset.filter(regions__pk__in=[self.request.GET['region__id']])
+        if 'referring_org__id' in self.request.GET and self.request.GET['referring_org__id']:
+            queryset = queryset.filter(referring_org__pk=self.request.GET['referring_org__id'])
+        if 'type__id' in self.request.GET and self.request.GET['type__id']:
+            queryset = queryset.filter(type__pk=self.request.GET['type__id'])
+        if 'referral_date__gte' in self.request.GET and self.request.GET['referral_date__gte']:
+            queryset = queryset.filter(referral_date__gte=self.request.GET['referral_date__gte'])
+        if 'referral_date__lte' in self.request.GET and self.request.GET['referral_date__lte']:
+            queryset = queryset.filter(referral_date__lte=self.request.GET['referral_date__lte'])
+        if 'tag__id' in self.request.GET and self.request.GET['tag__id']:
+            queryset = queryset.filter(tags__pk__in=[self.request.GET['tag__id']])
+
+        obj_count = queryset.count()  # Count the filtered results.
+
+        # Paginate the queryset.
+        offset = 0
+        if 'offset' in self.request.GET and self.request.GET['offset']:
+            offset = int(self.request.GET['offset'])
+            # Ignore any offset which is greater than the result count.
+            if offset >= obj_count:
+                offset = 0
+
+        # Django's queryset slicing is smart enough that we don't need to worry about "wrapping around".
+        if 'limit' in self.request.GET and self.request.GET['limit']:
+            limit = offset + int(self.request.GET['limit'])
+        else:
+            limit = offset + 50  # Default to a maximum of 50 objects in the response.
+
+        queryset = queryset[offset:limit]
+        resp = {
+            'count': obj_count,
+            'objects': [
+                {
+                    'id': obj.pk,
+                    'type': obj.type.name,
+                    'regions': ', '.join([i.name for i in obj.regions.current()]),
+                    'referring_org': obj.referring_org.name,
+                    'reference': obj.reference,
+                    'file_no': obj.file_no,
+                    'description': obj.description,
+                    'referral_date': obj.referral_date.strftime('%Y-%m-%d'),
+                    'address': obj.address,
+                    'point': obj.point.wkt if obj.point else None,
+                    'dop_triggers': [i.name for i in obj.dop_triggers.current()],
+                    'tags': [i.name for i in obj.tags.all()],
+                    'related_refs': [i.pk for i in obj.related_refs.current()],
+                    'lga': obj.lga.name if obj.lga else None,
+                } for obj in queryset
+            ],
+        }
+
+        return JsonResponse(resp)

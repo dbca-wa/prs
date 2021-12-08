@@ -345,7 +345,7 @@
         var data = {};
         var region = $("select#filter-region-referral").val();
         if (region) {
-            $.extend(data, {"regions__id__in": region});
+            $.extend(data, {"region__id": region});
         }
         var organisation = $("select#filter-organisation-referral").val();
         if (organisation) {
@@ -365,8 +365,7 @@
         }
         var tags = $("#filter-referralTag").val();
         if (tags) {
-            $.extend(data, {"tags__id__in": tags});
-            //$.extend(data, {"tags__id__in": tags.join(",")});
+            $.extend(data, {"tag__id": tags});
         }
         return data;
     }
@@ -458,13 +457,13 @@
             data.offset = settings._iDisplayStart;
             var params = $.extend({}, data, queryReferralFilters());
             $.get(
-                "{% url 'referral_api:referral-list' %}",
+                "{% url 'api_v3:referral_api_resource' %}",
                 params,  // Query parameters for the API call.
                 function(resp) {
                     spinner.stop();
                     // Map the API response to the DataTables format and pass it to DataTables callback.
                     callback({
-                        data: JSON.parse(JSON.stringify(resp.results)),
+                        data: JSON.parse(JSON.stringify(resp.objects)),
                         recordsTotal: JSON.parse(JSON.stringify(resp.count)),
                         recordsFiltered: JSON.parse(JSON.stringify(resp.count))
                     });
@@ -478,7 +477,7 @@
                     return "<a href='" + refListUrl + data + "/'>" + data +"</a>";
                 }
             },
-            {"data": "regions_str"},
+            {"data": "regions"},
             {"data": "referring_org"},
             {"data": "type"},
             {"data": "reference"},

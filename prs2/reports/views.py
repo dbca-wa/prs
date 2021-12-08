@@ -40,11 +40,14 @@ class DownloadView(TemplateView):
         query_params = dict(request.GET.items())
         # Get the required model type from the query params.
         model = is_model_or_string(query_params.pop('model'))
+        # Special case: region -> regions.
+        region = query_params.pop('region__id', None)
+        if region:
+            query_params['regions__id__in'] = [region]
         # Special case: remove tag PKs from the query params.
-        tag_pks = query_params.pop('tags__id__in', None)
-        if tag_pks:
-            tag_pks = [int(i) for i in tag_pks.split(',')]
-            tags = Tag.objects.filter(pk__in=tag_pks)
+        tag = query_params.pop('tag__id', None)
+        if tag:
+            tags = Tag.objects.filter(pk=tag)
         else:
             tags = None
 
