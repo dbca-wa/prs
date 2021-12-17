@@ -26,7 +26,7 @@ class ReportView(TemplateView):
 
 
 class DownloadView(TemplateView):
-    """A basic view to return a spreadsheet of referral objects.
+    """A basic view to return a spreadsheet of PRS objects.
     """
     def dispatch(self, request, *args, **kwargs):
         # kwargs must include a Model class, or a string.
@@ -43,7 +43,10 @@ class DownloadView(TemplateView):
         # Special case: region -> regions.
         region = query_params.pop('region__id', None)
         if region:
-            query_params['regions__id__in'] = [region]
+            if model._meta.model_name == 'referral':
+                query_params['regions__id__in'] = [region]
+            elif model._meta.model_name == 'task':
+                query_params['referral__regions__id__in'] = [region]
         # Special case: remove tag PKs from the query params.
         tag = query_params.pop('tag__id', None)
         if tag:

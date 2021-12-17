@@ -401,7 +401,7 @@
         var data = {};
         var region = $("select#filter-region-task").val();
         if (region) {
-            $.extend(data, {"referral__regions__id__in": region});
+            $.extend(data, {"region__id": region});
         }
         var type = $("select#filter-taskType").val();
         if (type) {
@@ -568,28 +568,28 @@
             data.offset = settings._iDisplayStart;
             var params = $.extend({}, data, queryTaskFilters());
             $.get(
-                "{% url 'referral_api:task-list' %}",
+                "{% url 'api_v3:task_api_resource' %}",
                 params,  // Query parameters for the API call.
                 function(resp) {
                     spinner.stop();
                     // Map the API response to the DataTables format and pass it to DataTables callback.
                     callback({
+                        data: JSON.parse(JSON.stringify(resp.objects)),
                         recordsTotal: JSON.parse(JSON.stringify(resp.count)),
-                        recordsFiltered: JSON.parse(JSON.stringify(resp.count)),
-                        data: JSON.parse(JSON.stringify(resp.results))
+                        recordsFiltered: JSON.parse(JSON.stringify(resp.count))
                     });
                 }
             );
         },
         columns: [
             {
-                "data": "referral.id",
+                "data": "referral_id",
                 "render": function(data, type, row, meta) {
                     return "<a href='" + refListUrl + data + "/'>" + data +"</a>";
                 }
             },
-            {"data": "referral.reference"},
-            {"data": "referral.regions_str"},
+            {"data": "referral_reference"},
+            {"data": "regions"},
             {"data": "assigned_user"},
             {"data": "type"},
             {"data": "description"},

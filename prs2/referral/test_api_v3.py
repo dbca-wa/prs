@@ -6,7 +6,7 @@ API_MODELS_LOOKUP = [
     'referraltype', 'region', 'organisation', 'taskstate', 'tasktype', 'user', 'tag',
 ]
 API_MODELS = [
-    'referral',
+    'referral', 'task',
 ]
 
 class PrsAPITest(PrsTestCase):
@@ -47,6 +47,7 @@ class PrsAPITest(PrsTestCase):
             response = self.client.get(url)  # Anonymous user
             self.assertEqual(response.status_code, 200)
         # The API response is a bit different for these models.
+        # TODO: test filtering and pagination.
         for i in API_MODELS:
             url = reverse('api_v3:{}_api_resource'.format(i))
             self.client.login(username='normaluser', password='pass')
