@@ -47,9 +47,7 @@ INSTALLED_APPS = (
     'reversion',
     'crispy_forms',
     'bootstrap_pagination',
-    'tastypie',
     'webtemplate_dbca',
-    'rest_framework',
     'django_celery_results',
     'referral',
     'reports',
@@ -217,9 +215,6 @@ LOGGING = {
         },
     }
 }
-
-# Tastypie settings
-TASTYPIE_DEFAULT_FORMATS = ['json']
 
 # crispy_forms settings
 CRISPY_TEMPLATE_PACK = 'bootstrap4'

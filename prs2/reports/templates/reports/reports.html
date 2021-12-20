@@ -457,7 +457,7 @@
             data.offset = settings._iDisplayStart;
             var params = $.extend({}, data, queryReferralFilters());
             $.get(
-                "{% url 'api_v3:referral_api_resource' %}",
+                "{% url 'api:referral_api_resource' %}",
                 params,  // Query parameters for the API call.
                 function(resp) {
                     spinner.stop();
@@ -515,7 +515,7 @@
             data.offset = settings._iDisplayStart;
             var params = $.extend({}, data, queryClearanceFilters());
             $.get(
-                "{% url 'api_v3:clearance_api_resource' %}",
+                "{% url 'api:clearance_api_resource' %}",
                 params,  // Query parameters for the API call.
                 function(resp) {
                     spinner.stop();
@@ -568,7 +568,7 @@
             data.offset = settings._iDisplayStart;
             var params = $.extend({}, data, queryTaskFilters());
             $.get(
-                "{% url 'api_v3:task_api_resource' %}",
+                "{% url 'api:task_api_resource' %}",
                 params,  // Query parameters for the API call.
                 function(resp) {
                     spinner.stop();
@@ -653,13 +653,13 @@
 
         // Initialise filter select lists.
         const selectFilters = {selectlist: ""};
-        _getSelectlistOptions("{% url 'api_v3:region_api_resource' %}", selectFilters, $("[id^=filter-region]"));
-        _getSelectlistOptions("{% url 'api_v3:referraltype_api_resource' %}", selectFilters, $("[id^=filter-referralType]"));
-        _getSelectlistOptions("{% url 'api_v3:organisation_api_resource' %}", selectFilters, $("[id^=filter-organisation]"));
-        _getSelectlistOptions("{% url 'api_v3:taskstate_api_resource' %}", selectFilters, $("[id^=filter-taskState]"));
-        _getSelectlistOptions("{% url 'api_v3:tasktype_api_resource' %}", selectFilters, $("[id^=filter-taskType]"));
-        _getSelectlistOptions("{% url 'api_v3:user_api_resource' %}", selectFilters, $("[id^=filter-assignedUser]"));
-        _getSelectlistOptions("{% url 'api_v3:tag_api_resource' %}", selectFilters, $("[id^=filter-referralTag]"));
+        _getSelectlistOptions("{% url 'api:region_api_resource' %}", selectFilters, $("[id^=filter-region]"));
+        _getSelectlistOptions("{% url 'api:referraltype_api_resource' %}", selectFilters, $("[id^=filter-referralType]"));
+        _getSelectlistOptions("{% url 'api:organisation_api_resource' %}", selectFilters, $("[id^=filter-organisation]"));
+        _getSelectlistOptions("{% url 'api:taskstate_api_resource' %}", selectFilters, $("[id^=filter-taskState]"));
+        _getSelectlistOptions("{% url 'api:tasktype_api_resource' %}", selectFilters, $("[id^=filter-taskType]"));
+        _getSelectlistOptions("{% url 'api:user_api_resource' %}", selectFilters, $("[id^=filter-assignedUser]"));
+        _getSelectlistOptions("{% url 'api:tag_api_resource' %}", selectFilters, $("[id^=filter-referralTag]"));
 
         // Onchange events for Referral filters.
         $("#filter-region-referral, #filter-organisation-referral, #filter-referralType, #filter-referralTag").change(function () {

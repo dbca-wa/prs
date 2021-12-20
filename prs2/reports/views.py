@@ -52,6 +52,9 @@ class DownloadView(TemplateView):
             state = query_params.pop('state__id', None)
             if state:
                 query_params['task__state__pk'] = state
+            referring_org = query_params.pop('referring_org__id', None)
+            if referring_org:
+                query_params['task__referral__referring_org__pk'] = referring_org
             start = query_params.pop('start_date__gte', None)
             if start:
                 query_params['task__start_date__gte'] = start

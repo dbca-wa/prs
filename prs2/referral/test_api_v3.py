@@ -15,7 +15,7 @@ class PrsAPITest(PrsTestCase):
         """Test auth and anon access permission to resource lists
         """
         for i in API_MODELS_LOOKUP + API_MODELS:
-            url = reverse('api_v3:{}_api_resource'.format(i))
+            url = reverse('api:{}_api_resource'.format(i))
             self.client.logout()
             response = self.client.get(url)  # Anonymous user
             self.assertEqual(response.status_code, 200)
@@ -30,13 +30,13 @@ class PrsAPITest(PrsTestCase):
         """Test auth and anon access permission to resource details
         """
         for i in API_MODELS_LOOKUP:
-            url = reverse('api_v3:{}_api_resource'.format(i))
+            url = reverse('api:{}_api_resource'.format(i))
             self.client.login(username='normaluser', password='pass')
             response = self.client.get(url)
             res_list = response.json()
             if res_list:  # Object(s) exist.
                 obj_id = res_list[0]['id']
-            url = reverse('api_v3:{}_api_resource'.format(i), kwargs={'pk': obj_id})
+            url = reverse('api:{}_api_resource'.format(i), kwargs={'pk': obj_id})
             response = self.client.get(url)
             self.assertEqual(response.status_code, 200)
             self.client.logout()
@@ -49,13 +49,13 @@ class PrsAPITest(PrsTestCase):
         # The API response is a bit different for these models.
         # TODO: test filtering and pagination.
         for i in API_MODELS:
-            url = reverse('api_v3:{}_api_resource'.format(i))
+            url = reverse('api:{}_api_resource'.format(i))
             self.client.login(username='normaluser', password='pass')
             response = self.client.get(url)
             res_list = response.json()
             if res_list:  # Object(s) exist.
                 obj_id = res_list['objects'][0]['id']
-            url = reverse('api_v3:{}_api_resource'.format(i), kwargs={'pk': obj_id})
+            url = reverse('api:{}_api_resource'.format(i), kwargs={'pk': obj_id})
             response = self.client.get(url)
             self.assertEqual(response.status_code, 200)
             self.client.logout()
