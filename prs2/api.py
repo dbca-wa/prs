@@ -14,7 +14,7 @@ from rest_framework.routers import DefaultRouter
 from referral import api_v2
 from referral.api_v3 import (
     ReferralTypeAPIResource, RegionAPIResource, OrganisationAPIResource, TaskStateAPIResource,
-    TaskTypeAPIResource, UserAPIResource, TagAPIResource, ReferralAPIResource, TaskAPIResource,
+    TaskTypeAPIResource, UserAPIResource, TagAPIResource, ReferralAPIResource, TaskAPIResource, ClearanceAPIResource,
 )
 
 
@@ -38,6 +38,8 @@ v3_api = [
     path('referral/<int:pk>/', cache_page(settings.API_RESPONSE_CACHE_SECONDS)(ReferralAPIResource.as_view()), name='referral_api_resource'),
     path('task/', cache_page(settings.API_RESPONSE_CACHE_SECONDS)(TaskAPIResource.as_view()), name='task_api_resource'),
     path('task/<int:pk>/', cache_page(settings.API_RESPONSE_CACHE_SECONDS)(TaskAPIResource.as_view()), name='task_api_resource'),
+    path('clearance/', cache_page(settings.API_RESPONSE_CACHE_SECONDS)(ClearanceAPIResource.as_view()), name='clearance_api_resource'),
+    path('clearance/<int:pk>/', cache_page(settings.API_RESPONSE_CACHE_SECONDS)(ClearanceAPIResource.as_view()), name='clearance_api_resource'),
 ]
 
 # v2 API

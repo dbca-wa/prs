@@ -47,6 +47,17 @@ class DownloadView(TemplateView):
                 query_params['regions__id__in'] = [region]
             elif model._meta.model_name == 'task':
                 query_params['referral__regions__id__in'] = [region]
+        # Special case: for clearances, follow dates through to linked task.
+        if model._meta.model_name == 'clearance':
+            state = query_params.pop('state__id', None)
+            if state:
+                query_params['task__state__pk'] = state
+            start = query_params.pop('start_date__gte', None)
+            if start:
+                query_params['task__start_date__gte'] = start
+            end = query_params.pop('start_date__lte', None)
+            if end:
+                query_params['task__start_date__lte'] = end
         # Special case: remove tag PKs from the query params.
         tag = query_params.pop('tag__id', None)
         if tag:

@@ -375,23 +375,23 @@
         var data = {};
         var region = $("select#filter-region-clearance").val();
         if (region) {
-            $.extend(data, {"task__referral__regions__id__in": region});
+            $.extend(data, {"region__id": region});
         }
         var organisation = $("select#filter-organisation-clearance").val();
         if (organisation) {
-            $.extend(data, {"task__referral__referring_org__id": organisation});
+            $.extend(data, {"referring_org__id": organisation});
         }
         var taskState = $("select#filter-taskState-clearance").val();
         if (taskState) {
-            $.extend(data, {"task__state__id": taskState});
+            $.extend(data, {"state__id": taskState});
         }
         var fromDate = $("input#filter-fromDate-clearance").val();
         if (fromDate) {
-            $.extend(data, {"task__start_date__gte": moment(fromDate, "D/M/YYYY").format("YYYY-MM-DD")});
+            $.extend(data, {"start_date__gte": moment(fromDate, "D/M/YYYY").format("YYYY-MM-DD")});
         }
         var toDate = $("input#filter-toDate-clearance").val();
         if (toDate) {
-            $.extend(data, {"task__start_date__lte": moment(toDate, "D/M/YYYY").format("YYYY-MM-DD")});
+            $.extend(data, {"start_date__lte": moment(toDate, "D/M/YYYY").format("YYYY-MM-DD")});
         }
         return data;
     }
@@ -515,40 +515,40 @@
             data.offset = settings._iDisplayStart;
             var params = $.extend({}, data, queryClearanceFilters());
             $.get(
-                "{% url 'referral_api:clearance-list' %}",
+                "{% url 'api_v3:clearance_api_resource' %}",
                 params,  // Query parameters for the API call.
                 function(resp) {
                     spinner.stop();
                     // Map the API response to the DataTables format and pass it to DataTables callback.
                     callback({
+                        data: JSON.parse(JSON.stringify(resp.objects)),
                         recordsTotal: JSON.parse(JSON.stringify(resp.count)),
-                        recordsFiltered: JSON.parse(JSON.stringify(resp.count)),
-                        data: JSON.parse(JSON.stringify(resp.results))
+                        recordsFiltered: JSON.parse(JSON.stringify(resp.count))
                     });
                 }
             );
         },
         columns: [
             {
-                "data": "task.referral.id",
+                "data": "referral_id",
                 "render": function(data, type, row, meta) {
                     return "<a href='" + refListUrl + data + "/'>" + data +"</a>";
                 }
             },
-            {"data": "task.referral.regions_str"},
-            {"data": "condition.identifier"},
+            {"data": "regions"},
+            {"data": "identifier"},
             {
-                "data": "condition.condition",
+                "data": "condition",
                 "render": function(data, type, row, meta) {
                     var c = "<div>{}</div>";
                     return c.replace("{}", data);
                 }
             },
-            {"data": "condition.category"},
-            {"data": "task.description"},
+            {"data": "category"},
+            {"data": "description"},
             {"data": "deposited_plan"},
-            {"data": "task.assigned_user"},
-            {"data": "task.state"}
+            {"data": "assigned_user"},
+            {"data": "state"}
         ],
     }
 

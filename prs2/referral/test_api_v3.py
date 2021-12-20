@@ -6,7 +6,7 @@ API_MODELS_LOOKUP = [
     'referraltype', 'region', 'organisation', 'taskstate', 'tasktype', 'user', 'tag',
 ]
 API_MODELS = [
-    'referral', 'task',
+    'referral', 'task', 'clearance',
 ]
 
 class PrsAPITest(PrsTestCase):
