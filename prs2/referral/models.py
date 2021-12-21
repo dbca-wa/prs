@@ -1659,6 +1659,9 @@ class Clearance(models.Model):
             self.pk, self.condition.pk, self.task.pk
         )
 
+    class Meta:
+        ordering = ["-pk"]
+
     def get_absolute_url(self):
         return reverse(
             "prs_object_detail", kwargs={"model": "clearance", "pk": self.pk}
@@ -1681,8 +1684,8 @@ class Clearance(models.Model):
         d["identifier"] = self.condition.identifier or ""
         d["condition"] = smart_truncate(self.condition.condition, length=400)
         # Condition "category" is actually an optional single tag.
-        if self.condition.tags.all():
-            d["category"] = self.condition.tags.all()[0].name
+        if self.condition.tags.exists():
+            d["category"] = self.condition.tags.first().name
         else:
             d["category"] = ""
         if self.task.description:

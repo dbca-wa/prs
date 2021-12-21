@@ -47,9 +47,7 @@ INSTALLED_APPS = (
     'reversion',
     'crispy_forms',
     'bootstrap_pagination',
-    'tastypie',
     'webtemplate_dbca',
-    'rest_framework',
     'django_celery_results',
     'referral',
     'reports',
@@ -103,7 +101,7 @@ LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 APPLICATION_TITLE = 'Planning Referral System'
 APPLICATION_ACRONYM = 'PRS'
-APPLICATION_VERSION_NO = '2.5.20'
+APPLICATION_VERSION_NO = '2.5.21'
 APPLICATION_ALERTS_EMAIL = 'PRS-Alerts@dbca.wa.gov.au'
 SITE_URL = env('SITE_URL', 'localhost')
 PRS_USER_GROUP = env('PRS_USER_GROUP', 'PRS user')
@@ -217,9 +215,6 @@ LOGGING = {
         },
     }
 }
-
-# Tastypie settings
-TASTYPIE_DEFAULT_FORMATS = ['json']
 
 # crispy_forms settings
 CRISPY_TEMPLATE_PACK = 'bootstrap4'

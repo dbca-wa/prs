@@ -26,7 +26,7 @@ class ReportView(TemplateView):
 
 
 class DownloadView(TemplateView):
-    """A basic view to return a spreadsheet of referral objects.
+    """A basic view to return a spreadsheet of PRS objects.
     """
     def dispatch(self, request, *args, **kwargs):
         # kwargs must include a Model class, or a string.
@@ -40,11 +40,31 @@ class DownloadView(TemplateView):
         query_params = dict(request.GET.items())
         # Get the required model type from the query params.
         model = is_model_or_string(query_params.pop('model'))
+        # Special case: region -> regions.
+        region = query_params.pop('region__id', None)
+        if region:
+            if model._meta.model_name == 'referral':
+                query_params['regions__id__in'] = [region]
+            elif model._meta.model_name == 'task':
+                query_params['referral__regions__id__in'] = [region]
+        # Special case: for clearances, follow dates through to linked task.
+        if model._meta.model_name == 'clearance':
+            state = query_params.pop('state__id', None)
+            if state:
+                query_params['task__state__pk'] = state
+            referring_org = query_params.pop('referring_org__id', None)
+            if referring_org:
+                query_params['task__referral__referring_org__pk'] = referring_org
+            start = query_params.pop('start_date__gte', None)
+            if start:
+                query_params['task__start_date__gte'] = start
+            end = query_params.pop('start_date__lte', None)
+            if end:
+                query_params['task__start_date__lte'] = end
         # Special case: remove tag PKs from the query params.
-        tag_pks = query_params.pop('tags__id__in', None)
-        if tag_pks:
-            tag_pks = [int(i) for i in tag_pks.split(',')]
-            tags = Tag.objects.filter(pk__in=tag_pks)
+        tag = query_params.pop('tag__id', None)
+        if tag:
+            tags = Tag.objects.filter(pk=tag)
         else:
             tags = None
 
