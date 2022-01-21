@@ -33,7 +33,7 @@ geojson = "2.5.0"
 typesense = "0.13.1"
 "pdfminer.six" = "20211012"
 docx2txt = "0.8"
-celery = "5.2.1"
+celery = "5.2.2"
 django-celery-results = "2.2.0"
 pygeopkg = "0.1.2"
 whitenoise = {version = "5.3.0", extras = ["brotli"]}
