@@ -67,6 +67,21 @@ class EmailedReferral(models.Model):
             self.save()
             actions.append('{} {}'.format(datetime.now().isoformat(), s))
             return actions
+
+        # We don't want to harvest "overdue referral" reminders.
+        overdue_subject_prefixes = (
+            'wapc eoverdue referral',
+            're: wapc eoverdue referral',
+        )
+        if self.subject.lower().startswith(overdue_subject_prefixes):
+            s = 'Skipping harvested referral {} (overdue notice)'.format(self)
+            LOGGER.info(s)
+            self.log = s
+            self.processed = True
+            self.save()
+            actions.append('{} {}'.format(datetime.now().isoformat(), s))
+            return actions
+
         # Must be an attachment named 'Application.xml' present to import.
         if not attachments.filter(name__istartswith='application.xml'):
             s = 'Skipping harvested referral {} (no XML attachment)'.format(self.pk)
