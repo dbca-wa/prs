@@ -12,6 +12,7 @@ from django.db.models import Q
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.safestring import mark_safe
+from django.utils.html import escape
 from extract_msg import Message
 from geojson import Feature, Polygon, FeatureCollection, dumps
 import json
@@ -98,7 +99,7 @@ class ReferralLookup(ActiveModel, Audit):
         d = copy(self.__dict__)
         d["url"] = self.get_absolute_url()
         if self.description:
-            d["description"] = unidecode(self.description)
+            d["description"] = escape(unidecode(self.description))
         else:
             d["description"] = ""
         d["modified"] = self.modified.strftime("%d %b %Y")
@@ -226,7 +227,7 @@ class Organisation(ReferralLookup):
             <tr><th>Last modified</th><td>{modified}</td></tr>
             <tr><th>Last changed by</th><td>{modifier}</td></tr>"""
         d = copy(self.__dict__)
-        d["type"] = self.type
+        d["type"] = self.type.name
         d["created"] = self.created.strftime("%d-%b-%Y")
         d["creator"] = self.creator.get_full_name()
         d["modified"] = self.modified.strftime("%d-%b-%Y")
@@ -520,7 +521,7 @@ class Referral(ReferralBaseModel):
             <td>{type}</td>"""
         d = copy(self.__dict__)
         d["url"] = self.get_absolute_url()
-        d["type"] = self.type
+        d["type"] = self.type.name
         d["regions"] = self.regions_str
         d["referring_org"] = self.referring_org
         if self.referral_date:
@@ -530,13 +531,14 @@ class Referral(ReferralBaseModel):
             d["referral_date"] = ""
             d["referral_date_ts"] = ""
         if self.address:
-            d["address"] = unidecode(self.address)
+            d["address"] = escape(unidecode(self.address))
         else:
             d["address"] = ""
         if self.description:
-            d["description"] = unidecode(self.description)
+            d["description"] = escape(unidecode(self.description))
         else:
             d["description"] = ""
+        d["reference"] = escape(self.reference)
         return mark_safe(template.format(**d))
 
     def as_tbody(self):
@@ -555,19 +557,20 @@ class Referral(ReferralBaseModel):
             <tr><th>DoP Trigger(s)</th><td>{dop_triggers}</td></tr>
             <tr><th>File no.</th><td>{file_no}</td></tr>"""
         d = copy(self.__dict__)
+        d["reference"] = escape(self.reference)
         d["url"] = self.get_absolute_url()
-        d["type"] = self.type
+        d["type"] = self.type.name
         d["regions"] = self.regions_str
         d["dop_triggers"] = self.dop_triggers_str
         d["referring_org"] = self.referring_org
         d["file_no"] = self.file_no or ""
         if self.description:
-            d["description"] = unidecode(self.description)
+            d["description"] = escape(unidecode(self.description))
         else:
             d["description"] = ""
         d["referral_date"] = self.referral_date.strftime("%d-%b-%Y")
         if self.address:
-            d["address"] = unidecode(self.address)
+            d["address"] = escape(unidecode(self.address))
         else:
             d["address"] = ""
         d["lga"] = self.lga.name if self.lga else ""
@@ -779,12 +782,12 @@ class Task(ReferralBaseModel):
             <td>{state}</td>"""
         d = copy(self.__dict__)
         d["url"] = self.get_absolute_url()
-        d["type"] = self.type
+        d["type"] = self.type.name
         if self.description:
-            d["description"] = smart_truncate(self.description, length=400)
+            d["description"] = escape(smart_truncate(self.description, length=400))
         else:
             d["description"] = ""
-        d["address"] = self.referral.address or ""
+        d["address"] = escape(self.referral.address) if self.referral.address else ""
         d["referral_url"] = self.referral.get_absolute_url()
         d["referral"] = self.referral
         d["assigned_user"] = self.assigned_user.get_full_name()
@@ -911,17 +914,17 @@ class Task(ReferralBaseModel):
         else:  # Render an empty table cell.
             template += '<td class="action-icons-cell"></td>'
         d = copy(self.__dict__)
-        d["type"] = self.type
+        d["type"] = self.type.name
         if self.description:
-            d["description"] = unidecode(self.description)
+            d["description"] = escape(unidecode(self.description))
         else:
             d["description"] = ""
         d["referral_url"] = self.referral.get_absolute_url()
         d["referral_pk"] = self.referral.pk
         d["referring_org"] = self.referral.referring_org
-        d["reference"] = self.referral.reference
+        d["reference"] = escape(self.referral.reference)
         if self.referral.address:
-            d["address"] = unidecode(self.referral.address)
+            d["address"] = escape(unidecode(self.referral.address))
         else:
             d["address"] = ""
         if self.due_date:
@@ -960,7 +963,7 @@ class Task(ReferralBaseModel):
             <td>{reference}</td>
             <td>{due_date}</td>"""
         d = copy(self.__dict__)
-        d["type"] = self.type
+        d["type"] = self.type.name
         if self.description:
             d["description"] = unidecode(self.description)
         else:
@@ -996,14 +999,14 @@ class Task(ReferralBaseModel):
             <tr><th>Restart date</th><td>{restart_date}</td></tr>
             <tr><th>Stop time (days)</th><td>{stop_time}</td></tr>"""
         d = copy(self.__dict__)
-        d["type"] = self.type
+        d["type"] = self.type.name
         d["referral_url"] = reverse(
             "referral_detail", kwargs={"pk": self.referral.pk, "related_model": "tasks"}
         )
         d["referral_id"] = self.referral.pk
-        d["reference"] = self.referral.reference
+        d["reference"] = escape(self.referral.reference)
         d["assigned_user"] = self.assigned_user.get_full_name()
-        d["state"] = self.state
+        d["state"] = self.state.name
         if self.start_date:
             d["start_date"] = self.start_date.strftime("%d-%b-%Y")
         else:
@@ -1025,7 +1028,7 @@ class Task(ReferralBaseModel):
         if d["stop_time"] == 0:
             d["stop_time"] = ""
         if self.description:
-            d["description"] = unidecode(self.description)
+            d["description"] = escape(unidecode(self.description))
         else:
             d["description"] = ""
         return mark_safe(template.format(**d).strip())
@@ -1174,6 +1177,7 @@ class Record(ReferralBaseModel):
             <td>{filesize}</td>"""
         d = copy(self.__dict__)
         d["url"] = self.get_absolute_url()
+        d["name"] = escape(self.name)
         if self.order_date:
             d["order_date"] = self.order_date.strftime("%d %b %Y")
             d["order_date_ts"] = self.order_date.isoformat()
@@ -1231,18 +1235,23 @@ class Record(ReferralBaseModel):
             <tr><th>File size</th><td>{filesize}</td></tr>
             <tr><th>Date</th><td>{order_date}</td</tr>"""
         d = copy(self.__dict__)
+        d["name"] = escape(self.name)
         d["referral_url"] = reverse(
             "referral_detail",
             kwargs={"pk": self.referral.pk, "related_model": "records"},
         )
         d["referral"] = self.referral
-        d["reference"] = self.referral.reference
+        d["reference"] = escape(self.referral.reference)
         if self.infobase_id:
             d["infobase_url"] = reverse("infobase_shortcut", kwargs={"pk": self.pk})
             d["infobase_id"] = self.infobase_id
         else:
             d["infobase_url"] = ""
             d["infobase_id"] = ""
+        if self.description:
+            d["description"] = escape(self.description)
+        else:
+            d["description"] = ""
         if self.uploaded_file:
             d["download_url"] = self.uploaded_file.url
             d["filetype"] = self.extension
@@ -1521,7 +1530,7 @@ class Condition(ReferralBaseModel):
             <td class="referral-id-cell"><a href="{referral_url}">{referral}</a></td>"""
         d = copy(self.__dict__)
         d["url"] = self.get_absolute_url()
-        d["identifier"] = self.identifier or ""
+        d["identifier"] = escape(self.identifier) if self.identifier else ""
         if self.proposed_condition:
             d["proposed_condition"] = smart_truncate(
                 self.proposed_condition, length=300
@@ -1587,12 +1596,12 @@ class Condition(ReferralBaseModel):
                 kwargs={"pk": self.referral.pk, "related_model": "conditions"},
             )
             d["referral"] = self.referral
-            d["reference"] = self.referral.reference
+            d["reference"] = escape(self.referral.reference)
         else:
             d["referral_url"] = ""
             d["referral"] = ""
             d["reference"] = ""
-        d["identifier"] = self.identifier or ""
+        d["identifier"] = escape(self.identifier) if self.identifier else ""
         if self.model_condition:
             d["model_condition"] = self.model_condition.condition
         else:
@@ -1681,18 +1690,18 @@ class Clearance(models.Model):
             <td class="referral-id-cell"><a href="{referral_url}">{referral}</a></td>"""
         d = copy(self.__dict__)
         d["url"] = self.get_absolute_url()
-        d["identifier"] = self.condition.identifier or ""
-        d["condition"] = smart_truncate(self.condition.condition, length=400)
+        d["identifier"] = escape(self.condition.identifier) if self.condition.identifier else ""
+        d["condition"] = escape(smart_truncate(self.condition.condition, length=400))
         # Condition "category" is actually an optional single tag.
         if self.condition.tags.exists():
             d["category"] = self.condition.tags.first().name
         else:
             d["category"] = ""
         if self.task.description:
-            d["task"] = smart_truncate(unidecode(self.task.description), length=400)
+            d["task"] = escape(smart_truncate(unidecode(self.task.description), length=400))
         else:
             d["task"] = self.task.type.name
-        d["deposited_plan"] = self.deposited_plan or ""
+        d["deposited_plan"] = escape(self.deposited_plan) if self.deposited_plan else ""
         d["referral"] = self.task.referral
         d["referral_url"] = self.task.referral.get_absolute_url()
         return mark_safe(template.format(**d))
@@ -1796,7 +1805,7 @@ class Location(ReferralBaseModel):
             address += " " + self.locality
         if self.postcode:
             address += " " + self.postcode
-        return address
+        return escape(address)
 
     def save(self, *args, **kwargs):
         """
@@ -1856,14 +1865,7 @@ class Location(ReferralBaseModel):
         """
         template = """<tr><th>Referral</th><td><a href="{referral_url}">{referral}</a></td></tr>
             <tr><th>Referrer's reference</th><td>{reference}</td></tr>
-            <tr><th>Short address</th><td>{address}</td></tr>
-            <tr><th>Lot no</th><td>{lot_no}</td></tr>
-            <tr><th>Address no</th><td>{address_no}</td></tr>
-            <tr><th>Address suffix</th><td>{address_suffix}</td></tr>
-            <tr><th>Road name</th><td>{road_name}</td></tr>
-            <tr><th>Road suffix</th><td>{road_suffix}</td></tr>
-            <tr><th>Locality</th><td>{locality}</td></tr>
-            <tr><th>Postcode</th><td>{postcode}</td></tr>"""
+            <tr><th>Address</th><td>{address}</td></tr>"""
         d = copy(self.__dict__)
         d["url"] = self.get_absolute_url()
         d["referral_url"] = reverse(
@@ -1871,15 +1873,8 @@ class Location(ReferralBaseModel):
             kwargs={"pk": self.referral.pk, "related_model": "locations"},
         )
         d["referral"] = self.referral
-        d["reference"] = self.referral.reference
+        d["reference"] = escape(self.referral.reference)
         d["address"] = self.nice_address or "none"
-        d["lot_no"] = self.lot_no or ""
-        d["address_no"] = self.address_no or ""
-        d["address_suffix"] = self.address_suffix or ""
-        d["road_name"] = self.road_name or ""
-        d["road_suffix"] = self.road_suffix or ""
-        d["locality"] = self.locality or ""
-        d["postcode"] = self.postcode or ""
         return mark_safe(template.format(**d).strip())
 
     def get_regions_intersected(self):
