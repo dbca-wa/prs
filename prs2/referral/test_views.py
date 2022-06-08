@@ -5,7 +5,6 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 from django.test import Client
 from django.utils.http import urlencode
-from django_webtest import WebTest
 import json
 from mixer.backend.django import mixer
 from taggit.models import Tag
@@ -242,7 +241,7 @@ class ReferralDetailTest(PrsViewsTestCase):
         self.assertContains(response, 'Remove bookmark')
 
 
-class ReferralCreateTest(PrsViewsTestCase, WebTest):
+class ReferralCreateTest(PrsViewsTestCase):
     """Test the customised referral create view.
     """
 
@@ -256,57 +255,63 @@ class ReferralCreateTest(PrsViewsTestCase, WebTest):
     def test_get(self):
         """Test that the referral create view renders
         """
-        r = self.app.get(self.url, user='normaluser')
-        self.assertEqual(r.status_code, 200)
-        self.assertTemplateUsed(r, 'referral/referral_create.html')
+        resp = self.client.get(self.url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertTemplateUsed(resp, 'referral/referral_create.html')
 
     def test_cancel(self):
         """Test the cancelling the referral create view redirects to home
         """
-        r = self.app.get(self.url, user='normaluser')
-        form = r.form
-        r = form.submit('cancel')
-        self.assertEqual(r.status_code, 302)
-        self.assertRedirects(r, reverse('site_home'))
+        resp = self.client.post(self.url, {'cancel': 'Cancel'})
+        self.assertEqual(resp.status_code, 302)
+        self.assertRedirects(resp, reverse('site_home'))
 
     def test_post(self):
         """Test referral creation form submit
         """
-        r = self.app.get(self.url, user='normaluser')
-        form = r.form
-        form['reference'] = 'Test reference 1'
-        form['description'] = 'Test description 1'
-        form['referral_date'] = '21/12/2015'
-        form['type'] = self.ref_type.pk
-        form['assigned_user'] = self.n_user.pk
-        form['regions'] = [Region.objects.first().pk]
-        form['dop_triggers'] = [DopTrigger.objects.first().pk]
-        r = form.submit('save').follow()
-        self.assertEqual(r.status_code, 200)
-        ref = Referral.objects.get(reference='Test reference 1')
-        self.assertTrue(ref in Referral.objects.all())
+        resp = self.client.post(
+            self.url,
+            {
+                'referring_org': self.org.pk,
+                'reference': 'Test reference 1',
+                'description': 'Test description 1',
+                'referral_date': '21/12/2022',
+                'type': self.ref_type.pk,
+                'task_type': self.task_type.pk,
+                'assigned_user': self.n_user.pk,
+                'regions': [Region.objects.first().pk],
+                'dop_triggers': [DopTrigger.objects.first().pk],
+                'save': 'Save',
+            }
+        )
+        self.assertEqual(resp.status_code, 302)
+        self.assertTrue(Referral.objects.filter(reference='Test reference 1').exists())
 
     def test_post_email(self):
         """Test referral creation form submit with email checked
         """
-        r = self.app.get(self.url, user='normaluser')
-        form = r.form
-        form['reference'] = 'Test reference 2'
-        form['description'] = 'Test description 2'
-        form['referral_date'] = '21/12/2015'
-        form['type'] = self.ref_type.pk
-        form['assigned_user'] = self.n_user.pk
-        form['email_user'] = True
-        form['due_date'] = '21/1/2016'
-        form['regions'] = [Region.objects.first().pk]
-        form['dop_triggers'] = [DopTrigger.objects.first().pk]
-        r = form.submit().follow()
-        self.assertEqual(r.status_code, 200)
-        ref = Referral.objects.get(reference='Test reference 2')
-        self.assertTrue(ref in Referral.objects.all())
+        resp = self.client.post(
+            self.url,
+            {
+                'referring_org': self.org.pk,
+                'reference': 'Test reference 2',
+                'description': 'Test description 2',
+                'referral_date': '21/12/2022',
+                'due_date': '30/12/2022',
+                'type': self.ref_type.pk,
+                'task_type': self.task_type.pk,
+                'assigned_user': self.n_user.pk,
+                'regions': [Region.objects.first().pk],
+                'dop_triggers': [DopTrigger.objects.first().pk],
+                'email_user': True,
+                'save': 'Save',
+            }
+        )
+        self.assertEqual(resp.status_code, 302)
+        self.assertTrue(Referral.objects.filter(reference='Test reference 2').exists())
 
 
-class ReferralUpdateTest(PrsViewsTestCase, WebTest):
+class ReferralUpdateTest(PrsViewsTestCase):
     """Test the generic object update view.
     """
     def setUp(self):
@@ -317,26 +322,32 @@ class ReferralUpdateTest(PrsViewsTestCase, WebTest):
     def test_get(self):
         """Test the referral update view
         """
-        r = self.client.get(self.url)
-        self.assertEqual(r.status_code, 200, 'Update view failed: {0}'.format(self.url))
-        self.assertTemplateUsed(r, 'referral/change_form.html')
+        resp = self.client.get(self.url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertTemplateUsed(resp, 'referral/change_form.html')
 
     def test_cancel(self):
         """Test that cancelling the referral update view redirects correctly
         """
-        r = self.client.post(self.url, {'cancel': 'Cancel'})
-        self.assertRedirects(r, self.ref.get_absolute_url())
+        resp = self.client.post(self.url, {'cancel': 'Cancel'})
+        self.assertRedirects(resp, self.ref.get_absolute_url())
 
     def test_post(self):
         """Test that updating a referral actually changes it
         """
-        r = self.app.get(self.url, user='normaluser')
-        form = r.form
-        form['reference'] = 'New reference value'
-        r = form.submit()
-        self.assertEqual(r.status_code, 200)
-        ref = Referral.objects.get(pk=self.ref.pk)  # Re-read from db
-        self.assertNotEqual(ref.reference, 'New reference value')
+        self.client.post(
+            self.url,
+            {
+                'referring_org': self.ref.referring_org.pk,
+                'reference': 'New reference value',
+                'referral_date': '21/12/2022',
+                'type': self.ref.type.pk,
+                'regions': [Region.objects.first().pk],
+                'save': 'Save',
+            },
+            follow=True
+        )
+        self.assertTrue(Referral.objects.filter(reference='New reference value').exists())
 
 
 class ReferralCreateChildTest(PrsViewsTestCase):
@@ -757,69 +768,6 @@ class TagListTest(PrsViewsTestCase):
         url = reverse('tag_list')
         response = self.client.post(url)
         self.assertEquals(response.status_code, 405)
-
-
-class TagReplaceTest(PrsViewsTestCase, WebTest):
-    """Integrated WebTest to test form submission easily.
-    """
-
-    def setUp(self):
-        super(TagReplaceTest, self).setUp()
-        self.url = reverse('tag_replace')
-        # Create some new Tags.
-        self.old_tag = mixer.blend(Tag)
-        self.new_tag = mixer.blend(Tag)
-        # Start each test logged out.
-        self.client.logout()
-
-    def test_get_normaluser(self):
-        """Test that non-power-user can't access the view
-        """
-        # Log in as normal PRS user
-        self.client.login(username='normaluser', password='pass')
-        response = self.client.get(self.url)
-        self.assertEquals(response.status_code, 403)
-        # Log in as read-only user
-        self.client.logout()
-        self.client.login(username='readonlyuser', password='pass')
-        response = self.client.get(self.url)
-        self.assertEquals(response.status_code, 403)
-
-    def test_get_poweruser(self):
-        """Test that a power user or superuser can access the view
-        """
-        # Log in as PRS power user
-        self.client.login(username='poweruser', password='pass')
-        response = self.client.get(self.url)
-        self.assertEquals(response.status_code, 200)
-        # Log in as admin user
-        self.client.logout()
-        self.client.login(username='admin', password='pass')
-        response = self.client.get(self.url)
-        self.assertEquals(response.status_code, 200)
-
-    def test_cancel(self):
-        """Test the cancel redirects to tag list view
-        """
-        self.client.login(username='poweruser', password='pass')
-        response = self.client.post(self.url, {'cancel': 'Cancel'})
-        self.assertRedirects(response, reverse('tag_list'))
-
-    def test_post(self):
-        """Test that replacing a tag works correctly
-        """
-        ref = Referral.objects.first()
-        ref.tags.add(self.old_tag)
-        self.assertTrue(self.old_tag in ref.tags.all())
-        self.assertFalse(self.new_tag in ref.tags.all())
-        r = self.app.get(self.url, user='poweruser')
-        form = r.form
-        form['old_tag'] = self.old_tag.pk
-        form['replace_with'] = self.new_tag.pk
-        form.submit().follow()
-        ref = Referral.objects.get(pk=ref.pk)  # Re-read from db
-        self.assertTrue(self.new_tag in ref.tags.all())
-        self.assertFalse(self.old_tag in ref.tags.all())
 
 
 class ReferralTaggedTest(PrsViewsTestCase):
