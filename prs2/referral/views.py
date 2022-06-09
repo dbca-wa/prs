@@ -1,5 +1,5 @@
 from copy import copy
-from datetime import datetime, timedelta
+from datetime import datetime, date, timedelta
 from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -467,7 +467,7 @@ class ReferralCreate(PrsObjectCreate):
         if d["due_date"]:
             new_task.due_date = d["due_date"]
         else:
-            new_task.due_date = datetime.today() + timedelta(new_task.type.target_days)
+            new_task.due_date = date.today() + timedelta(days=new_task.type.target_days)
         new_task.creator, new_task.modifier = req.user, req.user
         new_task.save()
         # If the user checked the "Email user" box, send an email notification.
@@ -904,8 +904,7 @@ class ReferralCreateChild(PrsObjectCreate):
             if form.cleaned_data["due_date"]:
                 clearance_task.due_date = form.cleaned_data["due_date"]
             else:
-                clearance_task.due_date = datetime.date(datetime.today())
-                clearance_task.due_date += timedelta(clearance_task.type.target_days)
+                clearance_task.due_date = date.today() + timedelta(days=clearance_task.type.target_days)
             clearance_task.creator, clearance_task.modifier = request.user, request.user
             clearance_task.save()
             condition.add_clearance(
@@ -999,8 +998,8 @@ class ReferralCreateChild(PrsObjectCreate):
             "Information only",
             "Provide pre-referral/preliminary advice",
         ]:
-            obj.due_date = datetime.date(datetime.today())
-            obj.complete_date = datetime.date(datetime.today())
+            obj.due_date = date.today()
+            obj.complete_date = date.today()
             obj.state = TaskState.objects.get(name="Complete")
 
         obj.save()
@@ -1848,8 +1847,7 @@ class ConditionClearanceCreate(PrsObjectCreate):
         if form.cleaned_data["due_date"]:
             clearance_task.due_date = form.cleaned_data["due_date"]
         else:
-            clearance_task.due_date = datetime.date(datetime.today())
-            clearance_task.due_date += timedelta(clearance_task.type.target_days)
+            clearance_task.due_date = date.today() + timedelta(days=clearance_task.type.target_days)
         clearance_task.creator, clearance_task.modifier = (
             self.request.user,
             self.request.user,
