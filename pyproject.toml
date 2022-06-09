@@ -36,6 +36,7 @@ celery = "5.2.2"
 django-celery-results = "2.2.0"
 pygeopkg = "0.1.2"
 whitenoise = {version = "5.3.0", extras = ["brotli"]}
+django-crum = "0.7.9"
 
 [tool.poetry.dev-dependencies]
 ipython = "^7.31.1"

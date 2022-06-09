@@ -1,13 +1,13 @@
+from crum import get_current_user
 from django.conf import settings
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
+from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 from django.contrib.gis.db import models
 from django.urls import reverse
 from django.db.models import FileField
 from django.utils import timezone
 import magic
-from reversion.revisions import create_revision, set_comment
-import threading
+import reversion
 
 
 class ActiveModelManager(models.Manager):
@@ -59,57 +59,34 @@ class Audit(models.Model):
     changed_data = property(_get_changed_data)
 
     def save(self, *args, **kwargs):
+        """This falls back on using an admin user if a request user object is absent (i.e. the
+        object was saved outside the web application).
         """
-        This falls back on using an admin user if a thread request object wasn't found
-        """
-        User = get_user_model()
-        _locals = threading.local()
+        user = get_current_user()
+        print()
+        if not user or (user and not user.pk):
+            User = get_user_model()
+            user = User.objects.get(id=1)
 
-        if ((not hasattr(_locals, "request") or _locals.request.user.is_anonymous())):
-            if hasattr(_locals, "user"):
-                user = _locals.user
-            else:
-                try:
-                    user = User.objects.get(pk=_locals.request.user.pk)
-                except Exception:
-                    user = User.objects.get(id=1)
-                _locals.user = user
-        else:
-            try:
-                user = User.objects.get(pk=_locals.request.user.pk)
-            except Exception:
-                user = User.objects.get(id=1)
-
-        # If saving a new model, set the creator.
+        self.modifier = user
         if not self.pk:
-            try:
-                self.creator
-            except ObjectDoesNotExist:
-                self.creator = user
-
-            try:
-                self.modifier
-            except ObjectDoesNotExist:
-                self.modifier = user
-
+            self.creator = user
             created = True
         else:
             created = False
-            self.modifier = user
 
-        super(Audit, self).save(*args, **kwargs)
+        with reversion.create_revision():
+            super(Audit, self).save(*args, **kwargs)
+            reversion.set_user(user)
 
-        if created:
-            with create_revision():
-                set_comment('Initial version.')
-        else:
-            if self.has_changed():
-                comment = 'Changed ' + ', '.join(self.changed_data) + '.'
-                with create_revision():
-                    set_comment(comment)
+            if created:
+                reversion.set_comment('Initial version.')
             else:
-                with create_revision():
-                    set_comment('Nothing changed.')
+                if self.has_changed():
+                    comment = 'Changed ' + ', '.join(self.changed_data)
+                    reversion.set_comment(comment)
+                else:
+                    reversion.set_comment('Nothing changed.')
 
     def __str__(self):
         return str(self.pk)
@@ -117,32 +94,6 @@ class Audit(models.Model):
     def get_absolute_url(self):
         opts = self._meta.app_label, self._meta.module_name
         return reverse("admin:%s_%s_change" % opts, args=(self.pk, ))
-
-    def clean_fields(self, exclude=None):
-        """
-        Override clean_fields to do what model validation should have done
-        in the first place -- call clean_FIELD during model validation.
-        """
-        errors = {}
-
-        for f in self._meta.fields:
-            if f.name in exclude:
-                continue
-            if hasattr(self, "clean_%s" % f.attname):
-                try:
-                    getattr(self, "clean_%s" % f.attname)()
-                except ValidationError as e:
-                    # TODO: Django 1.6 introduces new features to
-                    # ValidationError class, update it to use e.error_list
-                    errors[f.name] = e.messages
-
-        try:
-            super(Audit, self).clean_fields(exclude)
-        except ValidationError as e:
-            errors = e.update_error_dict(errors)
-
-        if errors:
-            raise ValidationError(errors)
 
 
 class ActiveModel(models.Model):

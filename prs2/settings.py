@@ -65,6 +65,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'reversion.middleware.RevisionMiddleware',
+    'crum.CurrentRequestUserMiddleware',
     'dbca_utils.middleware.SSOLoginMiddleware',
     'prs2.middleware.PrsMiddleware',
 ]
