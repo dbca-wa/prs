@@ -63,7 +63,6 @@ class Audit(models.Model):
         object was saved outside the web application).
         """
         user = get_current_user()
-        print()
         if not user or (user and not user.pk):
             User = get_user_model()
             user = User.objects.get(id=1)
