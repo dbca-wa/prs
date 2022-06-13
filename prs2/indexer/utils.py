@@ -122,7 +122,7 @@ def typesense_index_condition(con, client=None):
     condition_document = {
         'id': str(con.pk),
         'created': con.created.timestamp(),
-        'referral_id': con.referral.pk,
+        'referral_id': con.referral.pk if con.referral else '',
         'proposed_condition': con.proposed_condition if con.proposed_condition else '',
         'approved_condition': con.condition if con.condition else '',
     }
