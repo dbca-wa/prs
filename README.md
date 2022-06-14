@@ -62,6 +62,10 @@ Run console commands manually:
 
     poetry run python manage.py shell_plus
 
+Run a Celery worker alongside the local webserver to test indexing:
+
+    poetry run celery --app prs2 worker
+
 # Testing
 
 Run unit tests for the **referral** app as follows:

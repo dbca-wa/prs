@@ -343,18 +343,19 @@ class IndexSearchCombined(LoginRequiredMixin, TemplateView):
             search_result = client.collections["conditions"].documents.search(search_q)
             context["conditions_count"] = search_result["found"]
             for hit in search_result["hits"]:
-                ref = Referral.objects.get(pk=hit["document"]["referral_id"])
-                if ref.pk in referrals:
-                    referrals[ref.pk]["conditions"].append((hit["document"]["id"], hit["highlights"][0]))
-                else:
-                    referrals[ref.pk] = {
-                        "referral": ref,
-                        "highlights": [],
-                        "records": [],
-                        "notes": [],
-                        "tasks": [],
-                        "conditions": [(hit["document"]["id"], hit["highlights"][0])],
-                    }
+                if "referral_id" in hit["document"]:
+                    ref = Referral.objects.get(pk=hit["document"]["referral_id"])
+                    if ref.pk in referrals:
+                        referrals[ref.pk]["conditions"].append((hit["document"]["id"], hit["highlights"][0]))
+                    else:
+                        referrals[ref.pk] = {
+                            "referral": ref,
+                            "highlights": [],
+                            "records": [],
+                            "notes": [],
+                            "tasks": [],
+                            "conditions": [(hit["document"]["id"], hit["highlights"][0])],
+                        }
 
             # Combine the results into the template context (sort referrals by descending ID).
             for result in sorted(referrals.items(), reverse=True):
