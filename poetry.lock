@@ -1020,7 +1020,7 @@ python-versions = "*"
 
 [[package]]
 name = "webtemplate-dbca"
-version = "1.4.2"
+version = "1.5.1"
 description = "Base HTML templates for DBCA Django projects"
 category = "main"
 optional = false
@@ -1062,7 +1062,7 @@ python-versions = ">=3.4"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "e6cda6e66c16efd0c313d87a3c902b48817f598737283b9a26c075d65d6533b2"
+content-hash = "4689d9cfc284722a12fcc51921fd7e7f2ea5f7886afcbb8b75d0c00acca2a132"
 
 [metadata.files]
 amqp = [
@@ -1692,7 +1692,7 @@ wcwidth = [
     {file = "wcwidth-0.2.5.tar.gz", hash = "sha256:c4d647b99872929fdb7bdcaa4fbe7f01413ed3d98077df798530e5b04f116c83"},
 ]
 webtemplate-dbca = [
-    {file = "webtemplate-dbca-1.4.2.tar.gz", hash = "sha256:3e0ffd1dda85531259b32c63e0f671efe310eda7e0d4c032b38f7d20bd6f352a"},
+    {file = "webtemplate-dbca-1.5.1.tar.gz", hash = "sha256:e67a303090f71314ac4194c7ec38e5b3db8cf019940fa1e373cca4a2a0521fa7"},
 ]
 whitenoise = [
     {file = "whitenoise-6.2.0-py3-none-any.whl", hash = "sha256:8e9c600a5c18bd17655ef668ad55b5edf6c24ce9bdca5bf607649ca4b1e8e2c2"},
