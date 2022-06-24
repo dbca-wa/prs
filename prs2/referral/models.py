@@ -1512,10 +1512,11 @@ class Condition(ReferralBaseModel):
         super().save(force_insert, force_update)
 
         # Index the condition.
-        try:
-            index_object.delay(pk=self.pk, model='condition')
-        except Exception as ex:
-            LOGGER.exception(f"Error during indexing condition {self}")
+        if self.referral:
+            try:
+                index_object.delay(pk=self.pk, model='condition')
+            except Exception as ex:
+                LOGGER.exception(f"Error during indexing condition {self}")
 
     def as_row(self):
         """
