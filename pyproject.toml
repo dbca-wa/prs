@@ -33,7 +33,7 @@ typesense = "0.13.1"
 "pdfminer.six" = "20220524"
 docx2txt = "0.8"
 celery = "5.2.7"
-django-celery-results = "2.3.1"
+django-celery-results = "2.4.0"
 pygeopkg = "0.1.2"
 whitenoise = {version = "6.2.0", extras = ["brotli"]}
 django-crum = "0.7.9"
