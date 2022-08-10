@@ -42,7 +42,7 @@ const slipRoads = L.tileLayer(
   },
 );
 const prsLocations = L.tileLayer(
-  geoserver_wmts_url + "?service=WMTS&request=GetTile&version=1.0.0&tilematrixset=gda94&TileMatrix=gda94:{z}&TileCol={x}&TileRow={y}&format=image/png&transparent=true&layer=dbca:prs_locations",
+  geoserver_wmts_url + "?service=WMTS&request=GetTile&version=1.0.0&tilematrixset=gda94&TileMatrix=gda94:{z}&TileCol={x}&TileRow={y}&format=image/png&transparent=true&layer=dbca:prs_locations_view",
   {
     opacity: 0.75,
     tileSize: 1024,
