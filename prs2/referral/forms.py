@@ -25,6 +25,7 @@ class OrganisationChoiceField(forms.ModelChoiceField):
         kwargs['queryset'] = Organisation.objects.current().filter(public=True).order_by('list_name')
         kwargs['help_text'] = 'The referring organisation or individual.'
         kwargs['label'] = 'Referrer'
+        kwargs['required'] = True
         super().__init__(*args, **kwargs)
 
     def label_from_instance(self, obj):
@@ -154,7 +155,7 @@ class BaseForm(forms.ModelForm):
 
 
 class ReferralForm(BaseForm):
-    """Base form class, extended by the ReferralCreate and ReferralUpdate forms.
+    """Base form class, extended by the ReferralCreateForm and ReferralUpdateForm classes.
     """
     referring_org = OrganisationChoiceField()
     regions = RegionMultipleChoiceField(
@@ -186,13 +187,15 @@ class ReferralForm(BaseForm):
         be input.
         For other referral types, the DoP trigger field can be left blank.
         """
-        if not self.cleaned_data['dop_triggers'] and self.cleaned_data.get('type', None):
-            t = self.cleaned_data['type']
-            org = self.cleaned_data['referring_org']
-            if (t.slug == 'development-application' or t.slug == 'subdivision') and org.slug == 'wapc':
-                msg = '''WAPC subdivision/development application: you must choose
-                    applicable DoP triggers for this referral type.'''
-                self._errors['dop_triggers'] = self.error_class([msg])
+        cleaned_data = super().clean()
+        if not cleaned_data.get('dop_triggers', None) and cleaned_data.get('type', None):
+            t = cleaned_data['type']
+            if cleaned_data.get('referring_org', None):
+                org = cleaned_data['referring_org']
+                if (t.slug == 'development-application' or t.slug == 'subdivision') and org.slug == 'wapc':
+                    msg = '''WAPC subdivision/development application: you must choose
+                        applicable DoP triggers for this referral type.'''
+                    self._errors['dop_triggers'] = self.error_class([msg])
         return self.cleaned_data
 
 
@@ -410,10 +413,10 @@ class RecordCreateForm(RecordForm):
         One or both MUST be present.
         '''
         cleaned_data = super().clean()
-        uploaded_file = cleaned_data.get('uploaded_file')
-        infobase_id = cleaned_data.get('infobase_id')
-        msg = 'Please choose a file to upload AND/OR input an Infobase ID.'
+        uploaded_file = cleaned_data.get('uploaded_file', None)
+        infobase_id = cleaned_data.get('infobase_id', None)
         if not uploaded_file and not infobase_id:
+            msg = 'Please choose a file to upload AND/OR input an Infobase ID.'
             self._errors['uploaded_file'] = self.error_class([msg])
             self._errors['infobase_id'] = self.error_class([msg])
         return cleaned_data
@@ -675,25 +678,24 @@ class TaskForm(BaseForm):
         """Validate the complete_date field; cannot have a complete_date and a stop_date.
         Edge case only: users shouldn't be able to edit a stopped task.
         """
-        d = self.cleaned_data
-        if 'complete_date' in d and d['complete_date']:
+        cleaned_data = super().clean()
+        if cleaned_data.get('complete_date', None):
             # Can't have a complete date and a stop date.
-            if 'stop_date' in d and d['stop_date']:
+            if cleaned_data.get('stop_date', None):
                 msg = 'You cannot save the task with both a completed date AND a stop date!'
                 self._errors['complete_date'] = self.error_class([msg])
                 self._errors['stop_date'] = self.error_class([msg])
             # Start date can't be later than complete date.
-            if 'start_date' in d and d['start_date'] and d['start_date'] > d['complete_date']:
+            if cleaned_data.get('start_date', None) and cleaned_data['start_date'] > cleaned_data['complete_date']:
                 self._errors['start_date'] = self.error_class(['Cannot be after complete date!'])
                 self._errors['complete_date'] = self.error_class(['Cannot be before start date!'])
             # Can't record a complete date and leave the task state "In progress".
-            if 'state' in d and d['state'].is_ongoing:
+            if cleaned_data.get('state', None) and cleaned_data['state'].is_ongoing:
                 self._errors['complete_date'] = self.error_class(
                     ['Cannot record a complete date for an ongoing task!'])
                 self._errors['state'] = self.error_class(
                     ['Cannot record a complete date for an ongoing task!'])
-
-        return self.cleaned_data
+        return cleaned_data
 
     class Meta:
         model = Task
