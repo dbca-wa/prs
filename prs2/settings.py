@@ -206,9 +206,9 @@ LOGGING = {
         },
     },
     'loggers': {
-        '': {
+        'django': {
             'handlers': ['console'],
-            'level': 'WARNING',
+            'level': 'ERROR',
         },
         'harvester': {
             'handlers': ['harvester'],
