@@ -2,6 +2,7 @@ from django.conf import settings
 import docx2txt
 from extract_msg import Message
 from pdfminer import high_level
+import re
 import typesense
 
 
@@ -58,27 +59,37 @@ def typesense_index_record(rec, client=None):
         'file_name': rec.filename,
         'file_type': rec.extension,
     }
+    file_content = ''
+
     # PDF document content.
     if rec.extension == 'PDF':
         try:
             # PDF text extraction can be a little error-prone.
             # In the event of an exception here, we'll just accept it and pass.
-            content = high_level.extract_text(open(rec.uploaded_file.path, 'rb'))
-            rec_document['file_content'] = content.replace('\n', ' ').strip()
+            file_content = high_level.extract_text(open(rec.uploaded_file.path, 'rb'))
         except:
             pass
 
     # MSG document content.
     if rec.extension == 'MSG':
         message = Message(rec.uploaded_file.path)
-        content = '{} {}'.format(message.subject, message.body.replace('\r\n', ' '))
-        rec_document['file_content'] = content.strip()
+        file_content = '{} {}'.format(message.subject, message.body.replace('\r\n', ' '))
 
     # DOCX document content.
     if rec.extension == 'DOCX':
-        content = docx2txt.process(rec.uploaded_file.path)
-        rec_document['file_content'] = content.replace('\n', ' ').strip()
+        file_content = docx2txt.process(rec.uploaded_file.path)
 
+    # Trim down the content of uploaded files a little.
+    if file_content:
+        # Replace punctuation with a space.
+        file_content = re.sub(r'[^\w\s]', ' ', file_content)
+        # Replace newlines with a space.
+        file_content = file_content.replace('\r\n', ' ')
+        # Replace multiple spaces with a single one.
+        file_content = re.sub(r'\s+', ' ', file_content)
+        file_content = file_content.strip()
+
+    rec_document['file_content'] = file_content
     client.collections['records'].documents.upsert(rec_document)
 
 
