@@ -170,7 +170,6 @@ class IndexSearch(LoginRequiredMixin, TemplateView):
                 'q': self.request.GET["q"],
                 'sort_by': 'created:desc',
                 'num_typos': 0,
-                'include_fields': 'id',
                 'page': page,
                 'per_page': 20,
             }
@@ -261,7 +260,6 @@ class IndexSearchCombined(LoginRequiredMixin, TemplateView):
                 'q': self.request.GET["q"],
                 'sort_by': 'created:desc',
                 'num_typos': 0,
-                'include_fields': 'id',
             }
             referrals = {}
 
@@ -282,7 +280,6 @@ class IndexSearchCombined(LoginRequiredMixin, TemplateView):
 
             # Records
             search_q["query_by"] = "name,description,file_name,file_content"
-            search_q["include_fields"] = "id,referral_id"
             search_result = client.collections["records"].documents.search(search_q)
             context["records_count"] = search_result["found"]
             for hit in search_result["hits"]:
@@ -301,7 +298,6 @@ class IndexSearchCombined(LoginRequiredMixin, TemplateView):
 
             # Notes
             search_q["query_by"] = "note"
-            search_q["include_fields"] = "id,referral_id"
             search_result = client.collections["notes"].documents.search(search_q)
             context["notes_count"] = search_result["found"]
             for hit in search_result["hits"]:
@@ -320,7 +316,6 @@ class IndexSearchCombined(LoginRequiredMixin, TemplateView):
 
             # Tasks
             search_q["query_by"] = "description,assigned_user"
-            search_q["include_fields"] = "id,referral_id"
             search_result = client.collections["tasks"].documents.search(search_q)
             context["tasks_count"] = search_result["found"]
             for hit in search_result["hits"]:
@@ -339,7 +334,6 @@ class IndexSearchCombined(LoginRequiredMixin, TemplateView):
 
             # Conditions
             search_q["query_by"] = "proposed_condition,approved_condition"
-            search_q["include_fields"] = "id,referral_id"
             search_result = client.collections["conditions"].documents.search(search_q)
             context["conditions_count"] = search_result["found"]
             for hit in search_result["hits"]:
