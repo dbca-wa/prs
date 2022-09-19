@@ -14,7 +14,6 @@ def template_context(request):
         'geoserver_basic_auth': b64encode(f'{settings.GEOSERVER_SSO_USER}:{settings.GEOSERVER_SSO_PASS}'.encode('utf-8')).decode(),
         'geocoder_url': settings.GEOCODER_URL,
         'prs_user_group': settings.PRS_USER_GROUP,
-        'managers': settings.MANAGERS,
     }
     if request.user.is_authenticated:
         context['prs_user'] = request.user.userprofile.is_prs_user()

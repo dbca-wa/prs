@@ -141,6 +141,8 @@ class HelpPage(LoginRequiredMixin, TemplateView):
         context["page_title"] = " | ".join([settings.APPLICATION_ACRONYM, "Help"])
         links = [(reverse("site_home"), "Home"), (None, "Help")]
         context["breadcrumb_trail"] = breadcrumbs_li(links)
+        pu_group = Group.objects.get(name=settings.PRS_POWER_USER_GROUP)
+        context["power_users"] = pu_group.user_set.filter(is_active=True)
         return context
 
 
@@ -170,7 +172,6 @@ class IndexSearch(LoginRequiredMixin, TemplateView):
                 'q': self.request.GET["q"],
                 'sort_by': 'created:desc',
                 'num_typos': 0,
-                'include_fields': 'id',
                 'page': page,
                 'per_page': 20,
             }
@@ -261,7 +262,6 @@ class IndexSearchCombined(LoginRequiredMixin, TemplateView):
                 'q': self.request.GET["q"],
                 'sort_by': 'created:desc',
                 'num_typos': 0,
-                'include_fields': 'id',
             }
             referrals = {}
 
@@ -282,7 +282,6 @@ class IndexSearchCombined(LoginRequiredMixin, TemplateView):
 
             # Records
             search_q["query_by"] = "name,description,file_name,file_content"
-            search_q["include_fields"] = "id,referral_id"
             search_result = client.collections["records"].documents.search(search_q)
             context["records_count"] = search_result["found"]
             for hit in search_result["hits"]:
@@ -301,7 +300,6 @@ class IndexSearchCombined(LoginRequiredMixin, TemplateView):
 
             # Notes
             search_q["query_by"] = "note"
-            search_q["include_fields"] = "id,referral_id"
             search_result = client.collections["notes"].documents.search(search_q)
             context["notes_count"] = search_result["found"]
             for hit in search_result["hits"]:
@@ -320,7 +318,6 @@ class IndexSearchCombined(LoginRequiredMixin, TemplateView):
 
             # Tasks
             search_q["query_by"] = "description,assigned_user"
-            search_q["include_fields"] = "id,referral_id"
             search_result = client.collections["tasks"].documents.search(search_q)
             context["tasks_count"] = search_result["found"]
             for hit in search_result["hits"]:
@@ -339,7 +336,6 @@ class IndexSearchCombined(LoginRequiredMixin, TemplateView):
 
             # Conditions
             search_q["query_by"] = "proposed_condition,approved_condition"
-            search_q["include_fields"] = "id,referral_id"
             search_result = client.collections["conditions"].documents.search(search_q)
             context["conditions_count"] = search_result["found"]
             for hit in search_result["hits"]:
@@ -1886,12 +1882,14 @@ class ConditionClearanceCreate(PrsObjectCreate):
             # Email should fail gracefully - ie no Exception raised on failure.
             msg.send(fail_silently=True)
 
-        # Business rule: for each new clearance request, email the MANAGERS user list.
+        # Business rule: for each new clearance request, email users in the PRS power users group.
         subject = "PRS referral {} - new condition clearance request notification".format(
             clearance_task.referral.pk
         )
         from_email = "PRS-Alerts@dbca.wa.gov.au"
-        to_email = [i[1] for i in settings.MANAGERS]
+        pu_group = Group.objects.get(name=settings.PRS_POWER_USER_GROUP)
+        to_email = [user.email for user in pu_group.user_set.filter(is_active=True)]
+
         text_content = "This is an automated message to let you know that the following clearance request was just created:\n"
         html_content = "<p>This is an automated message to let you know that the following clearance request was just created:</p>"
         text_content += "* Task ID {}\n".format(clearance_task.pk)

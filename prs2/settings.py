@@ -95,8 +95,6 @@ TEMPLATES = [
 ]
 MANAGERS = (
     ('Sean Walsh', 'sean.walsh@dbca.wa.gov.au'),
-    ('Michael Roberts', 'michael.roberts@dbca.wa.gov.au'),
-    # ('Cho Lamb', 'cho.lamb@dbca.wa.gov.au'),
 )
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
@@ -206,9 +204,9 @@ LOGGING = {
         },
     },
     'loggers': {
-        '': {
+        'django': {
             'handlers': ['console'],
-            'level': 'WARNING',
+            'level': 'ERROR',
         },
         'harvester': {
             'handlers': ['harvester'],
