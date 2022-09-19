@@ -141,6 +141,8 @@ class HelpPage(LoginRequiredMixin, TemplateView):
         context["page_title"] = " | ".join([settings.APPLICATION_ACRONYM, "Help"])
         links = [(reverse("site_home"), "Home"), (None, "Help")]
         context["breadcrumb_trail"] = breadcrumbs_li(links)
+        pu_group = Group.objects.get(name=settings.PRS_POWER_USER_GROUP)
+        context["power_users"] = pu_group.user_set.filter(is_active=True)
         return context
 
 
@@ -1880,12 +1882,14 @@ class ConditionClearanceCreate(PrsObjectCreate):
             # Email should fail gracefully - ie no Exception raised on failure.
             msg.send(fail_silently=True)
 
-        # Business rule: for each new clearance request, email the MANAGERS user list.
+        # Business rule: for each new clearance request, email users in the PRS power users group.
         subject = "PRS referral {} - new condition clearance request notification".format(
             clearance_task.referral.pk
         )
         from_email = "PRS-Alerts@dbca.wa.gov.au"
-        to_email = [i[1] for i in settings.MANAGERS]
+        pu_group = Group.objects.get(name=settings.PRS_POWER_USER_GROUP)
+        to_email = [user.email for user in pu_group.user_set.filter(is_active=True)]
+
         text_content = "This is an automated message to let you know that the following clearance request was just created:\n"
         html_content = "<p>This is an automated message to let you know that the following clearance request was just created:</p>"
         text_content += "* Task ID {}\n".format(clearance_task.pk)

@@ -8,8 +8,8 @@
     <li>"Read-only" access to PRS requires only that you be logged into the Department's single-sign-on service (Office 365).</li>
     <li>If you require "edit" rights or more information, please contact:</li>
         <ul>
-        {% for manager in managers %}
-            <li><a href="mailto:{{ manager.1 }}">{{ manager.0 }}</a></li>
+        {% for user in power_users %}
+            <li><a href="mailto:{{ user.email }}">{{ user.get_full_name }}</a></li>
         {% endfor %}
         </ul>
     <li>To search for a referral, click <strong>Referrals</strong> under <strong>Search</strong> in the top menu,
