@@ -1,7 +1,6 @@
 "use strict";
 
 // NOTE: the following global variables need to be set prior to loading this script:
-// * geoserver_wfs_url
 // * geoserver_basic_auth
 
 // A small function to add a hashcode function to String
@@ -17,15 +16,6 @@ String.prototype.hashCode = function(){
     return Math.abs(hash);  // Always return absolute value.
 }
 
-// Define WFS layer for querying.
-var cadastreWFSParams = {
-    service: 'WFS',
-    version: '2.0.0',
-    request: 'GetFeature',
-    typeName: 'cddp:cadastre',
-    outputFormat: 'application/json',
-};
-var cadastreWFSURL = geoserver_wfs_url + L.Util.getParamString(cadastreWFSParams);
 // GeoJSON layer to store clicked-on cadastre locations.
 var locationsLayer = L.geoJson();
 locationsLayer.addTo(map);
@@ -35,13 +25,11 @@ var clickChooseEnabled = true;
 
 // Function to add a form fieldset.
 var addFormFieldset = function(feature) {
-    var obj = feature.properties;
-    var fid = feature.id;
+    var fid = feature.object_id;
     // Construct a form fieldset to submit the location.
     var address = '';
     var fieldset = '<fieldset id="fieldset_{fid}" class="form-inline" style="display:none;">' +
-        '<input name="form-{0}-address_no" class="form-control" value="{addrs_no}">' +  // No.
-        '<input name="form-{0}-address_suffix" class="form-control" value="{addrs_sfx}">' +  // Suffix
+        '<input name="form-{0}-address_no" class="form-control" value="{addrs_no}">' +  // Address no.
         '<input name="form-{0}-road_name" class="form-control" value="{road_name}">' +  // Road
         '<input name="form-{0}-road_suffix" class="form-control" value="{road_sfx}">' +  // Suffix
         '<input name="form-{0}-locality" class="form-control" value="{locality}">' +  // Locality
@@ -49,46 +37,40 @@ var addFormFieldset = function(feature) {
         '<input name="form-{0}-wkt" class="form-control" value="{wkt}">' +  // WKT
         '</fieldset>';
     fieldset = fieldset.replace('{fid}', fid);
-    if (obj.survey_lot) {address += obj.survey_lot + ', '};
-    if (obj.addrs_no) {
-        address += obj.addrs_no;
-        fieldset = fieldset.replace('{addrs_no}', obj.addrs_no);
+    if (feature.data.lot_number) {address += 'Lot ' + feature.data.lot_number + ', '};
+    if (feature.data.house_number) {
+        address += feature.data.house_number;
+        fieldset = fieldset.replace('{addrs_no}', feature.data.house_number);
     } else {
         fieldset = fieldset.replace('{addrs_no}', '');
     }
-    if (obj.addrs_sfx) {
-        address += obj.addrs_sfx;
-        fieldset = fieldset.replace('{addrs_sfx}', obj.addrs_sfx);
-    } else {
-        fieldset = fieldset.replace('{addrs_sfx}', '');
-    }
     if (address != '') {address += ' '};
-    if (obj.road_name) {
-        address += obj.road_name + ' ';
-        fieldset = fieldset.replace('{road_name}', obj.road_name);
+    if (feature.data.road_name) {
+        address += feature.data.road_name + ' ';
+        fieldset = fieldset.replace('{road_name}', feature.data.road_name);
     } else {
         fieldset = fieldset.replace('{road_name}', '');
     }
-    if (obj.road_sfx) {
-        address += obj.road_sfx + ' ';
-        fieldset = fieldset.replace('{road_sfx}', obj.road_sfx);
+    if (feature.data.road_type) {
+        address += feature.data.road_type + ' ';
+        fieldset = fieldset.replace('{road_sfx}', feature.data.road_type);
     } else {
         fieldset = fieldset.replace('{road_sfx}', '');
     }
-    if (obj.locality) {
-        address += obj.locality + ' ';
-        fieldset = fieldset.replace('{locality}', obj.locality);
+    if (feature.data.locality) {
+        address += feature.data.locality + ' ';
+        fieldset = fieldset.replace('{locality}', feature.data.locality);
     } else {
         fieldset = fieldset.replace('{locality}', '');
     }
-    if (obj.postcode) {
-        address += obj.postcode;
-        fieldset = fieldset.replace('{postcode}', obj.postcode);
+    if (feature.data.postcode) {
+        address += feature.data.postcode;
+        fieldset = fieldset.replace('{postcode}', feature.data.postcode);
     } else {
         fieldset = fieldset.replace('{postcode}', '');
     }
     // Insert WKT into the form.
-    fieldset = fieldset.replace('{wkt}', wellknown.stringify(feature));
+    fieldset = fieldset.replace('{wkt}', feature.boundary);
     // Make form input names unique.
     locations_count += 1;
     fieldset = fieldset.replace(/\{0\}/g, locations_count.toString());
@@ -102,28 +84,25 @@ var queryCadastre = function(latlng) {
     if (latlng == null) {
         return;
     }
-    // Generate our CQL filter.
-    var filter = 'INTERSECTS(wkb_geometry, POINT ({0} {1}))'.replace('{0}', latlng.lat).replace('{1}', latlng.lng);
-    var parameters = L.Util.extend(cadastreWFSParams, {'cql_filter': filter});
     $.ajax({
-        url: geoserver_wfs_url,
-        data: parameters,
-        dataType: 'json',
-        headers: {Authorization: 'Basic ' + geoserver_basic_auth},
-        crossDomain: true,
-        success: function(data) {
-            // Add the first feature returned by the query to locationsLayer.
-            var fid = data.features[0]['id'];
-            var feature = L.geoJson(data.features[0]);
-            locationsSelected[fid] = feature;
-            feature.addTo(locationsLayer);
-            // Add a form fieldset containing the feature data.
-            var address = addFormFieldset(data.features[0]);
-            // Insert the address line as a <li> element.
-            var li = "<li><button type='button' class='btn btn-danger btn-xs removeFeature' data-feature-id='{}'>Remove</button> " + address + "</li>";
-            li = li.replace('{}', data.features[0]['id']);
-            $("ol#selected_locations").append(li);
-        }
+      url: geocoder_url,
+      data: {point: "{0},{1}".replace("{0}", latlng.lng).replace("{1}", latlng.lat)},
+      type: "GET",
+      dataType: "json",
+      headers: {Authorization: 'Basic ' + geoserver_basic_auth},
+      success: function(data) {
+        var fid = data.object_id;
+        var feature = wellknown.parse(data.boundary);
+        var location = L.geoJson(feature);
+        locationsSelected[fid] = location;
+        location.addTo(locationsLayer);
+        // Add a form fieldset containing the location data.
+        var address = addFormFieldset(data);
+        // Insert the address line as a <li> element.
+        var li = "<li><button type='button' class='btn btn-danger btn-xs removeFeature' data-feature-id='{}'>Remove</button> " + address + "</li>";
+        li = li.replace('{}', data.object_id);
+        $("ol#selected_locations").append(li);
+      }
     });
 }
 var removeFeature = function(locationsLayer, featureId) {
