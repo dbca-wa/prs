@@ -248,8 +248,10 @@
 <script src="{% static 'js/leaflet-search.min.js' %}"></script>
 <script>
     // Set global variables (needs to happen before loading referral_map.js)
-    var geoserver_wmts_url = '{{ geoserver_wmts_url }}';
-    var geoserver_wfs_url = '{{ geoserver_wfs_url }}';
+    const geoserver_wmts_url = '{{ geoserver_wmts_url }}';
+    const cddp_geoserver_wmts_url = '{{ cddp_geoserver_wmts_url }}';
+    const geoserver_wfs_url = '{{ geoserver_wfs_url }}';
+    const cddp_geoserver_wfs_url = '{{ cddp_geoserver_wfs_url }}';
 </script>
 <script src="{% static 'js/referral_map.js' %}"></script>
 <script>
