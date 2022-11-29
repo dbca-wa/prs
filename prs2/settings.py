@@ -28,6 +28,10 @@ else:
 INTERNAL_IPS = ['127.0.0.1', '::1']
 ROOT_URLCONF = 'prs2.urls'
 WSGI_APPLICATION = 'prs2.wsgi.application'
+# Allow overriding the Django default for FILE_UPLOAD_PERMISSIONS (0o644).
+# Required for non-local Azure storage volumes in Kubernetes environment.
+FILE_UPLOAD_PERMISSIONS = env('FILE_UPLOAD_PERMISSIONS', None)
+
 GEOSERVER_WMTS_URL = env('GEOSERVER_WMTS_URL', '')
 CDDP_GEOSERVER_WMTS_URL = env('CDDP_GEOSERVER_WMTS_URL', '')
 GEOSERVER_WFS_URL = env('GEOSERVER_WFS_URL', '')
