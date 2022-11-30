@@ -79,6 +79,10 @@ def typesense_index_record(rec, client=None):
     if rec.extension == 'DOCX':
         file_content = docx2txt.process(rec.uploaded_file.path)
 
+    # TXT document content.
+    if rec.extension == 'TXT':
+        file_content = open(rec.uploaded_file.path, 'r').read()
+
     # Trim down the content of uploaded files a little.
     if file_content:
         # Replace punctuation with a space.
