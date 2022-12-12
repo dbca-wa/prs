@@ -270,7 +270,7 @@ def borgcollector_harvest(request, publishes=["prs_locations"]):
 
     Docs: https://github.com/parksandwildlife/borgcollector
     """
-    api_url = env("BORGCOLLECTOR_API", "https://borg.dpaw.wa.gov.au/api/") + "jobs/"
+    api_url = env("BORGCOLLECTOR_API", "https://borg.dbca.wa.gov.au/api/") + "jobs/"
     # Send a POST request to the API endpoint.
     r = requests.post(
         user_request=request, url=api_url, data=json.dumps({"publishes": publishes})
