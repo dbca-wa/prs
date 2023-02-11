@@ -39,7 +39,7 @@ whitenoise = {version = "6.2.0", extras = ["brotli"]}
 django-crum = "0.7.9"
 
 [tool.poetry.dev-dependencies]
-ipython = "^7.31.1"
+ipython = "^8.10.0"
 ipdb = "^0.13.2"
 
 [build-system]
