@@ -610,7 +610,7 @@ class Referral(ReferralBaseModel):
         xml = 'referral/{}.xml'.format(template)
         return render_to_string(xml, {
             'REFERRAL_PK': self.pk,
-            'GEOSERVER_WFS_URL': settings.GEOSERVER_WFS_URL
+            'PRS_GEOSERVER_WFS_URL': settings.PRS_GEOSERVER_WFS_URL
         })
 
     def generate_gpkg(self):

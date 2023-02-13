@@ -32,6 +32,8 @@ WSGI_APPLICATION = 'prs2.wsgi.application'
 # Required for non-local Azure storage volumes in Kubernetes environment.
 FILE_UPLOAD_PERMISSIONS = env('FILE_UPLOAD_PERMISSIONS', None)
 
+PRS_GEOSERVER_WMTS_URL = env('PRS_GEOSERVER_WMTS_URL', '')
+PRS_GEOSERVER_WFS_URL = env('PRS_GEOSERVER_WFS_URL', '')
 GEOSERVER_WMTS_URL = env('GEOSERVER_WMTS_URL', '')
 GEOSERVER_WFS_URL = env('GEOSERVER_WFS_URL', '')
 GEOSERVER_SSO_USER = env('GEOSERVER_SSO_USER', 'username')
@@ -104,7 +106,7 @@ LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 APPLICATION_TITLE = 'Planning Referral System'
 APPLICATION_ACRONYM = 'PRS'
-APPLICATION_VERSION_NO = '2.5.29'
+APPLICATION_VERSION_NO = '2.5.30'
 APPLICATION_ALERTS_EMAIL = 'PRS-Alerts@dbca.wa.gov.au'
 SITE_URL = env('SITE_URL', 'localhost')
 PRS_USER_GROUP = env('PRS_USER_GROUP', 'PRS user')
