@@ -39,7 +39,6 @@ urlpatterns += [
 # Other static/functional URLs
 urlpatterns += [
     path("help/", views.HelpPage.as_view(), name="help_page"),
-    # path("search/", views.GeneralSearch.as_view(), name="prs_general_search"),
     path("search/", views.IndexSearchCombined.as_view(), name="prs_index_search_combined"),
     path("index/", views.IndexSearch.as_view(), name="prs_index_search"),
     path("index/<collection>/", views.IndexSearch.as_view(), name="prs_index_search"),
