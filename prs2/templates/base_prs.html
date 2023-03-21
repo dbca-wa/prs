@@ -36,65 +36,67 @@
 </style>
 {% endblock %}
 
-{% block navbar_class %}navbar fixed-top navbar-expand-sm navbar-custom{% endblock %}
+{% block navbar_class %}navbar fixed-top navbar-expand-md navbar-custom{% endblock %}
 {% block navbar_button_class %}navbar-toggler custom-toggler{% endblock %}
 {% block navbar_links %}
-<ul class="navbar-nav ml-auto">
-    {% block navbar_item_extra %}{% endblock navbar_item_extra %}
-    <li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle" href="#" id="navbarSearchDropdown" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-            Search <span class="caret"></span>
-        </a>
-        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarSearchDropdown">
-            <a class="dropdown-item" href="{% url 'prs_object_list' model='referrals' %}" title="Referrals">Referrals</a>
-            <a class="dropdown-item" href="{% url 'prs_object_list' model='tasks' %}" title="Tasks">Tasks</a>
-            <a class="dropdown-item" href="{% url 'prs_object_list' model='notes' %}" title="Notes">Notes</a>
-            <a class="dropdown-item" href="{% url 'prs_object_list' model='conditions' %}" title="Conditions">Conditions</a>
-            <a class="dropdown-item" href="{% url 'prs_object_list' model='records' %}" title="Records">Records</a>
-            <a class="dropdown-item" href="{% url 'prs_object_list' model='locations' %}" title="Locations">Locations</a>
-            <a class="dropdown-item" href="{% url 'prs_object_list' model='clearances' %}" title="Clearances">Clearances</a>
-            <div class="dropdown-divider"></div>
-            <a class="dropdown-item" href="{% url 'prs_index_search_combined' %}" title="Search all">Search all</a>
-        </div>
-    </li>
+<div class="collapse navbar-collapse" id="navbarSupportedContent">
+    <ul class="navbar-nav ml-auto">
+        {% block navbar_item_extra %}{% endblock navbar_item_extra %}
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarSearchDropdown" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                Search <span class="caret"></span>
+            </a>
+            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarSearchDropdown">
+                <a class="dropdown-item" href="{% url 'prs_object_list' model='referrals' %}" title="Referrals">Referrals</a>
+                <a class="dropdown-item" href="{% url 'prs_object_list' model='tasks' %}" title="Tasks">Tasks</a>
+                <a class="dropdown-item" href="{% url 'prs_object_list' model='notes' %}" title="Notes">Notes</a>
+                <a class="dropdown-item" href="{% url 'prs_object_list' model='conditions' %}" title="Conditions">Conditions</a>
+                <a class="dropdown-item" href="{% url 'prs_object_list' model='records' %}" title="Records">Records</a>
+                <a class="dropdown-item" href="{% url 'prs_object_list' model='locations' %}" title="Locations">Locations</a>
+                <a class="dropdown-item" href="{% url 'prs_object_list' model='clearances' %}" title="Clearances">Clearances</a>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item" href="{% url 'prs_index_search_combined' %}" title="Search all">Search all</a>
+            </div>
+        </li>
 
-    <li class="nav-item">
-        <a class="nav-item nav-link" href="{% url 'reports' %}" title="Reports">Reports</a>
-    </li>
+        <li class="nav-item">
+            <a class="nav-item nav-link" href="{% url 'reports' %}" title="Reports">Reports</a>
+        </li>
 
-    {% block navbar_auth %}
-    {% if user.is_authenticated %}
-    <li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle" href="#" id="navbarAuthDropdown" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-            {% firstof user.get_full_name user.email %} <span class="caret"></span>
-        </a>
-        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarAuthDropdown">
-            {% if user.is_superuser %}
-            <a class="dropdown-item" href="{% url 'admin:index' %}" title="Administration">Administration</a>
-            {% endif %}
-            {% if prs_power_user %}
-            <a class="dropdown-item" href="{% url 'tag_replace' %}" title="Tag replace">Tag replace</a>
-            <div class="dropdown-divider"></div>
-            {% endif %}
-            {% if last_referral %}
-            <a class="dropdown-item" href="{% url 'referral_detail' pk=last_referral.pk %}" title="Last referral">Last referral: {{ last_referral.pk }}</a>
-            {% endif %}
+        {% block navbar_auth %}
+        {% if user.is_authenticated %}
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarAuthDropdown" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                {% firstof user.get_full_name user.email %} <span class="caret"></span>
+            </a>
+            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarAuthDropdown">
+                {% if user.is_superuser %}
+                <a class="dropdown-item" href="{% url 'admin:index' %}" title="Administration">Administration</a>
+                {% endif %}
+                {% if prs_power_user %}
+                <a class="dropdown-item" href="{% url 'tag_replace' %}" title="Tag replace">Tag replace</a>
+                <div class="dropdown-divider"></div>
+                {% endif %}
+                {% if last_referral %}
+                <a class="dropdown-item" href="{% url 'referral_detail' pk=last_referral.pk %}" title="Last referral">Last referral: {{ last_referral.pk }}</a>
+                {% endif %}
 
-            <a class="dropdown-item" href="{% url 'referral_recent' %}" title="Recent referrals">Recent referrals</a>
-            <a class="dropdown-item" href="{% url 'prs_object_list' model='bookmarks' %}" title="Bookmarks">Bookmarks</a>
-            <a class="dropdown-item" href="{% url 'stopped_tasks_list' %}" title="Stopped tasks">Stopped tasks</a>
-            <a class="dropdown-item" href="{% url 'help_page' %}" title="Help">Help</a>
-            {#<li><a class="dropdown-item" href="{% url 'logout' %}" title="Log out">Log out</a>#}
-        </div>
-    </li>
-    <a class="btn btn-light" href="{% url 'referral_create' %}" title="Create a new referral"><strong>Create</strong></a>
-    {% else %}
-    <li class="nav-item">
-        <a href="{% url 'login' %}">Log in</a>
-    </li>
-    {% endif %}
-    {% endblock navbar_auth %}
-</ul>
+                <a class="dropdown-item" href="{% url 'referral_recent' %}" title="Recent referrals">Recent referrals</a>
+                <a class="dropdown-item" href="{% url 'prs_object_list' model='bookmarks' %}" title="Bookmarks">Bookmarks</a>
+                <a class="dropdown-item" href="{% url 'stopped_tasks_list' %}" title="Stopped tasks">Stopped tasks</a>
+                <a class="dropdown-item" href="{% url 'help_page' %}" title="Help">Help</a>
+                {#<li><a class="dropdown-item" href="{% url 'logout' %}" title="Log out">Log out</a>#}
+            </div>
+        </li>
+        <a class="btn btn-light" href="{% url 'referral_create' %}" title="Create a new referral"><strong>Create</strong></a>
+        {% else %}
+        <li class="nav-item">
+            <a href="{% url 'login' %}">Log in</a>
+        </li>
+        {% endif %}
+        {% endblock navbar_auth %}
+    </ul>
+</div><!-- #navbarSupportedContent -->
 {% endblock navbar_links %}
 
 {% block page_content %}

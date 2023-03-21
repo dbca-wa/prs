@@ -42,11 +42,11 @@ const slipRoads = L.tileLayer(
   },
 );
 const prsLocations = L.tileLayer(
-  geoserver_wmts_url + "?service=WMTS&request=GetTile&version=1.0.0&tilematrixset=gda94&TileMatrix=gda94:{z}&TileCol={x}&TileRow={y}&format=image/png&transparent=true&layer=dbca:prs_locations_view",
+  prs_geoserver_wmts_url + "?service=WMTS&request=GetTile&version=1.1.1&tilematrixset=EPSG:4326&TileMatrix=EPSG:4326:{z}&TileCol={x}&TileRow={y}&format=image/png&transparent=true&layer=prs:prs_locations_view",
   {
     opacity: 0.75,
-    tileSize: 1024,
-    zoomOffset: -2,
+    tileSize: 256,
+    zoomOffset: 0,
   },
 );
 const dbcaTenure = L.tileLayer(

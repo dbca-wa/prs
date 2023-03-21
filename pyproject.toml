@@ -1,13 +1,13 @@
 [tool.poetry]
 name = "prs"
-version = "2.5.29"
+version = "2.5.30"
 description = "Planning Referral System corporate application"
 authors = ["Ashley Felton <ashley.felton@dbca.wa.gov.au>"]
 license = "Apache-2.0"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-Django = "3.2.16"
+django = "3.2.18"
 psycopg2 = "2.9.5"
 dbca-utils = "1.1.1"
 django-dotenv = "1.4.2"
@@ -38,10 +38,10 @@ pygeopkg = "0.1.2"
 whitenoise = {version = "6.2.0", extras = ["brotli"]}
 django-crum = "0.7.9"
 
-[tool.poetry.dev-dependencies]
-ipython = "^7.31.1"
+[tool.poetry.group.dev.dependencies]
+ipython = "^8.10.0"
 ipdb = "^0.13.2"
 
 [build-system]
-requires = ["poetry>=1.1.13"]
+requires = ["poetry>=1.2.2"]
 build-backend = "poetry.masonry.api"

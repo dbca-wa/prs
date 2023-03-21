@@ -57,15 +57,13 @@ class PrsObjectList(LoginRequiredMixin, ListView):
         return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
-        """
-        Define the queryset of objects to return.
-        By default, the queryset return recently-modified ones objects first.
+        """Define the queryset of objects to return.
         """
         qs = super().get_queryset()
+        # By default, filter out "inactive" objects.
         if "effective_to" in [f.name for f in self.model._meta.get_fields()]:
             qs = qs.filter(effective_to=None)
-        # Did we pass in a search string? If so, filter the queryset and
-        # return it.
+        # Did we pass in a search string? If so, filter the queryset and return it.
         if "q" in self.request.GET and self.request.GET["q"]:
             query_str = self.request.GET["q"]
             # Replace single-quotes with double-quotes
@@ -488,7 +486,7 @@ class PrsObjectDelete(LoginRequiredMixin, DeleteView):
         return HttpResponseRedirect(success_url)
 
 
-class PrsObjectTag(View):
+class PrsObjectTag(LoginRequiredMixin, View):
     """Utility view to create/delete a tag on an object (typically via AJAX).
     Expects a POST request containing a ``tag`` query param with the value of
     the tag to add.

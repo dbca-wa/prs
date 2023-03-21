@@ -360,48 +360,6 @@ class IndexSearchCombined(LoginRequiredMixin, TemplateView):
         return context
 
 
-class GeneralSearch(PrsObjectList):
-    """A search view that filters multiple object types: Referrals, Notes,
-    Records, Conditions and Tasks.
-    """
-
-    model = Referral
-    template_name = "referral/prs_general_search.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["page_title"] = " | ".join([settings.APPLICATION_ACRONYM, "Search"])
-        links = [(reverse("site_home"), "Home"), (None, "Search")]
-        context["breadcrumb_trail"] = breadcrumbs_li(links)
-        # Add search results for models other than Referral.
-        if "q" in self.request.GET and self.request.GET["q"]:
-            context["query"] = True
-            query_str = self.request.GET["q"].replace("'", r'"')
-            context["search_string_norm"] = query_str
-            for m, k in [
-                (Note, "notes"),
-                (Record, "records"),
-                (Condition, "conditions"),
-                (Task, "tasks"),
-            ]:
-                search_fields = admin.site._registry[m].search_fields
-                entry_query = get_query(query_str, search_fields)
-                # Only inlude up to 5 results for each model type.
-                context[k] = (
-                    m.objects.current()
-                    .distinct()
-                    .order_by("-modified")
-                    .filter(entry_query)[:5]
-                )
-            context["referrals"] = self.get_queryset()[:5]
-            context["referral_headers"] = Referral.headers
-            context["note_headers"] = Note.headers
-            context["record_headers"] = Record.headers
-            context["condition_headers"] = Condition.headers
-            context["task_headers"] = Task.headers
-        return context
-
-
 class ReferralCreate(PrsObjectCreate):
     """Dedicated create view for new referrals.
     """
