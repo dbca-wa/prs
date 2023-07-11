@@ -62,9 +62,9 @@ Run console commands manually:
 
     poetry run python manage.py shell_plus
 
-Run a Celery worker alongside the local webserver to test indexing:
+Run a single Celery worker alongside the local webserver to test indexing:
 
-    poetry run celery --app prs2 worker
+    poetry run celery --app prs2 worker --loglevel INFO --events --without-heartbeat --without-gossip --without-mingle
 
 # Testing
 
