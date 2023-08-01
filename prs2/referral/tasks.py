@@ -14,35 +14,40 @@ def index_object(pk, model, client=None):
         try:
             referral = Referral.objects.get(pk=pk)
             utils.typesense_index_referral(referral, client)
+            return f'Updated referral {pk}'
         except Referral.DoesNotExist:
-            return
+            return False
     elif model == 'record':
         from referral.models import Record
         try:
             record = Record.objects.get(pk=pk)
             utils.typesense_index_record(record, client)
+            return f'Updated record {pk}'
         except Record.DoesNotExist:
-            return
+            return False
     elif model == 'task':
         from referral.models import Task
         try:
             task = Task.objects.get(pk=pk)
             utils.typesense_index_task(task, client)
+            return f'Updated task {pk}'
         except Task.DoesNotExist:
-            return
+            return False
     elif model == 'note':
         from referral.models import Note
         try:
             note = Note.objects.get(pk=pk)
             utils.typesense_index_note(note, client)
+            return f'Updated note {pk}'
         except Note.DoesNotExist:
-            return
+            return False
     elif model == 'condition':
         from referral.models import Condition
         try:
             condition = Condition.objects.get(pk=pk)
             utils.typesense_index_condition(condition, client)
+            return f'Updated condition {pk}'
         except Condition.DoesNotExist:
-            return
+            return False
 
     return
