@@ -1,5 +1,5 @@
 # Prepare the base environment.
-FROM python:3.9.15-slim-buster as builder_base
+FROM python:3.10.12-slim-bookworm as builder_base_prs
 MAINTAINER asi@dbca.wa.gov.au
 LABEL org.opencontainers.image.source https://github.com/dbca-wa/prs
 
@@ -10,16 +10,16 @@ RUN apt-get update -y \
   && pip install --upgrade pip
 
 # Install Python libs using Poetry.
-FROM builder_base as python_libs
+FROM builder_base_prs as python_libs_prs
 WORKDIR /app
-ENV POETRY_VERSION=1.2.2
+ENV POETRY_VERSION=1.5.1
 RUN pip install "poetry==$POETRY_VERSION"
 COPY poetry.lock pyproject.toml /app/
 RUN poetry config virtualenvs.create false \
   && poetry install --no-interaction --no-ansi --only main
 
 # Install the project.
-FROM python_libs
+FROM python_libs_prs
 COPY gunicorn.py manage.py ./
 COPY prs2 ./prs2
 RUN python manage.py collectstatic --noinput
