@@ -26,7 +26,7 @@ The following variables are required for the project to run:
 
     DATABASE_URL="postgis://USER:PASSWORD@HOST:5432/DATABASE_NAME"
 
-Variables below may also need to be defined (context-dependent):
+Variables below may also need to be defined in production (context-dependent):
 
     SECRET_KEY="ThisIsASecretKey"
     DEBUG=True
@@ -52,6 +52,12 @@ Variables below may also need to be defined (context-dependent):
     SLIP_WFS_URL="https://wfs.slip.url.au/endpoint"
     SLIP_DATASET="slip:LGATE-001"
 
+# Media uploads
+
+By default, PRS assumes that user-uploaded media will be saved to Azure blob
+storage. To use local storage, set the environment variable `LOCAL_MEDIA_STORAGE=True`
+and ensure that a writeable `media` directory exists in the project directory.
+
 # Running
 
 Use `runserver` to run a local copy of the application:
@@ -68,17 +74,17 @@ Run a single Celery worker alongside the local webserver to test indexing:
 
 # Testing
 
-Run unit tests for the **referral** app as follows:
+Run unit tests as follows:
 
-    poetry run python manage.py test prs2.referral --keepdb -v2
+    poetry run python manage.py test --keepdb -v2 --settings prs2.settings-test
 
 To run tests for e.g. models only:
 
-    poetry run python manage.py test prs2.referral.test_models --keepdb -v2
+    poetry run python manage.py test prs2.referral.test_models --keepdb -v2 --settings prs2.settings-test
 
 To obtain coverage reports:
 
-    poetry run coverage run --source='.' manage.py test -k -v2
+    poetry run coverage run --source='.' manage.py test --keepdb -v2 --settings prs2.settings-test
     poetry run coverage report -m
 
 # Docker image

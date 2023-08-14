@@ -5,7 +5,6 @@ from django.conf import settings
 from django.contrib.auth.signals import user_logged_in
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import GeometryCollection
-from django.core.exceptions import SuspiciousFileOperation
 from django.core.mail import EmailMultiAlternatives
 from django.core.validators import MaxLengthValidator
 from django.db.models import Q
@@ -1140,19 +1139,16 @@ class Record(ReferralBaseModel):
 
     @property
     def extension(self):
-        try:  # Account for SuspiciousFileOperation exceptions.
-            if self.uploaded_file and os.path.exists(self.uploaded_file.path):
-                ext = os.path.splitext(self.uploaded_file.name)[1]
-                return ext.replace(".", "").upper()
-            else:
-                return ""
-        except SuspiciousFileOperation:
+        if self.uploaded_file:
+            ext = os.path.splitext(self.uploaded_file.name)[1]
+            return ext.replace(".", "").upper()
+        else:
             return ""
 
     @property
     def filesize_str(self):
-        try:  # Account for SuspiciousFileOperation exceptions.
-            if self.uploaded_file and os.path.exists(self.uploaded_file.path):
+        try:
+            if self.uploaded_file:
                 num = self.uploaded_file.size
                 for x in ["b", "Kb", "Mb", "Gb"]:
                     if num < 1024.0:
@@ -1160,7 +1156,7 @@ class Record(ReferralBaseModel):
                     num /= 1024.0
             else:
                 return ""
-        except SuspiciousFileOperation:
+        except:
             return ""
 
     def as_row(self):
