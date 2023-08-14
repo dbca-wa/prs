@@ -1,3 +1,4 @@
+from dbca_utils.utils import env
 from django.urls import include, path
 from django.contrib import admin
 from django.contrib.auth.views import LoginView, LogoutView
@@ -14,3 +15,8 @@ urlpatterns = [
     path('reports/', include('reports.urls')),
     path('', include('referral.urls')),
 ]
+
+if env('LOCAL_MEDIA_STORAGE', False):
+    from django.conf import settings
+    from django.conf.urls.static import static
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

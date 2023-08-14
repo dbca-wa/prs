@@ -1,4 +1,3 @@
-from azure.core.exceptions import ResourceNotFoundError
 from copy import copy
 from datetime import date
 from dateutil.parser import parse
@@ -1157,7 +1156,7 @@ class Record(ReferralBaseModel):
                     num /= 1024.0
             else:
                 return ""
-        except ResourceNotFoundError:
+        except:
             return ""
 
     def as_row(self):

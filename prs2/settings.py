@@ -29,12 +29,15 @@ INTERNAL_IPS = ['127.0.0.1', '::1']
 ROOT_URLCONF = 'prs2.urls'
 WSGI_APPLICATION = 'prs2.wsgi.application'
 
-# Use Azure blob storage for media uploads.
-DEFAULT_FILE_STORAGE = 'storages.backends.azure_storage.AzureStorage'
-AZURE_ACCOUNT_NAME = env('AZURE_ACCOUNT_NAME', 'name')
-AZURE_ACCOUNT_KEY = env('AZURE_ACCOUNT_KEY', 'key')
-AZURE_CONTAINER = env('AZURE_CONTAINER', 'container')
-AZURE_URL_EXPIRATION_SECS = env('AZURE_URL_EXPIRATION_SECS', 3600)  # Default one hour.
+# Use Azure blob storage for media uploads, unless explicitly set otherwise.
+if env('LOCAL_MEDIA_STORAGE', False):
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+else:
+    DEFAULT_FILE_STORAGE = 'storages.backends.azure_storage.AzureStorage'
+    AZURE_ACCOUNT_NAME = env('AZURE_ACCOUNT_NAME', 'name')
+    AZURE_ACCOUNT_KEY = env('AZURE_ACCOUNT_KEY', 'key')
+    AZURE_CONTAINER = env('AZURE_CONTAINER', 'container')
+    AZURE_URL_EXPIRATION_SECS = env('AZURE_URL_EXPIRATION_SECS', 3600)  # Default one hour.
 
 # PRS may deploy its own instance of Geoserver.
 PRS_GEOSERVER_WMTS_URL = env('PRS_GEOSERVER_WMTS_URL', '')
@@ -180,9 +183,6 @@ DATE_INPUT_FORMATS = (
 )
 
 # Static files (CSS, JavaScript, Images)
-# Ensure that the media directory exists:
-if not os.path.exists(os.path.join(BASE_DIR, 'media')):
-    os.mkdir(os.path.join(BASE_DIR, 'media'))
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
