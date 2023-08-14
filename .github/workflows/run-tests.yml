@@ -71,4 +71,4 @@ jobs:
         run: |
           source .venv/bin/activate
           python manage.py collectstatic
-          python manage.py test --noinput --failfast --parallel 4 --verbosity 0
+          python manage.py test --noinput --failfast --parallel 4 --verbosity 0 --settings prs2.settings-test
