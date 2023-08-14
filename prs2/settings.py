@@ -34,6 +34,7 @@ DEFAULT_FILE_STORAGE = 'storages.backends.azure_storage.AzureStorage'
 AZURE_ACCOUNT_NAME = env('AZURE_ACCOUNT_NAME', 'name')
 AZURE_ACCOUNT_KEY = env('AZURE_ACCOUNT_KEY', 'key')
 AZURE_CONTAINER = env('AZURE_CONTAINER', 'container')
+AZURE_URL_EXPIRATION_SECS = env('AZURE_URL_EXPIRATION_SECS', 3600)  # Default one hour.
 
 # PRS may deploy its own instance of Geoserver.
 PRS_GEOSERVER_WMTS_URL = env('PRS_GEOSERVER_WMTS_URL', '')
