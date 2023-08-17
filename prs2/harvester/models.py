@@ -11,7 +11,7 @@ import xmltodict
 from referral.models import (
     Referral, Record, Region, ReferralType, Agency, Organisation, DopTrigger,
     TaskType, Task, Location, LocalGovernment)
-
+from .utils import query_slip_esri
 LOGGER = logging.getLogger('harvester')
 
 
@@ -41,7 +41,6 @@ class EmailedReferral(models.Model):
     def harvest(self, create_tasks=True, create_locations=True, create_records=True, assignee=False):
         """Undertake the harvest process for this emailed referral.
         """
-        from .utils import query_slip_esri
 
         if self.processed:
             return

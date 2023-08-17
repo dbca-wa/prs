@@ -13,8 +13,6 @@ from pytz import timezone
 import requests
 import time
 
-from .models import EmailedReferral, EmailAttachment
-
 
 LOGGER = logging.getLogger('harvester')
 
@@ -63,6 +61,8 @@ def harvest_email(uid, message):
     """Harvest a passed-in UID and email message.
     Abort if UID exists in the database already.
     """
+    from .models import EmailedReferral, EmailAttachment
+
     if message.is_multipart():  # Should always be True.
         parts = [i for i in message.walk()]
     else:
@@ -202,6 +202,8 @@ def harvest_unread_emails(from_email):
 def import_harvested_refs():
     """Process harvested referrals and generate referrals & records within PRS
     """
+    from .models import EmailedReferral
+
     actions = []
     LOGGER.info('Starting import of harvested referrals')
     actions.append('{} Starting import of harvested referrals'.format(datetime.now().isoformat()))
