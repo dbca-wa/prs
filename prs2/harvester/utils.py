@@ -6,14 +6,11 @@ from django.core.files.base import ContentFile
 from django.core.mail import EmailMultiAlternatives
 import email
 from imaplib import IMAP4_SSL
+from io import StringIO
 import logging
 from lxml.html import clean, fromstring
 from pytz import timezone
 import requests
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO  # Python3
 import time
 
 from .models import EmailedReferral, EmailAttachment
