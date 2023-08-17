@@ -362,7 +362,7 @@ class EmailedReferral(models.Model):
             new_record = Record.objects.create(
                 name=self.subject, referral=new_ref, order_date=datetime.today())
             file_name = 'emailed_referral_{}.html'.format(reference)
-            new_file = ContentFile(self.body)
+            new_file = ContentFile(str.encode(self.body))
             new_record.uploaded_file.save(file_name, new_file)
             with create_revision():
                 new_record.save()
