@@ -19,6 +19,8 @@ TEMPLATES[0]['OPTIONS'] = {
 PASSWORD_HASHERS = (
     'django.contrib.auth.hashers.MD5PasswordHasher',
 )
+# Use local media storage
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

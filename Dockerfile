@@ -23,6 +23,7 @@ FROM python_libs_prs
 COPY gunicorn.py manage.py ./
 COPY prs2 ./prs2
 RUN python manage.py collectstatic --noinput
+
 # Run the application as the www-data user.
 USER www-data
 EXPOSE 8080

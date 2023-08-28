@@ -1116,7 +1116,10 @@ class Record(ReferralBaseModel):
 
         # If the file is a .MSG we take the sent date of the email and use it for order_date.
         if self.extension == "MSG":
-            msg = Message(os.path.realpath(self.uploaded_file.path))
+            if settings.LOCAL_MEDIA_STORAGE:
+                msg = Message(os.path.realpath(self.uploaded_file.path))
+            else:
+                msg = Message(self.uploaded_file)
             if msg.date:
                 date = parse(msg.date.replace('GMT ', ''))
                 if date and self.order_date != date:
@@ -1132,10 +1135,16 @@ class Record(ReferralBaseModel):
 
     @property
     def filename(self):
-        if self.uploaded_file and os.path.exists(self.uploaded_file.path):
-            return self.uploaded_file.name.rsplit("/", 1)[-1]
+        if settings.LOCAL_MEDIA_STORAGE:
+            if self.uploaded_file and os.path.exists(self.uploaded_file.path):
+                return self.uploaded_file.name.rsplit("/", 1)[-1]
+            else:
+                return ""
         else:
-            return ""
+            if self.uploaded_file:
+                return self.uploaded_file.name.rsplit("/", 1)[-1]
+            else:
+                return ""
 
     @property
     def extension(self):

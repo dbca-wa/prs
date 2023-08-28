@@ -66,25 +66,40 @@ def typesense_index_record(rec, client=None):
         try:
             # PDF text extraction can be a little error-prone.
             # In the event of an exception here, we'll just accept it and pass.
-            file_content = high_level.extract_text(open(rec.uploaded_file.path, 'rb'))
+            if settings.LOCAL_MEDIA_STORAGE:
+                file_content = high_level.extract_text(open(rec.uploaded_file.path, 'rb'))
+            else:
+                file_content = high_level.extract_text(open(rec.uploaded_file))
         except:
             pass
 
     # MSG document content.
     if rec.extension == 'MSG':
-        message = Message(rec.uploaded_file.path)
+        if settings.LOCAL_MEDIA_STORAGE:
+            message = Message(rec.uploaded_file.path)
+        else:
+            message = Message(rec.uploaded_file)
         file_content = '{} {}'.format(message.subject, message.body.replace('\r\n', ' '))
 
     # DOCX document content.
     if rec.extension == 'DOCX':
-        file_content = docx2txt.process(rec.uploaded_file.path)
+        if settings.LOCAL_MEDIA_STORAGE:
+            file_content = docx2txt.process(rec.uploaded_file.path)
+        else:
+            file_content = docx2txt.process(rec.uploaded_file)
 
     # TXT document content.
     if rec.extension == 'TXT':
-        file_content = open(rec.uploaded_file.path, 'r').read()
+        if settings.LOCAL_MEDIA_STORAGE:
+            file_content = open(rec.uploaded_file.path, 'r').read()
+        else:
+            file_content = rec.uploaded_file.read()
 
     # Trim down the content of uploaded files a little.
     if file_content:
+        # Decode a bytes object to a string.
+        if isinstance(file_content, bytes):
+            file_content = file_content.decode('utf-8')
         # Replace punctuation with a space.
         file_content = re.sub(r'[^\w\s]', ' ', file_content)
         # Replace newlines with a space.

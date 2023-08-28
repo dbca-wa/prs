@@ -29,9 +29,11 @@ INTERNAL_IPS = ['127.0.0.1', '::1']
 ROOT_URLCONF = 'prs2.urls'
 WSGI_APPLICATION = 'prs2.wsgi.application'
 
-# Use Azure blob storage for media uploads, unless explicitly set otherwise.
-if env('LOCAL_MEDIA_STORAGE', False):
+# Assume Azure blob storage is used for media uploads, unless explicitly set as local storage.
+LOCAL_MEDIA_STORAGE = env('LOCAL_MEDIA_STORAGE', False)
+if LOCAL_MEDIA_STORAGE:
     DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 else:
     DEFAULT_FILE_STORAGE = 'storages.backends.azure_storage.AzureStorage'
     AZURE_ACCOUNT_NAME = env('AZURE_ACCOUNT_NAME', 'name')
@@ -115,7 +117,7 @@ LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 APPLICATION_TITLE = 'Planning Referral System'
 APPLICATION_ACRONYM = 'PRS'
-APPLICATION_VERSION_NO = '2.5.32'
+APPLICATION_VERSION_NO = '2.5.33'
 APPLICATION_ALERTS_EMAIL = 'PRS-Alerts@dbca.wa.gov.au'
 SITE_URL = env('SITE_URL', 'localhost')
 PRS_USER_GROUP = env('PRS_USER_GROUP', 'PRS user')
@@ -183,13 +185,14 @@ DATE_INPUT_FORMATS = (
 )
 
 # Static files (CSS, JavaScript, Images)
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-MEDIA_URL = '/media/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATIC_URL = '/static/'
 STATICFILES_DIRS = (os.path.join(BASE_DIR, 'prs2', 'static'),)
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 WHITENOISE_ROOT = STATIC_ROOT
+
+# Media uploads
+MEDIA_URL = '/media/'
 
 # This is required to add context variables to all templates:
 STATIC_CONTEXT_VARS = {}
