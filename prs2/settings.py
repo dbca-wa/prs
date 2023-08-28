@@ -29,9 +29,10 @@ INTERNAL_IPS = ['127.0.0.1', '::1']
 ROOT_URLCONF = 'prs2.urls'
 WSGI_APPLICATION = 'prs2.wsgi.application'
 
-# Use Azure blob storage for media uploads, unless explicitly set otherwise.
+# Use Azure blob storage for media uploads, unless explicitly set as local storage.
 if env('LOCAL_MEDIA_STORAGE', False):
     DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 else:
     DEFAULT_FILE_STORAGE = 'storages.backends.azure_storage.AzureStorage'
     AZURE_ACCOUNT_NAME = env('AZURE_ACCOUNT_NAME', 'name')
@@ -183,13 +184,14 @@ DATE_INPUT_FORMATS = (
 )
 
 # Static files (CSS, JavaScript, Images)
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-MEDIA_URL = '/media/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATIC_URL = '/static/'
 STATICFILES_DIRS = (os.path.join(BASE_DIR, 'prs2', 'static'),)
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 WHITENOISE_ROOT = STATIC_ROOT
+
+# Media uploads
+MEDIA_URL = '/media/'
 
 # This is required to add context variables to all templates:
 STATIC_CONTEXT_VARS = {}
