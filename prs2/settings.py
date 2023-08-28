@@ -29,8 +29,9 @@ INTERNAL_IPS = ['127.0.0.1', '::1']
 ROOT_URLCONF = 'prs2.urls'
 WSGI_APPLICATION = 'prs2.wsgi.application'
 
-# Use Azure blob storage for media uploads, unless explicitly set as local storage.
-if env('LOCAL_MEDIA_STORAGE', False):
+# Assume Azure blob storage is used for media uploads, unless explicitly set as local storage.
+LOCAL_MEDIA_STORAGE = env('LOCAL_MEDIA_STORAGE', False)
+if LOCAL_MEDIA_STORAGE:
     DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 else:
