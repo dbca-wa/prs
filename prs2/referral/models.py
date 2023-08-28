@@ -1135,10 +1135,16 @@ class Record(ReferralBaseModel):
 
     @property
     def filename(self):
-        if self.uploaded_file and os.path.exists(self.uploaded_file.path):
-            return self.uploaded_file.name.rsplit("/", 1)[-1]
+        if settings.LOCAL_MEDIA_STORAGE:
+            if self.uploaded_file and os.path.exists(self.uploaded_file.path):
+                return self.uploaded_file.name.rsplit("/", 1)[-1]
+            else:
+                return ""
         else:
-            return ""
+            if self.uploaded_file:
+                return self.uploaded_file.name.rsplit("/", 1)[-1]
+            else:
+                return ""
 
     @property
     def extension(self):
