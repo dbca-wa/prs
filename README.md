@@ -58,6 +58,12 @@ By default, PRS assumes that user-uploaded media will be saved to Azure blob
 storage. To use local storage, set the environment variable `LOCAL_MEDIA_STORAGE=True`
 and ensure that a writeable `media` directory exists in the project directory.
 
+Credentials for Azure should be defined in the following environment variables:
+
+    AZURE_ACCOUNT_NAME=name
+    AZURE_ACCOUNT_KEY=key
+    AZURE_CONTAINER=container_name
+
 # Running
 
 Use `runserver` to run a local copy of the application:
