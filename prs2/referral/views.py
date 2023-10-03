@@ -1578,6 +1578,8 @@ class ReferralTagged(PrsObjectList):
 
     def get_queryset(self):
         qs = super().get_queryset()
+        if not Tag.objects.filter(slug=self.kwargs["slug"]).exists():
+            return []
         # Filter queryset by the tag.
         tag = Tag.objects.get(slug=self.kwargs["slug"])
         qs = qs.filter(tags__in=[tag]).distinct()
@@ -1585,8 +1587,11 @@ class ReferralTagged(PrsObjectList):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        tag = Tag.objects.get(slug=self.kwargs["slug"])
-        title = "Referrals tagged: {}".format(tag.name)
+        if not Tag.objects.filter(slug=self.kwargs["slug"]).exists():
+            title = f"Referrals tagged: {self.kwargs['slug']}"
+        else:
+            tag = Tag.objects.get(slug=self.kwargs["slug"])
+            title = f"Referrals tagged: {tag.name}"
         context["page_title"] = " | ".join([settings.APPLICATION_ACRONYM, title])
         links = [
             (reverse("site_home"), "Home"),
