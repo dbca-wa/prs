@@ -471,18 +471,7 @@ class PrsObjectDelete(LoginRequiredMixin, DeleteView):
             success_url = self.get_success_url()
         obj.delete()
 
-        # For Location objects:
-        # Call the Borg Collector publish API endpoint to create a manual job
-        # to update the prs_locations layer.
-        # FIXME: don't call the Borg API at present (broken).
-        #if obj._meta.object_name == "Location":
-        #    resp = borgcollector_harvest(self.request)
-        #    logger.info(
-        #        "Borg Collector API response status was {}".format(resp.status_code)
-        #    )
-        #    logger.info("Borg Collector API response: {}".format(resp.content))
-
-        messages.success(self.request, "{0} has been deleted.".format(obj))
+        messages.success(self.request, f"{obj} has been deleted.")
         return HttpResponseRedirect(success_url)
 
 
