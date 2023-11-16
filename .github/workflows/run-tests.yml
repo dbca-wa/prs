@@ -93,4 +93,4 @@ jobs:
           source .venv/bin/activate
           python manage.py collectstatic
           # NOTE: we can't run tests in parallel, because setup() may break DB constraints.
-          python manage.py test --noinput --failfast --verbosity 0 --settings prs2.settings-test
+          python manage.py test --noinput --failfast --verbosity 0 --settings prs2.test-settings
