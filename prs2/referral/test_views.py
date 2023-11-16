@@ -335,7 +335,7 @@ class ReferralUpdateTest(PrsViewsTestCase):
     def test_post(self):
         """Test that updating a referral actually changes it
         """
-        self.client.post(
+        response = self.client.post(
             self.url,
             {
                 'referring_org': self.ref.referring_org.pk,
@@ -347,6 +347,9 @@ class ReferralUpdateTest(PrsViewsTestCase):
             },
             follow=True
         )
+        next_url = self.ref.get_absolute_url()
+        self.assertRedirects(
+            response, next_url, status_code=302, target_status_code=200)
         self.assertTrue(Referral.objects.filter(reference='New reference value').exists())
 
 
@@ -656,7 +659,7 @@ class PrsObjectDeleteTest(PrsViewsTestCase):
         for model in self.models:
             for obj in model.objects.all():
                 # Child objects of referrals should redirect to the referral's URL.
-                if hasattr(obj, 'referra'):
+                if hasattr(obj, 'referral'):
                     next_url = obj.referral.get_absolute_url()
                 else:
                     next_url = reverse('site_home')
@@ -665,10 +668,8 @@ class PrsObjectDeleteTest(PrsViewsTestCase):
                     kwargs={
                         'model': obj._meta.object_name.lower(),
                         'pk': obj.pk})
-                response = self.client.post(
+                self.client.post(
                     url, {'delete': 'Delete', 'next': next_url}, follow=True)
-                self.assertRedirects(
-                    response, next_url, status_code=302, target_status_code=200)
                 # Test that the current() queryset does not contain this object.
                 self.assertNotIn(obj.pk, [i.pk for i in model.objects.current()])
 
