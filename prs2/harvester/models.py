@@ -92,6 +92,7 @@ class EmailedReferral(models.Model):
             return actions
         else:
             xml_file = attachments.get(name__istartswith='application.xml')
+
         # Parse the attached XML file.
         try:
             d = xmltodict.parse(xml_file.attachment.read())
@@ -144,6 +145,7 @@ class EmailedReferral(models.Model):
             addresses = [app['ADDRESS_DETAIL']['DOP_ADDRESS_TYPE']]
         else:
             addresses = app['ADDRESS_DETAIL']['DOP_ADDRESS_TYPE']
+
         # Address geometry:
         locations = []
         if create_locations:

@@ -3,6 +3,7 @@ import dj_database_url
 import os
 from pathlib import Path
 import sys
+import tomli
 
 
 # Project paths
@@ -14,7 +15,6 @@ sys.path.insert(0, PROJECT_DIR)
 
 # Application definition
 DEBUG = env('DEBUG', False)
-DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 SECRET_KEY = env('SECRET_KEY', 'PlaceholderSecretKey')
 CSRF_COOKIE_SECURE = env('CSRF_COOKIE_SECURE', False)
 SESSION_COOKIE_SECURE = env('SESSION_COOKIE_SECURE', False)
@@ -28,6 +28,7 @@ else:
 INTERNAL_IPS = ['127.0.0.1', '::1']
 ROOT_URLCONF = 'prs2.urls'
 WSGI_APPLICATION = 'prs2.wsgi.application'
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 # Assume Azure blob storage is used for media uploads, unless explicitly set as local storage.
 LOCAL_MEDIA_STORAGE = env('LOCAL_MEDIA_STORAGE', False)
@@ -117,7 +118,8 @@ LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 APPLICATION_TITLE = 'Planning Referral System'
 APPLICATION_ACRONYM = 'PRS'
-APPLICATION_VERSION_NO = '2.5.33'
+project = tomli.load(open(os.path.join(BASE_DIR, "pyproject.toml"), "rb"))
+APPLICATION_VERSION_NO = project["tool"]["poetry"]["version"]
 APPLICATION_ALERTS_EMAIL = 'PRS-Alerts@dbca.wa.gov.au'
 SITE_URL = env('SITE_URL', 'localhost')
 PRS_USER_GROUP = env('PRS_USER_GROUP', 'PRS user')
@@ -251,3 +253,17 @@ TYPESENSE_CONN_TIMEOUT = env('TYPESENSE_CONN_TIMEOUT', 2)
 BROKER_URL = env('CELERY_BROKER_URL', 'pyamqp://localhost//')
 CELERY_RESULT_BACKEND = 'django-db'
 CELERY_TIMEZONE = TIME_ZONE
+
+# Sentry config
+SENTRY_DSN = env('SENTRY_DSN', None)
+SENTRY_SAMPLE_RATE = env('SENTRY_SAMPLE_RATE', 0.0)  # 0.0 - 1.0
+SENTRY_ENVIRONMENT = env('SENTRY_ENVIRONMENT', None)
+if SENTRY_DSN and SENTRY_ENVIRONMENT:
+    import sentry_sdk
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        traces_sample_rate=SENTRY_SAMPLE_RATE,
+        environment=SENTRY_ENVIRONMENT,
+        release=APPLICATION_VERSION_NO,
+    )
