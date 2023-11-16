@@ -84,8 +84,7 @@ class PRSUserChoiceField(forms.ModelChoiceField):
     """
 
     def __init__(self, *args, **kwargs):
-        users = User.objects.filter(groups__name__in=['PRS user'], is_active=True)
-        kwargs['queryset'] = users.order_by('username')
+        kwargs['queryset'] = User.objects.filter(groups__name__in=['PRS user'], is_active=True).order_by('email')
         super().__init__(*args, **kwargs)
 
     def label_from_instance(self, obj):
@@ -438,11 +437,13 @@ class CustomFormHelper(BaseFormHelper):
 class RecordAddExistingForm(BaseForm):
     """Form for associating existing record(s) to a task or note.
     """
-    records = RecordChoiceField(queryset=None)
+    records = RecordChoiceField(queryset=None, help_text='Hold down control to select multiple items')
 
     def __init__(self, referral, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['records'].queryset = Record.objects.current().filter(referral=referral)
+        records = Record.objects.current().filter(referral=referral)
+        self.fields['records'].queryset = records
+        self.fields['records'].widget.attrs.update(size=str(records.count()))
         self.helper = CustomFormHelper()
         layout = Layout(
             'records',
