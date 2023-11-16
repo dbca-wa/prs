@@ -82,11 +82,11 @@ Run a single Celery worker alongside the local webserver to test indexing:
 
 Run unit tests as follows:
 
-    poetry run python manage.py test --keepdb -v2 --settings prs2.settings-test
+    poetry run python manage.py test --keepdb -v2 --settings prs2.test-settings
 
 To run tests for e.g. models only:
 
-    poetry run python manage.py test prs2.referral.test_models --keepdb -v2 --settings prs2.settings-test
+    poetry run python manage.py test prs2.referral.test_models --keepdb -v2 --settings prs2.test-settings
 
 To obtain coverage reports:
 
