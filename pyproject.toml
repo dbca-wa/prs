@@ -44,6 +44,7 @@ sentry-sdk = {version = "1.32.0", extras = ["django"]}
 [tool.poetry.group.dev.dependencies]
 ipython = "^8.10.0"
 ipdb = "^0.13.11"
+pre-commit = "^3.5.0"
 
 [build-system]
 requires = ["poetry-core"]
