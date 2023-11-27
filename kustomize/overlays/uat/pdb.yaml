@@ -1,0 +1,32 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: prs-deployment-pdb
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: prs-uat
+      variant: uat
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: prs-celery-pdb
+spec:
+  minAvailable: 0
+  selector:
+    matchLabels:
+      app: prs-celery-uat
+      variant: uat
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: prs-typesense-pdb
+spec:
+  minAvailable: 0
+  selector:
+    matchLabels:
+      app: prs-typesense-uat
+      variant: uat
