@@ -39,7 +39,7 @@ whitenoise = {version = "6.5.0", extras = ["brotli"]}
 django-crum = "0.7.9"
 django-storages = {version = "1.14.2", extras = ["azure"]}
 tomli = "2.0.1"
-sentry-sdk = {version = "1.37.1", extras = ["django"]}
+sentry-sdk = {version = "1.38.0", extras = ["django"]}
 
 [tool.poetry.group.dev.dependencies]
 ipython = "^8.10.0"
