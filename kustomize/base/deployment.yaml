@@ -11,8 +11,9 @@ spec:
       containers:
       - name: prs
         image: ghcr.io/dbca-wa/prs
+        imagePullPolicy: Always
         env:
-        - name: ALLOWED_DOMAINS
+        - name: ALLOWED_HOSTS
           value: ".dbca.wa.gov.au"
         - name: CSRF_COOKIE_SECURE
           value: "True"

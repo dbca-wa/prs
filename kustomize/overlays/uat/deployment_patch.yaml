@@ -15,8 +15,9 @@ spec:
     spec:
       containers:
       - name: prs
-        imagePullPolicy: Always
         env:
+        - name: SITE_URL
+          value: "prs-uat.dbca.wa.gov.au"
         - name: DATABASE_URL
           valueFrom:
             secretKeyRef:
