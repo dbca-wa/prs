@@ -242,6 +242,7 @@ def email_harvest_actions(to_emails, actions):
 
 def query_slip(pin):
     """Function to query the Landgate SLIP service for a cadastral location, by PIN.
+    DEPRECATED - use query_slip_esri instead.
     """
     url = env('SLIP_WFS_URL', None)
     auth = (env('SLIP_USERNAME', None), env('SLIP_PASSWORD', None))

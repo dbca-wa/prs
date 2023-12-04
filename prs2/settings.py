@@ -22,7 +22,7 @@ SECURE_SSL_REDIRECT = env('SECURE_SSL_REDIRECT', False)
 SECURE_REFERRER_POLICY = env('SECURE_REFERRER_POLICY', None)
 SECURE_HSTS_SECONDS = env('SECURE_HSTS_SECONDS', 0)
 if not DEBUG:
-    ALLOWED_HOSTS = env('ALLOWED_DOMAINS', 'localhost').split(',')
+    ALLOWED_HOSTS = env('ALLOWED_HOSTS', 'localhost').split(',')
 else:
     ALLOWED_HOSTS = ['*']
 INTERNAL_IPS = ['127.0.0.1', '::1']

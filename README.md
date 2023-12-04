@@ -49,8 +49,7 @@ Variables below may also need to be defined in production (context-dependent):
     BORGCOLLECTOR_API="https://borg.dpaw.wa.gov.au/api/"
     SLIP_USERNAME="slip_username"
     SLIP_PASSWORD="slip_password"
-    SLIP_WFS_URL="https://wfs.slip.url.au/endpoint"
-    SLIP_DATASET="slip:LGATE-001"
+    SLIP_ESRI_FS_URL="https://wfs.slip.url.au/endpoint"
 
 # Media uploads
 
