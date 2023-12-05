@@ -64,6 +64,7 @@ INSTALLED_APPS = (
     'taggit',
     'reversion',
     'crispy_forms',
+    'crispy_bootstrap4',
     'bootstrap_pagination',
     'webtemplate_dbca',
     'django_celery_results',

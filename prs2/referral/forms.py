@@ -231,10 +231,6 @@ class ReferralCreateForm(ReferralForm):
             be added.'''
         self.fields['address'].help_text = '''[Searchable] Insert physical
             address of the proposal.'''
-        self.fields['type'].label = '''<button type="button" class="btn btn-primary"
-            data-toggle="modal" data-target="#refTypeModal">
-            <i class="far fa-question-circle"></i>
-            Referral type</button>'''
         self.fields['task_type'].help_text = '''Select a task from the list.
             Normally, the default task 'Assess a referral' is appropriate.
             Please note that to enter a clearance request, a referral will first
