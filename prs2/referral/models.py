@@ -1,6 +1,6 @@
 from copy import copy
 from datetime import date
-from dateutil.parser import parse
+#from dateutil.parser import parse
 from django.conf import settings
 from django.contrib.auth.signals import user_logged_in
 from django.contrib.gis.db import models
@@ -1112,19 +1112,14 @@ class Record(ReferralBaseModel):
         self.name = unidecode(self.name).replace('\r\n', '').strip()
         if self.description:
             self.description = unidecode(self.description)
-        super().save(force_insert, force_update)
 
         # If the file is a .MSG we take the sent date of the email and use it for order_date.
         if self.extension == "MSG":
-            if settings.LOCAL_MEDIA_STORAGE:
-                msg = Message(os.path.realpath(self.uploaded_file.path))
-            else:
-                msg = Message(self.uploaded_file)
-            if msg.date:
-                date = parse(msg.date.replace('GMT ', ''))
-                if date and self.order_date != date:
-                    self.order_date = date
-                    self.save()
+            msg = Message(self.uploaded_file)
+            if msg.date and not self.order_date:  # Don't override any existing order_date.
+                self.order_date = msg.date
+
+        super().save(force_insert, force_update)
 
         # Index the record.
         try:
