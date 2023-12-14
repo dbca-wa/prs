@@ -13,7 +13,7 @@ RUN apt-get update -y \
 # Install Python libs using Poetry.
 FROM builder_base_prs as python_libs_prs
 WORKDIR /app
-ARG POETRY_VERSION=1.6.1
+ARG POETRY_VERSION=1.7.1
 RUN pip install poetry=="${POETRY_VERSION}"
 COPY poetry.lock pyproject.toml ./
 RUN poetry config virtualenvs.create false \
