@@ -8,6 +8,8 @@ secretGenerator:
       - .env
 resources:
   - ../../base
+  - cronjobs/harvest-email-referrals
+  - cronjobs/overdue-task-email
   - ingress.yaml
   - pdb.yaml
   - typesense_pvc.yaml
