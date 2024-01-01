@@ -27,7 +27,6 @@ xmltodict = "0.13.0"
 extract-msg = "0.47.0"
 django-extensions = "3.2.3"
 webtemplate-dbca = "1.5.1"
-coverage = "4.5.1"
 mixer = "7.2.2"
 geojson = "3.0.1"
 typesense = "0.16.0"
@@ -46,6 +45,7 @@ sentry-sdk = {version = "1.38.0", extras = ["django"]}
 ipython = "^8.10.0"
 ipdb = "^0.13.11"
 pre-commit = "^3.5.0"
+coverage = "^7.4.0"
 
 [build-system]
 requires = ["poetry-core"]

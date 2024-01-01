@@ -89,7 +89,7 @@ To run tests for e.g. models only:
 
 To obtain coverage reports:
 
-    poetry run coverage run --source='.' manage.py test --keepdb -v2 --settings prs2.settings-test
+    poetry run coverage run --source='.' manage.py test --keepdb -v2 --settings prs2.test-settings
     poetry run coverage report -m
 
 # Docker image
