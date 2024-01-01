@@ -2009,12 +2009,13 @@ test = ["argcomplete (>=3.0.3)", "mypy (>=1.7.0)", "pre-commit", "pytest (>=7.0,
 
 [[package]]
 name = "typesense"
-version = "0.16.0"
+version = "0.18.0"
 description = "Python client for Typesense, an open source and typo tolerant search engine."
 optional = false
 python-versions = ">=3"
 files = [
-    {file = "typesense-0.16.0-py2.py3-none-any.whl", hash = "sha256:d7a66eeae2ec146bba19dc5ce6afd52f5c4773eb029d0214fb5c8bc1511be033"},
+    {file = "typesense-0.18.0-py2.py3-none-any.whl", hash = "sha256:1004f29752e25991444beb378823555bf583b8f0c48df5150b955f55de1f73e6"},
+    {file = "typesense-0.18.0.tar.gz", hash = "sha256:539b87aa91d6224a3dc47ec187dd091119ba514891cbdd1a4bea5461b12f53df"},
 ]
 
 [package.dependencies]
@@ -2182,4 +2183,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.11"
-content-hash = "ec8dd50026f71aed6463fbe6021bc1c611228a55c60acc0eeaeabd4838e2a895"
+content-hash = "300eade6999bc6d05c9aaa5c1030433b0e075169d8e040f6479d764cc861a9d2"
