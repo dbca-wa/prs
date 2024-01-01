@@ -3,8 +3,8 @@ kind: CronJob
 metadata:
   name: prs-cronjob
 spec:
-  # Every hour between 09:00-17:00, Mon-Fri
-  schedule: "0 9-17 * * 1-5"
+  # Every hour between 09:00-17:00, Mon-Fri (AWST -> UTC)
+  schedule: "0 1-9 * * 1-5"
   jobTemplate:
     spec:
       template:
