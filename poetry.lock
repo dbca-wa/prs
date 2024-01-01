@@ -15,6 +15,28 @@ files = [
 vine = ">=5.0.0,<6.0.0"
 
 [[package]]
+name = "anyio"
+version = "4.2.0"
+description = "High level compatibility layer for multiple asynchronous event loop implementations"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "anyio-4.2.0-py3-none-any.whl", hash = "sha256:745843b39e829e108e518c489b31dc757de7d2131d53fac32bd8df268227bfee"},
+    {file = "anyio-4.2.0.tar.gz", hash = "sha256:e1875bb4b4e2de1669f4bc7869b6d3f54231cdced71605e6e64c9be77e3be50f"},
+]
+
+[package.dependencies]
+exceptiongroup = {version = ">=1.0.2", markers = "python_version < \"3.11\""}
+idna = ">=2.8"
+sniffio = ">=1.1"
+typing-extensions = {version = ">=4.1", markers = "python_version < \"3.11\""}
+
+[package.extras]
+doc = ["Sphinx (>=7)", "packaging", "sphinx-autodoc-typehints (>=1.2.0)", "sphinx-rtd-theme"]
+test = ["anyio[trio]", "coverage[toml] (>=7)", "exceptiongroup (>=1.2.0)", "hypothesis (>=4.0)", "psutil (>=5.9)", "pytest (>=7.0)", "pytest-mock (>=3.6.1)", "trustme", "uvloop (>=0.17)"]
+trio = ["trio (>=0.23)"]
+
+[[package]]
 name = "asgiref"
 version = "3.7.2"
 description = "ASGI specs, helper code, and adapters"
@@ -51,17 +73,18 @@ test = ["astroid (>=1,<2)", "astroid (>=2,<4)", "pytest"]
 
 [[package]]
 name = "azure-core"
-version = "1.29.5"
+version = "1.29.6"
 description = "Microsoft Azure Core Library for Python"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "azure-core-1.29.5.tar.gz", hash = "sha256:52983c89d394c6f881a121e5101c5fa67278ca3b1f339c8fb2ef39230c70e9ac"},
-    {file = "azure_core-1.29.5-py3-none-any.whl", hash = "sha256:0fa04b7b1f7d44a4fb8468c4093deb2ea01fdf4faddbf802ed9205615f99d68c"},
+    {file = "azure-core-1.29.6.tar.gz", hash = "sha256:13b485252ecd9384ae624894fe51cfa6220966207264c360beada239f88b738a"},
+    {file = "azure_core-1.29.6-py3-none-any.whl", hash = "sha256:604a005bce6a49ba661bb7b2be84a9b169047e52fcfcd0a4e4770affab4178f7"},
 ]
 
 [package.dependencies]
-requests = ">=2.18.4"
+anyio = ">=3.0,<5.0"
+requests = ">=2.21.0"
 six = ">=1.11.0"
 typing-extensions = ">=4.6.0"
 
@@ -90,13 +113,13 @@ aio = ["azure-core[aio] (>=1.28.0,<2.0.0)"]
 
 [[package]]
 name = "beautifulsoup4"
-version = "4.11.2"
+version = "4.12.2"
 description = "Screen-scraping library"
 optional = false
 python-versions = ">=3.6.0"
 files = [
-    {file = "beautifulsoup4-4.11.2-py3-none-any.whl", hash = "sha256:0e79446b10b3ecb499c1556f7e228a53e64a2bfcebd455f370d8927cb5b59e39"},
-    {file = "beautifulsoup4-4.11.2.tar.gz", hash = "sha256:bc4bdda6717de5a2987436fb8d72f45dc90dd856bdfd512a1314ce90349a0106"},
+    {file = "beautifulsoup4-4.12.2-py3-none-any.whl", hash = "sha256:bd2520ca0d9d7d12694a53d44ac482d181b4ec1888909b035a3dbf40d0f57d4a"},
+    {file = "beautifulsoup4-4.12.2.tar.gz", hash = "sha256:492bbc69dca35d12daac71c4db1bfff0c876c00ef4a2ffacce226d4638eb72da"},
 ]
 
 [package.dependencies]
@@ -211,29 +234,29 @@ files = [
 
 [[package]]
 name = "celery"
-version = "5.3.0"
+version = "5.3.6"
 description = "Distributed Task Queue."
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "celery-5.3.0-py3-none-any.whl", hash = "sha256:95d29f9a93f41c4b122fddf1fe3ef13f872029dca4ad1f9af4f1a414442ceecf"},
-    {file = "celery-5.3.0.tar.gz", hash = "sha256:1eaba5ee14d8c8c0bed8f6063e5e10dabdbcf23503a861cf0e10b7221d99cb0d"},
+    {file = "celery-5.3.6-py3-none-any.whl", hash = "sha256:9da4ea0118d232ce97dff5ed4974587fb1c0ff5c10042eb15278487cdd27d1af"},
+    {file = "celery-5.3.6.tar.gz", hash = "sha256:870cc71d737c0200c397290d730344cc991d13a057534353d124c9380267aab9"},
 ]
 
 [package.dependencies]
-billiard = ">=4.1.0,<5.0"
+billiard = ">=4.2.0,<5.0"
 click = ">=8.1.2,<9.0"
 click-didyoumean = ">=0.3.0"
 click-plugins = ">=1.1.1"
 click-repl = ">=0.2.0"
-kombu = ">=5.3.0,<6.0"
+kombu = ">=5.3.4,<6.0"
 python-dateutil = ">=2.8.2"
 tzdata = ">=2022.7"
-vine = ">=5.0.0,<6.0"
+vine = ">=5.1.0,<6.0"
 
 [package.extras]
-arangodb = ["pyArango (>=2.0.1)"]
-auth = ["cryptography (==41.0.1)"]
+arangodb = ["pyArango (>=2.0.2)"]
+auth = ["cryptography (==41.0.5)"]
 azureblockblob = ["azure-storage-blob (>=12.15.0)"]
 brotli = ["brotli (>=1.0.0)", "brotlipy (>=0.7.0)"]
 cassandra = ["cassandra-driver (>=3.25.0,<4)"]
@@ -243,26 +266,26 @@ couchbase = ["couchbase (>=3.0.0)"]
 couchdb = ["pycouchdb (==1.14.2)"]
 django = ["Django (>=2.2.28)"]
 dynamodb = ["boto3 (>=1.26.143)"]
-elasticsearch = ["elasticsearch (<8.0)"]
+elasticsearch = ["elastic-transport (<=8.10.0)", "elasticsearch (<=8.11.0)"]
 eventlet = ["eventlet (>=0.32.0)"]
 gevent = ["gevent (>=1.5.0)"]
 librabbitmq = ["librabbitmq (>=2.0.0)"]
 memcache = ["pylibmc (==1.6.3)"]
 mongodb = ["pymongo[srv] (>=4.0.2)"]
-msgpack = ["msgpack (==1.0.5)"]
+msgpack = ["msgpack (==1.0.7)"]
 pymemcache = ["python-memcached (==1.59)"]
 pyro = ["pyro4 (==4.82)"]
 pytest = ["pytest-celery (==0.0.0)"]
-redis = ["redis (>=4.5.2)"]
+redis = ["redis (>=4.5.2,!=4.5.5,<6.0.0)"]
 s3 = ["boto3 (>=1.26.143)"]
 slmq = ["softlayer-messaging (>=1.0.3)"]
-solar = ["ephem (==4.1.4)"]
+solar = ["ephem (==4.1.5)"]
 sqlalchemy = ["sqlalchemy (>=1.4.48,<2.1)"]
-sqs = ["kombu[sqs] (>=5.3.0)"]
+sqs = ["boto3 (>=1.26.143)", "kombu[sqs] (>=5.3.0)", "pycurl (>=7.43.0.5)", "urllib3 (>=1.26.16)"]
 tblib = ["tblib (>=1.3.0)", "tblib (>=1.5.0)"]
 yaml = ["PyYAML (>=3.10)"]
 zookeeper = ["kazoo (>=1.3.1)"]
-zstd = ["zstandard (==0.21.0)"]
+zstd = ["zstandard (==0.22.0)"]
 
 [[package]]
 name = "certifi"
@@ -809,13 +832,13 @@ Django = ">=3.2"
 
 [[package]]
 name = "django-reversion"
-version = "5.0.8"
+version = "5.0.10"
 description = "An extension to the Django web framework that provides version control for model instances."
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "django-reversion-5.0.8.tar.gz", hash = "sha256:45d378bc6e606df6b2ad0077aec8b0a00e35f18c74ca2a1ae9cc262ceb32fb9a"},
-    {file = "django_reversion-5.0.8-py3-none-any.whl", hash = "sha256:229ad0d2819416157502ff13d81bad2366227b763ce85b63b8a223edb756a513"},
+    {file = "django-reversion-5.0.10.tar.gz", hash = "sha256:c18749a67c1db4167ccaccc36395c5fe6078f312869683c2f3d214051e5a6b29"},
+    {file = "django_reversion-5.0.10-py3-none-any.whl", hash = "sha256:1209a7965ea91f39a297424450f88732e01acf841e024a1eec6c6420367a6252"},
 ]
 
 [package.dependencies]
@@ -989,13 +1012,13 @@ typing = ["typing-extensions (>=4.8)"]
 
 [[package]]
 name = "geojson"
-version = "3.0.1"
+version = "3.1.0"
 description = "Python bindings and utilities for GeoJSON"
 optional = false
-python-versions = ">=3.7, <3.12"
+python-versions = ">=3.7"
 files = [
-    {file = "geojson-3.0.1-py3-none-any.whl", hash = "sha256:e49df982b204ed481e4c1236c57f587adf71537301cf8faf7120ab27d73c7568"},
-    {file = "geojson-3.0.1.tar.gz", hash = "sha256:ff3d75acab60b1e66504a11f7ea12c104bad32ff3c410a807788663b966dee4a"},
+    {file = "geojson-3.1.0-py3-none-any.whl", hash = "sha256:68a9771827237adb8c0c71f8527509c8f5bef61733aa434cefc9c9d4f0ebe8f3"},
+    {file = "geojson-3.1.0.tar.gz", hash = "sha256:58a7fa40727ea058efc28b0e9ff0099eadf6d0965e04690830208d3ef571adac"},
 ]
 
 [[package]]
@@ -1061,13 +1084,13 @@ tomli = {version = "*", markers = "python_version > \"3.6\" and python_version <
 
 [[package]]
 name = "ipython"
-version = "8.18.1"
+version = "8.19.0"
 description = "IPython: Productive Interactive Computing"
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.10"
 files = [
-    {file = "ipython-8.18.1-py3-none-any.whl", hash = "sha256:e8267419d72d81955ec1177f8a29aaa90ac80ad647499201119e2f05e99aa397"},
-    {file = "ipython-8.18.1.tar.gz", hash = "sha256:ca6f079bb33457c66e233e4580ebfc4128855b4cf6370dddd73842a9563e8a27"},
+    {file = "ipython-8.19.0-py3-none-any.whl", hash = "sha256:2f55d59370f59d0d2b2212109fe0e6035cfea436b1c0e6150ad2244746272ec5"},
+    {file = "ipython-8.19.0.tar.gz", hash = "sha256:ac4da4ecf0042fb4e0ce57c60430c2db3c719fa8bdf92f8631d6bd8a5785d1f0"},
 ]
 
 [package.dependencies]
@@ -1083,17 +1106,17 @@ stack-data = "*"
 traitlets = ">=5"
 
 [package.extras]
-all = ["black", "curio", "docrepr", "exceptiongroup", "ipykernel", "ipyparallel", "ipywidgets", "matplotlib", "matplotlib (!=3.2.0)", "nbconvert", "nbformat", "notebook", "numpy (>=1.22)", "pandas", "pickleshare", "pytest (<7)", "pytest (<7.1)", "pytest-asyncio (<0.22)", "qtconsole", "setuptools (>=18.5)", "sphinx (>=1.3)", "sphinx-rtd-theme", "stack-data", "testpath", "trio", "typing-extensions"]
+all = ["black", "curio", "docrepr", "exceptiongroup", "ipykernel", "ipyparallel", "ipywidgets", "matplotlib", "matplotlib (!=3.2.0)", "nbconvert", "nbformat", "notebook", "numpy (>=1.23)", "pandas", "pickleshare", "pytest", "pytest-asyncio (<0.22)", "qtconsole", "setuptools (>=18.5)", "sphinx (>=1.3)", "sphinx-rtd-theme", "stack-data", "testpath", "trio", "typing-extensions"]
 black = ["black"]
-doc = ["docrepr", "exceptiongroup", "ipykernel", "matplotlib", "pickleshare", "pytest (<7)", "pytest (<7.1)", "pytest-asyncio (<0.22)", "setuptools (>=18.5)", "sphinx (>=1.3)", "sphinx-rtd-theme", "stack-data", "testpath", "typing-extensions"]
+doc = ["docrepr", "exceptiongroup", "ipykernel", "matplotlib", "pickleshare", "pytest", "pytest-asyncio (<0.22)", "setuptools (>=18.5)", "sphinx (>=1.3)", "sphinx-rtd-theme", "stack-data", "testpath", "typing-extensions"]
 kernel = ["ipykernel"]
 nbconvert = ["nbconvert"]
 nbformat = ["nbformat"]
 notebook = ["ipywidgets", "notebook"]
 parallel = ["ipyparallel"]
 qtconsole = ["qtconsole"]
-test = ["pickleshare", "pytest (<7.1)", "pytest-asyncio (<0.22)", "testpath"]
-test-extra = ["curio", "matplotlib (!=3.2.0)", "nbformat", "numpy (>=1.22)", "pandas", "pickleshare", "pytest (<7.1)", "pytest-asyncio (<0.22)", "testpath", "trio"]
+test = ["pickleshare", "pytest", "pytest-asyncio (<0.22)", "testpath"]
+test-extra = ["curio", "matplotlib (!=3.2.0)", "nbformat", "numpy (>=1.23)", "pandas", "pickleshare", "pytest", "pytest-asyncio (<0.22)", "testpath", "trio"]
 
 [[package]]
 name = "isodate"
@@ -1731,20 +1754,6 @@ files = [
 ]
 
 [[package]]
-name = "pytz-deprecation-shim"
-version = "0.1.0.post0"
-description = "Shims to make deprecation of pytz easier"
-optional = false
-python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,>=2.7"
-files = [
-    {file = "pytz_deprecation_shim-0.1.0.post0-py2.py3-none-any.whl", hash = "sha256:8314c9692a636c8eb3bda879b9f119e350e93223ae83e70e80c31675a0fdc1a6"},
-    {file = "pytz_deprecation_shim-0.1.0.post0.tar.gz", hash = "sha256:af097bae1b616dde5c5744441e2ddc69e74dfdcb0c263129610d85b87445a59d"},
-]
-
-[package.dependencies]
-tzdata = {version = "*", markers = "python_version >= \"3.6\""}
-
-[[package]]
 name = "pyyaml"
 version = "6.0.1"
 description = "YAML parser and emitter for Python"
@@ -1845,18 +1854,17 @@ msg-parse = ["extract-msg (>=0.27)"]
 
 [[package]]
 name = "sentry-sdk"
-version = "1.38.0"
+version = "1.39.1"
 description = "Python client for Sentry (https://sentry.io)"
 optional = false
 python-versions = "*"
 files = [
-    {file = "sentry-sdk-1.38.0.tar.gz", hash = "sha256:8feab81de6bbf64f53279b085bd3820e3e737403b0a0d9317f73a2c3374ae359"},
-    {file = "sentry_sdk-1.38.0-py2.py3-none-any.whl", hash = "sha256:0017fa73b8ae2d4e57fd2522ee3df30453715b29d2692142793ec5d5f90b94a6"},
+    {file = "sentry-sdk-1.39.1.tar.gz", hash = "sha256:320a55cdf9da9097a0bead239c35b7e61f53660ef9878861824fd6d9b2eaf3b5"},
+    {file = "sentry_sdk-1.39.1-py2.py3-none-any.whl", hash = "sha256:81b5b9ffdd1a374e9eb0c053b5d2012155db9cbe76393a8585677b753bd5fdc1"},
 ]
 
 [package.dependencies]
 certifi = "*"
-django = {version = ">=1.8", optional = true, markers = "extra == \"django\""}
 urllib3 = {version = ">=1.26.11", markers = "python_version >= \"3.6\""}
 
 [package.extras]
@@ -1891,13 +1899,13 @@ tornado = ["tornado (>=5)"]
 
 [[package]]
 name = "setuptools"
-version = "69.0.2"
+version = "69.0.3"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "setuptools-69.0.2-py3-none-any.whl", hash = "sha256:1e8fdff6797d3865f37397be788a4e3cba233608e9b509382a2777d25ebde7f2"},
-    {file = "setuptools-69.0.2.tar.gz", hash = "sha256:735896e78a4742605974de002ac60562d286fa8051a7e2299445e8e8fbb01aa6"},
+    {file = "setuptools-69.0.3-py3-none-any.whl", hash = "sha256:385eb4edd9c9d5c17540511303e39a147ce2fc04bc55289c322b9e5904fe2c05"},
+    {file = "setuptools-69.0.3.tar.gz", hash = "sha256:be1af57fc409f93647f2e8e4573a142ed38724b8cdd389706a867bb4efcf1e78"},
 ]
 
 [package.extras]
@@ -1914,6 +1922,17 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
 files = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
     {file = "six-1.16.0.tar.gz", hash = "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926"},
+]
+
+[[package]]
+name = "sniffio"
+version = "1.3.0"
+description = "Sniff out which async library your code is running under"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "sniffio-1.3.0-py3-none-any.whl", hash = "sha256:eecefdce1e5bbfb7ad2eeaabf7c1eeb404d7757c379bd1f7e5cce9d8bf425384"},
+    {file = "sniffio-1.3.0.tar.gz", hash = "sha256:e60305c5e5d314f5389259b7f22aaa33d8f7dee49763119234af3755c55b9101"},
 ]
 
 [[package]]
@@ -2014,33 +2033,31 @@ files = [
 
 [[package]]
 name = "tzdata"
-version = "2023.3"
+version = "2023.4"
 description = "Provider of IANA time zone data"
 optional = false
 python-versions = ">=2"
 files = [
-    {file = "tzdata-2023.3-py2.py3-none-any.whl", hash = "sha256:7e65763eef3120314099b6939b5546db7adce1e7d6f2e179e3df563c70511eda"},
-    {file = "tzdata-2023.3.tar.gz", hash = "sha256:11ef1e08e54acb0d4f95bdb1be05da659673de4acbd21bf9c69e94cc5e907a3a"},
+    {file = "tzdata-2023.4-py2.py3-none-any.whl", hash = "sha256:aa3ace4329eeacda5b7beb7ea08ece826c28d761cda36e747cfbf97996d39bf3"},
+    {file = "tzdata-2023.4.tar.gz", hash = "sha256:dd54c94f294765522c77399649b4fefd95522479a664a0cec87f41bebc6148c9"},
 ]
 
 [[package]]
 name = "tzlocal"
-version = "4.2"
+version = "5.2"
 description = "tzinfo object for the local timezone"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.8"
 files = [
-    {file = "tzlocal-4.2-py3-none-any.whl", hash = "sha256:89885494684c929d9191c57aa27502afc87a579be5cdd3225c77c463ea043745"},
-    {file = "tzlocal-4.2.tar.gz", hash = "sha256:ee5842fa3a795f023514ac2d801c4a81d1743bbe642e3940143326b3a00addd7"},
+    {file = "tzlocal-5.2-py3-none-any.whl", hash = "sha256:49816ef2fe65ea8ac19d19aa7a1ae0551c834303d5014c6d5a62e4cbda8047b8"},
+    {file = "tzlocal-5.2.tar.gz", hash = "sha256:8d399205578f1a9342816409cc1e46a93ebd5755e39ea2d85334bea911bf0e6e"},
 ]
 
 [package.dependencies]
-pytz-deprecation-shim = "*"
 tzdata = {version = "*", markers = "platform_system == \"Windows\""}
 
 [package.extras]
-devenv = ["black", "pyroma", "pytest-cov", "zest.releaser"]
-test = ["pytest (>=4.3)", "pytest-mock (>=3.3)"]
+devenv = ["check-manifest", "pytest (>=4.3)", "pytest-cov", "pytest-mock (>=3.3)", "zest.releaser"]
 
 [[package]]
 name = "unidecode"
@@ -2165,4 +2182,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.11"
-content-hash = "9f6c96ab728b9eb891bdba130c7e3acd18644581397b65b2a74eae57b66a486d"
+content-hash = "ec8dd50026f71aed6463fbe6021bc1c611228a55c60acc0eeaeabd4838e2a895"
