@@ -1,11 +1,6 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 nameSuffix: -uat
-secretGenerator:
-  - name: prs-env
-    type: Opaque
-    envs:
-      - .env
 resources:
   - ../../base
   - cronjobs/harvest-email-referrals
@@ -13,10 +8,15 @@ resources:
   - ingress.yaml
   - pdb.yaml
   - typesense_pvc.yaml
+secretGenerator:
+  - name: prs-env
+    type: Opaque
+    envs:
+      - .env
 labels:
-  - includeSelectors: true
-    pairs:
+  - pairs:
       variant: uat
+    includeSelectors: true
 patches:
   - path: celery_patch.yaml
   - path: deployment_patch.yaml
