@@ -113,11 +113,6 @@ spec:
             secretKeyRef:
               name: prs-env-uat
               key: ASSESSOR_EMAILS
-        - name: REFERRAL_EMAIL_POST_DELETE
-          valueFrom:
-            secretKeyRef:
-              name: prs-env-uat
-              key: REFERRAL_EMAIL_POST_DELETE
         - name: TYPESENSE_HOST
           valueFrom:
             secretKeyRef:
