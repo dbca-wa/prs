@@ -160,8 +160,6 @@ REFERRAL_ASSIGNEE_FALLBACK = env('REFERRAL_ASSIGNEE_FALLBACK', 'admin')
 PLANNING_EMAILS = env('PLANNING_EMAILS', 'referrals@dplh.wa.gov.au').split(',')
 # Whitelist of receiving mailboxes (only harvest referrals sent to these):
 ASSESSOR_EMAILS = env('ASSESSOR_EMAILS', '').split(',')
-# Delete harvested referral emails after processing them?
-REFERRAL_EMAIL_POST_DELETE = env('REFERRAL_EMAIL_POST_DELETE', True)
 
 # Database configuration
 DATABASES = {

@@ -148,9 +148,9 @@ def email_delete(imap, uid):
     return status, response
 
 
-def harvest_unread_emails(from_email):
+def harvest_unread_emails(from_email, purge_email=False):
     """Download a list of unread email from the specified email address and
-    harvest each one. Empty the mailbox of deleted emails on completion.
+    harvest each one. Optionally purge harvested emails on completion.
     """
     actions = []
     imap = get_imap()
@@ -172,6 +172,7 @@ def harvest_unread_emails(from_email):
             # Decode uid to a string if required.
             if isinstance(uid, bytes):
                 uid = uid.decode('utf-8')
+
             # Fetch email message.
             LOGGER.info('Fetching email UID {}'.format(uid))
             status, message = fetch_email(imap, uid)
@@ -181,12 +182,14 @@ def harvest_unread_emails(from_email):
             LOGGER.info('Harvesting email UID {}'.format(uid))
             actions.append('{} Harvesting email UID {}'.format(datetime.now().isoformat(), uid))
             harvest_email(uid, message)
-            # Mark email as read.
-            status, response = email_mark_read(imap, uid)
-            if status == 'OK':
-                LOGGER.info('Email UID {} was marked as "Read"'.format(uid))
-            # Optionally mark email for deletion.
-            if settings.REFERRAL_EMAIL_POST_DELETE:
+
+            # Optionally mark email as read and flag it for deletion.
+            if purge_email:
+                # Mark email as read.
+                status, response = email_mark_read(imap, uid)
+                if status == 'OK':
+                    LOGGER.info('Email UID {} was marked as "Read"'.format(uid))
+                # Mark email for deletion.
                 status, response = email_delete(imap, uid)
                 if status == 'OK':
                     LOGGER.info('Email UID {} was marked for deletion'.format(uid))
