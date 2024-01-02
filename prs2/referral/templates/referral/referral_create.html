@@ -76,6 +76,10 @@
         $('#id_reference').keyup(function() {
             delay(function() {matchedReferrals()}, 1000);
         });
+
+        // Replace a DOM element with a button for a modal popup.
+        $("label[for='id_type']").html("<button type='button' class='btn btn-primary' data-toggle='modal' data-target='#refTypeModal'><i class='far fa-question-circle'></i> Referral type</button>");
+
     });
 </script>
 {% endblock %}

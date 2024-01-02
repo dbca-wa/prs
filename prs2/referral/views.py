@@ -1,7 +1,7 @@
 from copy import copy
 from datetime import datetime, date, timedelta
 from django.conf import settings
-from django.contrib import admin, messages
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Group
 from django.contrib.gis.geos import GEOSGeometry, MultiPolygon
@@ -46,7 +46,6 @@ from referral.utils import (
     is_model_or_string,
     breadcrumbs_li,
     smart_truncate,
-    get_query,
     user_task_history,
     user_referral_history,
     prs_user,

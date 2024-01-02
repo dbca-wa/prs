@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prs-celery
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+  template:
+    spec:
+      containers:
+      - name: prs-celery
+        image: ghcr.io/dbca-wa/prs
+        env:
+        - name: TZ
+          value: "Australia/Perth"
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "10m"
+          limits:
+            memory: "4096Mi"
+            cpu: "1000m"
+        securityContext:
+          runAsNonRoot: true
+          privileged: false
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          readOnlyRootFilesystem: true
+        volumeMounts:
+          - mountPath: /tmp
+            name: tmpfs-ram
+      volumes:
+        - name: tmpfs-ram
+          emptyDir:
+            medium: "Memory"
+      restartPolicy: Always

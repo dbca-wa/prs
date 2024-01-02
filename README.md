@@ -49,8 +49,7 @@ Variables below may also need to be defined in production (context-dependent):
     BORGCOLLECTOR_API="https://borg.dpaw.wa.gov.au/api/"
     SLIP_USERNAME="slip_username"
     SLIP_PASSWORD="slip_password"
-    SLIP_WFS_URL="https://wfs.slip.url.au/endpoint"
-    SLIP_DATASET="slip:LGATE-001"
+    SLIP_ESRI_FS_URL="https://wfs.slip.url.au/endpoint"
 
 # Media uploads
 
@@ -90,7 +89,7 @@ To run tests for e.g. models only:
 
 To obtain coverage reports:
 
-    poetry run coverage run --source='.' manage.py test --keepdb -v2 --settings prs2.settings-test
+    poetry run coverage run --source='.' manage.py test --keepdb -v2 --settings prs2.test-settings
     poetry run coverage report -m
 
 # Docker image
@@ -98,3 +97,16 @@ To obtain coverage reports:
 To build a new Docker image from the `Dockerfile`:
 
     docker image build -t ghcr.io/dbca-wa/prs .
+
+# Pre-commit hooks
+
+This project includes the following pre-commit hooks:
+
+- TruffleHog (credential scanning): https://github.com/marketplace/actions/trufflehog-oss
+
+Pre-commit hooks may have additional system dependencies to run. Optionally
+install pre-commit hooks locally like so:
+
+    poetry run pre-commit install
+
+Reference: https://pre-commit.com/

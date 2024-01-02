@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: prs-typesense
+  labels:
+    app: prs-typesense-prod
+spec:
+  selector:
+    matchLabels:
+      app: prs-typesense-prod
+  template:
+    metadata:
+      labels:
+        app: prs-typesense-prod
+    spec:
+      initContainers:
+      - name: data-vol-chown
+        image: busybox
+        command:
+          - /bin/chown
+          - -R
+          - "10001:10001"
+          - /data
+        volumeMounts:
+          - mountPath: /data
+            name: prs-typesense-data
+      containers:
+      - name: prs-typesense
+        imagePullPolicy: Always
+        env:
+        - name: TYPESENSE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: prs-env-prod
+              key: TYPESENSE_API_KEY
+        volumeMounts:
+          - mountPath: /data
+            name: prs-typesense-data
+      volumes:
+        - name: prs-typesense-data
+          persistentVolumeClaim:
+            claimName: prs-typesense-data-prod

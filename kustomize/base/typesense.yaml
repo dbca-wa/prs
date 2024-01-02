@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: prs-typesense
+spec:
+  replicas: 1
+  minReadySeconds: 10
+  serviceName: prs-typesense
+  template:
+    spec:
+      containers:
+      - name: prs-typesense
+        image: ghcr.io/dbca-wa/typesense:0.25.1
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: TZ
+          value: "Australia/Perth"
+        - name: TYPESENSE_DATA_DIR
+          value: "/data"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "10m"
+          limits:
+            memory: "8Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health/
+            port: 8108
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+          timeoutSeconds: 1
+        readinessProbe:
+          httpGet:
+            path: /health/
+            port: 8108
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+          timeoutSeconds: 1
+        securityContext:
+          runAsNonRoot: true
+          privileged: false
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          readOnlyRootFilesystem: true
+      restartPolicy: Always

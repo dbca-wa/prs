@@ -22,7 +22,7 @@ SECURE_SSL_REDIRECT = env('SECURE_SSL_REDIRECT', False)
 SECURE_REFERRER_POLICY = env('SECURE_REFERRER_POLICY', None)
 SECURE_HSTS_SECONDS = env('SECURE_HSTS_SECONDS', 0)
 if not DEBUG:
-    ALLOWED_HOSTS = env('ALLOWED_DOMAINS', 'localhost').split(',')
+    ALLOWED_HOSTS = env('ALLOWED_HOSTS', 'localhost').split(',')
 else:
     ALLOWED_HOSTS = ['*']
 INTERNAL_IPS = ['127.0.0.1', '::1']
@@ -64,6 +64,7 @@ INSTALLED_APPS = (
     'taggit',
     'reversion',
     'crispy_forms',
+    'crispy_bootstrap4',
     'bootstrap_pagination',
     'webtemplate_dbca',
     'django_celery_results',
@@ -159,8 +160,6 @@ REFERRAL_ASSIGNEE_FALLBACK = env('REFERRAL_ASSIGNEE_FALLBACK', 'admin')
 PLANNING_EMAILS = env('PLANNING_EMAILS', 'referrals@dplh.wa.gov.au').split(',')
 # Whitelist of receiving mailboxes (only harvest referrals sent to these):
 ASSESSOR_EMAILS = env('ASSESSOR_EMAILS', '').split(',')
-# Delete harvested referral emails after processing them?
-REFERRAL_EMAIL_POST_DELETE = env('REFERRAL_EMAIL_POST_DELETE', True)
 
 # Database configuration
 DATABASES = {
@@ -256,14 +255,16 @@ CELERY_TIMEZONE = TIME_ZONE
 
 # Sentry config
 SENTRY_DSN = env('SENTRY_DSN', None)
-SENTRY_SAMPLE_RATE = env('SENTRY_SAMPLE_RATE', 0.0)  # 0.0 - 1.0
+SENTRY_SAMPLE_RATE = env('SENTRY_SAMPLE_RATE', 1.0)  # Error sampling rate
+SENTRY_TRANSACTION_SAMPLE_RATE = env('SENTRY_TRANSACTION_SAMPLE_RATE', 0.0)  # Transaction sampling
 SENTRY_ENVIRONMENT = env('SENTRY_ENVIRONMENT', None)
 if SENTRY_DSN and SENTRY_ENVIRONMENT:
     import sentry_sdk
 
     sentry_sdk.init(
         dsn=SENTRY_DSN,
-        traces_sample_rate=SENTRY_SAMPLE_RATE,
+        sample_rate=SENTRY_SAMPLE_RATE,
+        traces_sample_rate=SENTRY_TRANSACTION_SAMPLE_RATE,
         environment=SENTRY_ENVIRONMENT,
         release=APPLICATION_VERSION_NO,
     )
