@@ -1,0 +1,153 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prs-deployment
+  labels:
+    app: prs-prod
+spec:
+  selector:
+    matchLabels:
+      app: prs-prod
+  template:
+    metadata:
+      labels:
+        app: prs-prod
+    spec:
+      containers:
+      - name: prs
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: SITE_URL
+          value: "prs.dbca.wa.gov.au"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: prs-env-prod
+              key: DATABASE_URL
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: prs-env-prod
+              key: SECRET_KEY
+        - name: PRS_GEOSERVER_WMTS_URL
+          valueFrom:
+            secretKeyRef:
+              name: prs-env-prod
+              key: PRS_GEOSERVER_WMTS_URL
+        - name: PRS_GEOSERVER_WFS_URL
+          valueFrom:
+            secretKeyRef:
+              name: prs-env-prod
+              key: PRS_GEOSERVER_WFS_URL
+        - name: GEOSERVER_WMTS_URL
+          valueFrom:
+            secretKeyRef:
+              name: prs-env-prod
+              key: GEOSERVER_WMTS_URL
+        - name: GEOSERVER_WFS_URL
+          valueFrom:
+            secretKeyRef:
+              name: prs-env-prod
+              key: GEOSERVER_WFS_URL
+        - name: GEOSERVER_SSO_USER
+          valueFrom:
+            secretKeyRef:
+              name: prs-env-prod
+              key: GEOSERVER_SSO_USER
+        - name: GEOSERVER_SSO_PASS
+          valueFrom:
+            secretKeyRef:
+              name: prs-env-prod
+              key: GEOSERVER_SSO_PASS
+        - name: GEOCODER_URL
+          valueFrom:
+            secretKeyRef:
+              name: prs-env-prod
+              key: GEOCODER_URL
+        - name: SLIP_ESRI_FS_URL
+          valueFrom:
+            secretKeyRef:
+              name: prs-env-prod
+              key: SLIP_ESRI_FS_URL
+        - name: SLIP_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: prs-env-prod
+              key: SLIP_USERNAME
+        - name: SLIP_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: prs-env-prod
+              key: SLIP_PASSWORD
+        - name: EMAIL_HOST
+          valueFrom:
+            secretKeyRef:
+              name: prs-env-prod
+              key: EMAIL_HOST
+        - name: REFERRAL_EMAIL_HOST
+          valueFrom:
+            secretKeyRef:
+              name: prs-env-prod
+              key: REFERRAL_EMAIL_HOST
+        - name: REFERRAL_EMAIL_USER
+          valueFrom:
+            secretKeyRef:
+              name: prs-env-prod
+              key: REFERRAL_EMAIL_USER
+        - name: REFERRAL_EMAIL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: prs-env-prod
+              key: REFERRAL_EMAIL_PASSWORD
+        - name: REFERRAL_ASSIGNEE_FALLBACK
+          valueFrom:
+            secretKeyRef:
+              name: prs-env-prod
+              key: REFERRAL_ASSIGNEE_FALLBACK
+        - name: PLANNING_EMAILS
+          valueFrom:
+            secretKeyRef:
+              name: prs-env-prod
+              key: PLANNING_EMAILS
+        - name: ASSESSOR_EMAILS
+          valueFrom:
+            secretKeyRef:
+              name: prs-env-prod
+              key: ASSESSOR_EMAILS
+        - name: TYPESENSE_HOST
+          valueFrom:
+            secretKeyRef:
+              name: prs-env-prod
+              key: TYPESENSE_HOST
+        - name: TYPESENSE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: prs-env-prod
+              key: TYPESENSE_API_KEY
+        - name: CELERY_BROKER_URL
+          valueFrom:
+            secretKeyRef:
+              name: prs-env-prod
+              key: CELERY_BROKER_URL
+        - name: AZURE_ACCOUNT_NAME
+          valueFrom:
+            secretKeyRef:
+              name: prs-env-prod
+              key: AZURE_ACCOUNT_NAME
+        - name: AZURE_ACCOUNT_KEY
+          valueFrom:
+            secretKeyRef:
+              name: prs-env-prod
+              key: AZURE_ACCOUNT_KEY
+        - name: AZURE_CONTAINER
+          valueFrom:
+            secretKeyRef:
+              name: prs-env-prod
+              key: AZURE_CONTAINER
+        - name: SENTRY_DSN
+          valueFrom:
+            secretKeyRef:
+              name: prs-env-prod
+              key: SENTRY_DSN
+        - name: SENTRY_ENVIRONMENT
+          value: "prod"
