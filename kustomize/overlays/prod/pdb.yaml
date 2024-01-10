@@ -40,4 +40,4 @@ spec:
   selector:
     matchLabels:
       app: prs-geoserver-prod
-      variant: uat
+      variant: prod
