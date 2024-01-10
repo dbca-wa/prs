@@ -6,3 +6,5 @@ resources:
   - service.yaml
   - typesense.yaml
   - typesense_service.yaml
+  - geoserver.yaml
+  - geoserver_service.yaml

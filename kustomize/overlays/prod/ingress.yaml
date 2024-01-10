@@ -15,3 +15,10 @@ spec:
             name: prs-clusterip-prod
             port:
               number: 8080
+      - path: /geoserver
+        pathType: Prefix
+        backend:
+          service:
+            name: prs-geoserver-clusterip-prod
+            port:
+              number: 8080
