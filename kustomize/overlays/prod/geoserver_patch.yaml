@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prs-geoserver
+  labels:
+    app: prs-geoserver-prod
+spec:
+  selector:
+    matchLabels:
+      app: prs-geoserver-prod
+  template:
+    metadata:
+      labels:
+        app: prs-geoserver-prod
+    spec:
+      initContainers:
+      - name: chown-pvc
+        image: busybox
+        command:
+          - /bin/chown
+          - -R
+          - "10001:0"
+          - /data/geoserver
+        volumeMounts:
+          - mountPath: /data/geoserver
+            name: prs-geoserver-data
+      containers:
+      - name: prs-geoserver
+        volumeMounts:
+          - mountPath: /data/geoserver
+            name: prs-geoserver-data
+      volumes:
+        - name: prs-geoserver-data
+          persistentVolumeClaim:
+            claimName: prs-geoserver-data-prod
