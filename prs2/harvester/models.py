@@ -5,6 +5,7 @@ from django.contrib.gis.geos import GEOSGeometry, Polygon, Point
 from django.core.files.base import ContentFile
 from django.db import models
 import logging
+import re
 from reversion.revisions import create_revision, set_comment
 import xmltodict
 
@@ -35,7 +36,12 @@ class EmailedReferral(models.Model):
 
     def save(self, force_insert=False, force_update=False, *args, **kwargs):
         self.subject = self.subject.replace('\r\n', '').strip()
+        # Clean up some markup in the email body.
         self.body = self.body.replace('=\r\n', '').replace('=E2=80=93', '-').strip()
+        p = '^(<!--)(.+)(-->)'
+        self.body = re.sub(p, '', self.body, flags=re.DOTALL)
+        p = '(&nbsp;)'
+        self.body = re.sub(p, '', self.body)
         super().save(force_insert, force_update)
 
     def harvest(self, create_tasks=True, create_locations=True, create_records=True, assignee=False):
