@@ -11,7 +11,7 @@ spec:
         spec:
           containers:
           - name: prs-cronjob
-            args: ["manage.py", "harvest_email_referrals", "--email", "--purge-email"]
+            args: ["manage.py", "harvest_email_referrals", "--email-report", "--purge-email"]
             env:
             - name: SITE_URL
               value: "prs.dbca.wa.gov.au"

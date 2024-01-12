@@ -11,7 +11,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         # Named (optional) arguments
         parser.add_argument(
-            "--email",
+            "--email-report",
             action="store_true",
             dest="email",
             default=False,
