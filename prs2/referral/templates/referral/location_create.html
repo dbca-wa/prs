@@ -31,14 +31,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js" integrity="sha256-siofc4Uwjlra3YWkwthOn8Uj69cNN4aMug/iOHNiRgs=" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-search/3.0.2/leaflet-search.min.js" integrity="sha512-lmt2nQGwuhA/7xEG4KjOuzy+kBQVOgpBNFxJR2yWp8J57H8nYxWC8J7Y5woDbqBBpBVHHLbFEi503u5K49KcOA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="{% static 'js/wellknown.js' %}"></script>
-<script>
-    // Set global variables (needs to happen before loading referral_map.js or location_create.js)
-    const prs_geoserver_wmts_url = '{{ prs_geoserver_wmts_url }}';
-    const geoserver_wmts_url = '{{ geoserver_wmts_url }}';
-    const geoserver_wfs_url = '{{ geoserver_wfs_url }}';
-    const geoserver_basic_auth = '{{ geoserver_basic_auth }}';
-    const geocoder_url = '{{ geocoder_url }}';
-</script>
 <script src="{% static 'js/referral_map.js' %}"></script>
 <script>
     {% if geojson_locations %}

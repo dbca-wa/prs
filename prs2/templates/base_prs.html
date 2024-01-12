@@ -155,6 +155,15 @@
 {% endblock jquery_version %}
 
 {% block extra_js %}
+<script>
+    // Set global variables, used by multiple views..
+    const prs_geoserver_url = '{{ prs_geoserver_url }}';
+    const mapproxy_url = '{{ mapproxy_url }}';
+    const geoserver_url = '{{ geoserver_url }}';
+    const geoserver_basic_auth = '{{ geoserver_basic_auth }}';
+    const geocoder_url = '{{ geocoder_url }}';
+    const cadastre_layer_name = '{{ cadastre_layer_name }}';
+</script>
 <script src="{% static 'js/startswith.js' %}"></script>
 {{ block.super }}
 {% endblock extra_js %}

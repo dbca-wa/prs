@@ -9,7 +9,7 @@
   <maplayers>
     <maplayer minimumScale="-4.65661e-10" maximumScale="1e+08" simplifyDrawingHints="1" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" geometry="Polygon" simplifyMaxScale="1" type="vector" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
       <id>referral{{ REFERRAL_PK }}</id>
-      <datasource>{{ PRS_GEOSERVER_WFS_URL }}?SERVICE=WFS&amp;VERSION=1.0.0&amp;REQUEST=GetFeature&amp;TYPENAME=prs:prs_locations_view&amp;SRSNAME=EPSG:4326&amp;FILTER=&lt;ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">
+      <datasource>{{ PRS_GEOSERVER_URL }}?SERVICE=WFS&amp;VERSION=1.0.0&amp;REQUEST=GetFeature&amp;TYPENAME=prs:prs_locations_view&amp;SRSNAME=EPSG:4326&amp;FILTER=&lt;ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">
  &lt;ogc:PropertyIsEqualTo>
   &lt;ogc:PropertyName>referral_id&lt;/ogc:PropertyName>
   &lt;ogc:Literal>{{ REFERRAL_PK }}&lt;/ogc:Literal>

@@ -216,14 +216,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.min.js" integrity="sha512-SeiQaaDh73yrb56sTW/RgVdi/mMqNeM2oBwubFHagc5BkixSpP1fvqF47mKzPGWYSSy4RwbBunrJBQ4Co8fRWA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.js" integrity="sha256-6H5xWuqlbGtfk8UL9eMYmp14brCbCw1ZZialT8fHLRE=" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-search/3.0.2/leaflet-search.min.js" integrity="sha512-lmt2nQGwuhA/7xEG4KjOuzy+kBQVOgpBNFxJR2yWp8J57H8nYxWC8J7Y5woDbqBBpBVHHLbFEi503u5K49KcOA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script>
-    // Set global variables (needs to happen before loading referral_map.js)
-    const prs_geoserver_wmts_url = '{{ prs_geoserver_wmts_url }}';
-    const geoserver_wmts_url = '{{ geoserver_wmts_url }}';
-    const geoserver_wfs_url = '{{ geoserver_wfs_url }}';
-    const geoserver_basic_auth = '{{ geoserver_basic_auth }}';
-    const geocoder_url = '{{ geocoder_url }}';
-</script>
 <script src="{% static 'js/referral_map.js' %}"></script>
 <script>
     // Add a fullscreen control to the map.

@@ -9,11 +9,12 @@ def template_context(request):
         'site_title': settings.APPLICATION_TITLE,
         'site_acronym': settings.APPLICATION_ACRONYM,
         'version_no': settings.APPLICATION_VERSION_NO,
-        'prs_geoserver_wmts_url': settings.PRS_GEOSERVER_WMTS_URL,
-        'geoserver_wmts_url': settings.GEOSERVER_WMTS_URL,
-        'geoserver_wfs_url': settings.GEOSERVER_WFS_URL,
-        'geoserver_basic_auth': b64encode(f'{settings.GEOSERVER_SSO_USER}:{settings.GEOSERVER_SSO_PASS}'.encode('utf-8')).decode(),
+        'prs_geoserver_url': settings.PRS_GEOSERVER_URL,
+        'mapproxy_url': settings.MAPPROXY_URL,
         'geocoder_url': settings.GEOCODER_URL,
+        'geoserver_url': settings.GEOSERVER_URL,
+        'geoserver_basic_auth': b64encode(f'{settings.GEOSERVER_SSO_USER}:{settings.GEOSERVER_SSO_PASS}'.encode('utf-8')).decode(),
+        'cadastre_layer_name': settings.CADASTRE_LAYER_NAME,
         'prs_user_group': settings.PRS_USER_GROUP,
     }
     if request.user.is_authenticated:

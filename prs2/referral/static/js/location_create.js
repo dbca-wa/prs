@@ -1,8 +1,5 @@
 "use strict";
-
-// NOTE: the following global variables need to be set prior to loading this script:
-// * geoserver_wfs_url
-// * geoserver_basic_auth
+// NOTE: some global variables are set in the base template.
 
 // A small function to add a hashcode function to String
 // Ref: http://werxltd.com/wp/2010/05/13/javascript-implementation-of-javas-string-hashcode-method/
@@ -22,10 +19,9 @@ var cadastreWFSParams = {
     service: 'WFS',
     version: '2.0.0',
     request: 'GetFeature',
-    typeName: 'cddp:cadastre',
+    typeName: cadastre_layer_name,
     outputFormat: 'application/json',
 };
-var cadastreWFSURL = geoserver_wfs_url + L.Util.getParamString(cadastreWFSParams);
 // GeoJSON layer to store clicked-on cadastre locations.
 var locationsLayer = L.geoJson();
 locationsLayer.addTo(map);
@@ -40,50 +36,43 @@ var addFormFieldset = function(feature) {
     // Construct a form fieldset to submit the location.
     var address = '';
     var fieldset = '<fieldset id="fieldset_{fid}" class="form-inline" style="display:none;">' +
-        '<input name="form-{0}-address_no" class="form-control" value="{addrs_no}">' +  // No.
-        '<input name="form-{0}-address_suffix" class="form-control" value="{addrs_sfx}">' +  // Suffix
+        '<input name="form-{0}-address_no" class="form-control" value="{addrs_no}">' +  // Address no.
         '<input name="form-{0}-road_name" class="form-control" value="{road_name}">' +  // Road
-        '<input name="form-{0}-road_suffix" class="form-control" value="{road_sfx}">' +  // Suffix
+        '<input name="form-{0}-road_suffix" class="form-control" value="{road_sfx}">' +  // Road type suffix
         '<input name="form-{0}-locality" class="form-control" value="{locality}">' +  // Locality
         '<input name="form-{0}-postcode" class="form-control" value="{postcode}">' +  // Postcode
         '<input name="form-{0}-wkt" class="form-control" value="{wkt}">' +  // WKT
         '</fieldset>';
     fieldset = fieldset.replace('{fid}', fid);
-    if (obj.survey_lot) {address += obj.survey_lot + ', '};
-    if (obj.addrs_no) {
-        address += obj.addrs_no;
-        fieldset = fieldset.replace('{addrs_no}', obj.addrs_no);
+    if (obj.CAD_LOT_NUMBER) {address += 'Lot ' + obj.CAD_LOT_NUMBER + ', '};
+    if (obj.CAD_HOUSE_NUMBER) {
+        address += obj.CAD_HOUSE_NUMBER;
+        fieldset = fieldset.replace('{addrs_no}', obj.CAD_HOUSE_NUMBER);
     } else {
         fieldset = fieldset.replace('{addrs_no}', '');
     }
-    if (obj.addrs_sfx) {
-        address += obj.addrs_sfx;
-        fieldset = fieldset.replace('{addrs_sfx}', obj.addrs_sfx);
-    } else {
-        fieldset = fieldset.replace('{addrs_sfx}', '');
-    }
     if (address != '') {address += ' '};
-    if (obj.road_name) {
-        address += obj.road_name + ' ';
-        fieldset = fieldset.replace('{road_name}', obj.road_name);
+    if (obj.CAD_ROAD_NAME) {
+        address += obj.CAD_ROAD_NAME + ' ';
+        fieldset = fieldset.replace('{road_name}', obj.CAD_ROAD_NAME);
     } else {
         fieldset = fieldset.replace('{road_name}', '');
     }
-    if (obj.road_sfx) {
-        address += obj.road_sfx + ' ';
-        fieldset = fieldset.replace('{road_sfx}', obj.road_sfx);
+    if (obj.CAD_ROAD_TYPE) {
+        address += obj.CAD_ROAD_TYPE + ' ';
+        fieldset = fieldset.replace('{road_sfx}', obj.CAD_ROAD_TYPE);
     } else {
         fieldset = fieldset.replace('{road_sfx}', '');
     }
-    if (obj.locality) {
-        address += obj.locality + ' ';
-        fieldset = fieldset.replace('{locality}', obj.locality);
+    if (obj.CAD_LOCALITY) {
+        address += obj.CAD_LOCALITY + ' ';
+        fieldset = fieldset.replace('{locality}', obj.CAD_LOCALITY);
     } else {
         fieldset = fieldset.replace('{locality}', '');
     }
-    if (obj.postcode) {
-        address += obj.postcode;
-        fieldset = fieldset.replace('{postcode}', obj.postcode);
+    if (obj.CAD_POSTCODE) {
+        address += obj.CAD_POSTCODE;
+        fieldset = fieldset.replace('{postcode}', obj.CAD_POSTCODE);
     } else {
         fieldset = fieldset.replace('{postcode}', '');
     }
@@ -103,10 +92,10 @@ var queryCadastre = function(latlng) {
         return;
     }
     // Generate our CQL filter.
-    var filter = 'INTERSECTS(wkb_geometry, POINT ({0} {1}))'.replace('{0}', latlng.lat).replace('{1}', latlng.lng);
+    var filter = 'INTERSECTS(SHAPE, POINT ({0} {1}))'.replace('{0}', latlng.lat).replace('{1}', latlng.lng);
     var parameters = L.Util.extend(cadastreWFSParams, {'cql_filter': filter});
     $.ajax({
-        url: geoserver_wfs_url,
+        url: geoserver_url,
         data: parameters,
         dataType: 'json',
         headers: {Authorization: 'Basic ' + geoserver_basic_auth},

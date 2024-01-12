@@ -246,14 +246,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.min.js" integrity="sha512-SeiQaaDh73yrb56sTW/RgVdi/mMqNeM2oBwubFHagc5BkixSpP1fvqF47mKzPGWYSSy4RwbBunrJBQ4Co8fRWA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/2.1.0/Control.FullScreen.min.js" integrity="sha512-bmFAjeYoavPgi1WB5HbKPxfN8x8namh7PVWpgxlkTRoyIldWc+UpoCZAkI9m7KXD/R2aUjtMBVmWzRh3KfPg7g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="{% static 'js/leaflet-search.min.js' %}"></script>
-<script>
-    // Set global variables (needs to happen before loading referral_map.js)
-    const prs_geoserver_wmts_url = '{{ prs_geoserver_wmts_url }}';
-    const geoserver_wmts_url = '{{ geoserver_wmts_url }}';
-    const geoserver_wfs_url = '{{ geoserver_wfs_url }}';
-    const geoserver_basic_auth = '{{ geoserver_basic_auth }}';
-    const geocoder_url = '{{ geocoder_url }}';
-</script>
 <script src="{% static 'js/referral_map.js' %}"></script>
 <script>
     // Add a fullscreen control to the map.
