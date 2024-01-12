@@ -15,6 +15,7 @@ from django.http import (
     HttpResponseRedirect,
     JsonResponse,
     HttpResponseForbidden,
+    HttpResponseBadRequest,
 )
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
@@ -50,7 +51,7 @@ from referral.utils import (
     user_referral_history,
     prs_user,
     is_prs_power_user,
-    # borgcollector_harvest,
+    query_cadastre,
 )
 from referral.forms import (
     ReferralCreateForm,
@@ -1037,15 +1038,6 @@ class LocationCreate(ReferralCreateChild):
 
         messages.success(request, "{} location(s) created.".format(len(forms)))
 
-        # Call the Borg Collector publish API endpoint to create a manual job
-        # to update the prs_locations layer.
-        # FIXME: don't call the Borg API at present (broken).
-        # resp = borgcollector_harvest(self.request)
-        # LOGGER.info(
-        #    "Borg Collector API response status was {}".format(resp.status_code)
-        # )
-        # LOGGER.info("Borg Collector API response: {}".format(resp.content))
-
         # Test for intersecting locations.
         intersecting_locations = self.polygon_intersects(locations)
         if intersecting_locations:
@@ -1672,14 +1664,7 @@ class ReferralDelete(PrsObjectDelete):
             i.delete()
         ref.delete()
         messages.success(request, "{0} deleted.".format(self.model._meta.object_name))
-        # FIXME: don't call the Borg API at present (broken).
-        # Call the Borg Collector publish API endpoint to create a manual job
-        # to update the prs_locations layer.
-        # resp = borgcollector_harvest(self.request)
-        # LOGGER.info(
-        #    "Borg Collector API response status was {}".format(resp.status_code)
-        # )
-        # LOGGER.info("Borg Collector API response: {}".format(resp.content))
+
         return redirect("site_home")
 
 
@@ -1899,3 +1884,21 @@ class InfobaseShortcut(View):
                 request, "That record is not associated with an InfoBase object ID."
             )
             return HttpResponseRedirect(record.get_absolute_url())
+
+
+class CadastreQuery(View):
+    """Basic view endpoint to send a CQL filter query to the Cadastre spatial service.
+    """
+    http_method_names = ["get"]
+
+    def get(self, request, *args, **kwargs):
+        cql_filter = request.GET.get("cql_filter", None)
+        if not cql_filter:
+            return HttpResponseBadRequest("Bad request")
+        crs = request.GET.get("crs", None)
+        if crs:
+            resp = query_cadastre(cql_filter, crs)
+        else:
+            resp = query_cadastre(cql_filter)
+
+        return JsonResponse(resp)

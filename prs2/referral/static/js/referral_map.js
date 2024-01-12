@@ -166,24 +166,13 @@ $("input#id_input_lotSearch").change(function() {
 var lotsearchresults = new L.featureGroup();
 map.addLayer(lotsearchresults);
 
-// Define WFS layer for querying.
-var cadastreWFSParams = {
-    service: 'WFS',
-    version: '2.0.0',
-    request: 'GetFeature',
-    typeName: cadastre_layer_name,
-    outputFormat: 'application/json',
-};
-
 var findLot = function(lotname) {
     // Generate our CQL filter.
     var filter = "CAD_LOT_NUMBER like '%" + lotname + "%' AND BBOX(SHAPE," + map.getBounds().toBBoxString() + ",'EPSG:4326')";
-    var parameters = L.Util.extend(cadastreWFSParams, {'cql_filter': filter});
     $.ajax({
-        url: geoserver_url,
-        data: parameters,
+        url: cadastre_query_url,
+        data: {'cql_filter': filter},
         dataType: 'json',
-        headers: {Authorization: 'Basic ' + geoserver_basic_auth},
         success: function(data) {
             if (data.totalFeatures === 0 && map.getMinZoom() < map.getZoom() && confirm("Couldn't find Survey Lot containing '" + lotname + "' in viewport, zoom out and try again?")) {
                 map.zoomOut();

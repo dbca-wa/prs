@@ -14,14 +14,6 @@ String.prototype.hashCode = function(){
     return Math.abs(hash);  // Always return absolute value.
 }
 
-// Define WFS layer for querying.
-var cadastreWFSParams = {
-    service: 'WFS',
-    version: '2.0.0',
-    request: 'GetFeature',
-    typeName: cadastre_layer_name,
-    outputFormat: 'application/json',
-};
 // GeoJSON layer to store clicked-on cadastre locations.
 var locationsLayer = L.geoJson();
 locationsLayer.addTo(map);
@@ -93,13 +85,10 @@ var queryCadastre = function(latlng) {
     }
     // Generate our CQL filter.
     var filter = 'INTERSECTS(SHAPE, POINT ({0} {1}))'.replace('{0}', latlng.lat).replace('{1}', latlng.lng);
-    var parameters = L.Util.extend(cadastreWFSParams, {'cql_filter': filter});
     $.ajax({
-        url: geoserver_url,
-        data: parameters,
+        url: cadastre_query_url,
+        data: {'cql_filter': filter},
         dataType: 'json',
-        headers: {Authorization: 'Basic ' + geoserver_basic_auth},
-        crossDomain: true,
         success: function(data) {
             // Add the first feature returned by the query to locationsLayer.
             var fid = data.features[0]['id'];

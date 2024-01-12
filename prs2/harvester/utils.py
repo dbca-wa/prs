@@ -256,7 +256,7 @@ def query_slip(pin):
         'typeName': type_name,
         'request': 'getFeature',
         'outputFormat': 'json',
-        'cql_filter': 'polygon_number={}'.format(pin)
+        'cql_filter': 'polygon_number={}'.format(pin),
     }
     resp = requests.get(url, auth=auth, params=params)
     return resp
@@ -274,7 +274,7 @@ def query_slip_esri(pin):
         'outSR': 4326,
         'outFields': '*',
         'returnGeometry': 'true',
-        'where': 'polygon_number={}'.format(pin)
+        'where': 'polygon_number={}'.format(pin),
     }
     resp = requests.get(url, auth=auth, params=params)
     return resp

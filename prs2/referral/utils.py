@@ -329,3 +329,24 @@ def overdue_task_email():
             msg.send(fail_silently=True)
 
     return True
+
+
+def query_cadastre(cql_filter, crs="EPSG:4326"):
+    """A utility function to query the internal DBCA Cadastre dataset via the passed-in CQL filter
+    and return results as GeoJSON.
+    """
+    url = env('GEOSERVER_URL', None)
+    auth = (env('GEOSERVER_SSO_USER', None), env('GEOSERVER_SSO_PASS', None))
+    type_name = env('CADASTRE_LAYER_NAME', '')
+    params = {
+        'service': 'WFS',
+        'version': '2.0.0',
+        'typeName': type_name,
+        'request': 'getFeature',
+        'outputFormat': 'json',
+        'SRSName': f'urn:x-ogc:def:crs:{crs}',
+        'cql_filter': cql_filter,
+    }
+    resp = requests.get(url, auth=auth, params=params)
+    resp.raise_for_status()
+    return resp.json()
