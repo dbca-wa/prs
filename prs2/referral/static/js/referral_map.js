@@ -28,6 +28,7 @@ const cadastre = L.tileLayer.wms(mapproxy_url, {
   opacity: 0.75,
   tileSize: 1024,
   zoomOffset: -2,
+  minZoom: 12,
 });
 const prsLocations = L.tileLayer.wms(prs_geoserver_url, {
   layers: 'prs:prs_locations_view',
@@ -189,3 +190,5 @@ var findLot = function(lotname) {
         }
     });
 };
+// Log zoom level to console.
+//map.on('zoomend', function (e) {console.log(e.target._zoom)});
