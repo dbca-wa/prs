@@ -277,4 +277,5 @@ def query_slip_esri(pin):
         'where': 'polygon_number={}'.format(pin),
     }
     resp = requests.get(url, auth=auth, params=params)
-    return resp
+    resp.raise_for_status()
+    return resp.json()

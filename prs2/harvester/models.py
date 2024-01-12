@@ -167,7 +167,7 @@ class EmailedReferral(models.Model):
                 if 'PIN' in a and a['PIN']:
                     try:
                         resp = query_slip_esri(a['PIN'])
-                        features = resp.json()['features']  # List of spatial features.
+                        features = resp['features']  # List of spatial features.
                         if len(features) > 0:
                             a['FEATURES'] = features
                             locations.append(a)  # A dict for each address location.
