@@ -1858,13 +1858,13 @@ msg-parse = ["extract-msg (>=0.27)"]
 
 [[package]]
 name = "sentry-sdk"
-version = "1.39.1"
+version = "1.39.2"
 description = "Python client for Sentry (https://sentry.io)"
 optional = false
 python-versions = "*"
 files = [
-    {file = "sentry-sdk-1.39.1.tar.gz", hash = "sha256:320a55cdf9da9097a0bead239c35b7e61f53660ef9878861824fd6d9b2eaf3b5"},
-    {file = "sentry_sdk-1.39.1-py2.py3-none-any.whl", hash = "sha256:81b5b9ffdd1a374e9eb0c053b5d2012155db9cbe76393a8585677b753bd5fdc1"},
+    {file = "sentry-sdk-1.39.2.tar.gz", hash = "sha256:24c83b0b41c887d33328a9166f5950dc37ad58f01c9f2fbff6b87a6f1094170c"},
+    {file = "sentry_sdk-1.39.2-py2.py3-none-any.whl", hash = "sha256:acaf597b30258fc7663063b291aa99e58f3096e91fe1e6634f4b79f9c1943e8e"},
 ]
 
 [package.dependencies]
@@ -1890,7 +1890,7 @@ huey = ["huey (>=2)"]
 loguru = ["loguru (>=0.5)"]
 opentelemetry = ["opentelemetry-distro (>=0.35b0)"]
 opentelemetry-experimental = ["opentelemetry-distro (>=0.40b0,<1.0)", "opentelemetry-instrumentation-aiohttp-client (>=0.40b0,<1.0)", "opentelemetry-instrumentation-django (>=0.40b0,<1.0)", "opentelemetry-instrumentation-fastapi (>=0.40b0,<1.0)", "opentelemetry-instrumentation-flask (>=0.40b0,<1.0)", "opentelemetry-instrumentation-requests (>=0.40b0,<1.0)", "opentelemetry-instrumentation-sqlite3 (>=0.40b0,<1.0)", "opentelemetry-instrumentation-urllib (>=0.40b0,<1.0)"]
-pure-eval = ["asttokens", "executing", "pure-eval"]
+pure-eval = ["asttokens", "executing", "pure_eval"]
 pymongo = ["pymongo (>=3.1)"]
 pyspark = ["pyspark (>=2.4.4)"]
 quart = ["blinker (>=1.1)", "quart (>=0.16.1)"]
@@ -2013,13 +2013,13 @@ test = ["argcomplete (>=3.0.3)", "mypy (>=1.7.0)", "pre-commit", "pytest (>=7.0,
 
 [[package]]
 name = "typesense"
-version = "0.18.0"
+version = "0.19.0"
 description = "Python client for Typesense, an open source and typo tolerant search engine."
 optional = false
 python-versions = ">=3"
 files = [
-    {file = "typesense-0.18.0-py2.py3-none-any.whl", hash = "sha256:1004f29752e25991444beb378823555bf583b8f0c48df5150b955f55de1f73e6"},
-    {file = "typesense-0.18.0.tar.gz", hash = "sha256:539b87aa91d6224a3dc47ec187dd091119ba514891cbdd1a4bea5461b12f53df"},
+    {file = "typesense-0.19.0-py3-none-any.whl", hash = "sha256:4c7447f8cc6be456abb420cd6a39e52afa50afa4d10d8313cc8afb2b70e15d87"},
+    {file = "typesense-0.19.0.tar.gz", hash = "sha256:21cf6897eceb2cd3c9cab3d7372b3c4cd1ea88d1a57d4cce058d5a0518f0121b"},
 ]
 
 [package.dependencies]
@@ -2066,13 +2066,13 @@ devenv = ["check-manifest", "pytest (>=4.3)", "pytest-cov", "pytest-mock (>=3.3)
 
 [[package]]
 name = "unidecode"
-version = "1.3.7"
+version = "1.3.8"
 description = "ASCII transliterations of Unicode text"
 optional = false
 python-versions = ">=3.5"
 files = [
-    {file = "Unidecode-1.3.7-py3-none-any.whl", hash = "sha256:663a537f506834ed836af26a81b210d90cbde044c47bfbdc0fbbc9f94c86a6e4"},
-    {file = "Unidecode-1.3.7.tar.gz", hash = "sha256:3c90b4662aa0de0cb591884b934ead8d2225f1800d8da675a7750cbc3bd94610"},
+    {file = "Unidecode-1.3.8-py3-none-any.whl", hash = "sha256:d130a61ce6696f8148a3bd8fe779c99adeb4b870584eeb9526584e9aa091fd39"},
+    {file = "Unidecode-1.3.8.tar.gz", hash = "sha256:cfdb349d46ed3873ece4586b96aa75258726e2fa8ec21d6f00a591d98806c2f4"},
 ]
 
 [[package]]
@@ -2187,4 +2187,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.11"
-content-hash = "f888e59061f0e2f8cb6c8078e9c8550273262cc08294abdc668f5e824ae4656a"
+content-hash = "86d6b3a84bd8195cef08e41d86f3f734a30fb447be8ff6a982c5f3d30174294d"
