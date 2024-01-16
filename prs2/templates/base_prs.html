@@ -1,4 +1,4 @@
-{% extends "webtemplate_dbca/base_b4.html" %}
+{% extends "webtemplate_dbca/base_b5.html" %}
 {% load static %}
 
 {% block extra_style %}
@@ -26,88 +26,85 @@
     .navbar-custom .nav-item:hover .nav-link {
         color: #ffffff;
     }
-    /* Change the color of the navbar toggle button */
-    .custom-toggler .navbar-toggler-icon {
-      background-image: url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 32 32' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='rgba(255,255,255, 0.7)' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 8h24M4 16h24M4 24h24'/%3E%3C/svg%3E");
-    }
-    .custom-toggler.navbar-toggler {
-      border-color: rgb(255,255,255);
-    }
 </style>
 {% endblock %}
 
 {% block navbar_class %}navbar fixed-top navbar-expand-md navbar-custom{% endblock %}
-{% block navbar_button_class %}navbar-toggler custom-toggler{% endblock %}
 {% block navbar_links %}
-<div class="collapse navbar-collapse" id="navbarSupportedContent">
-    <ul class="navbar-nav ml-auto">
-        {% block navbar_item_extra %}{% endblock navbar_item_extra %}
-        <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarSearchDropdown" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-                Search <span class="caret"></span>
-            </a>
-            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarSearchDropdown">
-                <a class="dropdown-item" href="{% url 'prs_object_list' model='referrals' %}" title="Referrals">Referrals</a>
-                <a class="dropdown-item" href="{% url 'prs_object_list' model='tasks' %}" title="Tasks">Tasks</a>
-                <a class="dropdown-item" href="{% url 'prs_object_list' model='notes' %}" title="Notes">Notes</a>
-                <a class="dropdown-item" href="{% url 'prs_object_list' model='conditions' %}" title="Conditions">Conditions</a>
-                <a class="dropdown-item" href="{% url 'prs_object_list' model='records' %}" title="Records">Records</a>
-                <a class="dropdown-item" href="{% url 'prs_object_list' model='locations' %}" title="Locations">Locations</a>
-                <a class="dropdown-item" href="{% url 'prs_object_list' model='clearances' %}" title="Clearances">Clearances</a>
-                <div class="dropdown-divider"></div>
-                <a class="dropdown-item" href="{% url 'prs_index_search_combined' %}" title="Search all">Search all</a>
-            </div>
-        </li>
+<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+  <span class="navbar-toggler-icon"></span>
+</button>
+<div class="collapse navbar-collapse" id="navbarNavDropdown">
+  <ul class="navbar-nav ms-auto">
+    {% block navbar_item_extra %}{% endblock navbar_item_extra %}
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="navbarSearchDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Search <span class="caret"></span>
+        </a>
+        <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarSearchDropdown">
+            <a class="dropdown-item" href="{% url 'prs_object_list' model='referrals' %}" title="Referrals">Referrals</a>
+            <a class="dropdown-item" href="{% url 'prs_object_list' model='tasks' %}" title="Tasks">Tasks</a>
+            <a class="dropdown-item" href="{% url 'prs_object_list' model='notes' %}" title="Notes">Notes</a>
+            <a class="dropdown-item" href="{% url 'prs_object_list' model='conditions' %}" title="Conditions">Conditions</a>
+            <a class="dropdown-item" href="{% url 'prs_object_list' model='records' %}" title="Records">Records</a>
+            <a class="dropdown-item" href="{% url 'prs_object_list' model='locations' %}" title="Locations">Locations</a>
+            <a class="dropdown-item" href="{% url 'prs_object_list' model='clearances' %}" title="Clearances">Clearances</a>
+            <div class="dropdown-divider"></div>
+            <a class="dropdown-item" href="{% url 'prs_index_search_combined' %}" title="Search all">Search all</a>
+        </div>
+    </li>
 
-        <li class="nav-item">
-            <a class="nav-item nav-link" href="{% url 'reports' %}" title="Reports">Reports</a>
-        </li>
+    <li class="nav-item">
+        <a class="nav-item nav-link" href="{% url 'reports' %}" title="Reports">Reports</a>
+    </li>
 
-        {% block navbar_auth %}
-        {% if user.is_authenticated %}
-        <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarAuthDropdown" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-                {% firstof user.get_full_name user.email %} <span class="caret"></span>
-            </a>
-            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarAuthDropdown">
-                {% if user.is_superuser %}
-                <a class="dropdown-item" href="{% url 'admin:index' %}" title="Administration">Administration</a>
-                {% endif %}
-                {% if prs_power_user %}
-                <a class="dropdown-item" href="{% url 'tag_replace' %}" title="Tag replace">Tag replace</a>
-                <div class="dropdown-divider"></div>
-                {% endif %}
-                {% if last_referral %}
-                <a class="dropdown-item" href="{% url 'referral_detail' pk=last_referral.pk %}" title="Last referral">Last referral: {{ last_referral.pk }}</a>
-                {% endif %}
-
-                <a class="dropdown-item" href="{% url 'referral_recent' %}" title="Recent referrals">Recent referrals</a>
-                <a class="dropdown-item" href="{% url 'prs_object_list' model='bookmarks' %}" title="Bookmarks">Bookmarks</a>
-                <a class="dropdown-item" href="{% url 'stopped_tasks_list' %}" title="Stopped tasks">Stopped tasks</a>
-                <a class="dropdown-item" href="{% url 'help_page' %}" title="Help">Help</a>
-                {#<li><a class="dropdown-item" href="{% url 'logout' %}" title="Log out">Log out</a>#}
-            </div>
-        </li>
-        <a class="btn btn-light" href="{% url 'referral_create' %}" title="Create a new referral"><strong>Create</strong></a>
-        {% else %}
-        <li class="nav-item">
-            <a href="{% url 'login' %}">Log in</a>
-        </li>
-        {% endif %}
-        {% endblock navbar_auth %}
-    </ul>
-</div><!-- #navbarSupportedContent -->
+    {% block navbar_auth %}
+    {% if user.is_authenticated %}
+    <li class="nav-item dropdown">
+      <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+        {% firstof user.get_full_name user.email %} <span class="caret"></span>
+      </a>
+      <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownMenuLink">
+            {% if user.is_superuser %}
+            <a class="dropdown-item" href="{% url 'admin:index' %}" title="Administration">Administration</a>
+            {% endif %}
+            {% if prs_power_user %}
+            <a class="dropdown-item" href="{% url 'tag_replace' %}" title="Tag replace">Tag replace</a>
+            <div class="dropdown-divider"></div>
+            {% endif %}
+            {% if last_referral %}
+            <a class="dropdown-item" href="{% url 'referral_detail' pk=last_referral.pk %}" title="Last referral">Last referral: {{ last_referral.pk }}</a>
+            {% endif %}
+            <a class="dropdown-item" href="{% url 'referral_recent' %}" title="Recent referrals">Recent referrals</a>
+            <a class="dropdown-item" href="{% url 'prs_object_list' model='bookmarks' %}" title="Bookmarks">Bookmarks</a>
+            <a class="dropdown-item" href="{% url 'stopped_tasks_list' %}" title="Stopped tasks">Stopped tasks</a>
+            <a class="dropdown-item" href="{% url 'help_page' %}" title="Help">Help</a>
+      </ul>
+    </li>
+    <a class="btn btn-light" href="{% url 'referral_create' %}" title="Create a new referral"><strong>Create</strong></a>
+    {% else %}
+    <li class="nav-item"><a class="nav-link" id="id_a_login" href="{% url 'login' %}">Log in</a></li>
+    {% endif %}
+    {% endblock %}
+  </ul>
+</div>
 {% endblock navbar_links %}
 
 {% block page_content %}
     {% block breadcrumb_nav %}
         {% if breadcrumb_trail %}
         <!-- Breadcrumbs -->
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                {{ breadcrumb_trail|safe }}
-            </ol>
-        </nav>
+    <div class="container-fluid">
+        <div class="row pt-2 bg-light">
+            <div class="col">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        {{ breadcrumb_trail|safe }}
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
         {% endif %}
     {% endblock breadcrumb_nav %}
 
@@ -142,17 +139,18 @@
                 Version: {{ version_no }}
                 </small>
             </div>
-            <div class="col-sm">
-                <small class="float-right">&copy; Department of Biodiversity, Conservation and Attractions</small>
+            <div class="col-sm-8 d-none d-sm-block text-end">
+                <small>&copy; Department of Biodiversity, Conservation and Attractions</small>
             </div>
         </div>
     </div>
 </footer>
 {% endblock page_footer %}
 
-{% block jquery_version %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
-{% endblock jquery_version %}
+{% block base_js %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+{% endblock %}
 
 {% block extra_js %}
 <script>

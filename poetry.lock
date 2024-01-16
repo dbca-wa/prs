@@ -632,19 +632,22 @@ files = [
 toml = ["tomli"]
 
 [[package]]
-name = "crispy-bootstrap4"
-version = "2022.1"
-description = "Bootstrap4 template pack for django-crispy-forms"
+name = "crispy-bootstrap5"
+version = "0.7"
+description = "Bootstrap5 template pack for django-crispy-forms"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "crispy-bootstrap4-2022.1.tar.gz", hash = "sha256:f18386c4d96180c1bb1212487d6e8f5a3dd1a9bb58d3032183973d4d130b55f9"},
-    {file = "crispy_bootstrap4-2022.1-py3-none-any.whl", hash = "sha256:5241ab1dc2188c95560aa786439bcbedec7416e6b0f5a52dded82380810367ec"},
+    {file = "crispy-bootstrap5-0.7.tar.gz", hash = "sha256:0745a67199619149b7feca87dab7a45664876ed50fb582b38fd2aeb3f8a8d869"},
+    {file = "crispy_bootstrap5-0.7-py3-none-any.whl", hash = "sha256:f3ff1ef5cb379fe80b1b02e245008f276444098a4bdb8d855bed84c623798a85"},
 ]
 
 [package.dependencies]
 django = ">=3.2"
-django-crispy-forms = ">=1.14.0"
+django-crispy-forms = ">=1.13.0"
+
+[package.extras]
+test = ["pytest", "pytest-django"]
 
 [[package]]
 name = "cryptography"
@@ -2135,16 +2138,16 @@ files = [
 
 [[package]]
 name = "webtemplate-dbca"
-version = "1.5.1"
+version = "1.6.0"
 description = "Base HTML templates for DBCA Django projects"
 optional = false
 python-versions = "*"
 files = [
-    {file = "webtemplate-dbca-1.5.1.tar.gz", hash = "sha256:e67a303090f71314ac4194c7ec38e5b3db8cf019940fa1e373cca4a2a0521fa7"},
+    {file = "webtemplate-dbca-1.6.0.tar.gz", hash = "sha256:6ab6f043ba62b178b5fbd85907d7e9a5ad6634aa231b5a11e3a5d35035ff8942"},
 ]
 
 [package.dependencies]
-Django = ">=2.2"
+Django = ">=3.2,<5"
 
 [[package]]
 name = "whitenoise"
@@ -2187,4 +2190,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.11"
-content-hash = "86d6b3a84bd8195cef08e41d86f3f734a30fb447be8ff6a982c5f3d30174294d"
+content-hash = "8984f56eee22f79cb53ad53b57300cf9cb03a4ba4450186f3d57c70ba3c834ff"

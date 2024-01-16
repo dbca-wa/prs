@@ -3,7 +3,7 @@
 
 {% block extra_style %}
 {{ block.super }}
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/css/dataTables.bootstrap4.min.css" integrity="sha512-PT0RvABaDhDQugEbpNMwgYBCnGCiTZMh9yOzUsJHDgl/dMhD9yjHAwoumnUk3JydV3QTcIkNDuN40CJxik5+WQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link href="https://cdn.datatables.net/v/bs5/dt-1.13.8/date-1.5.1/datatables.min.css" rel="stylesheet">
 {% if geojson_locations %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.min.css" integrity="sha512-1xoFisiGdy9nvho8EgXuXvnpR5GAMSjFwp40gSRE3NwdUdIMIKuPa7bqoUhLD0O/5tPNhteAsE5XyyMi5reQVA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/2.1.0/Control.FullScreen.min.css" integrity="sha512-DRkMa+fn898M1uc6s9JZeztUoXN6viuHsXmh/pgz3jG6a77YWO3U3QYEjLoqbxOeclc2NunWfMTya4Y5twXAKA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -240,8 +240,7 @@
 {% block extra_js %}
 {{ block.super }}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.1/dropzone.min.js" integrity="sha256-fegGeSK7Ez4lvniVEiz1nKMx9pYtlLwPNRPf6uc8d+8=" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/js/jquery.dataTables.min.js" integrity="sha512-BkpSL20WETFylMrcirBahHfSnY++H2O1W+UnEEO4yNIl+jI2+zowyoGJpbtk6bx97fBXf++WJHSSK2MV4ghPcg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/js/dataTables.bootstrap4.min.js" integrity="sha512-OQlawZneA7zzfI6B1n1tjUuo3C5mtYuAWpQdg+iI9mkDoo7iFzTqnQHf+K5ThOWNJ9AbXL4+ZDwH7ykySPQc+A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdn.datatables.net/v/bs5/dt-1.13.8/date-1.5.1/datatables.min.js"></script>
 {% if geojson_locations %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.min.js" integrity="sha512-SeiQaaDh73yrb56sTW/RgVdi/mMqNeM2oBwubFHagc5BkixSpP1fvqF47mKzPGWYSSy4RwbBunrJBQ4Co8fRWA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/2.1.0/Control.FullScreen.min.js" integrity="sha512-bmFAjeYoavPgi1WB5HbKPxfN8x8namh7PVWpgxlkTRoyIldWc+UpoCZAkI9m7KXD/R2aUjtMBVmWzRh3KfPg7g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>

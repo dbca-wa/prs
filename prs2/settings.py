@@ -64,7 +64,7 @@ INSTALLED_APPS = (
     'taggit',
     'reversion',
     'crispy_forms',
-    'crispy_bootstrap4',
+    'crispy_bootstrap5',
     'bootstrap_pagination',
     'webtemplate_dbca',
     'django_celery_results',
@@ -231,8 +231,9 @@ LOGGING = {
     }
 }
 
-# crispy_forms settings
-CRISPY_TEMPLATE_PACK = 'bootstrap4'
+# django-crispy-forms config
+CRISPY_ALLOWED_TEMPLATE_PACKS = 'bootstrap5'
+CRISPY_TEMPLATE_PACK = 'bootstrap5'
 
 # django-rest-framework configuration
 REST_FRAMEWORK = {

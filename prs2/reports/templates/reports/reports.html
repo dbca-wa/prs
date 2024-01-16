@@ -2,7 +2,7 @@
 
 {% block extra_style %}
 {{ block.super }}
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/css/dataTables.bootstrap4.min.css" integrity="sha512-PT0RvABaDhDQugEbpNMwgYBCnGCiTZMh9yOzUsJHDgl/dMhD9yjHAwoumnUk3JydV3QTcIkNDuN40CJxik5+WQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link href="https://cdn.datatables.net/v/bs5/dt-1.13.8/date-1.5.1/datatables.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css" integrity="sha256-siyOpF/pBWUPgIcQi17TLBkjvNgNQArcmwJB8YvkAgg=" crossorigin="anonymous" />
 {% endblock %}
 
@@ -14,13 +14,13 @@
         <!-- Navigation tabs -->
         <ul class="nav nav-tabs" role="tablist">
             <li class="nav-item">
-                <a class="nav-link active" id="id_referrals_tab" href="#tab_referrals" aria-controls="tab_referrals" aria-selected="true" role="tab" data-toggle="tab">Referrals</a>
+                <a class="nav-link active" id="id_referrals_tab" href="#tab_referrals" aria-controls="tab_referrals" aria-selected="true" role="tab" data-bs-toggle="tab">Referrals</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" id="id_clearances_tab" href="#tab_clearances" aria-controls="tab_clearances" aria-selected="false" role="tab" data-toggle="tab">Clearance Requests</a>
+                <a class="nav-link" id="id_clearances_tab" href="#tab_clearances" aria-controls="tab_clearances" aria-selected="false" role="tab" data-bs-toggle="tab">Clearance Requests</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" id="id_tasks_tab" href="#tab_tasks" aria-controls="tab_tasks" aria-selected="false" role="tab" data-toggle="tab">Tasks</a>
+                <a class="nav-link" id="id_tasks_tab" href="#tab_tasks" aria-controls="tab_tasks" aria-selected="false" role="tab" data-bs-toggle="tab">Tasks</a>
             </li>
         </ul>
 
@@ -35,7 +35,7 @@
 
                             <div class="card-header" id="referralFilterCardHeading">
                                 <h5 class="mb-0">
-                                    <button class="btn btn-link" data-toggle="collapse" data-target="#collapseFiltersReferrals" aria-expanded="false" aria-controls="collapseFiltersReferrals">
+                                    <button class="btn btn-link" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFiltersReferrals" aria-expanded="false" aria-controls="collapseFiltersReferrals">
                                         Filter referrals (click to collapse/expand)
                                     </button>
                                 </h5>
@@ -125,7 +125,7 @@
 
                             <div class="card-header" id="clearanceFilterCardHeading">
                                 <h5 class="mb-0">
-                                    <button class="btn btn-link" data-toggle="collapse" data-target="#collapseFiltersClearances" aria-expanded="false" aria-controls="collapseFiltersClearances">
+                                    <button class="btn btn-link" data-bs-toggle="collapse" data-bs-target="#collapseFiltersClearances" aria-expanded="false" aria-controls="collapseFiltersClearances">
                                         Filter clearance requests (click to collapse/expand)
                                     </button>
                                 </h5>
@@ -212,7 +212,7 @@
 
                             <div class="card-header" id="taskFilterCardHeading">
                                 <h5 class="mb-0">
-                                    <button class="btn btn-link" data-toggle="collapse" data-target="#collapseFiltersTasks" aria-expanded="false" aria-controls="collapseFiltersTasks">
+                                    <button class="btn btn-link" data-bs-toggle="collapse" data-bs-target="#collapseFiltersTasks" aria-expanded="false" aria-controls="collapseFiltersTasks">
                                         Filter tasks (click to collapse/expand)
                                     </button>
                                 </h5>
@@ -306,8 +306,7 @@
 {% block extra_js %}
 {{ block.super }}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.15/lodash.min.js" integrity="sha256-VeNaFBVDhoX3H+gJ37DpT/nTuZTdjYro9yBruHjVmoQ=" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/js/jquery.dataTables.min.js" integrity="sha512-BkpSL20WETFylMrcirBahHfSnY++H2O1W+UnEEO4yNIl+jI2+zowyoGJpbtk6bx97fBXf++WJHSSK2MV4ghPcg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/js/dataTables.bootstrap4.min.js" integrity="sha512-OQlawZneA7zzfI6B1n1tjUuo3C5mtYuAWpQdg+iI9mkDoo7iFzTqnQHf+K5ThOWNJ9AbXL4+ZDwH7ykySPQc+A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdn.datatables.net/v/bs5/dt-1.13.8/date-1.5.1/datatables.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js" integrity="sha256-bqVeqGdJ7h/lYPq6xrPv/YGzMEb6dNxlfiTUHSgRCp8=" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/spin.js/2.3.2/spin.min.js" integrity="sha256-PieqE0QdEDMppwXrTzSZQr6tWFX3W5KkyRVyF1zN3eg=" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.26.0/moment.min.js" integrity="sha256-5oApc/wMda1ntIEK4qoWJ4YItnV4fBHMwywunj8gPqc=" crossorigin="anonymous"></script>
