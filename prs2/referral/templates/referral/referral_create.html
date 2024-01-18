@@ -16,20 +16,18 @@
 {% crispy form %}
 
 <!-- Referral Types modal -->
-<div id="refTypeModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="refTypeModalLabel" aria-hidden="true">
+<div id="refTypePopover" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="refTypeModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="refTypemodalLabel">Referral types (definitions)</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 {% include "referral/referral_type_modal.html" %}
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
@@ -40,8 +38,6 @@
 {{ block.super }}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js" integrity="sha256-bqVeqGdJ7h/lYPq6xrPv/YGzMEb6dNxlfiTUHSgRCp8=" crossorigin="anonymous"></script>
 <script type="text/javascript">
-    // Initialise popovers.
-    $("[data-toggle=popover]").popover({container: "body"});
 
     // Define a function to call another function after a timeout.
     var delay = function(){
@@ -78,8 +74,12 @@
         });
 
         // Replace a DOM element with a button for a modal popup.
-        $("label[for='id_type']").html("<button type='button' class='btn btn-primary' data-toggle='modal' data-target='#refTypeModal'><i class='far fa-question-circle'></i> Referral type</button>");
-
+        $("label[for='id_type']").html("<button type='button' class='btn btn-primary' data-bs-toggle='modal' data-bs-target='#refTypePopover'><i class='far fa-question-circle'></i> Referral type</button>");
+        // Initialise popover.
+        var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="modal"]'))
+        var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+          return new bootstrap.Popover(popoverTriggerEl)
+        });
     });
 </script>
 {% endblock %}

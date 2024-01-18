@@ -9,7 +9,7 @@
   <maplayers>
     <maplayer simplifyAlgorithm="0" minimumScale="0" maximumScale="1e+08" simplifyDrawingHints="1" readOnly="0" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" geometry="Polygon" simplifyMaxScale="1" type="vector" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
       <id>referral_{{ REFERRAL_PK }}</id>
-      <datasource>filter='"referral_id" = {{ REFERRAL_PK }}' restrictToRequestBBOX='1' srsname='EPSG:4326' typename='prs:prs_locations_view' url='{{ PRS_GEOSERVER_WFS_URL }}' version='auto'</datasource>
+      <datasource>filter='"referral_id" = {{ REFERRAL_PK }}' restrictToRequestBBOX='1' srsname='EPSG:4326' typename='prs:prs_locations_view' url='{{ PRS_GEOSERVER_URL }}' version='auto'</datasource>
       <keywordList>
         <value></value>
       </keywordList>

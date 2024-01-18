@@ -64,3 +64,4 @@ spec:
           # Note that Geoserver can't cope with a RO root filesystem.
           readOnlyRootFilesystem: false
       restartPolicy: Always
+      terminationGracePeriodSeconds: 180

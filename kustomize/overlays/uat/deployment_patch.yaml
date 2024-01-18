@@ -28,26 +28,31 @@ spec:
             secretKeyRef:
               name: prs-env-uat
               key: SECRET_KEY
-        - name: PRS_GEOSERVER_WMTS_URL
+        - name: PRS_GEOSERVER_URL
           valueFrom:
             secretKeyRef:
               name: prs-env-uat
-              key: PRS_GEOSERVER_WMTS_URL
-        - name: PRS_GEOSERVER_WFS_URL
+              key: PRS_GEOSERVER_URL
+        - name: MAPPROXY_URL
           valueFrom:
             secretKeyRef:
               name: prs-env-uat
-              key: PRS_GEOSERVER_WFS_URL
-        - name: GEOSERVER_WMTS_URL
+              key: MAPPROXY_URL
+        - name: GEOCODER_URL
           valueFrom:
             secretKeyRef:
               name: prs-env-uat
-              key: GEOSERVER_WMTS_URL
-        - name: GEOSERVER_WFS_URL
+              key: GEOCODER_URL
+        - name: GEOSERVER_URL
           valueFrom:
             secretKeyRef:
               name: prs-env-uat
-              key: GEOSERVER_WFS_URL
+              key: GEOSERVER_URL
+        - name: CADASTRE_LAYER_NAME
+          valueFrom:
+            secretKeyRef:
+              name: prs-env-uat
+              key: CADASTRE_LAYER_NAME
         - name: GEOSERVER_SSO_USER
           valueFrom:
             secretKeyRef:
@@ -58,11 +63,6 @@ spec:
             secretKeyRef:
               name: prs-env-uat
               key: GEOSERVER_SSO_PASS
-        - name: GEOCODER_URL
-          valueFrom:
-            secretKeyRef:
-              name: prs-env-uat
-              key: GEOCODER_URL
         - name: SLIP_ESRI_FS_URL
           valueFrom:
             secretKeyRef:

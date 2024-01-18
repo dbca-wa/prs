@@ -43,13 +43,13 @@ else:
     AZURE_URL_EXPIRATION_SECS = env('AZURE_URL_EXPIRATION_SECS', 3600)  # Default one hour.
 
 # PRS may deploy its own instance of Geoserver.
-PRS_GEOSERVER_WMTS_URL = env('PRS_GEOSERVER_WMTS_URL', '')
-PRS_GEOSERVER_WFS_URL = env('PRS_GEOSERVER_WFS_URL', '')
-GEOSERVER_WMTS_URL = env('GEOSERVER_WMTS_URL', '')
-GEOSERVER_WFS_URL = env('GEOSERVER_WFS_URL', '')
+PRS_GEOSERVER_URL = env('PRS_GEOSERVER_URL', '')
+MAPPROXY_URL = env('MAPPROXY_URL', '')
+GEOCODER_URL = env('GEOCODER_URL', '')
+GEOSERVER_URL = env('GEOSERVER_URL', '')
 GEOSERVER_SSO_USER = env('GEOSERVER_SSO_USER', 'username')
 GEOSERVER_SSO_PASS = env('GEOSERVER_SSO_PASS', 'password')
-GEOCODER_URL = env('GEOCODER_URL', '')
+CADASTRE_LAYER_NAME = env('CADASTRE_LAYER_NAME', 'cadastre')
 
 INSTALLED_APPS = (
     'whitenoise.runserver_nostatic',
@@ -64,7 +64,7 @@ INSTALLED_APPS = (
     'taggit',
     'reversion',
     'crispy_forms',
-    'crispy_bootstrap4',
+    'crispy_bootstrap5',
     'bootstrap_pagination',
     'webtemplate_dbca',
     'django_celery_results',
@@ -231,8 +231,9 @@ LOGGING = {
     }
 }
 
-# crispy_forms settings
-CRISPY_TEMPLATE_PACK = 'bootstrap4'
+# django-crispy-forms config
+CRISPY_ALLOWED_TEMPLATE_PACKS = 'bootstrap5'
+CRISPY_TEMPLATE_PACK = 'bootstrap5'
 
 # django-rest-framework configuration
 REST_FRAMEWORK = {
