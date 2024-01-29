@@ -1143,10 +1143,13 @@ class Record(ReferralBaseModel):
 
     @property
     def extension(self):
-        if self.uploaded_file:
-            ext = os.path.splitext(self.uploaded_file.name)[1]
-            return ext.replace(".", "").upper()
-        else:
+        try:
+            if self.uploaded_file and self.uploaded_file.size:
+                ext = os.path.splitext(self.uploaded_file.name)[1]
+                return ext.replace(".", "").upper()
+            else:
+                return ""
+        except:
             return ""
 
     @property
