@@ -42,7 +42,7 @@ sentry-sdk = {version = "1.39.2", extras = ["django"]}
 crispy-bootstrap5 = "0.7"
 
 [tool.poetry.group.dev.dependencies]
-ipython = "^8.20.0"
+ipython = "^8.21.0"
 ipdb = "^0.13.11"
 pre-commit = "^3.5.0"
 coverage = "^7.4.1"
