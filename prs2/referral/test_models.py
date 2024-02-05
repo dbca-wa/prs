@@ -468,7 +468,9 @@ class RecordTest(PrsTestCase):
     def setUp(self):
         super(RecordTest, self).setUp()
         # Create a temp file in the MEDIA_ROOT directory.
-        self.tmp_f = open(settings.MEDIA_ROOT + '/test.txt', 'a')
+        self.tmp_f = open(settings.MEDIA_ROOT + '/test.txt', 'w')
+        self.tmp_f.write('Hello, World!')
+        self.tmp_f.close()
         self.r = Record.objects.first()
 
     def tearDown(self):
@@ -498,6 +500,7 @@ class RecordTest(PrsTestCase):
         """
         self.assertTrue(hasattr(self.r, 'extension'))
         self.assertFalse(self.r.filesize_str)  # No file assigned yet.
+        self.tmp_f = open(settings.MEDIA_ROOT + '/test.txt', 'w')
         self.tmp_f.write('x' * 1024 * 10)  # Write 10k of junk in the file.
         self.tmp_f.close()
         self.r.uploaded_file = self.tmp_f.name
