@@ -5,5 +5,5 @@ metadata:
 spec:
   type: ClusterIP
   selector:
-    app: prs-uat
+    app: prs-deployment
     variant: uat

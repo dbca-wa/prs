@@ -2,16 +2,14 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: prs-celery
-  labels:
-    app: prs-celery-uat
 spec:
   selector:
     matchLabels:
-      app: prs-celery-uat
+      app: prs-celery
   template:
     metadata:
       labels:
-        app: prs-celery-uat
+        app: prs-celery
     spec:
       containers:
       - name: prs-celery

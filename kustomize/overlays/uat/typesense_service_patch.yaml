@@ -4,5 +4,5 @@ metadata:
   name: prs-typesense
 spec:
   selector:
-    app: prs-typesense-uat
+    app: prs-typesense
     variant: uat

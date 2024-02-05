@@ -15,9 +15,9 @@ secretGenerator:
     envs:
       - .env
 labels:
-  - pairs:
+  - includeSelectors: true
+    pairs:
       variant: uat
-    includeSelectors: true
 patches:
   - path: celery_patch.yaml
   - path: deployment_patch.yaml

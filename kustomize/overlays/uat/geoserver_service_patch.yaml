@@ -4,5 +4,5 @@ metadata:
   name: prs-geoserver-clusterip
 spec:
   selector:
-    app: prs-geoserver-uat
+    app: prs-geoserver
     variant: uat
