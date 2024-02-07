@@ -238,7 +238,6 @@
         </div>
     </div>
 </div>
-
 {% endif %}
 {% endblock page_content_inner %}
 
@@ -250,8 +249,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-search/3.0.2/leaflet-search.min.js" integrity="sha512-lmt2nQGwuhA/7xEG4KjOuzy+kBQVOgpBNFxJR2yWp8J57H8nYxWC8J7Y5woDbqBBpBVHHLbFEi503u5K49KcOA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="{% static 'js/referral_map.js' %}"></script>
 <script>
-    // Add a fullscreen control to the map.
-    L.control.fullscreen().addTo(map);
     // Add Location polygons to the map display and zoom to their bounds.
     var geojsonFeatures = JSON.parse('{{ geojson_locations|escapejs }}');
     var locationsLayer = L.geoJson(null, {
