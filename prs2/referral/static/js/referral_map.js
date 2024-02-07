@@ -28,15 +28,24 @@ const cadastre = L.tileLayer.wms(mapproxy_url, {
   opacity: 0.75,
   tileSize: 1024,
   zoomOffset: -2,
-  minZoom: 12,
+  minZoom: 13,
 });
 const prsLocations = L.tileLayer.wms(prs_geoserver_url, {
   layers: 'prs:prs_locations_view',
   format: 'image/png',
   transparent: true,
   opacity: 0.75,
-  tileSize: 256,
+  tileSize: 1024,
+  zoomOffset: -2,
   zoomOffset: 0,
+});
+const dbcaRegions = L.tileLayer.wms(mapproxy_url, {
+  layers: 'dbca-regions',
+  format: 'image/png',
+  transparent: true,
+  opacity: 0.75,
+  tileSize: 1024,
+  zoomOffset: -2,
 });
 const dbcaTenure = L.tileLayer.wms(mapproxy_url, {
   layers: 'dbca-tenure',
@@ -48,6 +57,22 @@ const dbcaTenure = L.tileLayer.wms(mapproxy_url, {
 });
 const regionalParks = L.tileLayer.wms(mapproxy_url, {
   layers: 'dbca-regional-parks',
+  format: 'image/png',
+  transparent: true,
+  opacity: 0.75,
+  tileSize: 1024,
+  zoomOffset: -2,
+});
+const ucl = L.tileLayer.wms(mapproxy_url, {
+  layers: 'ucl',
+  format: 'image/png',
+  transparent: true,
+  opacity: 0.75,
+  tileSize: 1024,
+  zoomOffset: -2,
+});
+const lgaBoundaries = L.tileLayer.wms(mapproxy_url, {
+  layers: 'lga-boundaries',
   format: 'image/png',
   transparent: true,
   opacity: 0.75,
@@ -73,10 +98,12 @@ var baseMaps = {
 };
 var overlayMaps = {
     "Cadastre": cadastre,
-    //"SLIP roads": slipRoads,
     "PRS locations": prsLocations,
+    "DBCA regions": dbcaRegions,
     "DBCA tenure": dbcaTenure,
     "Regional Parks": regionalParks,
+    "Unallocated Crown Land": ucl,
+    "LGA boundaries": lgaBoundaries,
 };
 
 // Define layer control.
@@ -155,7 +182,8 @@ L.control.lotfilter = function(id, options) {
     return new L.Control.LotFilter(id, options);
 };
 // Add the custom control to the map, then set a change() event listener on it
-map.addControl(new L.Control.LotFilter({}));
+const lotFilter = new L.Control.LotFilter({});
+map.addControl(lotFilter);
 $("input#id_input_lotSearch").change(function() {
     var lotname = $(this).val().toUpperCase();
     if (lotname) {
@@ -192,3 +220,7 @@ var findLot = function(lotname) {
 };
 // Log zoom level to console.
 //map.on('zoomend', function (e) {console.log(e.target._zoom)});
+
+  // Add a fullscreen control to the map.
+const fullScreen = new L.control.fullscreen();
+map.addControl(fullScreen);
