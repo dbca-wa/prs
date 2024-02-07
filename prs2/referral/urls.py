@@ -40,6 +40,7 @@ urlpatterns += [
 # Other static/functional URLs
 urlpatterns += [
     path("help/", views.HelpPage.as_view(), name="help_page"),
+    path("map/", views.ReferralMap.as_view(), name="referral_map"),
     path("search/", views.IndexSearchCombined.as_view(), name="prs_index_search_combined"),
     path("index/", views.IndexSearch.as_view(), name="prs_index_search"),
     path("index/<str:collection>/", views.IndexSearch.as_view(), name="prs_index_search"),
