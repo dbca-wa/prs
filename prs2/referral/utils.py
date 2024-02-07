@@ -264,20 +264,6 @@ def update_revision_history(app_model):
             """
 
 
-def borgcollector_harvest(request, publishes=["prs_locations"]):
-    """Convenience function to manually run a Borg Collector harvest
-    job for the PRS locations layer.
-
-    Docs: https://github.com/parksandwildlife/borgcollector
-    """
-    api_url = env("BORGCOLLECTOR_API", "https://borg.dbca.wa.gov.au/api/") + "jobs/"
-    # Send a POST request to the API endpoint.
-    r = requests.post(
-        user_request=request, url=api_url, data=json.dumps({"publishes": publishes})
-    )
-    return r
-
-
 def overdue_task_email():
     """A utility function to send an email to each user with tasks that are overdue.
     """

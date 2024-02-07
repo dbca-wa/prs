@@ -30,6 +30,7 @@ urlpatterns += [
     path("tags/", views.TagList.as_view(), name="tag_list"),
     path("tags/replace/", views.TagReplace.as_view(), name="tag_replace"),
     path("tasks/<int:pk>/history/", views.PrsObjectHistory.as_view(model=Task), name="prs_object_history"),
+    path("tasks/<int:pk>/delete/", views.PrsObjectDelete.as_view(), name="prs_object_delete"),
     path("tasks/<int:pk>/<str:action>/", views.TaskAction.as_view(), name="task_action"),
     path("conditions/<int:pk>/clearance/", views.ConditionClearanceCreate.as_view(), name="condition_clearance_add"),
     path("records/<int:pk>/infobase/", views.InfobaseShortcut.as_view(), name="infobase_shortcut"),
@@ -39,6 +40,7 @@ urlpatterns += [
 # Other static/functional URLs
 urlpatterns += [
     path("help/", views.HelpPage.as_view(), name="help_page"),
+    path("map/", views.ReferralMap.as_view(), name="referral_map"),
     path("search/", views.IndexSearchCombined.as_view(), name="prs_index_search_combined"),
     path("index/", views.IndexSearch.as_view(), name="prs_index_search"),
     path("index/<str:collection>/", views.IndexSearch.as_view(), name="prs_index_search"),

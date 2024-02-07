@@ -23,7 +23,7 @@
 {% block navbar_item_extra %}
 {% if object_type == 'task' %}
 <li class="nav-item dropdown">
-    <a class="nav-link dropdown-toggle" href="#" id="taskDetailNavbarDropdown" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+    <a class="nav-link dropdown-toggle" href="#" id="taskDetailNavbarDropdown" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
         Task <span class="caret"></span>
     </a>
     <div class="dropdown-menu dropdown-menu-right" aria-labelledby="taskDetailNavbarDropdown">
@@ -53,7 +53,7 @@
 </li>
 {% elif object_type == 'note' %}
 <li class="nav-item dropdown">
-    <a class="nav-link dropdown-toggle" href="#" id="noteDetailNavbarDropdown" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+    <a class="nav-link dropdown-toggle" href="#" id="noteDetailNavbarDropdown" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
         Note <span class="caret"></span>
     </a>
     <div class="dropdown-menu dropdown-menu-right" aria-labelledby="noteDetailNavbarDropdown">
@@ -68,7 +68,7 @@
 </li>
 {% elif object_type == 'record' %}
 <li class="nav-item dropdown">
-    <a class="nav-link dropdown-toggle" href="#" id="recordDetailNavbarDropdown" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+    <a class="nav-link dropdown-toggle" href="#" id="recordDetailNavbarDropdown" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
         Record <span class="caret"></span>
     </a>
     <div class="dropdown-menu dropdown-menu-right" aria-labelledby="recordDetailNavbarDropdown">
@@ -83,7 +83,7 @@
 </li>
 {% elif object_type == 'location' %}
 <li class="nav-item dropdown">
-    <a class="nav-link dropdown-toggle" href="#" id="locationDetailNavbarDropdown" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+    <a class="nav-link dropdown-toggle" href="#" id="locationDetailNavbarDropdown" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
         Location <span class="caret"></span>
     </a>
     <div class="dropdown-menu dropdown-menu-right" aria-labelledby="locationDetailNavbarDropdown">
@@ -96,7 +96,7 @@
 </li>
 {% elif object_type == 'condition' %}
 <li class="nav-item dropdown">
-    <a class="nav-link dropdown-toggle" href="#" id="conditionDetailNavbarDropdown"  data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+    <a class="nav-link dropdown-toggle" href="#" id="conditionDetailNavbarDropdown" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
         Condition <span class="caret"></span>
     </a>
     <div class="dropdown-menu dropdown-menu-right" aria-labelledby="conditionDetailNavbarDropdown">
@@ -247,8 +247,6 @@
 <script src="{% static 'js/leaflet-search.min.js' %}"></script>
 <script src="{% static 'js/referral_map.js' %}"></script>
 <script>
-    // Add a fullscreen control to the map.
-    L.control.fullscreen().addTo(map);
     // Add Location polygons to the map display and zoom to their bounds.
     var geojsonFeatures = JSON.parse('{{ geojson_locations|escapejs }}');
     var locationsLayer = L.geoJson(null, {

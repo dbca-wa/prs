@@ -26,6 +26,15 @@
     .navbar-custom .nav-item:hover .nav-link {
         color: #ffffff;
     }
+    .navbar-toggler {
+        border: 1px solid #a2c1ca;
+    }
+    .navbar-toggler:focus {
+        box-shadow: 0 0 0 0.25em #a2c1ca;
+    }
+    .navbar-toggler-icon {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.55%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+    }
 </style>
 {% endblock %}
 
@@ -56,6 +65,9 @@
 
     <li class="nav-item">
         <a class="nav-item nav-link" href="{% url 'reports' %}" title="Reports">Reports</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-item nav-link" href="{% url 'referral_map' %}" title="Referral map">Map</a>
     </li>
 
     {% block navbar_auth %}
@@ -92,9 +104,9 @@
 
 {% block page_content %}
     {% block breadcrumb_nav %}
-        {% if breadcrumb_trail %}
-        <!-- Breadcrumbs -->
-    <div class="container-fluid">
+    {% if breadcrumb_trail %}
+    <!-- Breadcrumbs -->
+    <div class="container-fluid" id="breadcrumbs_div">
         <div class="row pt-2 bg-light">
             <div class="col">
                 <nav aria-label="breadcrumb">
@@ -105,10 +117,10 @@
             </div>
         </div>
     </div>
-        {% endif %}
+    {% endif %}
     {% endblock breadcrumb_nav %}
 
-    <div class="container-fluid">
+    <div class="container-fluid{% block page_content_container_extracss %}{% endblock %}">
         <!-- Messages  -->
         {% if messages %}
         <div class="row">
@@ -122,13 +134,15 @@
         </div>
         {% endif %}
 
+        {% block page_content_outer %}
         <div class="row">
             <div class="col">
                 {% block page_content_inner %}{% endblock %}
             </div>
         </div>
+        {% endblock page_content_outer %}
     </div>
-{% endblock %}
+{% endblock page_content %}
 
 {% block page_footer %}
 <footer class="footer mt-auto py-3">

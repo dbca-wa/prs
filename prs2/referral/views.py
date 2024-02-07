@@ -1902,3 +1902,14 @@ class CadastreQuery(View):
             resp = query_cadastre(cql_filter)
 
         return JsonResponse(resp)
+
+
+class ReferralMap(LoginRequiredMixin, TemplateView):
+    """A combined version of the index search which returns referrals with linked objects.
+    """
+    template_name = "referral/referral_map.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["page_title"] = " | ".join([settings.APPLICATION_ACRONYM, "Referrals map"])
+        return context

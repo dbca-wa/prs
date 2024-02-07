@@ -34,7 +34,6 @@ from referral.utils import (
     breadcrumbs_li,
     get_query,
     prs_user,
-    #borgcollector_harvest,
 )
 
 logger = logging.getLogger("prs")
@@ -53,7 +52,7 @@ class PrsObjectList(LoginRequiredMixin, ListView):
             self.model = is_model_or_string(kwargs["model"])
         # is_model_or_string() returns None if the model doesn't exist.
         if not self.model:
-            return HttpResponseBadRequest("Not a model.")
+            return HttpResponseBadRequest("Bad request")
         return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):

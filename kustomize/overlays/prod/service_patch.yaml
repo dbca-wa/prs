@@ -5,5 +5,5 @@ metadata:
 spec:
   type: ClusterIP
   selector:
-    app: prs-prod
+    app: prs-deployment
     variant: prod
