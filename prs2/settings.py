@@ -148,6 +148,7 @@ ALLOWED_UPLOAD_TYPES = [
     'text/plain'
 ]
 REDIS_CACHE_HOST = env("REDIS_CACHE_HOST", "")
+REDIS_CACHE_PASSWORD = env("REDIS_CACHE_PASSWORD", "")
 if REDIS_CACHE_HOST:
     CACHES = {
         "default": {
@@ -158,6 +159,8 @@ if REDIS_CACHE_HOST:
             }
         }
     }
+    if REDIS_CACHE_PASSWORD:
+        CACHES["default"]["OPTIONS"]["PASSWORD"] = REDIS_CACHE_PASSWORD
 else:
     # Don't cache if we don't have a cache server configured.
     CACHES = {
