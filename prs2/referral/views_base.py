@@ -2,6 +2,8 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.admin import site
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.cache import cache
+from django.core.cache.utils import make_template_fragment_key
 from django.core.serializers import serialize
 from django.db.models import F
 from django.urls import reverse
@@ -172,6 +174,18 @@ class PrsObjectCreate(LoginRequiredMixin, CreateView):
             self.object.slug = slugify(self.object.name)
         self.object.save()
         messages.success(self.request, "{0} has been created.".format(self.object))
+
+        # Find the referral associated with this object (may be the object itself)
+        # and invalidate any cached detail fragment.
+        if settings.REDIS_CACHE_HOST:
+            if self.object._meta.model_name == 'referral':
+                referral = self.object
+            else:
+                referral = self.object.referral
+            if referral:
+                key = make_template_fragment_key('referral_detail', [referral.pk])
+                cache.delete(key)
+
         return HttpResponseRedirect(self.get_success_url())
 
     def get_success_url(self):
@@ -340,6 +354,18 @@ class PrsObjectUpdate(LoginRequiredMixin, UpdateView):
 
     def form_valid(self, form):
         self.object = form.save()
+
+        # Find the referral associated with this object (may be the object itself)
+        # and invalidate any cached detail fragment.
+        if settings.REDIS_CACHE_HOST:
+            if self.object._meta.model_name == 'referral':
+                referral = self.object
+            else:
+                referral = self.object.referral
+            if referral:
+                key = make_template_fragment_key('referral_detail', [referral.pk])
+                cache.delete(key)
+
         messages.success(
             self.request, "{0} has been updated.".format(self.get_object())
         )
@@ -469,6 +495,17 @@ class PrsObjectDelete(LoginRequiredMixin, DeleteView):
         else:
             success_url = self.get_success_url()
         obj.delete()
+
+        # Find the referral associated with this object (may be the object itself)
+        # and invalidate any cached detail fragment.
+        if settings.REDIS_CACHE_HOST:
+            if obj._meta.model_name == 'referral':
+                referral = obj
+            else:
+                referral = obj.referral
+            if referral:
+                key = make_template_fragment_key('referral_detail', [referral.pk])
+                cache.delete(key)
 
         messages.success(self.request, f"{obj} has been deleted.")
         return HttpResponseRedirect(success_url)

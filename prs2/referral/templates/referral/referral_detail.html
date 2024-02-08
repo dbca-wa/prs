@@ -1,6 +1,5 @@
 {% extends "base_prs.html" %}
-{% load static %}
-{% load bootstrap_pagination %}
+{% load static bootstrap_pagination cache %}
 
 {% block extra_style %}
 {{ block.super }}
@@ -60,6 +59,7 @@
 {% endblock navbar_item_extra %}
 
 {% block page_content_inner %}
+{% cache 600 referral_detail referral.pk %}
 <!-- Tags and related referrals pane -->
 {% if not object.is_deleted %}
     <h1>{{ title }}</h1>
@@ -223,6 +223,7 @@
         </div><!-- /.col -->
     </div><!-- /.row -->
 {% endif %}
+{% endcache %}
 
 {% if geojson_locations %}
 <hr>
