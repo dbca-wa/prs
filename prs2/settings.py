@@ -147,6 +147,27 @@ ALLOWED_UPLOAD_TYPES = [
     'text/html',
     'text/plain'
 ]
+REDIS_CACHE_HOST = env("REDIS_CACHE_HOST", "")
+REDIS_CACHE_PASSWORD = env("REDIS_CACHE_PASSWORD", "")
+if REDIS_CACHE_HOST:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": REDIS_CACHE_HOST,
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            }
+        }
+    }
+    if REDIS_CACHE_PASSWORD:
+        CACHES["default"]["OPTIONS"]["PASSWORD"] = REDIS_CACHE_PASSWORD
+else:
+    # Don't cache if we don't have a cache server configured.
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.dummy.DummyCache",
+        }
+    }
 API_RESPONSE_CACHE_SECONDS = env('API_RESPONSE_CACHE_SECONDS', 60)
 
 # Email settings

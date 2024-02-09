@@ -63,6 +63,14 @@ const regionalParks = L.tileLayer.wms(mapproxy_url, {
   tileSize: 1024,
   zoomOffset: -2,
 });
+const swanCannDevContArea = L.tileLayer.wms(mapproxy_url, {
+  layers: 'swan-canning-dev-cont-area',
+  format: 'image/png',
+  transparent: true,
+  opacity: 0.85,
+  tileSize: 1024,
+  zoomOffset: -2,
+});
 const ucl = L.tileLayer.wms(mapproxy_url, {
   layers: 'ucl',
   format: 'image/png',
@@ -102,6 +110,7 @@ var overlayMaps = {
     "DBCA regions": dbcaRegions,
     "DBCA tenure": dbcaTenure,
     "Regional Parks": regionalParks,
+    "Swan Canning Dev Ctrl Area": swanCannDevContArea,
     "Unallocated Crown Land": ucl,
     "LGA boundaries": lgaBoundaries,
 };

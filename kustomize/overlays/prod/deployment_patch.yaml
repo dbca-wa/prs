@@ -161,3 +161,13 @@ spec:
               key: SENTRY_TRANSACTION_SAMPLE_RATE
         - name: SENTRY_ENVIRONMENT
           value: "prod"
+        - name: REDIS_CACHE_HOST
+          valueFrom:
+            secretKeyRef:
+              name: prs-env-prod
+              key: REDIS_CACHE_HOST
+        - name: REDIS_CACHE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: prs-env-prod
+              key: REDIS_CACHE_PASSWORD
