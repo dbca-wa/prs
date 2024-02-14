@@ -172,7 +172,7 @@
     const prs_geoserver_url = '{{ prs_geoserver_url }}';
     const mapproxy_url = '{{ mapproxy_url }}';
     const geoserver_url = '{{ geoserver_url }}';
-    const geocoder_url = '{{ geocoder_url }}';
+    const geocoder_url = '{% url "geocode_query" %}';
     const cadastre_query_url = '{% url "cadastre_query" %}'
     const cadastre_layer_name = '{{ cadastre_layer_name }}';
 </script>
