@@ -3,10 +3,10 @@ kind: PersistentVolumeClaim
 metadata:
   name: prs-typesense-data
 spec:
-  storageClassName: managed-csi-retain
+  storageClassName: managed-csi-premium-retain
   volumeMode: Filesystem
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 2Gi
+      storage: 4Gi
