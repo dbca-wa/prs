@@ -249,6 +249,12 @@ LOGGING = {
             'handlers': ['harvester'],
             'level': 'INFO',
         },
+        # Set the logging level for all azure-* libraries (the azure-storage-blob library uses this one).
+        # Reference: https://learn.microsoft.com/en-us/azure/developer/python/sdk/azure-sdk-logging
+        'azure': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+        }
     }
 }
 
