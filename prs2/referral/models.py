@@ -1,6 +1,5 @@
 from copy import copy
 from datetime import date
-#from dateutil.parser import parse
 from django.conf import settings
 from django.contrib.auth.signals import user_logged_in
 from django.contrib.gis.db import models
