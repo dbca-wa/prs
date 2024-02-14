@@ -336,3 +336,14 @@ def query_cadastre(cql_filter, crs="EPSG:4326"):
     resp = requests.get(url, auth=auth, params=params)
     resp.raise_for_status()
     return resp.json()
+
+
+def query_caddy(q):
+    """Utility function to proxy queries to the Caddy geocoder service.
+    """
+    url = env('GEOCODER_URL', None)
+    auth = (env('GEOSERVER_SSO_USER', None), env('GEOSERVER_SSO_PASS', None))
+    params = {'q': q}
+    resp = requests.get(url, auth=auth, params=params)
+    resp.raise_for_status()
+    return resp.json()

@@ -47,6 +47,7 @@ urlpatterns += [
     path("stopped-tasks/", views.SiteHome.as_view(stopped_tasks=True), name="stopped_tasks_list"),
     path("print/", views.SiteHome.as_view(printable=True), name="site_home_print"),
     path("cadastre-query/", views.CadastreQuery.as_view(), name="cadastre_query"),
+    path("geocode/", views.GeocodeQuery.as_view(), name="geocode_query"),
     path("<str:model>/", views.PrsObjectList.as_view(), name="prs_object_list"),
     path("<str:model>/create/", views.PrsObjectCreate.as_view(), name="prs_object_create"),
     path("<str:model>/<int:pk>/", views.PrsObjectDetail.as_view(), name="prs_object_detail"),

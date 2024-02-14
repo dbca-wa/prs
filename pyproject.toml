@@ -38,14 +38,14 @@ whitenoise = {version = "6.6.0", extras = ["brotli"]}
 django-crum = "0.7.9"
 django-storages = {version = "1.14.2", extras = ["azure"]}
 tomli = "2.0.1"
-sentry-sdk = {version = "1.40.0", extras = ["django"]}
+sentry-sdk = {version = "1.40.3", extras = ["django"]}
 crispy-bootstrap5 = "0.7"
 django-redis = "5.4.0"
 
 [tool.poetry.group.dev.dependencies]
 ipython = "^8.21.0"
 ipdb = "^0.13.11"
-pre-commit = "^3.6.0"
+pre-commit = "^3.6.1"
 coverage = "^7.4.1"
 
 [build-system]

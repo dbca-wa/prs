@@ -54,6 +54,7 @@ from referral.utils import (
     prs_user,
     is_prs_power_user,
     query_cadastre,
+    query_caddy,
 )
 from referral.forms import (
     ReferralCreateForm,
@@ -1938,3 +1939,17 @@ class ReferralMap(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         context["page_title"] = " | ".join([settings.APPLICATION_ACRONYM, "Referrals map"])
         return context
+
+
+class GeocodeQuery(View):
+    """Basic view endpoint to send a geocode query to the Caddy spatial service.
+    """
+    http_method_names = ["get"]
+
+    def get(self, request, *args, **kwargs):
+        q = request.GET.get("q", None)
+
+        if not q:
+            return HttpResponseBadRequest("Bad request")
+        resp = query_caddy(q)
+        return JsonResponse(resp, safe=False)
