@@ -26,7 +26,6 @@ spec:
             name: prs-typesense-data
       containers:
       - name: prs-typesense
-        imagePullPolicy: Always
         env:
         - name: TYPESENSE_API_KEY
           valueFrom:
