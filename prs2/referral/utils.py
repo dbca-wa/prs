@@ -6,7 +6,7 @@ from django.contrib import admin
 from django.core.mail import EmailMultiAlternatives
 from django.db.models import Q
 from django.db.models.base import ModelBase
-from django.utils.encoding import smart_text
+from django.utils.encoding import smart_str
 from django.utils.safestring import mark_safe
 import json
 from reversion.models import Version
@@ -51,7 +51,7 @@ def smart_truncate(content, length=100, suffix="....(more)"):
     """Small function to truncate a string in a sensible way, sourced from:
     http://stackoverflow.com/questions/250357/smart-truncate-in-python
     """
-    content = smart_text(content)
+    content = smart_str(content)
     if len(content) <= length:
         return content
     else:
