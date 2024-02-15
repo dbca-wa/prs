@@ -1,6 +1,5 @@
 from copy import copy
 from datetime import date
-#from dateutil.parser import parse
 from django.conf import settings
 from django.contrib.auth.signals import user_logged_in
 from django.contrib.gis.db import models
@@ -534,7 +533,7 @@ class Referral(ReferralBaseModel):
         else:
             d["address"] = ""
         if self.description:
-            d["description"] = escape(unidecode(self.description))
+            d["description"] = escape(smart_truncate(self.description, length=200))
         else:
             d["description"] = ""
         d["reference"] = escape(self.reference)
@@ -783,7 +782,7 @@ class Task(ReferralBaseModel):
         d["url"] = self.get_absolute_url()
         d["type"] = self.type.name
         if self.description:
-            d["description"] = escape(smart_truncate(self.description, length=400))
+            d["description"] = escape(smart_truncate(self.description, length=200))
         else:
             d["description"] = ""
         d["address"] = escape(self.referral.address) if self.referral.address else ""
@@ -915,7 +914,7 @@ class Task(ReferralBaseModel):
         d = copy(self.__dict__)
         d["type"] = self.type.name
         if self.description:
-            d["description"] = escape(unidecode(self.description))
+            d["description"] = escape(smart_truncate(self.description, length=200))
         else:
             d["description"] = ""
         d["referral_url"] = self.referral.get_absolute_url()
