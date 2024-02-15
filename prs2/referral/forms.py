@@ -1,6 +1,5 @@
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit, HTML, Div
-from crispy_forms.bootstrap import PrependedText
 from datetime import datetime
 from django import forms
 from django.conf import settings
@@ -586,8 +585,7 @@ class TaskReassignForm(BaseForm):
         self.fields['due_date'].input_formats = settings.DATE_INPUT_FORMATS
         self.fields['due_date'].required = True
         layout = Layout(
-            'assigned_user', 'due_date', 'description',
-            PrependedText('email_user', ''),
+            'assigned_user', 'email_user', 'due_date', 'description',
             Div(
                 self.save_button, self.cancel_button,
                 css_class='col-sm-offset-4 col-md-offset-3 col-lg-offset-2')
@@ -750,8 +748,7 @@ class TaskCreateForm(BaseForm):
             auto-completed if no due date is recorded.'''
         self.fields['description'].required = True
         layout = Layout(
-            'assigned_user', 'type', 'start_date', 'due_date', 'description',
-            PrependedText('email_user', ''),
+            'assigned_user', 'email_user', 'type', 'start_date', 'due_date', 'description',
             Div(
                 self.save_button, self.cancel_button,
                 css_class='col-sm-offset-4 col-md-offset-3 col-lg-offset-2')
@@ -893,9 +890,8 @@ class TaskClearanceCreateForm(BaseForm):
             stage number, all condition numbers applicable to this clearance
             request and any other useful information.'''
         layout = Layout(
-            'conditions', 'assigned_user', 'deposited_plan', 'start_date',
+            'conditions', 'assigned_user', 'email_user', 'deposited_plan', 'start_date',
             'due_date', 'description',
-            PrependedText('email_user', ''),
             Div(
                 self.save_button, self.cancel_button,
                 css_class='col-sm-offset-4 col-md-offset-3 col-lg-offset-2')
@@ -937,13 +933,13 @@ class ClearanceCreateForm(BaseForm):
     def __init__(self, condition=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         cond_text_html = HTML('''
-            <div id="div_id_condition_text" class="form-group">
-                <label for="id_condition_text" class="control-label col-xs-12 col-sm-4 col-md-3 col-lg-2">Approved condition</label>
-                <div class="controls col-xs-12 col-sm-8 col-md-6 col-lg-4"><p>{}</p></div>
+            <div class="row">
+                <div class="col-xs-12 col-sm-4 col-md-3 col-lg-2">Approved condition</div>
+                <div class="col-xs-12 col-sm-8 col-md-9 col-lg-10">{}</div>
             </div>
-            <div id="div_id_condition_no" class="form-group">
-                <label for="id_condition_no" class="control-label col-xs-12 col-sm-4 col-md-3 col-lg-2">Condition no.</label>
-                <div class="controls col-xs-12 col-sm-8 col-md-6 col-lg-4"><p>{}</p></div>
+            <div class="row mb-3">
+                <div class="col-xs-12 col-sm-4 col-md-3 col-lg-2">Condition no.</div>
+                <div class="col-xs-12 col-sm-8 col-md-9 col-lg-10">{}</div>
             </div>
             '''.format(condition.condition_html, condition.identifier or '(none)'))
         self.fields['assigned_user'] = PRSUserChoiceField()
@@ -952,10 +948,8 @@ class ClearanceCreateForm(BaseForm):
             (max 200 characters). Include the stage number, all condition numbers applicable to this
             clearance request and any other useful information.'''
         layout = Layout(
-            cond_text_html, 'assigned_user', 'deposited_plan', 'start_date',
+            cond_text_html, 'assigned_user', 'email_user', 'deposited_plan', 'start_date',
             'due_date', 'description',
-            # Hack to make crispy_forms output proper HTML for Bootstrap 3:
-            PrependedText('email_user', ''),
             Div(
                 self.save_button, self.cancel_button,
                 css_class='col-sm-offset-4 col-md-offset-3 col-lg-offset-2')
