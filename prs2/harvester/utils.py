@@ -9,9 +9,9 @@ from imaplib import IMAP4_SSL
 from io import StringIO
 import logging
 from lxml.html import clean, fromstring
-from pytz import timezone
 import requests
 import time
+from zoneinfo import ZoneInfo
 
 
 LOGGER = logging.getLogger('harvester')
@@ -91,9 +91,9 @@ def harvest_email(uid, message):
             #     return None  # Not in the whitelist; skip.
             from_e = email.utils.parseaddr(message.get('From'))[1]
             # Parse the 'sent' date & time (assume WST).
-            wa_tz = timezone('Australia/Perth')
+            wa_tz = ZoneInfo(settings.TIME_ZONE)
             ts = time.mktime(email.utils.parsedate(message.get('Date')))
-            received = wa_tz.localize(datetime.fromtimestamp(ts))
+            received = datetime.fromtimestamp(ts).astimezone(wa_tz)
             # Generate an EmailedReferral object.
             em_new = EmailedReferral(
                 received=received, email_uid=str(uid), to_email=to_e,
