@@ -28,12 +28,18 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         logger = logging.getLogger("harvester")
         actions = []
+
+        # Download unread emails from each specifed source email address.
         for email in settings.PLANNING_EMAILS:
             if "purge_email" in options and options["purge_email"]:
                 actions += harvest_unread_emails(from_email=email, purge_email=True)
             else:
                 actions += harvest_unread_emails(from_email=email)
+
+        # Import all harvested, unprocessed referrals.
         actions += import_harvested_refs()
+
+        # Optionally email the power users group a report.
         if options["email"]:
             # Send an email to users in the "PRS power users" group.
             pu_group = Group.objects.get(name=settings.PRS_POWER_USER_GROUP)
