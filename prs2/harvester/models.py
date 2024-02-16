@@ -47,9 +47,11 @@ class EmailedReferral(models.Model):
     def harvest(self, create_tasks=True, create_locations=True, create_records=True, assignee=False):
         """Undertake the harvest process for this emailed referral.
         """
+        actions = []
 
         if self.processed:
-            return
+            LOGGER.info(f'Emailed referral {self.pk} is already processed, aborting')
+            return actions
 
         User = get_user_model()
         dbca = Agency.objects.get(slug='dbca')
@@ -59,13 +61,12 @@ class EmailedReferral(models.Model):
             assignee_default = User.objects.get(username=settings.REFERRAL_ASSIGNEE_FALLBACK)
         else:
             assignee_default = assignee
-        actions = []
         attachments = self.emailattachment_set.all()
         self.log = ''
 
         # Emails without attachments are usually reminder notices.
         if not attachments.exists():
-            s = 'Skipping harvested referral {} (no attachments)'.format(self)
+            s = f'Skipping emailed referral {self.pk} (no attachments)'
             LOGGER.info(s)
             self.log = s
             self.processed = True
@@ -396,9 +397,11 @@ class EmailedReferral(models.Model):
                 i.save()
 
         # Link the emailed referral to the new or existing referral.
+        LOGGER.info(f'Marking emailed referral {self.pk} as processed and linking it to {new_ref}')
         self.referral = new_ref
         self.processed = True
         self.save()
+        LOGGER.info('Done')
 
         return actions
 
