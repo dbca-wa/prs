@@ -1,6 +1,8 @@
 # Core Django imports
 from django.contrib.gis import admin
 from django.contrib.gis.admin import ModelAdmin
+from django.urls import reverse
+from django.utils.safestring import mark_safe
 
 # Third-party app imports
 from reversion.admin import VersionAdmin
@@ -170,6 +172,7 @@ class RecordAdmin(ReferralBaseModelAdmin):
     list_display = (
         "id",
         "name",
+        "referral_url",
         "infobase_id",
         "creator",
         "created",
@@ -179,6 +182,13 @@ class RecordAdmin(ReferralBaseModelAdmin):
     raw_id_fields = ReferralBaseModelAdmin.raw_id_fields + ["referral", "notes"]
     date_hierarchy = "created"
     search_fields = ("id", "name", "infobase_id", "description")
+
+    def referral_url(self, instance):
+        if not instance.referral:
+            return ""
+        url = reverse("admin:referral_referral_change", args=[instance.referral.pk])
+        return mark_safe(f"<a href='{url}'>{instance.referral.pk}</a>")
+    referral_url.short_description = "Referral"
 
 
 class NoteAdmin(ReferralBaseModelAdmin):
