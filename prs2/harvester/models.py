@@ -64,30 +64,31 @@ class EmailedReferral(models.Model):
         attachments = self.emailattachment_set.all()
         self.log = ''
 
-        # Emails without attachments are usually reminder notices.
+        # SCENARIO: no email attachments, skip harvest.
         if not attachments.exists():
-            s = f'Skipping emailed referral {self.pk} (no attachments)'
-            LOGGER.info(s)
-            self.log = s
+            log = f'Skipping emailed referral {self.pk} (no attachments)'
+            LOGGER.info(log)
+            self.log = log
             self.processed = True
             self.save()
-            actions.append(f'{datetime.now().isoformat()} {s}')
+            actions.append(f'{datetime.now().isoformat()} {log}')
             return actions
 
-        # We don't want to harvest "overdue referral" reminders.
+        # SCENARIO: overdue referral reminders: skip harvest.
         overdue_subject_prefixes = (
             'wapc eoverdue referral',
             're: wapc eoverdue referral',
         )
         if any([self.subject.lower().startswith(i) for i in overdue_subject_prefixes]):
-            s = f'Skipping harvested referral {self} (overdue notice)'
-            LOGGER.info(s)
-            self.log = s
+            log = f'Skipping harvested referral {self} (overdue notice)'
+            LOGGER.info(log)
+            self.log = log
             self.processed = True
             self.save()
-            actions.append(f'{datetime.now().isoformat()} {s}')
+            actions.append(f'{datetime.now().isoformat()} {log}')
             return actions
 
+        # SCENARIO: email referral supplement.
         # Some emailed referrals contain "additional documents" where the size
         # limit of attachments have been exceeded for the first email.
         additional_documents_subject = (
@@ -95,15 +96,17 @@ class EmailedReferral(models.Model):
             'additional referral documents',
         )
         if any([i in self.subject.lower() for i in additional_documents_subject]) and attachments.exists():
+            log = f'Harvested referral {self} appears to be a supplement to an existing email'
+            LOGGER.info(log)
             # Try to parse the referral reference from the email subject (it's normally the first
             # element in the string).
             reference = self.subject.split()[0]
             if Referral.objects.current().filter(reference__iexact=reference):
                 referral = Referral.objects.current().filter(reference__iexact=reference).order_by('-pk').first()
-                s = f'Referral ref. {reference} is already in database; using existing referral {referral}'
-                LOGGER.info(s)
-                self.log = self.log + f'{s}\n'
-                actions.append(f'{datetime.now().isoformat()} {s}')
+                log = f'Referral ref. {reference} is already in database; using existing referral {referral.pk}'
+                LOGGER.info(log)
+                self.log = self.log + f'{log}\n'
+                actions.append(f'{datetime.now().isoformat()} {log}')
                 self.referral = referral
 
                 # Save the EmailedReferral as a record on the referral.
@@ -116,10 +119,10 @@ class EmailedReferral(models.Model):
                     with create_revision():
                         new_record.save()
                         set_comment('Initial version.')
-                    s = f'New PRS record generated: {new_record}'
-                    LOGGER.info(s)
-                    self.log = self.log + f'{s}\n'
-                    actions.append(f'{datetime.now().isoformat()} {s}')
+                    log = f'New PRS record generated: {new_record}'
+                    LOGGER.info(log)
+                    self.log = self.log + f'{log}\n'
+                    actions.append(f'{datetime.now().isoformat()} {log}')
 
                     # Add records to the referral (one per attachment).
                     for att in attachments:
@@ -129,28 +132,115 @@ class EmailedReferral(models.Model):
                         new_file = ContentFile(att.attachment.read())
                         new_record.uploaded_file.save(att.name, new_file)
                         new_record.save()
-                        s = f'New PRS record generated: {new_record}'
-                        LOGGER.info(s)
-                        self.log = self.log + f'{s}\n'
-                        actions.append(f'{datetime.now().isoformat()} {s}')
+                        log = f'New PRS record generated: {new_record}'
+                        LOGGER.info(log)
+                        self.log = self.log + f'{log}\n'
+                        actions.append(f'{datetime.now().isoformat()} {log}')
                         # Link the attachment to the new, generated record.
                         att.record = new_record
                         att.save()
+            else:
+                LOGGER.info(f'Referral ref. {reference} not found, skipping')
 
             LOGGER.info(f'Marking emailed referral {self.pk} as processed')
             self.processed = True
             self.save()
             LOGGER.info('Done')
+
             return actions
 
-        # Must be an attachment named 'Application.xml' present to import.
-        if not attachments.filter(name__istartswith='application.xml'):
-            s = f'Skipping harvested referral {self.pk} (no XML attachment)'
-            LOGGER.info(s)
-            self.log = s
+        # SCENARIO: WAPC decision letter for a referral.
+        # Existing referral should exist, and the email should include application.xml
+        if self.subject.lower().startswith('wapc decision letter for application'):
+            if not attachments.filter(name__istartswith='application.xml'):
+                log = f'Skipping harvested decision letter {self.pk} (no XML attachment)'
+                LOGGER.info(log)
+                self.log = log
+                self.processed = True
+                self.save()
+                actions.append(f'{datetime.now().isoformat()} {log}')
+                return actions
+            else:
+                xml_file = attachments.get(name__istartswith='application.xml')
+            # Parse the attached XML file.
+            try:
+                d = xmltodict.parse(xml_file.attachment.read())
+            except Exception as e:
+                log = f'Harvested decision letter {self.pk} parsing of application.xml failed'
+                LOGGER.error(log)
+                LOGGER.exception(e)
+                self.log = self.log + f'{log}\n{e}\n'
+                LOGGER.info(f'Marking emailed decision letter {self.pk} as processed')
+                self.processed = True
+                self.save()
+                LOGGER.info('Done')
+                actions.append(f'{datetime.now().isoformat()} {log}')
+                return actions
+            app = d['APPLICATION']
+            reference = app['WAPC_APPLICATION_NO']
+            # New/existing referral object.
+            if not Referral.objects.current().filter(reference__iexact=reference).exists():
+                log = f'Skipping harvested decision letter {self.pk} (no existing record)'
+                LOGGER.info(log)
+                self.log = log
+                self.processed = True
+                self.save()
+                actions.append(f'{datetime.now().isoformat()} {log}')
+                return actions
+            else:
+                log = f'Referral ref. {reference} exists in database'
+                LOGGER.info(log)
+                self.log = self.log + f'{log}\n'
+                actions.append(f'{datetime.now().isoformat()} {log}')
+                referral = Referral.objects.current().filter(reference__iexact=reference).order_by('-pk').first()
+            # Save the EmailedReferral as a record on the referral.
+            if create_records:
+                new_record = Record.objects.create(
+                    name=self.subject, referral=referral, order_date=datetime.today())
+                file_name = f'emailed_referral_{reference}.html'
+                new_file = ContentFile(str.encode(self.body))
+                new_record.uploaded_file.save(file_name, new_file)
+                with create_revision():
+                    new_record.save()
+                    set_comment('Initial version.')
+                log = f'New PRS record generated: {new_record}'
+                LOGGER.info(log)
+                self.log = self.log + f'{log}\n'
+                actions.append(f'{datetime.now().isoformat()} {log}')
+
+                # Add records to the referral (one per attachment).
+                for i in attachments:
+                    new_record = Record.objects.create(
+                        name=i.name, referral=referral, order_date=datetime.today())
+                    # Duplicate the uploaded file.
+                    new_file = ContentFile(i.attachment.read())
+                    new_record.uploaded_file.save(i.name, new_file)
+                    new_record.save()
+                    log = f'New PRS record generated: {new_record}'
+                    LOGGER.info(log)
+                    self.log = self.log + f'{log}\n'
+                    actions.append(f'{datetime.now().isoformat()} {log}')
+                    # Link the attachment to the new, generated record.
+                    i.record = new_record
+                    i.save()
+
+            # Link the emailed referral to the new or existing referral.
+            LOGGER.info(f'Marking emailed referral {self.pk} as processed and linking it to {referral}')
+            self.referral = referral
             self.processed = True
             self.save()
-            actions.append(f'{datetime.now().isoformat()} {s}')
+            LOGGER.info('Done')
+            return actions
+
+        # SCENARIO: a standard emailed referral.
+        # Must be an attachment named 'Application.xml' present to import.
+        if not attachments.filter(name__istartswith='application.xml'):
+            log = f'Skipping harvested referral {self.pk} (no XML attachment)'
+            LOGGER.info(log)
+            self.log = log
+            self.processed = True
+            self.save()
+            actions.append(f'{datetime.now().isoformat()} {log}')
             return actions
         else:
             xml_file = attachments.get(name__istartswith='application.xml')
@@ -159,44 +249,48 @@ class EmailedReferral(models.Model):
         try:
             d = xmltodict.parse(xml_file.attachment.read())
         except Exception as e:
-            s = f'Harvested referral {self.pk} parsing of application.xml failed'
-            LOGGER.error(s)
+            log = f'Harvested referral {self.pk} parsing of application.xml failed'
+            LOGGER.error(log)
             LOGGER.exception(e)
-            self.log = self.log + f'{s}\n{e}\n'
+            self.log = self.log + f'{log}\n{e}\n'
+            LOGGER.info(f'Marking emailed referral {self.pk} as processed')
             self.processed = True
             self.save()
-            actions.append(f'{datetime.now().isoformat()} {s}')
+            LOGGER.info('Done')
+            actions.append(f'{datetime.now().isoformat()} {log}')
+            return actions
+
         app = d['APPLICATION']
         reference = app['WAPC_APPLICATION_NO']
 
         # New/existing referral object.
         if Referral.objects.current().filter(reference__iexact=reference):
             # Note if the the reference no. exists in PRS already.
-            s = f'Referral ref. {reference} is already in database; using existing referral'
-            LOGGER.info(s)
-            self.log = self.log + f'{s}\n'
-            actions.append(f'{datetime.now().isoformat()} {s}')
-            new_ref = Referral.objects.current().filter(reference__iexact=reference).order_by('-pk').first()
+            log = f'Referral ref. {reference} is already in database; using existing referral'
+            LOGGER.info(log)
+            self.log = self.log + f'{log}\n'
+            actions.append(f'{datetime.now().isoformat()} {log}')
+            referral = Referral.objects.current().filter(reference__iexact=reference).order_by('-pk').first()
             referral_preexists = True
         else:
             # No match with existing references.
-            s = f'Importing harvested referral ref. {reference} as new entity'
-            LOGGER.info(s)
-            self.log = f'{s}\n'
-            actions.append(f'{datetime.now().isoformat()} {s}')
-            new_ref = Referral(reference=reference)
+            log = f'Importing harvested referral ref. {reference} as new entity'
+            LOGGER.info(log)
+            self.log = f'{log}\n'
+            actions.append(f'{datetime.now().isoformat()} {log}')
+            referral = Referral(reference=reference)
             referral_preexists = False
 
         # Referral type
         try:
             ref_type = ReferralType.objects.filter(name__istartswith=app['APP_TYPE'])[0]
         except Exception:
-            s = f'Referral type {app["APP_TYPE"]} is not recognised type; skipping'
-            LOGGER.warning(s)
-            self.log = f'{s}\n'
+            log = f'Referral type {app["APP_TYPE"]} is not recognised type; skipping'
+            LOGGER.warning(log)
+            self.log = f'{log}\n'
             self.processed = True
             self.save()
-            actions.append(f'{datetime.now().isoformat()} {s}')
+            actions.append(f'{datetime.now().isoformat()} {log}')
             return actions
 
         # Determine the intersecting region(s).
@@ -220,10 +314,10 @@ class EmailedReferral(models.Model):
                             regions.append(r)
                     intersected_region = True
                 except Exception:
-                    s = f'Address long/lat could not be parsed ({a["LONGITUDE"]}, {a["LATITUDE"]})'
-                    LOGGER.warning(s)
-                    self.log = f'{s}\n'
-                    actions.append(f'{datetime.now().isoformat()} {s}')
+                    log = f'Address long/lat could not be parsed ({a["LONGITUDE"]}, {a["LATITUDE"]})'
+                    LOGGER.warning(log)
+                    self.log = f'{log}\n'
+                    actions.append(f'{datetime.now().isoformat()} {log}')
                     intersected_region = False
                 # Use the PIN field to try returning geometry from SLIP.
                 if 'PIN' in a and a['PIN']:
@@ -242,19 +336,19 @@ class EmailedReferral(models.Model):
                                         for r in Region.objects.all():
                                             if r.region_mpoly and r.region_mpoly.intersects(p) and r not in regions:
                                                 regions.append(r)
-                        s = f'Address PIN {a["PIN"]} returned geometry from SLIP'
-                        self.log = self.log + f'{s}\n'
-                        LOGGER.info(s)
+                        log = f'Address PIN {a["PIN"]} returned geometry from SLIP'
+                        self.log = self.log + f'{log}\n'
+                        LOGGER.info(log)
                     except Exception as e:
-                        s = f'Error querying Landgate SLIP for spatial data (referral ref. {reference})'
-                        LOGGER.error(s)
+                        log = f'Error querying Landgate SLIP for spatial data (referral ref. {reference})'
+                        LOGGER.error(log)
                         LOGGER.error(resp.content)
                         LOGGER.exception(e)
-                        self.log = self.log + f'{s}\n{resp.content}\n{e}\n'
+                        self.log = self.log + f'{log}\n{resp.content}\n{e}\n'
                 else:
-                    s = f'Address PIN could not be parsed ({a["PIN"]})'
-                    LOGGER.warning(s)
-                    self.log = self.log + f'{s}\n'
+                    log = f'Address PIN could not be parsed ({a["PIN"]})'
+                    LOGGER.warning(log)
+                    self.log = self.log + f'{log}\n'
         regions = set(regions)
         # Business rules:
         # Didn't intersect a region? Might be bad geometry in the XML.
@@ -263,57 +357,57 @@ class EmailedReferral(models.Model):
         if len(regions) == 0:
             region = Region.objects.get(name='Swan')
             assigned = assignee_default
-            s = f'No regions were intersected, defaulting to {region} ({assigned})'
-            LOGGER.info(s)
-            self.log = self.log + f'{s}\n'
+            log = f'No regions were intersected, defaulting to {region} ({assigned})'
+            LOGGER.info(log)
+            self.log = self.log + f'{log}\n'
         elif len(regions) > 1:
             region = Region.objects.get(name='Swan')
             assigned = assignee_default
-            s = f'>1 regions were intersected ({regions}), defaulting to {region} ({assigned})'
-            LOGGER.info(s)
-            self.log = self.log + f'{s}\n'
+            log = f'>1 regions were intersected ({regions}), defaulting to {region} ({assigned})'
+            LOGGER.info(log)
+            self.log = self.log + f'{log}\n'
         else:
             region = regions.pop()
             try:
                 assigned = RegionAssignee.objects.get(region=region).user
             except Exception:
-                s = f'No default assignee set for {region}, defaulting to {assignee_default}'
-                LOGGER.info(s)
-                self.log = self.log + f'{s}\n'
-                actions.append(f'{datetime.now().isoformat()} {s}')
+                log = f'No default assignee set for {region}, defaulting to {assignee_default}'
+                LOGGER.info(log)
+                self.log = self.log + f'{log}\n'
+                actions.append(f'{datetime.now().isoformat()} {log}')
                 assigned = assignee_default
 
         # Create/update the referral in PRS.
-        new_ref.type = ref_type
-        new_ref.agency = dbca
-        new_ref.referring_org = wapc
-        new_ref.reference = reference
-        new_ref.description = app['DEVELOPMENT_DESCRIPTION'] if 'DEVELOPMENT_DESCRIPTION' in app else ''
-        new_ref.referral_date = self.received.date()
-        new_ref.address = app['LOCATION'] if 'LOCATION' in app else ''
+        referral.type = ref_type
+        referral.agency = dbca
+        referral.referring_org = wapc
+        referral.reference = reference
+        referral.description = app['DEVELOPMENT_DESCRIPTION'] if 'DEVELOPMENT_DESCRIPTION' in app else ''
+        referral.referral_date = self.received.date()
+        referral.address = app['LOCATION'] if 'LOCATION' in app else ''
         with create_revision():
-            new_ref.save()
+            referral.save()
             set_comment('Initial version.')
 
         if referral_preexists:
-            s = f'PRS referral updated: {new_ref}'
+            log = f'PRS referral updated: {referral}'
         else:
-            s = f'New PRS referral generated: {new_ref}'
-        LOGGER.info(s)
-        self.log = self.log + f'{s}\n'
-        actions.append(f'{datetime.now().isoformat()} {s}')
+            log = f'New PRS referral generated: {referral}'
+        LOGGER.info(log)
+        self.log = self.log + f'{log}\n'
+        actions.append(f'{datetime.now().isoformat()} {log}')
 
         # Assign to a region.
-        new_ref.regions.add(region)
+        referral.regions.add(region)
         # Assign an LGA.
         try:
-            new_ref.lga = LocalGovernment.objects.get(name=app['LOCAL_GOVERNMENT'])
-            new_ref.save()
+            referral.lga = LocalGovernment.objects.get(name=app['LOCAL_GOVERNMENT'])
+            referral.save()
         except Exception:
-            s = f'LGA {app["LOCAL_GOVERNMENT"]} was not recognised'
-            LOGGER.warning(s)
-            self.log = self.log + f'{s}\n'
-            actions.append(f'{datetime.now().isoformat()} {s}')
+            log = f'LGA {app["LOCAL_GOVERNMENT"]} was not recognised'
+            LOGGER.warning(log)
+            self.log = self.log + f'{log}\n'
+            actions.append(f'{datetime.now().isoformat()} {log}')
 
         # Add triggers to the new referral.
         if 'MRSZONE_TEXT' in app:
@@ -325,20 +419,20 @@ class EmailedReferral(models.Model):
             # A couple of exceptions for DoP triggers follow (specific -> general trigger).
             if i.startswith('BUSH FOREVER SITE'):
                 added_trigger = True
-                new_ref.dop_triggers.add(DopTrigger.objects.get(name='Bush Forever site'))
+                referral.dop_triggers.add(DopTrigger.objects.get(name='Bush Forever site'))
             elif i.startswith('DPW ESTATE'):
                 added_trigger = True
-                new_ref.dop_triggers.add(DopTrigger.objects.get(name='Parks and Wildlife estate'))
+                referral.dop_triggers.add(DopTrigger.objects.get(name='Parks and Wildlife estate'))
             elif i.find('REGIONAL PARK') > -1:
                 added_trigger = True
-                new_ref.dop_triggers.add(DopTrigger.objects.get(name='Regional Park'))
+                referral.dop_triggers.add(DopTrigger.objects.get(name='Regional Park'))
             # All other triggers (don't use exists() in case of duplicates).
             elif DopTrigger.objects.current().filter(name__istartswith=i).count() == 1:
                 added_trigger = True
-                new_ref.dop_triggers.add(DopTrigger.objects.current().get(name__istartswith=i))
+                referral.dop_triggers.add(DopTrigger.objects.current().get(name__istartswith=i))
         # If we didn't link any DoP triggers, link the "No Parks and Wildlife trigger" tag.
         if not added_trigger:
-            new_ref.dop_triggers.add(DopTrigger.objects.get(name='No Parks and Wildlife trigger'))
+            referral.dop_triggers.add(DopTrigger.objects.get(name='No Parks and Wildlife trigger'))
 
         # Add locations to the new referral (one per polygon in each MP geometry).
         if create_locations:
@@ -353,7 +447,7 @@ class EmailedReferral(models.Model):
                         road_suffix=l['STREET_SUFFIX'],
                         locality=l['SUBURB'],
                         postcode=l['POSTCODE'],
-                        referral=new_ref,
+                        referral=referral,
                         poly=geom
                     )
                     try:  # NUMBER_FROM XML fields started to contain non-integer values :(
@@ -364,10 +458,10 @@ class EmailedReferral(models.Model):
                         new_loc.save()
                         set_comment('Initial version.')
                     new_locations.append(new_loc)
-                    s = f'New PRS location generated: {new_loc}'
-                    LOGGER.info(s)
-                    self.log = self.log + f'{s}\n'
-                    actions.append(f'{datetime.now().isoformat()} {s}')
+                    log = f'New PRS location generated: {new_loc}'
+                    LOGGER.info(log)
+                    self.log = self.log + f'{log}\n'
+                    actions.append(f'{datetime.now().isoformat()} {log}')
 
             # Check to see if new locations intersect with any existing locations.
             intersecting = []
@@ -377,20 +471,20 @@ class EmailedReferral(models.Model):
                     intersecting += list(other_l)
             # For any intersecting locations, relate the new and existing referrals.
             for l in intersecting:
-                if l.referral.pk != new_ref.pk:
-                    new_ref.add_relationship(l.referral)
-                    s = f'New referral {new_ref.pk} related to existing referral {l.referral.pk}'
-                    LOGGER.info(s)
-                    self.log = self.log + f'{s}\n'
-                    actions.append(f'{datetime.now().isoformat()} {s}')
+                if l.referral.pk != referral.pk:
+                    referral.add_relationship(l.referral)
+                    log = f'New referral {referral.pk} related to existing referral {l.referral.pk}'
+                    LOGGER.info(log)
+                    self.log = self.log + f'{log}\n'
+                    actions.append(f'{datetime.now().isoformat()} {log}')
 
         # Create an "Assess a referral" task and assign it to a user.
         if create_tasks:
             new_task = Task(
                 type=assess_task,
-                referral=new_ref,
-                start_date=new_ref.referral_date,
-                description=new_ref.description,
+                referral=referral,
+                start_date=referral.referral_date,
+                description=referral.description,
                 assigned_user=assigned
             )
             new_task.state = assess_task.initial_state
@@ -405,56 +499,55 @@ class EmailedReferral(models.Model):
             with create_revision():
                 new_task.save()
                 set_comment('Initial version.')
-            s = f'New PRS task generated: {new_task} assigned to {assigned.get_full_name()}'
-            LOGGER.info(s)
-            self.log = self.log + f'{s}\n'
-            actions.append(f'{datetime.now().isoformat()} {s}')
+            log = f'New PRS task generated: {new_task} assigned to {assigned.get_full_name()}'
+            LOGGER.info(log)
+            self.log = self.log + f'{log}\n'
+            actions.append(f'{datetime.now().isoformat()} {log}')
 
             # Email the assigned user about the new task.
             new_task.email_user()
-            s = f'Task assignment email sent to {assigned.email}'
-            LOGGER.info(s)
-            self.log = self.log + f'{s}\n'
-            actions.append(f'{datetime.now().isoformat()} {s}')
+            log = f'Task assignment email sent to {assigned.email}'
+            LOGGER.info(log)
+            self.log = self.log + f'{log}\n'
+            actions.append(f'{datetime.now().isoformat()} {log}')
 
         # Save the EmailedReferral as a record on the referral.
         if create_records:
             new_record = Record.objects.create(
-                name=self.subject, referral=new_ref, order_date=datetime.today())
+                name=self.subject, referral=referral, order_date=datetime.today())
             file_name = f'emailed_referral_{reference}.html'
             new_file = ContentFile(str.encode(self.body))
             new_record.uploaded_file.save(file_name, new_file)
             with create_revision():
                 new_record.save()
                 set_comment('Initial version.')
-            s = f'New PRS record generated: {new_record}'
-            LOGGER.info(s)
-            self.log = self.log + f'{s}\n'
-            actions.append(f'{datetime.now().isoformat()} {s}')
+            log = f'New PRS record generated: {new_record}'
+            LOGGER.info(log)
+            self.log = self.log + f'{log}\n'
+            actions.append(f'{datetime.now().isoformat()} {log}')
 
             # Add records to the referral (one per attachment).
             for i in attachments:
                 new_record = Record.objects.create(
-                    name=i.name, referral=new_ref, order_date=datetime.today())
+                    name=i.name, referral=referral, order_date=datetime.today())
                 # Duplicate the uploaded file.
                 new_file = ContentFile(i.attachment.read())
                 new_record.uploaded_file.save(i.name, new_file)
                 new_record.save()
-                s = f'New PRS record generated: {new_record}'
-                LOGGER.info(s)
-                self.log = self.log + f'{s}\n'
-                actions.append(f'{datetime.now().isoformat()} {s}')
+                log = f'New PRS record generated: {new_record}'
+                LOGGER.info(log)
+                self.log = self.log + f'{log}\n'
+                actions.append(f'{datetime.now().isoformat()} {log}')
                 # Link the attachment to the new, generated record.
                 i.record = new_record
                 i.save()
 
         # Link the emailed referral to the new or existing referral.
-        LOGGER.info(f'Marking emailed referral {self.pk} as processed and linking it to {new_ref}')
-        self.referral = new_ref
+        LOGGER.info(f'Marking emailed referral {self.pk} as processed and linking it to {referral}')
+        self.referral = referral
         self.processed = True
         self.save()
         LOGGER.info('Done')
-
         return actions
 
 
