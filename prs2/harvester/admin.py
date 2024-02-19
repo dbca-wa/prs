@@ -29,21 +29,26 @@ class EmailedReferralAdmin(admin.ModelAdmin):
     actions = [harvest_referral]
     date_hierarchy = 'received'
     list_display = (
-        'received', 'from_email', 'subject', 'harvested', 'attachments',
+        'received', 'from_email', 'subject', 'harvested', 'attachments_url',
         'referral_url', 'processed')
     raw_id_fields = ('referral',)
     search_fields = ('subject',)
     readonly_fields = ['email_uid', 'to_email', 'from_email', 'subject', 'body', 'processed', 'log']
 
-    def attachments(self, instance):
-        return instance.emailattachment_set.count()
+    def attachments_url(self, instance):
+        if not instance.emailattachment_set.exists():
+            return ""
+        count = instance.emailattachment_set.count()
+        url = reverse("admin:harvester_emailattachment_changelist")
+        return mark_safe(f"<a href='{url}?emailed_referral_id__exact={instance.pk}'>{count}</a>")
+    attachments_url.short_description = 'attachments'
 
     def referral_url(self, instance):
         if not instance.referral:
-            return ''
-        url = reverse('admin:referral_referral_change', args=[instance.referral.pk])
-        return mark_safe('<a href="{}">{}</a>'.format(url, instance.referral.pk))
-    referral_url.short_description = 'Referral'
+            return ""
+        url = reverse("admin:referral_referral_change", args=[instance.referral.pk])
+        return mark_safe(f"<a href='{url}'>{instance.referral.pk}</a>")
+    referral_url.short_description = "Referral"
 
 
 @admin.register(EmailAttachment)
@@ -55,14 +60,14 @@ class EmailAttachmentAdmin(admin.ModelAdmin):
 
     def emailed_referral_url(self, instance):
         url = reverse('admin:harvester_emailedreferral_change', args=[instance.emailed_referral.pk])
-        return mark_safe('<a href="{}">{}</a>'.format(url, instance.emailed_referral))
+        return mark_safe(f'<a href="{url}">{instance.emailed_referral}</a>')
     emailed_referral_url.short_description = 'Emailed referral'
 
     def record_url(self, instance):
         if not instance.record:
             return ''
         url = reverse('admin:referral_record_change', args=[instance.record.pk])
-        return mark_safe('<a href="{}">{}</a>'.format(url, instance.record.pk))
+        return mark_safe(f'<a href="{url}">{instance.record.pk}</a>')
     record_url.short_description = 'Record'
 
 
