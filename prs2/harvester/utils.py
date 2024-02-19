@@ -72,13 +72,13 @@ def harvest_email(uid, message):
     message_body = None
     attachments = []
 
-    for p in parts:
-        # 'text/html' content is the email body.
-        if p.get_content_type() == 'text/html':
-            message_body = p
+    for part in parts:
+        # 'text/html' or 'text/plain' content should be the email body.
+        if part.get_content_type() in ['text/html', 'text/plain']:
+            message_body = part
         # Other content types (not multipart/mixed) are attachments (normally application/octet-stream).
-        elif p.get_content_type() != 'multipart/mixed':
-            attachments.append(p)
+        elif part.get_content_type() != 'multipart/mixed':
+            attachments.append(part)
 
     # Create & return EmailedReferral from the email body (if found).
     if message_body:
@@ -99,9 +99,12 @@ def harvest_email(uid, message):
                 received=received, email_uid=str(uid), to_email=to_e,
                 from_email=from_e, subject=message.get('Subject'),
             )
-            # Strip the HTML from the message body and just save the text content.
-            t = fromstring(clean.clean_html(message_body.get_payload()))
-            em_new.body = t.text_content().replace('=\n', '').strip()
+            if message_body.get_content_type() == 'text/html':
+                # Strip the HTML from the message body and just save the text content.
+                t = fromstring(clean.clean_html(message_body.get_payload()))
+                em_new.body = t.text_content().replace('=\n', '').strip()
+            else:
+                em_new.body = message_body.get_payload()  # Plain text body.
             em_new.save()
             LOGGER.info(f'Email UID {uid} harvested: {em_new.subject}')
             for a in attachments:
@@ -164,7 +167,7 @@ def harvest_unread_emails(from_email, purge_email=False):
         actions.append(f'{datetime.now().isoformat()} Server response failure: {status}')
         return actions
 
-    LOGGER.info(f'Server lists {len(uids)} unread emails')
+    LOGGER.info(f'Server lists {len(uids)} unread emails from {from_email}')
     actions.append(f'{datetime.now().isoformat()} Server lists {len(uids)} unread emails')
 
     if uids:
