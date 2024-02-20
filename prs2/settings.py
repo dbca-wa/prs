@@ -65,7 +65,6 @@ INSTALLED_APPS = (
     'reversion',
     'crispy_forms',
     'crispy_bootstrap5',
-    'bootstrap_pagination',
     'webtemplate_dbca',
     'django_celery_results',
     'referral',

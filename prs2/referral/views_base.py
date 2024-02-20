@@ -36,6 +36,8 @@ from referral.utils import (
     breadcrumbs_li,
     get_query,
     prs_user,
+    get_previous_pages,
+    get_next_pages,
 )
 
 logger = logging.getLogger("prs")
@@ -91,6 +93,9 @@ class PrsObjectList(LoginRequiredMixin, ListView):
         context["page_title"] = " | ".join([settings.APPLICATION_ACRONYM, title])
         links = [(reverse("site_home"), "Home"), (None, title)]
         context["breadcrumb_trail"] = breadcrumbs_li(links)
+        context["object_count"] = self.get_queryset().count()
+        context["previous_pages"] = get_previous_pages(context["page_obj"])
+        context["next_pages"] = get_next_pages(context["page_obj"])
         return context
 
 

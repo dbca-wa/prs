@@ -765,17 +765,6 @@ argon2 = ["argon2-cffi (>=19.1.0)"]
 bcrypt = ["bcrypt"]
 
 [[package]]
-name = "django-bootstrap-pagination"
-version = "1.7.1"
-description = "Render Django Page objects as Bootstrap 3.x/4.x Pagination compatible HTML"
-optional = false
-python-versions = "*"
-files = [
-    {file = "django-bootstrap-pagination-1.7.1.tar.gz", hash = "sha256:69d826d92217325611cb86e49944d8261e3c92eaa4deafea5a605d79fd363883"},
-    {file = "django_bootstrap_pagination-1.7.1-py3-none-any.whl", hash = "sha256:47e742679cf109e12f10ae09d5263433f94440818cf7b023e90a3f5252849639"},
-]
-
-[[package]]
 name = "django-celery-results"
 version = "2.5.1"
 description = "Celery result backends for Django."
@@ -2216,4 +2205,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.11"
-content-hash = "f0bd90dbb2ab2d3efc8ccfdeff18827bbd0f27209b135d7b8cd723a4b6d6b010"
+content-hash = "503cb43cd4b9bfc68c5644a80027ca0370202a4add1329b3024f784069f46fbb"

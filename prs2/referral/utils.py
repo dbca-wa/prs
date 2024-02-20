@@ -347,3 +347,32 @@ def query_caddy(q):
     resp = requests.get(url, auth=auth, params=params)
     resp.raise_for_status()
     return resp.json()
+
+
+def get_previous_pages(page_num, count=5):
+    """Convenience function to take a Paginator page object and return the previous `count`
+    page numbers, to a minimum of 1.
+    """
+    prev_page_numbers = []
+
+    if page_num and page_num.has_previous():
+        for i in range(page_num.previous_page_number(), page_num.previous_page_number() - count, -1):
+            if i >= 1:
+                prev_page_numbers.append(i)
+
+    prev_page_numbers.reverse()
+    return prev_page_numbers
+
+
+def get_next_pages(page_num, count=5):
+    """Convenience function to take a Paginator page object and return the next `count`
+    page numbers, to a maximum of the paginator page count.
+    """
+    next_page_numbers = []
+
+    if page_num and page_num.has_next():
+        for i in range(page_num.next_page_number(), page_num.next_page_number() + count):
+            if i <= page_num.paginator.num_pages:
+                next_page_numbers.append(i)
+
+    return next_page_numbers
