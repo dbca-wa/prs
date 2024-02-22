@@ -1187,20 +1187,24 @@ class RecordUpload(LoginRequiredMixin, View):
 
     def post(self, request, *args, **kargs):
         if "file" not in request.FILES:
-            return HttpResponse(json.dumps({"success": False}))
-        f = request.FILES["file"]
+            return HttpResponseBadRequest("File not found")
+
+        uploaded_file = request.FILES["file"]
+        if uploaded_file.content_type not in settings.ALLOWED_UPLOAD_TYPES:
+            return HttpResponseBadRequest("Disallowed file type")
+
         if self.parent_referral:
             rec = Record(
-                name=f.name,
+                name=uploaded_file.name,
                 referral=self.get_parent_object(),
-                uploaded_file=f,
+                uploaded_file=uploaded_file,
                 order_date=datetime.now(),
                 creator=request.user,
                 modifier=request.user,
             )
         else:
             rec = self.get_parent_object()
-            rec.uploaded_file = f
+            rec.uploaded_file = uploaded_file
             rec.modifier = request.user
 
         rec.save()

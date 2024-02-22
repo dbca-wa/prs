@@ -146,7 +146,6 @@ class EmailedReferral(models.Model):
             self.processed = True
             self.save()
             LOGGER.info('Done')
-
             return actions
 
         # SCENARIO: WAPC decision letter for a referral.
@@ -209,20 +208,20 @@ class EmailedReferral(models.Model):
                 actions.append(f'{datetime.now().isoformat()} {log}')
 
                 # Add records to the referral (one per attachment).
-                for i in attachments:
+                for emailattachment in attachments:
                     new_record = Record.objects.create(
-                        name=i.name, referral=referral, order_date=datetime.today())
+                        name=emailattachment.name, referral=referral, order_date=datetime.today())
                     # Duplicate the uploaded file.
-                    new_file = ContentFile(i.attachment.read())
-                    new_record.uploaded_file.save(i.name, new_file)
+                    new_file = ContentFile(emailattachment.attachment.read())
+                    new_record.uploaded_file.save(emailattachment.name, new_file)
                     new_record.save()
                     log = f'New PRS record generated: {new_record}'
                     LOGGER.info(log)
                     self.log = self.log + f'{log}\n'
                     actions.append(f'{datetime.now().isoformat()} {log}')
                     # Link the attachment to the new, generated record.
-                    i.record = new_record
-                    i.save()
+                    emailattachment.record = new_record
+                    emailattachment.save()
 
             # Link the emailed referral to the new or existing referral.
             LOGGER.info(f'Marking emailed referral {self.pk} as processed and linking it to {referral}')
@@ -282,9 +281,7 @@ class EmailedReferral(models.Model):
             referral_preexists = False
 
         # Referral type
-        try:
-            ref_type = ReferralType.objects.filter(name__istartswith=app['APP_TYPE'])[0]
-        except Exception:
+        if not ReferralType.objects.filter(name__istartswith=app['APP_TYPE']).exists():
             log = f'Referral type {app["APP_TYPE"]} is not recognised type; skipping'
             LOGGER.warning(log)
             self.log = f'{log}\n'
@@ -292,6 +289,8 @@ class EmailedReferral(models.Model):
             self.save()
             actions.append(f'{datetime.now().isoformat()} {log}')
             return actions
+        else:
+            ref_type = ReferralType.objects.filter(name__istartswith=app['APP_TYPE']).first()
 
         # Determine the intersecting region(s).
         regions = []
@@ -511,6 +510,10 @@ class EmailedReferral(models.Model):
             self.log = self.log + f'{log}\n'
             actions.append(f'{datetime.now().isoformat()} {log}')
 
+        log = f'Emailed referral {self} includes {attachments.count()} attachments'
+        LOGGER.info(log)
+        actions.append(log)
+
         # Save the EmailedReferral as a record on the referral.
         if create_records:
             new_record = Record.objects.create(
@@ -521,26 +524,29 @@ class EmailedReferral(models.Model):
             with create_revision():
                 new_record.save()
                 set_comment('Initial version.')
-            log = f'New PRS record generated: {new_record}'
+            log = f'New PRS record generated for the referral: {new_record}'
             LOGGER.info(log)
             self.log = self.log + f'{log}\n'
             actions.append(f'{datetime.now().isoformat()} {log}')
 
             # Add records to the referral (one per attachment).
-            for i in attachments:
+            for emailattachment in attachments:
                 new_record = Record.objects.create(
-                    name=i.name, referral=referral, order_date=datetime.today())
+                    name=emailattachment.name,
+                    referral=referral,
+                    order_date=datetime.today(),
+                )
                 # Duplicate the uploaded file.
-                new_file = ContentFile(i.attachment.read())
-                new_record.uploaded_file.save(i.name, new_file)
+                new_file = ContentFile(emailattachment.attachment.read())
+                new_record.uploaded_file.save(emailattachment.name, new_file)
                 new_record.save()
-                log = f'New PRS record generated: {new_record}'
+                log = f'New PRS record generated for the attachment: {new_record}'
                 LOGGER.info(log)
                 self.log = self.log + f'{log}\n'
                 actions.append(f'{datetime.now().isoformat()} {log}')
                 # Link the attachment to the new, generated record.
-                i.record = new_record
-                i.save()
+                emailattachment.record = new_record
+                emailattachment.save()
 
         # Link the emailed referral to the new or existing referral.
         LOGGER.info(f'Marking emailed referral {self.pk} as processed and linking it to {referral}')

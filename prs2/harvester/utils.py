@@ -215,10 +215,7 @@ def import_harvested_refs():
     actions.append(f'{datetime.now().isoformat()} Starting import of harvested referrals')
     # Process harvested refs that are unprocessed at present.
     for er in EmailedReferral.objects.filter(referral__isnull=True, processed=False):
-        try:
-            actions.append(er.harvest())
-        except Exception:
-            actions.append(f'Emailed referral {er} failed to import; notify the custodian to investigate')
+        actions.append(er.harvest())
 
     LOGGER.info('Import process completed')
     actions.append(f'{datetime.now().isoformat()} Import process completed')
