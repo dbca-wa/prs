@@ -44,7 +44,7 @@ django-redis = "5.4.0"
 [tool.poetry.group.dev.dependencies]
 ipython = "^8.21.0"
 ipdb = "^0.13.11"
-pre-commit = "^3.6.1"
+pre-commit = "^3.6.2"
 coverage = "^7.4.1"
 
 [build-system]
