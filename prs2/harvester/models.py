@@ -540,7 +540,7 @@ class EmailedReferral(models.Model):
                 new_file = ContentFile(emailattachment.attachment.read())
                 new_record.uploaded_file.save(emailattachment.name, new_file)
                 new_record.save()
-                log = f'New PRS record generated: {new_record}'
+                log = f'New PRS record generated for the attachment: {new_record}'
                 LOGGER.info(log)
                 self.log = self.log + f'{log}\n'
                 actions.append(f'{datetime.now().isoformat()} {log}')
