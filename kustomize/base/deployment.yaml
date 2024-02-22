@@ -30,7 +30,7 @@ spec:
             cpu: "1000m"
         startupProbe:
           httpGet:
-            path: /liveness
+            path: /livez
             port: 8080
             scheme: HTTP
           initialDelaySeconds: 3
@@ -40,7 +40,7 @@ spec:
           failureThreshold: 3
         livenessProbe:
           httpGet:
-            path: /liveness
+            path: /livez
             port: 8080
             scheme: HTTP
           initialDelaySeconds: 0
@@ -50,7 +50,7 @@ spec:
           timeoutSeconds: 10
         readinessProbe:
           httpGet:
-            path: /readiness
+            path: /readyz
             port: 8080
             scheme: HTTP
           initialDelaySeconds: 0
