@@ -130,3 +130,10 @@ spec:
                 secretKeyRef:
                   name: prs-env-prod
                   key: AZURE_CONTAINER
+            - name: SENTRY_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: prs-env-prod
+                  key: SENTRY_DSN
+            - name: SENTRY_ENVIRONMENT
+              value: "prod"
