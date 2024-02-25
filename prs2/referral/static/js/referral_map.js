@@ -96,6 +96,7 @@ var map = L.map('map', {
     minZoom: 6,
     maxZoom: 18,
     layers: [landgateOrthomosaic, cadastre],  // Sets default selections.
+    attributionControl: false,
 });
 
 // Define layer groups.
