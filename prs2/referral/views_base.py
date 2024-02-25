@@ -262,18 +262,14 @@ class PrsObjectDetail(LoginRequiredMixin, DetailView):
             context["task_stopped"] = True if obj.state.name == "Stopped" else False
             context["can_complete"] = True
             if not obj.referral.has_proposed_condition:
-                context[
-                    "can_complete_msg"
-                ] = """You are unable to complete this task
-                as 'Response with advice' without first recording proposed condition(s)
-                on the referral."""
+                context["can_complete_msg"] = """You are unable to complete this task
+                    as 'Response with advice' without first recording proposed condition(s)
+                    on the referral."""
                 context["can_complete"] = False
             if not obj.referral.has_location:
-                context[
-                    "can_complete_msg"
-                ] = """You are unable to complete this task
-                as 'Assess a referral' without first recording at least one location
-                on the referral."""
+                context["can_complete_msg"] = """You are unable to complete this task
+                    as 'Assess a referral' without first recording at least one location
+                    on the referral."""
                 context["can_complete"] = False
         if self.model == Record:
             if Task.objects.current().filter(records=obj):  # Related tasks.

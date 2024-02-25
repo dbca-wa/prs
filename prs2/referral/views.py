@@ -1802,14 +1802,21 @@ class ConditionClearanceCreate(PrsObjectCreate):
         return initial
 
     def post(self, request, *args, **kwargs):
+        obj = self.get_object()
+
         # On Cancel, redirect to the Condition URL.
         if request.POST.get("cancel"):
-            obj = self.get_object()
             return HttpResponseRedirect(
                 reverse(
                     "prs_object_detail", kwargs={"pk": obj.pk, "model": "conditions"}
                 )
             )
+
+        # Invalidate any cached referral detail fragment.
+        if settings.REDIS_CACHE_HOST:
+            key = make_template_fragment_key('referral_detail', [obj.referral.pk])
+            cache.delete(key)
+
         return super().post(request, *args, **kwargs)
 
     def form_valid(self, form):
