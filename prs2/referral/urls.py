@@ -30,7 +30,7 @@ urlpatterns += [
     path("tags/", views.TagList.as_view(), name="tag_list"),
     path("tags/replace/", views.TagReplace.as_view(), name="tag_replace"),
     path("tasks/<int:pk>/history/", views.PrsObjectHistory.as_view(model=Task), name="prs_object_history"),
-    path("tasks/<int:pk>/delete/", views.PrsObjectDelete.as_view(), name="prs_object_delete"),
+    path("tasks/<int:pk>/delete/", views.PrsObjectDelete.as_view(model=Task), name="prs_object_delete"),
     path("tasks/<int:pk>/<str:action>/", views.TaskAction.as_view(), name="task_action"),
     path("conditions/<int:pk>/clearance/", views.ConditionClearanceCreate.as_view(), name="condition_clearance_add"),
     path("records/<int:pk>/infobase/", views.InfobaseShortcut.as_view(), name="infobase_shortcut"),
