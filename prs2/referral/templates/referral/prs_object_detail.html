@@ -112,7 +112,7 @@
 {% endblock %}
 
 {% block page_content_inner %}
-{% if can_complete %}
+{% if not can_complete and can_complete_msg %}
 <div class="alert alert-danger hidden" id="complete_msg">{{ can_complete_msg }}</div>
 {% endif %}
 <div id="object-details">
