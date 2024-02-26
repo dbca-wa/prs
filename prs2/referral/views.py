@@ -1198,7 +1198,7 @@ class RecordUpload(LoginRequiredMixin, View):
                 name=uploaded_file.name,
                 referral=self.get_parent_object(),
                 uploaded_file=uploaded_file,
-                order_date=datetime.now(),
+                order_date=date.today(),
                 creator=request.user,
                 modifier=request.user,
             )
