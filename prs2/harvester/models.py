@@ -36,12 +36,20 @@ class EmailedReferral(models.Model):
 
     def save(self, force_insert=False, force_update=False, *args, **kwargs):
         self.subject = self.subject.replace('\r\n', '').strip()
-        # Clean up some markup in the email body.
+        # Fix rare strange subject line text encoding issue.
+        pattern = r'(\=\?Windows-1252\?Q\?)'
+        if re.match(pattern, self.subject):
+            self.subject = re.sub(pattern, '', self.subject)
+            self.subject = self.subject.replace('=96', '').replace('?=', '').replace('_', ' ').strip()
+        # Clean up any HTML markup in the email body.
         self.body = self.body.replace('=\r\n', '').replace('=E2=80=93', '-').strip()
-        p = '^(<!--)(.+)(-->)'
-        self.body = re.sub(p, '', self.body, flags=re.DOTALL)
-        p = '(&nbsp;)'
-        self.body = re.sub(p, '', self.body)
+        pattern = r'^(<!--)(.+)(-->)'
+        self.body = re.sub(pattern, '', self.body, flags=re.DOTALL)
+        pattern = r'(&nbsp;)'
+        self.body = re.sub(pattern, '', self.body)
+        pattern = r'(<.+>)'
+        self.body = re.sub(pattern, '', self.body)
+        self.body = self.body.replace('=96', '').strip()
         super().save(force_insert, force_update)
 
     def harvest(self, create_tasks=True, create_locations=True, create_records=True, assignee=False):

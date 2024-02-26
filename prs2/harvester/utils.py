@@ -63,7 +63,7 @@ def harvest_email(uid, message):
     """
     from .models import EmailedReferral, EmailAttachment
 
-    if message.is_multipart():  # Should always be True.
+    if message and message.is_multipart():  # Should always be True.
         parts = [i for i in message.walk()]
     else:
         LOGGER.error(f'Email UID {uid} is not of type multipart')
