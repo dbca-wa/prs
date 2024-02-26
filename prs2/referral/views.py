@@ -58,18 +58,9 @@ from referral.utils import (
 )
 from referral.forms import (
     ReferralCreateForm,
-    NoteForm,
-    NoteAddExistingForm,
-    RecordCreateForm,
-    RecordAddExistingForm,
     TaskCreateForm,
-    ConditionCreateForm,
-    TaskClearanceCreateForm,
     ClearanceCreateForm,
     LocationForm,
-    BookmarkForm,
-    ConditionForm,
-    RecordForm,
     TaskForm,
     TaskCompleteForm,
     TaskStopForm,
@@ -86,8 +77,6 @@ from referral.views_base import (
     PrsObjectCreate,
     PrsObjectUpdate,
     PrsObjectDelete,
-    PrsObjectHistory,
-    PrsObjectTag,
 )
 from indexer.utils import typesense_client
 
@@ -1167,16 +1156,7 @@ class RecordUpload(LoginRequiredMixin, View):
     @method_decorator(csrf_exempt)
     def dispatch(self, request, *args, **kwargs):
         if not prs_user(request):
-            return HttpResponseForbidden(
-                json.dumps(
-                    {
-                        "error": {
-                            "code": 403,
-                            "message": "You do not have permission to create records",
-                        }
-                    }
-                )
-            )
+            return HttpResponseForbidden("You do not have permission to create records")
         return super().dispatch(request, *args, **kwargs)
 
     def get_parent_object(self):
@@ -1198,7 +1178,6 @@ class RecordUpload(LoginRequiredMixin, View):
                 name=uploaded_file.name,
                 referral=self.get_parent_object(),
                 uploaded_file=uploaded_file,
-                order_date=date.today(),
                 creator=request.user,
                 modifier=request.user,
             )
@@ -1207,6 +1186,10 @@ class RecordUpload(LoginRequiredMixin, View):
             rec.uploaded_file = uploaded_file
             rec.modifier = request.user
 
+        # Non *.msg files only: set order_date to today's date.
+        if rec.extension != "MSG":
+            rec.order_date = date.today()
+
         rec.save()
         # Invalidate the cached referral detail fragment.
         if settings.REDIS_CACHE_HOST:
@@ -1214,13 +1197,11 @@ class RecordUpload(LoginRequiredMixin, View):
             key = make_template_fragment_key('referral_detail', [referral.pk])
             cache.delete(key)
 
-        return HttpResponse(
-            json.dumps(
-                {
-                    "success": True,
-                    "object": {"id": rec.pk, "resource_uri": rec.get_absolute_url()},
-                }
-            )
+        return JsonResponse(
+            {
+                "success": True,
+                "object": {"id": rec.pk, "resource_uri": rec.get_absolute_url()},
+            }
         )
 
 
