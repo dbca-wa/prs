@@ -9,7 +9,7 @@ license = "Apache-2.0"
 python = ">=3.10,<3.11"
 django = "3.2.24"
 psycopg2 = "2.9.9"
-dbca-utils = "2.0.0"
+dbca-utils = "2.0.1"
 python-dotenv = "1.0.1"
 dj-database-url = "2.1.0"
 gunicorn = "21.2.0"
@@ -42,10 +42,10 @@ crispy-bootstrap5 = "0.7"
 django-redis = "5.4.0"
 
 [tool.poetry.group.dev.dependencies]
-ipython = "^8.21.0"
+ipython = "^8.22.1"
 ipdb = "^0.13.11"
 pre-commit = "^3.6.2"
-coverage = "^7.4.1"
+coverage = "^7.4.3"
 
 [build-system]
 requires = ["poetry-core"]
