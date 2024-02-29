@@ -183,12 +183,14 @@ class PrsObjectCreate(LoginRequiredMixin, CreateView):
         # Find the referral associated with this object (may be the object itself)
         # and invalidate any cached detail fragment.
         if settings.REDIS_CACHE_HOST:
-            if self.object._meta.model_name == 'referral':
+            if self.object._meta.model_name == "referral":
                 referral = self.object
-            else:
+            elif hasattr(self.object, "referral"):
                 referral = self.object.referral
+            else:
+                referral = None
             if referral:
-                key = make_template_fragment_key('referral_detail', [referral.pk])
+                key = make_template_fragment_key("referral_detail", [referral.pk])
                 cache.delete(key)
 
         return HttpResponseRedirect(self.get_success_url())
