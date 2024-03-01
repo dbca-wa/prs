@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from django.conf import settings
 from django.urls import reverse
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseBadRequest
 from django.views.generic import TemplateView
 from taggit.models import Tag
 import xlsxwriter
@@ -92,6 +92,11 @@ class DownloadView(TemplateView):
             ).filter(**query_params)
             if tags:  # Optional: filter by tags.
                 referrals = referrals.filter(tags__in=tags).distinct()
+
+            # Short circuit: disallow a report containing >10000 objects.
+            if referrals.count() > 10000:
+                return HttpResponseBadRequest('Report too large, apply additional filters')
+
             # Add a worksheet.
             ws = workbook.add_worksheet('Referrals')
             # Write the column headers to the new worksheet.
@@ -155,6 +160,10 @@ class DownloadView(TemplateView):
                 'condition',
                 'task',
             ).filter(**query_params)
+
+            # Short circuit: disallow a report containing >10000 objects.
+            if clearances.count() > 10000:
+                return HttpResponseBadRequest('Report too large, apply additional filters')
 
             # Add a worksheet.
             ws = workbook.add_worksheet('Clearances')
@@ -231,6 +240,10 @@ class DownloadView(TemplateView):
             # Business rule: filter out 'Condition clearance' task types.
             cr = TaskType.objects.get(name='Conditions clearance request')
             tasks = tasks.exclude(type=cr)
+
+            # Short circuit: disallow a report containing >10000 objects.
+            if tasks.count() > 10000:
+                return HttpResponseBadRequest('Report too large, apply additional filters')
 
             # Add a worksheet.
             ws = workbook.add_worksheet('Tasks')
