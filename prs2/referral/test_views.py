@@ -38,17 +38,17 @@ class SiteAuthViewsTest(PrsViewsTestCase):
         """Test login view renders
         """
         url = reverse('login')
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'login.html')
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertTemplateUsed(resp, 'login.html')
 
     def test_logout(self):
         """Test logout view renders
         """
         url = reverse('logout')
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'logged_out.html')
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertTemplateUsed(resp, 'logged_out.html')
 
 
 class BaseViewTest(PrsViewsTestCase):
@@ -79,20 +79,20 @@ class BaseViewTest(PrsViewsTestCase):
         """
         for i in self.models:
             url = reverse('prs_object_list', kwargs={'model': i._meta.object_name.lower()})
-            response = self.client.get(url)
-            self.assertEqual(response.status_code, 200)
-            self.assertTemplateUsed(response, 'referral/prs_object_list.html')
+            resp = self.client.get(url)
+            self.assertEqual(resp.status_code, 200)
+            self.assertTemplateUsed(resp, 'referral/prs_object_list.html')
             # Also test with a view with a query string.
             url += '?q=foo+bar'
-            response = self.client.get(url)
-            self.assertEqual(response.status_code, 200)
+            resp = self.client.get(url)
+            self.assertEqual(resp.status_code, 200)
 
     def test_nonsense_model(self):
         """Test an attempt to reverse the list view for a non-existent model.
         """
         url = reverse('prs_object_list', kwargs={'model': 'foobar'})
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 400)  # Returns a HTTP 400 error.
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 400)  # Returns a HTTP 400 error.
 
 
 class SiteHomeTest(PrsViewsTestCase):
@@ -107,41 +107,41 @@ class SiteHomeTest(PrsViewsTestCase):
         task.assigned_user = self.n_user
         task.save()
         url = reverse('site_home')
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'site_home.html')
-        self.assertContains(response, 'ONGOING TASKS')
-        self.assertContains(response, reverse('site_home_print'))
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertTemplateUsed(resp, 'site_home.html')
+        self.assertContains(resp, 'ONGOING TASKS')
+        self.assertContains(resp, reverse('site_home_print'))
 
     def test_homepage_admin(self):
         """Test that the navbar only renders the admin link for superusers
         """
         url = reverse('site_home')
-        response = self.client.get(url)
+        resp = self.client.get(url)
         link = b'<a class="dropdown-item" href="/admin/" title="Administration">Administration</a>'
-        self.assertIs(response.content.find(link), -1)
+        self.assertIs(resp.content.find(link), -1)
         # Log in as admin user
         self.client.logout()
         self.client.login(username='admin', password='pass')
-        response = self.client.get(url)
-        self.assertIsNot(response.content.find(link), -1)
+        resp = self.client.get(url)
+        self.assertIsNot(resp.content.find(link), -1)
 
     def test_homepage_printable(self):
         """Test that the site printable homepage uses the correct template
         """
         url = reverse('site_home_print')
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'site_home_print.html')
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertTemplateUsed(resp, 'site_home_print.html')
 
     def test_stopped_tasks(self):
         """Test the 'stopped tasks' homepage view
         """
         url = reverse('stopped_tasks_list')
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'site_home.html')
-        self.assertContains(response, 'STOPPED TASKS')
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertTemplateUsed(resp, 'site_home.html')
+        self.assertContains(resp, 'STOPPED TASKS')
 
 
 class HelpPageTest(PrsViewsTestCase):
@@ -150,10 +150,10 @@ class HelpPageTest(PrsViewsTestCase):
         """Test that the site help page renders
         """
         url = reverse('help_page')
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'help_page.html')
-        self.assertContains(response, 'HELP')
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertTemplateUsed(resp, 'help_page.html')
+        self.assertContains(resp, 'HELP')
 
 
 class GeneralSearchTest(PrsViewsTestCase):
@@ -162,9 +162,9 @@ class GeneralSearchTest(PrsViewsTestCase):
         """Test that the general search page renders
         """
         url = reverse('prs_index_search_combined')
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'referral/prs_index_search_combined.html')
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertTemplateUsed(resp, 'referral/prs_index_search_combined.html')
 
 
 class ReferralDetailTest(PrsViewsTestCase):
@@ -179,34 +179,34 @@ class ReferralDetailTest(PrsViewsTestCase):
         """Test that the referral detail page renders
         """
         url = self.ref.get_absolute_url()
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'referral/referral_detail.html')
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertTemplateUsed(resp, 'referral/referral_detail.html')
 
     def test_related(self):
         """Test that each of the referral related object types render
         """
         for m in ['tasks', 'notes', 'records', 'locations', 'conditions']:
             url = reverse('referral_detail', kwargs={'pk': self.ref.pk, 'related_model': m})
-            response = self.client.get(url)
-            self.assertEqual(response.status_code, 200)
+            resp = self.client.get(url)
+            self.assertEqual(resp.status_code, 200)
 
     def test_print_notes(self):
         """Test that the referral notes printable view renders
         """
         url = reverse('referral_detail', kwargs={'pk': self.ref.pk})
         url += '?' + urlencode({'print': 'notes'})
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'referral/referral_notes_print.html')
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertTemplateUsed(resp, 'referral/referral_notes_print.html')
 
     def test_referral_history(self):
         """Test that the referral history view renders
         """
         url = reverse('prs_object_history', kwargs={'model': 'referral', 'pk': self.ref.pk})
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'referral/prs_object_history.html')
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertTemplateUsed(resp, 'referral/prs_object_history.html')
 
     def test_referral_generate_qgis(self):
         """Test that the referral with locations can return a QGIS layer definition
@@ -233,12 +233,12 @@ class ReferralDetailTest(PrsViewsTestCase):
         """Test the referral detail page renders differently if bookmarked
         """
         url = self.ref.get_absolute_url()
-        response = self.client.get(url)
-        self.assertContains(response, 'Bookmark this referral')
+        resp = self.client.get(url)
+        self.assertContains(resp, 'Bookmark this referral')
         # Bookmark the referral.
         Bookmark.objects.create(referral=self.ref, user=self.n_user)
-        response = self.client.get(url)
-        self.assertContains(response, 'Remove bookmark')
+        resp = self.client.get(url)
+        self.assertContains(resp, 'Remove bookmark')
 
 
 class ReferralCreateTest(PrsViewsTestCase):
@@ -335,7 +335,7 @@ class ReferralUpdateTest(PrsViewsTestCase):
     def test_post(self):
         """Test that updating a referral actually changes it
         """
-        response = self.client.post(
+        resp = self.client.post(
             self.url,
             {
                 'referring_org': self.ref.referring_org.pk,
@@ -345,11 +345,8 @@ class ReferralUpdateTest(PrsViewsTestCase):
                 'regions': [Region.objects.first().pk],
                 'save': 'Save',
             },
-            follow=True
         )
-        next_url = self.ref.get_absolute_url()
-        self.assertRedirects(
-            response, next_url, status_code=302, target_status_code=200)
+        self.assertRedirects(resp, self.ref.get_absolute_url())
         self.assertTrue(Referral.objects.filter(reference='New reference value').exists())
 
 
@@ -382,8 +379,8 @@ class ReferralCreateChildTest(PrsViewsTestCase):
         """
         for i in ['task', 'record', 'note', 'condition']:
             url = reverse('referral_create_child', kwargs={'pk': self.ref.pk, 'model': i})
-            r = self.client.post(url, {'cancel': 'Cancel'})
-            self.assertRedirects(r, self.ref.get_absolute_url())
+            resp = self.client.post(url, {'cancel': 'Cancel'})
+            self.assertRedirects(resp, self.ref.get_absolute_url())
 
     def test_create_related_get(self):
         """Test GET for relating 'child' objects together
@@ -586,10 +583,10 @@ class ReferralRecentTest(PrsViewsTestCase):
     """
     def test_get(self):
         url = reverse('referral_recent')
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'referral/referral_recent.html')
-        self.assertContains(response, 'RECENTLY OPENED REFERRALS')
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertTemplateUsed(resp, 'referral/referral_recent.html')
+        self.assertContains(resp, 'RECENTLY OPENED REFERRALS')
 
 
 class LocationCreateTest(PrsViewsTestCase):
@@ -601,17 +598,17 @@ class LocationCreateTest(PrsViewsTestCase):
         """
         ref = Referral.objects.first()
         url = reverse('referral_location_create', kwargs={'pk': ref.pk})
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200, 'Location create view failed: {0}'.format(url))
-        self.assertTemplateUsed(response, 'referral/location_create.html')
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200, 'Location create view failed: {0}'.format(url))
+        self.assertTemplateUsed(resp, 'referral/location_create.html')
 
     def test_cancel(self):
         """Test that cancelling the referral update view redirects correctly
         """
         ref = Referral.objects.first()
         url = reverse('referral_location_create', kwargs={'pk': ref.pk})
-        response = self.client.post(url, {'cancel': 'Cancel'})
-        self.assertRedirects(response, ref.get_absolute_url())
+        resp = self.client.post(url, {'cancel': 'Cancel'})
+        self.assertRedirects(resp, ref.get_absolute_url())
 
     def test_post(self):
         """Test POST request for the create location view.
@@ -648,10 +645,10 @@ class PrsObjectDeleteTest(PrsViewsTestCase):
                     kwargs={
                         'model': i._meta.object_name.lower(),
                         'pk': i.pk})
-                response = self.client.get(url)
-                self.assertEqual(response.status_code, 200)
-                self.assertContains(response, i.as_tbody())
-                self.assertTemplateUsed(response, 'referral/prs_object_delete.html')
+                resp = self.client.get(url)
+                self.assertEqual(resp.status_code, 200)
+                self.assertContains(resp, i.as_tbody())
+                self.assertTemplateUsed(resp, 'referral/prs_object_delete.html')
 
     def test_post(self):
         """Test the POST method of the generic delete view
@@ -691,8 +688,8 @@ class PrsObjectTagTest(PrsViewsTestCase):
                     kwargs={
                         'model': obj._meta.object_name.lower(),
                         'pk': obj.pk})
-                response = self.client.get(url)
-                self.assertEqual(response.status_code, 405)
+                resp = self.client.get(url)
+                self.assertEqual(resp.status_code, 405)
 
     def test_post_create(self):
         """Test a POST request to create a tag on an object.
@@ -704,8 +701,8 @@ class PrsObjectTagTest(PrsViewsTestCase):
                     kwargs={
                         'model': obj._meta.object_name.lower(),
                         'pk': obj.pk})
-                response = self.client.post(url, {'tag': self.tag.name})
-                self.assertEqual(response.status_code, 200)
+                resp = self.client.post(url, {'tag': self.tag.name})
+                self.assertEqual(resp.status_code, 200)
                 self.assertTrue(self.tag in obj.tags.all())
 
     def test_post_delete(self):
@@ -720,8 +717,8 @@ class PrsObjectTagTest(PrsViewsTestCase):
                     kwargs={
                         'model': obj._meta.object_name.lower(),
                         'pk': obj.pk})
-                response = self.client.post(url, {'tag': self.tag.name, 'delete': ''})
-                self.assertEqual(response.status_code, 200)
+                resp = self.client.post(url, {'tag': self.tag.name, 'delete': ''})
+                self.assertEqual(resp.status_code, 200)
                 self.assertFalse(self.tag in obj.tags.all())
 
     def test_post_faulty(self):
@@ -734,8 +731,8 @@ class PrsObjectTagTest(PrsViewsTestCase):
                     kwargs={
                         'model': obj._meta.object_name.lower(),
                         'pk': obj.pk})
-                response = self.client.post(url)
-                self.assertEqual(response.status_code, 400)
+                resp = self.client.post(url)
+                self.assertEqual(resp.status_code, 400)
 
 
 class TagListTest(PrsViewsTestCase):
@@ -751,24 +748,24 @@ class TagListTest(PrsViewsTestCase):
         """Test that the rendered response contains text of all tags
         """
         url = reverse('tag_list')
-        response = self.client.get(url)
-        self.assertEquals(response.status_code, 200)
+        resp = self.client.get(url)
+        self.assertEquals(resp.status_code, 200)
         for tag in Tag.objects.all():
-            self.assertContains(response, tag.name)
+            self.assertContains(resp, tag.name)
 
     def test_get_json(self):
         """Test that a request for tags as JSON data returns correctly
         """
         url = reverse('tag_list')
-        response = self.client.get(url, data={'json': 'true'})
-        self.assertEquals(response.get('Content-Type'), 'application/json')
+        resp = self.client.get(url, data={'json': 'true'})
+        self.assertEquals(resp.get('Content-Type'), 'application/json')
 
     def test_post(self):
         """Test that POST requests are not allowed
         """
         url = reverse('tag_list')
-        response = self.client.post(url)
-        self.assertEquals(response.status_code, 405)
+        resp = self.client.post(url)
+        self.assertEquals(resp.status_code, 405)
 
 
 class ReferralTaggedTest(PrsViewsTestCase):
@@ -785,10 +782,10 @@ class ReferralTaggedTest(PrsViewsTestCase):
         """Test that a tagged referral is present in the referral_tagged view context
         """
         url = reverse('referral_tagged', kwargs={'slug': self.tag.slug})
-        response = self.client.get(url)
-        self.assertEquals(response.status_code, 200)
-        self.assertTrue(self.ref_tagged in response.context['object_list'])
-        self.assertFalse(self.ref_untagged in response.context['object_list'])
+        resp = self.client.get(url)
+        self.assertEquals(resp.status_code, 200)
+        self.assertTrue(self.ref_tagged in resp.context['object_list'])
+        self.assertFalse(self.ref_untagged in resp.context['object_list'])
 
 
 class TaskActionTest(PrsViewsTestCase):
@@ -801,15 +798,15 @@ class TaskActionTest(PrsViewsTestCase):
         """Test the Task update view responds
         """
         url = reverse('task_action', kwargs={'pk': self.task.pk, 'action': 'update'})
-        response = self.client.get(url)
-        self.assertEquals(response.status_code, 200)
+        resp = self.client.get(url)
+        self.assertEquals(resp.status_code, 200)
 
     def test_can_reassign_incomplete_task(self):
         """
         """
         url = reverse('task_action', kwargs={'pk': self.task.pk, 'action': 'reassign'})
-        response = self.client.get(url)
-        self.assertEquals(response.status_code, 200)
+        resp = self.client.get(url)
+        self.assertEquals(resp.status_code, 200)
 
     def test_cant_update_stopped_task(self):
         """Test that a stopped task can't be updated
@@ -817,12 +814,12 @@ class TaskActionTest(PrsViewsTestCase):
         self.task.stop_date = date.today()
         self.task.save()
         url = reverse('task_action', kwargs={'pk': self.task.pk, 'action': 'update'})
-        response = self.client.get(url)
+        resp = self.client.get(url)
         # Response should be a redirect to the object URL.
-        self.assertRedirects(response, self.task.get_absolute_url())
+        self.assertRedirects(resp, self.task.get_absolute_url())
         # Test that the redirected response contains an error message.
-        response = self.client.get(url, follow=True)
-        messages = response.context['messages']._get()[0]
+        resp = self.client.get(url, follow=True)
+        messages = resp.context['messages']._get()[0]
         self.assertIsNot(messages[0].message.find("You can't edit a stopped task"), -1)
 
     def test_cant_stop_completed_task(self):
@@ -831,24 +828,24 @@ class TaskActionTest(PrsViewsTestCase):
         self.task.complete_date = date.today()
         self.task.save()
         url = reverse('task_action', kwargs={'pk': self.task.pk, 'action': 'stop'})
-        response = self.client.get(url)
+        resp = self.client.get(url)
         # Response should be a redirect to the object URL.
-        self.assertRedirects(response, self.task.get_absolute_url())
+        self.assertRedirects(resp, self.task.get_absolute_url())
         # Test that the redirected response contains an error message.
-        response = self.client.get(url, follow=True)
-        messages = response.context['messages']._get()[0]
+        resp = self.client.get(url, follow=True)
+        messages = resp.context['messages']._get()[0]
         self.assertIsNot(messages[0].message.find("You can't stop a completed task"), -1)
 
     def test_cant_restart_unstopped_task(self):
         """Test that a non-stopped task can't be started
         """
         url = reverse('task_action', kwargs={'pk': self.task.pk, 'action': 'start'})
-        response = self.client.get(url)
+        resp = self.client.get(url)
         # Response should be a redirect to the object URL.
-        self.assertRedirects(response, self.task.get_absolute_url())
+        self.assertRedirects(resp, self.task.get_absolute_url())
         # Test that the redirected response contains an error message.
-        response = self.client.get(url, follow=True)
-        messages = response.context['messages']._get()[0]
+        resp = self.client.get(url, follow=True)
+        messages = resp.context['messages']._get()[0]
         self.assertIsNot(messages[0].message.find("You can't restart a non-stopped task"), -1)
 
     def test_cant_inherit_owned_task_task(self):
@@ -857,12 +854,12 @@ class TaskActionTest(PrsViewsTestCase):
         self.task.assigned_user = self.n_user
         self.task.save()
         url = reverse('task_action', kwargs={'pk': self.task.pk, 'action': 'inherit'})
-        response = self.client.get(url)
+        resp = self.client.get(url)
         # Response should be a redirect to the object URL.
-        self.assertRedirects(response, self.task.get_absolute_url())
+        self.assertRedirects(resp, self.task.get_absolute_url())
         # Test that the redirected response contains an error message.
-        response = self.client.get(url, follow=True)
-        messages = response.context['messages']._get()[0]
+        resp = self.client.get(url, follow=True)
+        messages = resp.context['messages']._get()[0]
         self.assertIsNot(messages[0].message.find("That task is already assigned to you"), -1)
 
     def test_cant_alter_completed_task(self):
@@ -872,21 +869,21 @@ class TaskActionTest(PrsViewsTestCase):
         self.task.save()
         for action in ['cancel', 'complete', 'reassign']:
             url = reverse('task_action', kwargs={'pk': self.task.pk, 'action': action})
-            response = self.client.get(url)
+            resp = self.client.get(url)
             # Response should be a redirect to the object URL.
-            self.assertRedirects(response, self.task.get_absolute_url())
+            self.assertRedirects(resp, self.task.get_absolute_url())
             # Test that the redirected response contains an error message.
-            response = self.client.get(url, follow=True)
-            messages = response.context['messages']._get()[0]
+            resp = self.client.get(url, follow=True)
+            messages = resp.context['messages']._get()[0]
             self.assertIsNot(messages[0].message.find('That task is already completed'), -1)
 
     def test_cant_add_task_to_task(self):
         """Test that a task can't be added to another task
         """
         url = reverse('task_action', kwargs={'pk': self.task.pk, 'action': 'add'})
-        response = self.client.get(url)
+        resp = self.client.get(url)
         # Response should be a redirect to the object URL.
-        self.assertRedirects(response, self.task.get_absolute_url())
+        self.assertRedirects(resp, self.task.get_absolute_url())
 
     def test_cant_complete_task_without_location(self):
         """Test rule that some tasks can't be completed without a location on the referral
@@ -899,9 +896,9 @@ class TaskActionTest(PrsViewsTestCase):
             for loc in self.task.referral.location_set.all():
                 loc.delete()
             url = reverse('task_action', kwargs={'pk': self.task.pk, 'action': 'complete'})
-            response = self.client.get(url)
+            resp = self.client.get(url)
             # Response should be a redirect to the task URL.
-            self.assertRedirects(response, self.task.get_absolute_url())
+            self.assertRedirects(resp, self.task.get_absolute_url())
 
 
 class ReferralRelateTest(PrsViewsTestCase):
@@ -915,9 +912,9 @@ class ReferralRelateTest(PrsViewsTestCase):
         """Test GET for the referral_relate view
         """
         url = reverse('referral_relate', kwargs={'pk': self.ref1.pk})
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'referral/referral_relate.html')
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertTemplateUsed(resp, 'referral/referral_relate.html')
 
     def test_post_create(self):
         """Test post for the referral_relate create view
@@ -928,8 +925,8 @@ class ReferralRelateTest(PrsViewsTestCase):
         # NOTE: setting the ``data`` dict in the post below form-encodes the parameters.
         # We need them as query params instead, so manually build the query.
         url += '?ref_pk={}&create=true'.format(self.ref2.pk)
-        response = self.client.post(url, follow=True)
-        self.assertEqual(response.status_code, 200)
+        resp = self.client.post(url, follow=True)
+        self.assertEqual(resp.status_code, 200)
         self.assertTrue(self.ref2 in self.ref1.related_refs.all())
 
     def test_post_delete(self):
@@ -942,8 +939,8 @@ class ReferralRelateTest(PrsViewsTestCase):
         # NOTE: setting the ``data`` dict in the post below form-encodes the parameters.
         # We need them as query params instead, so manually build the query.
         url += '?ref_pk={}&delete=true'.format(self.ref2.pk)
-        response = self.client.post(url, follow=True)
-        self.assertEqual(response.status_code, 200)
+        resp = self.client.post(url, follow=True)
+        self.assertEqual(resp.status_code, 200)
         self.assertTrue(self.ref2 not in self.ref1.related_refs.all())
 
 
@@ -956,9 +953,9 @@ class InfobaseShortcutTest(PrsViewsTestCase):
             i.infobase_id = None
             i.save()
             url = reverse('infobase_shortcut', kwargs={'pk': i.pk})
-            response = self.client.get(url)
+            resp = self.client.get(url)
             # View response shoud be 302 redirect.
-            self.assertEqual(response.status_code, 302)
+            self.assertEqual(resp.status_code, 302)
 
     def test_get_with_id(self):
         """Test GET for the Infobase shortcut view with an ID
@@ -967,15 +964,12 @@ class InfobaseShortcutTest(PrsViewsTestCase):
             i.infobase_id = str(uuid.uuid4())[:8]
             i.save()
             url = reverse('infobase_shortcut', kwargs={'pk': i.pk})
-            response = self.client.get(url)
+            resp = self.client.get(url)
             # View response shoud be file.
-            self.assertEqual(response.status_code, 200)
-            self.assertEqual(response.get('Content-Type'), 'application/octet-stream')
-            # Python 3 compat: response.content is a bytestring.
-            if isinstance(response.content, bytes):
-                self.assertEqual(response.content.decode(), i.infobase_id)
-            else:  # Python 2.
-                self.assertEqual(response.content, i.infobase_id)
+            self.assertEqual(resp.status_code, 200)
+            self.assertEqual(resp.get('Content-Type'), 'application/octet-stream')
+            # resp.content is a bytestring.
+            self.assertEqual(resp.content.decode(), i.infobase_id)
 
 
 class RecordUploadViewTest(PrsViewsTestCase):
@@ -985,9 +979,9 @@ class RecordUploadViewTest(PrsViewsTestCase):
         """
         url = reverse('referral_record_upload', kwargs={'pk': Referral.objects.first().pk})
         f = SimpleUploadedFile('file.txt', b'file_content')
-        response = self.client.post(url, {'file': f})
-        self.assertEquals(response.status_code, 200)
-        result = json.loads(response.content.decode('utf8'))
+        resp = self.client.post(url, {'file': f})
+        self.assertEquals(resp.status_code, 200)
+        result = json.loads(resp.content.decode('utf8'))
         self.assertTrue(Record.objects.filter(pk=result['object']['id']).exists())
 
     def test_post_forbidden(self):
@@ -998,5 +992,5 @@ class RecordUploadViewTest(PrsViewsTestCase):
         # Log in as read-only user
         self.client.logout()
         self.client.login(username='readonlyuser', password='pass')
-        response = self.client.post(url, {'file': f})
-        self.assertEquals(response.status_code, 403)
+        resp = self.client.post(url, {'file': f})
+        self.assertEquals(resp.status_code, 403)
