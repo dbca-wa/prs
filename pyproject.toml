@@ -21,7 +21,7 @@ pillow = "10.2.0"
 python-magic = "0.4.27"
 lxml = "5.1.0"
 xmltodict = "0.13.0"
-extract-msg = "0.47.0"
+extract-msg = "0.48.0"
 django-extensions = "3.2.3"
 webtemplate-dbca = "1.7.0"
 mixer = "7.2.2"
@@ -36,13 +36,13 @@ whitenoise = {version = "6.6.0", extras = ["brotli"]}
 django-crum = "0.7.9"
 django-storages = {version = "1.14.2", extras = ["azure"]}
 tomli = "2.0.1"
-sentry-sdk = {version = "1.40.5", extras = ["django"]}
+sentry-sdk = {version = "1.40.6", extras = ["django"]}
 crispy-bootstrap5 = "0.7"
 django-redis = "5.4.0"
 xlsxwriter = "3.2.0"
 
 [tool.poetry.group.dev.dependencies]
-ipython = "^8.22.1"
+ipython = "^8.22.2"
 ipdb = "^0.13.11"
 pre-commit = "^3.6.2"
 coverage = "^7.4.3"
