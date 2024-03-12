@@ -90,9 +90,7 @@
                     <h4>Key issues:</h4>
                     {% for tag in object.tags.all %}
                     <a href="{% url 'referral_tagged' slug=tag.slug %}"><span class="label label-primary">{{ tag.name }}</span></a>
-                        {% if forloop.last %}{% else %}
-                            {% ifequal forloop.revcounter0 1 %}and{% else %},{% endifequal %}
-                        {% endif %}
+                        {% if forloop.last %}{% else %}, {% endif %}
                     {% endfor %}
                 {% else %}
                     No issues recorded</a>

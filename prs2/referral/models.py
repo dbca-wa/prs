@@ -1466,7 +1466,6 @@ class Condition(ReferralBaseModel):
         through="Clearance",
         editable=False,
         symmetrical=True,
-        related_name="clearance_requests",
     )
     category = models.ForeignKey(
         ConditionCategory, on_delete=models.PROTECT, blank=True, null=True

@@ -3,7 +3,8 @@ import dj_database_url
 import os
 from pathlib import Path
 import sys
-import tomli
+import tomllib
+from zoneinfo import ZoneInfo
 
 
 # Project paths
@@ -17,6 +18,7 @@ sys.path.insert(0, PROJECT_DIR)
 DEBUG = env('DEBUG', False)
 SECRET_KEY = env('SECRET_KEY', 'PlaceholderSecretKey')
 CSRF_COOKIE_SECURE = env('CSRF_COOKIE_SECURE', False)
+CSRF_TRUSTED_ORIGINS = env('CSRF_TRUSTED_ORIGINS', 'http://127.0.0.1').split(',')
 SESSION_COOKIE_SECURE = env('SESSION_COOKIE_SECURE', False)
 SECURE_SSL_REDIRECT = env('SECURE_SSL_REDIRECT', False)
 SECURE_REFERRER_POLICY = env('SECURE_REFERRER_POLICY', None)
@@ -118,8 +120,8 @@ LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 APPLICATION_TITLE = 'Planning Referral System'
 APPLICATION_ACRONYM = 'PRS'
-project = tomli.load(open(os.path.join(BASE_DIR, "pyproject.toml"), "rb"))
-APPLICATION_VERSION_NO = project["tool"]["poetry"]["version"]
+project = tomllib.load(open(os.path.join(BASE_DIR, 'pyproject.toml'), 'rb'))
+APPLICATION_VERSION_NO = project['tool']['poetry']['version']
 APPLICATION_ALERTS_EMAIL = 'PRS-Alerts@dbca.wa.gov.au'
 SITE_URL = env('SITE_URL', 'localhost')
 PRS_USER_GROUP = env('PRS_USER_GROUP', 'PRS user')
@@ -146,25 +148,24 @@ ALLOWED_UPLOAD_TYPES = [
     'text/html',
     'text/plain'
 ]
-REDIS_CACHE_HOST = env("REDIS_CACHE_HOST", "")
-REDIS_CACHE_PASSWORD = env("REDIS_CACHE_PASSWORD", "")
+
+# Caching config
+REDIS_CACHE_HOST = env('REDIS_CACHE_HOST', '')
+REDIS_CACHE_PASSWORD = env('REDIS_CACHE_PASSWORD', '')
 if REDIS_CACHE_HOST:
     CACHES = {
-        "default": {
-            "BACKEND": "django_redis.cache.RedisCache",
-            "LOCATION": REDIS_CACHE_HOST,
-            "OPTIONS": {
-                "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            }
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': REDIS_CACHE_HOST,
         }
     }
     if REDIS_CACHE_PASSWORD:
-        CACHES["default"]["OPTIONS"]["PASSWORD"] = REDIS_CACHE_PASSWORD
+        CACHES['default']['OPTIONS']['PASSWORD'] = REDIS_CACHE_PASSWORD
 else:
     # Don't cache if we don't have a cache server configured.
     CACHES = {
-        "default": {
-            "BACKEND": "django.core.cache.backends.dummy.DummyCache",
+        'default': {
+            'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
         }
     }
 API_RESPONSE_CACHE_SECONDS = env('API_RESPONSE_CACHE_SECONDS', 60)
@@ -189,6 +190,7 @@ DATABASES = {
 
 # Internationalization
 TIME_ZONE = 'Australia/Perth'
+TZ = ZoneInfo(TIME_ZONE)
 USE_TZ = True
 USE_I18N = False
 USE_L10N = True
@@ -260,13 +262,6 @@ LOGGING = {
 # django-crispy-forms config
 CRISPY_ALLOWED_TEMPLATE_PACKS = 'bootstrap5'
 CRISPY_TEMPLATE_PACK = 'bootstrap5'
-
-# django-rest-framework configuration
-REST_FRAMEWORK = {
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
-    'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.AllowAny'],
-    'PAGE_SIZE': 100
-}
 
 # Typesense config
 TYPESENSE_API_KEY = env('TYPESENSE_API_KEY', 'PlaceholderAPIKey')
