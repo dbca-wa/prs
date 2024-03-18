@@ -13,9 +13,9 @@ dbca-utils = "2.0.2"
 python-dotenv = "1.0.1"
 dj-database-url = "2.1.0"
 gunicorn = "21.2.0"
-django-crispy-forms = "2.0"
+django-crispy-forms = "2.1"
 django-reversion = "5.0.12"
-django-taggit = "4.0.0"
+django-taggit = "5.0.1"
 unidecode = "1.3.8"
 pillow = "10.2.0"
 python-magic = "0.4.27"
@@ -35,8 +35,8 @@ pygeopkg = "0.1.3"
 whitenoise = {version = "6.6.0", extras = ["brotli"]}
 django-crum = "0.7.9"
 django-storages = {version = "1.14.2", extras = ["azure"]}
-sentry-sdk = {version = "1.41.0", extras = ["django"]}
-crispy-bootstrap5 = "0.7"
+sentry-sdk = {version = "1.42.0", extras = ["django"]}
+crispy-bootstrap5 = "2024.2"
 redis = "5.0.3"
 xlsxwriter = "3.2.0"
 
@@ -44,7 +44,7 @@ xlsxwriter = "3.2.0"
 ipython = "^8.22.2"
 ipdb = "^0.13.11"
 pre-commit = "^3.6.2"
-coverage = "^7.4.3"
+coverage = "^7.4.4"
 
 [build-system]
 requires = ["poetry-core"]
