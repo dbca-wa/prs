@@ -2,11 +2,19 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: prs-deployment
+  labels:
+    app: prs-deployment
 spec:
+  selector:
+    matchLabels:
+      app: prs-deployment
   replicas: 2
   strategy:
     type: RollingUpdate
   template:
+    metadata:
+      labels:
+        app: prs-deployment
     spec:
       containers:
       - name: prs
