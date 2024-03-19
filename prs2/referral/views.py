@@ -662,7 +662,7 @@ class ReferralCreateChild(PrsObjectCreate):
         redirect_url = None
 
         if form.Meta.model._meta.model_name == "task":
-            # Create a clearance request task:
+            # Create one or more clearance request tasks:
             if "type" in self.kwargs and self.kwargs["type"] == "clearance":
                 self.create_clearance(form)
             # Create a task, type unspecified:
@@ -746,8 +746,6 @@ class ReferralCreateChild(PrsObjectCreate):
         new_note.creator, new_note.modifier = request.user, request.user
         new_note.save()
         obj.notes.add(new_note)
-        obj.modifier = request.user
-        obj.save()
         # Create the reverse relationship too.
         if model_name == "task":
             new_note.task_set.add(obj)
@@ -799,8 +797,6 @@ class ReferralCreateChild(PrsObjectCreate):
         new_record.creator, new_record.modifier = request.user, request.user
         new_record.save()
         obj.records.add(new_record)
-        obj.modifier = request.user
-        obj.save()
         # Create the reverse relationship too.
         if model_name == "task":
             new_record.task_set.add(obj)
@@ -839,8 +835,10 @@ class ReferralCreateChild(PrsObjectCreate):
         return condition_choices
 
     def create_clearance(self, form):
+        """For each of the chosen conditions in the form, create one clearance task.
+        """
         request = self.request
-        # For each of the chosen conditions, create a clearance task using the form data.
+
         tasks = []
         for i in form.cleaned_data["conditions"]:
             condition = Condition.objects.get(pk=i)
@@ -1400,7 +1398,7 @@ class TaskAction(PrsObjectUpdate):
                     and not obj.referral.has_proposed_condition
                 ):
                     msg = """You are unable to complete this task as 'Response
-                        with condition' without first recording proposed
+                        with conditions' without first recording proposed
                         condition(s) on the referral.
                         <a href="{}">Click here to create a condition.</a>""".format(
                         reverse(
@@ -1509,7 +1507,7 @@ class TagList(PrsObjectList):
         """For an AJAX request or one containing a ``json`` request parameter,
         return a JSON response (list of tag names).
         """
-        if request.is_ajax() or "json" in request.GET:
+        if "json" in request.GET:
             loc = [str(i) for i in self.get_queryset().values_list("name", flat=True)]
             return JsonResponse(loc, safe=False)
         return super().get(request, *args, **kwargs)

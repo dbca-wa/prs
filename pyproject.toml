@@ -1,28 +1,27 @@
 [tool.poetry]
 name = "prs"
-version = "2.5.42"
+version = "2.5.43"
 description = "Planning Referral System corporate application"
 authors = ["Ashley Felton <ashley.felton@dbca.wa.gov.au>"]
 license = "Apache-2.0"
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.11"
-django = "3.2.24"
+python = "^3.11"
+django = "4.2.11"
 psycopg2 = "2.9.9"
-dbca-utils = "2.0.0"
+dbca-utils = "2.0.2"
 python-dotenv = "1.0.1"
 dj-database-url = "2.1.0"
 gunicorn = "21.2.0"
-django-crispy-forms = "2.0"
+django-crispy-forms = "2.1"
 django-reversion = "5.0.12"
-django-taggit = "4.0.0"
+django-taggit = "5.0.1"
 unidecode = "1.3.8"
 pillow = "10.2.0"
 python-magic = "0.4.27"
 lxml = "5.1.0"
-openpyxl = "3.1.2"
 xmltodict = "0.13.0"
-extract-msg = "0.47.0"
+extract-msg = "0.48.2"
 django-extensions = "3.2.3"
 webtemplate-dbca = "1.7.0"
 mixer = "7.2.2"
@@ -36,16 +35,16 @@ pygeopkg = "0.1.3"
 whitenoise = {version = "6.6.0", extras = ["brotli"]}
 django-crum = "0.7.9"
 django-storages = {version = "1.14.2", extras = ["azure"]}
-tomli = "2.0.1"
-sentry-sdk = {version = "1.40.5", extras = ["django"]}
-crispy-bootstrap5 = "0.7"
-django-redis = "5.4.0"
+sentry-sdk = {version = "1.42.0", extras = ["django"]}
+crispy-bootstrap5 = "2024.2"
+redis = "5.0.3"
+xlsxwriter = "3.2.0"
 
 [tool.poetry.group.dev.dependencies]
-ipython = "^8.21.0"
+ipython = "^8.22.2"
 ipdb = "^0.13.11"
 pre-commit = "^3.6.2"
-coverage = "^7.4.1"
+coverage = "^7.4.4"
 
 [build-system]
 requires = ["poetry-core"]

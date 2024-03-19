@@ -11,7 +11,6 @@ import logging
 from lxml.html import clean, fromstring
 import requests
 import time
-from zoneinfo import ZoneInfo
 
 
 LOGGER = logging.getLogger('harvester')
@@ -90,10 +89,9 @@ def harvest_email(uid, message):
             #     LOGGER.info(f'Email UID {uid} to {to_e} harvest was skipped')
             #     return None  # Not in the whitelist; skip.
             from_e = email.utils.parseaddr(message.get('From'))[1]
-            # Parse the 'sent' date & time (assume WST).
-            wa_tz = ZoneInfo(settings.TIME_ZONE)
+            # Parse the 'sent' date & time (assume AWST).
             ts = time.mktime(email.utils.parsedate(message.get('Date')))
-            received = datetime.fromtimestamp(ts).astimezone(wa_tz)
+            received = datetime.fromtimestamp(ts).astimezone(settings.TZ)
             # Generate an EmailedReferral object.
             em_new = EmailedReferral(
                 received=received, email_uid=str(uid), to_email=to_e,

@@ -1,10 +1,10 @@
+from datetime import date, datetime
 from django.conf import settings
 from django.urls import reverse
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseBadRequest
 from django.views.generic import TemplateView
-from openpyxl import Workbook
-from openpyxl.styles import Font
 from taggit.models import Tag
+import xlsxwriter
 
 from referral.models import Referral, Clearance, Task, TaskType
 from referral.utils import breadcrumbs_li, is_model_or_string, prs_user
@@ -47,6 +47,8 @@ class DownloadView(TemplateView):
                 query_params['regions__id__in'] = [region]
             elif model._meta.model_name == 'task':
                 query_params['referral__regions__id__in'] = [region]
+            elif model._meta.model_name == 'clearance':
+                query_params['condition__referral__regions__id__in'] = [region]
         # Special case: for clearances, follow dates through to linked task.
         if model._meta.model_name == 'clearance':
             state = query_params.pop('state__id', None)
@@ -68,233 +70,256 @@ class DownloadView(TemplateView):
         else:
             tags = None
 
-        # Generate a blank Excel workbook.
-        wb = Workbook()
-        ws = wb.active  # The worksheet
-        # Default font for all cells.
-        arial = Font(name='Arial', size=10)
-        # Define a date style.
-        date_style = 'dd/mm/yyyy'
-
         # Generate a HTTPResponse object to write to.
-        response = HttpResponse(
-            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        # Generate a blank Excel workbook.
+        workbook = xlsxwriter.Workbook(
+            response,
+            options={
+                'in_memory': True,
+                'default_date_format': 'dd-mmm-yyyy',
+                'remove_timezone': True,
+            },
+        )
 
         if model == Referral:
-            response['Content-Disposition'] = 'attachment; filename=prs_referrals.xlsx'
+            response['Content-Disposition'] = f'attachment; filename=prs_referrals_{date.today().isoformat()}_{datetime.now().strftime("%H%M")}.xlsx'
             # Filter referral objects according to the parameters.
-            referrals = Referral.objects.current().filter(**query_params)
+            referrals = Referral.objects.current().select_related(
+                'type',
+                'referring_org',
+                'lga',
+            ).filter(**query_params)
             if tags:  # Optional: filter by tags.
                 referrals = referrals.filter(tags__in=tags).distinct()
+
+            # Short circuit: disallow a report containing >10000 objects.
+            if referrals.count() > 10000:
+                return HttpResponseBadRequest('Report too large, apply additional filters')
+
+            # Add a worksheet.
+            ws = workbook.add_worksheet('Referrals')
             # Write the column headers to the new worksheet.
-            headers = [
-                'Referral ID', 'Region(s)', 'Referrer', 'Type', 'Reference',
-                'Received', 'Description', 'Address', 'Triggers', 'Tags',
-                'File no.', 'LGA']
-            for col, value in enumerate(headers, 1):
-                cell = ws.cell(row=1, column=col)
-                cell.value = value
-                cell.font = arial
+            row = 0
+            ws.write_row(
+                row=row,
+                col=0,
+                data=[
+                    'Referral ID',
+                    'Region(s)',
+                    'Referrer',
+                    'Type',
+                    'Reference',
+                    'Received',
+                    'Description',
+                    'Address',
+                    'Triggers',
+                    'Tags',
+                    'File no.',
+                    'LGA',
+                ],
+            )
+            row += 1
             # Write the referral values to the worksheet.
-            for row, r in enumerate(referrals, 2):  # Start at row 2
-                cell = ws.cell(row=row, column=1)
-                cell.value = r.pk
-                cell.font = arial
-                cell = ws.cell(row=row, column=2)
-                cell.value = r.regions_str
-                cell.font = arial
-                cell = ws.cell(row=row, column=3)
-                cell.value = r.referring_org.name
-                cell.font = arial
-                cell = ws.cell(row=row, column=4)
-                cell.value = r.type.name
-                cell.font = arial
-                cell = ws.cell(row=row, column=5)
-                cell.value = r.reference
-                cell.font = arial
-                cell = ws.cell(row=row, column=6)
-                cell.value = r.referral_date
-                cell.number_format = date_style
-                cell.font = arial
-                cell = ws.cell(row=row, column=7)
-                cell.value = r.description
-                cell.font = arial
-                cell = ws.cell(row=row, column=8)
-                cell.value = r.address
-                cell.font = arial
-                cell = ws.cell(row=row, column=9)
-                cell.value = ', '.join([t.name for t in r.dop_triggers.all()])
-                cell.font = arial
-                cell = ws.cell(row=row, column=10)
-                cell.value = ', '.join([t.name for t in r.tags.all()])
-                cell.font = arial
-                cell = ws.cell(row=row, column=11)
-                cell.value = r.file_no
-                cell.font = arial
-                cell = ws.cell(row=row, column=12)
-                cell.value = r.lga.name if r.lga else ''
-                cell.font = arial
+            for r in referrals:
+                ws.write_row(
+                    row=row,
+                    col=0,
+                    data=[
+                        r.pk,
+                        r.regions_str,
+                        r.referring_org.name,
+                        r.type.name,
+                        r.reference,
+                        r.referral_date,
+                        r.description,
+                        r.address,
+                        ', '.join([t.name for t in r.dop_triggers.all()]),
+                        ', '.join([t.name for t in r.tags.all()]),
+                        r.file_no,
+                        r.lga.name if r.lga else '',
+                    ],
+                )
+                row += 1
+
+            # Set column widths.
+            ws.set_column('A:A', width=10)
+            ws.set_column('B:B', width=12)
+            ws.set_column('C:C', width=38)
+            ws.set_column('D:D', width=22)
+            ws.set_column('E:F', width=12)
+            ws.set_column('G:I', width=45)
+            ws.set_column('J:J', width=15)
+            ws.set_column('K:K', width=12)
+            ws.set_column('L:L', width=30)
+
         elif model == Clearance:
-            response['Content-Disposition'] = 'attachment; filename=prs_clearance_requests.xlsx'
+            response['Content-Disposition'] = f'attachment; filename=prs_clearance_requests_{date.today().isoformat()}_{datetime.now().strftime("%H%M")}.xlsx'
             # Filter clearance objects according to the parameters.
-            clearances = Clearance.objects.current().filter(**query_params)
+            clearances = Clearance.objects.current().select_related(
+                'condition',
+                'task',
+            ).filter(**query_params)
+
+            # Short circuit: disallow a report containing >10000 objects.
+            if clearances.count() > 10000:
+                return HttpResponseBadRequest('Report too large, apply additional filters')
+
+            # Add a worksheet.
+            ws = workbook.add_worksheet('Clearances')
             # Write the column headers to the new worksheet.
-            headers = [
-                'Referral ID', 'Region(s)', 'Reference', 'Condition no.',
-                'Approved condition', 'Category', 'Task description',
-                'Deposited plan no.', 'Assigned user', 'Status', 'Start date',
-                'Due date', 'Complete date', 'Stop date', 'Restart date',
-                'Total stop days']
-            for col, value in enumerate(headers, 1):
-                cell = ws.cell(row=1, column=col)
-                cell.value = value
-                cell.font = arial
+            row = 0
+            ws.write_row(
+                row=row,
+                col=0,
+                data=[
+                    'Referral ID',
+                    'Region(s)',
+                    'Reference',
+                    'Condition no.',
+                    'Approved condition',
+                    'Category',
+                    'Task description',
+                    'Deposited plan no.',
+                    'Assigned user',
+                    'Status',
+                    'Start date',
+                    'Due date',
+                    'Complete date',
+                    'Stop date',
+                    'Restart date',
+                    'Total stop days',
+                ],
+            )
+            row += 1
+
             # Write the clearance values to the worksheet.
-            for row, c in enumerate(clearances, 2):  # Start at row 2
-                cell = ws.cell(row=row, column=1)
-                cell.value = c.condition.referral.pk
-                cell.font = arial
-                cell = ws.cell(row=row, column=2)
-                cell.value = c.condition.referral.regions_str
-                cell.font = arial
-                cell = ws.cell(row=row, column=3)
-                cell.value = c.condition.referral.reference
-                cell.font = arial
-                cell = ws.cell(row=row, column=4)
-                cell.value = c.condition.identifier
-                cell.font = arial
-                cell = ws.cell(row=row, column=5)
-                cell.value = c.condition.condition
-                cell.font = arial
-                cell = ws.cell(row=row, column=6)
-                cell.font = arial
-                if c.condition.category:
-                    cell.value = c.condition.category.name
-                cell = ws.cell(row=row, column=7)
-                cell.value = c.task.description
-                cell.font = arial
-                cell = ws.cell(row=row, column=8)
-                cell.value = c.deposited_plan
-                cell.font = arial
-                cell = ws.cell(row=row, column=9)
-                cell.value = c.task.assigned_user.get_full_name()
-                cell.font = arial
-                cell = ws.cell(row=row, column=10)
-                cell.value = c.task.state.name
-                cell.font = arial
-                cell = ws.cell(row=row, column=11)
-                cell.value = c.task.start_date
-                cell.number_format = date_style
-                cell.font = arial
-                cell = ws.cell(row=row, column=12)
-                cell.value = c.task.due_date
-                cell.number_format = date_style
-                cell.font = arial
-                cell = ws.cell(row=row, column=13)
-                cell.value = c.task.complete_date
-                cell.number_format = date_style
-                cell.font = arial
-                cell = ws.cell(row=row, column=14)
-                cell.value = c.task.stop_date
-                cell.number_format = date_style
-                cell.font = arial
-                cell = ws.cell(row=row, column=15)
-                cell.value = c.task.restart_date
-                cell.number_format = date_style
-                cell.font = arial
-                cell = ws.cell(row=row, column=16)
-                cell.value = c.task.stop_time
-                cell.font = arial
+            for c in clearances:
+                ws.write_row(
+                    row=row,
+                    col=0,
+                    data=[
+                        c.condition.referral.pk,
+                        c.condition.referral.regions_str,
+                        c.condition.referral.reference,
+                        c.condition.identifier,
+                        c.condition.condition,
+                        c.condition.category.name if c.condition.category else '',
+                        c.task.description,
+                        c.deposited_plan,
+                        c.task.assigned_user.get_full_name(),
+                        c.task.state.name,
+                        c.task.start_date,
+                        c.task.due_date,
+                        c.task.complete_date,
+                        c.task.stop_date,
+                        c.task.restart_date,
+                        c.task.stop_time,
+                    ],
+                )
+                row += 1
+
+            # Set column widths.
+            ws.set_column('A:A', 9)
+            ws.set_column('B:D', 12)
+            ws.set_column('E:E', 45)
+            ws.set_column('G:G', 45)
+            ws.set_column('H:J', 18)
+            ws.set_column('K:P', 10)
+
         elif model == Task:
-            response['Content-Disposition'] = 'attachment; filename=prs_tasks.xlsx'
+            response['Content-Disposition'] = f'attachment; filename=prs_tasks_{date.today().isoformat()}_{datetime.now().strftime("%H%M")}.xlsx'
+
             # Filter task objects according to the parameters.
-            tasks = Task.objects.current().filter(**query_params)
+            tasks = Task.objects.current().select_related(
+                'type',
+                'referral',
+                'assigned_user',
+                'state',
+            ).filter(**query_params)
             # Business rule: filter out 'Condition clearance' task types.
             cr = TaskType.objects.get(name='Conditions clearance request')
             tasks = tasks.exclude(type=cr)
-            # Write the column headers to the new worksheet.
-            headers = [
-                'Task ID', 'Region(s)', 'Referral ID', 'Referred by',
-                'Referral type', 'Reference', 'Referral received', 'Task type',
-                'Task status', 'Assigned user', 'Task start', 'Task due',
-                'Task complete', 'Stop date', 'Restart date', 'Total stop days',
-                'File no.', 'DoP triggers', 'Referral description',
-                'Referral address', 'LGA']
-            for col, value in enumerate(headers, 1):
-                cell = ws.cell(row=1, column=col)
-                cell.value = value
-                cell.font = arial
-            # Write the task values to the worksheet.
-            for row, t in enumerate(tasks, 2):  # Start at row 2
-                cell = ws.cell(row=row, column=1)
-                cell.value = t.pk
-                cell.font = arial
-                cell = ws.cell(row=row, column=2)
-                cell.value = t.referral.regions_str
-                cell.font = arial
-                cell = ws.cell(row=row, column=3)
-                cell.value = t.referral.pk
-                cell.font = arial
-                cell = ws.cell(row=row, column=4)
-                cell.value = t.referral.referring_org.name
-                cell.font = arial
-                cell = ws.cell(row=row, column=5)
-                cell.value = t.referral.type.name
-                cell.font = arial
-                cell = ws.cell(row=row, column=6)
-                cell.value = t.referral.reference
-                cell.font = arial
-                cell = ws.cell(row=row, column=7)
-                cell.value = t.referral.referral_date
-                cell.number_format = date_style
-                cell.font = arial
-                cell = ws.cell(row=row, column=8)
-                cell.value = t.type.name
-                cell.font = arial
-                cell = ws.cell(row=row, column=9)
-                cell.value = t.state.name
-                cell.font = arial
-                cell = ws.cell(row=row, column=10)
-                cell.value = t.assigned_user.get_full_name()
-                cell.font = arial
-                cell = ws.cell(row=row, column=11)
-                cell.value = t.start_date
-                cell.number_format = date_style
-                cell.font = arial
-                cell = ws.cell(row=row, column=12)
-                cell.value = t.due_date
-                cell.number_format = date_style
-                cell.font = arial
-                cell = ws.cell(row=row, column=13)
-                cell.value = t.complete_date
-                cell.number_format = date_style
-                cell.font = arial
-                cell = ws.cell(row=row, column=14)
-                cell.value = t.stop_date
-                cell.number_format = date_style
-                cell.font = arial
-                cell = ws.cell(row=row, column=15)
-                cell.value = t.restart_date
-                cell.number_format = date_style
-                cell.font = arial
-                cell = ws.cell(row=row, column=16)
-                cell.value = t.stop_time
-                cell.font = arial
-                cell = ws.cell(row=row, column=17)
-                cell.value = t.referral.file_no
-                cell.font = arial
-                cell = ws.cell(row=row, column=18)
-                cell.value = ', '.join([i.name for i in t.referral.dop_triggers.all()])
-                cell.font = arial
-                cell = ws.cell(row=row, column=19)
-                cell.value = t.referral.description
-                cell.font = arial
-                cell = ws.cell(row=row, column=20)
-                cell.value = t.referral.address
-                cell.font = arial
-                cell = ws.cell(row=row, column=21)
-                cell.value = t.referral.lga.name if t.referral.lga else ''
-                cell.font = arial
 
-        wb.save(response)  # Save the workbook contents to the response.
+            # Short circuit: disallow a report containing >10000 objects.
+            if tasks.count() > 10000:
+                return HttpResponseBadRequest('Report too large, apply additional filters')
+
+            # Add a worksheet.
+            ws = workbook.add_worksheet('Tasks')
+            # Write the column headers to the new worksheet.
+            row = 0
+            ws.write_row(
+                row=row,
+                col=0,
+                data=[
+                    'Task ID',
+                    'Region(s)',
+                    'Referral ID',
+                    'Referred by',
+                    'Referral type',
+                    'Reference',
+                    'Referral received',
+                    'Task type',
+                    'Task status',
+                    'Assigned user',
+                    'Task start',
+                    'Task due',
+                    'Task complete',
+                    'Stop date',
+                    'Restart date',
+                    'Total stop days',
+                    'File no.',
+                    'DoP triggers',
+                    'Referral description',
+                    'Referral address',
+                    'LGA',
+                ],
+            )
+            row += 1
+
+            # Write the task values to the worksheet.
+            for t in tasks:
+                ws.write_row(
+                    row=row,
+                    col=0,
+                    data=[
+                        t.pk,
+                        t.referral.regions_str,
+                        t.referral.pk,
+                        t.referral.referring_org.name,
+                        t.referral.type.name,
+                        t.referral.reference,
+                        t.referral.referral_date,
+                        t.type.name,
+                        t.state.name,
+                        t.assigned_user.get_full_name(),
+                        t.start_date,
+                        t.due_date,
+                        t.complete_date,
+                        t.stop_date,
+                        t.restart_date,
+                        t.stop_time,
+                        t.referral.file_no,
+                        ', '.join([i.name for i in t.referral.dop_triggers.all()]),
+                        t.referral.description,
+                        t.referral.address,
+                        t.referral.lga.name if t.referral.lga else '',
+                    ],
+                )
+                row += 1
+
+            # Set column widths.
+            ws.set_column('A:A', 9)
+            ws.set_column('B:B', 12)
+            ws.set_column('C:C', 9)
+            ws.set_column('D:E', 35)
+            ws.set_column('F:F', 20)
+            ws.set_column('G:G', 14)
+            ws.set_column('H:J', 20)
+            ws.set_column('K:P', 11)
+            ws.set_column('Q:Q', 25)
+            ws.set_column('R:U', 45)
+
+        workbook.close()
         return response

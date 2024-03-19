@@ -39,7 +39,11 @@
             {% else %}
                 <a class="dropdown-item" href="#" id="id_complete" title="{{ can_complete_msg }}" style="color:grey">Complete task</a>
             {% endif %}
-            <a class="dropdown-item" href="{% url 'task_action' pk=object.pk action='cancel' %}">Cancel task</a>
+            {% if not object.complete_date %}
+                <a class="dropdown-item" href="{% url 'task_action' pk=object.pk action='cancel' %}">Cancel task</a>
+            {% else %}
+                <a class="dropdown-item" href="#" style="color:grey">Cancel task</a>
+            {% endif %}
             <a class="dropdown-item" href="{% url 'task_action' pk=object.pk action='reassign' %}">Reassign task</a>
             <a class="dropdown-item" href="{% url 'task_action' pk=object.pk action='inherit' %}">Inherit task</a>
             <a class="dropdown-item" href="{% url 'referral_create_child_related' pk=object.referral.pk id=object.id model='task' type='addnewrecord' %}">Add a new record to this task</a>

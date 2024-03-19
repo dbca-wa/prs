@@ -10,7 +10,7 @@ spec:
     spec:
       containers:
       - name: prs-geoserver
-        image: ghcr.io/dbca-wa/docker-geoserver:2.24.1
+        image: ghcr.io/dbca-wa/docker-geoserver:2.24.2
         imagePullPolicy: IfNotPresent
         env:
         - name: TZ

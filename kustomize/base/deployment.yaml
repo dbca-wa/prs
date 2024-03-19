@@ -2,11 +2,19 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: prs-deployment
+  labels:
+    app: prs-deployment
 spec:
+  selector:
+    matchLabels:
+      app: prs-deployment
   replicas: 2
   strategy:
     type: RollingUpdate
   template:
+    metadata:
+      labels:
+        app: prs-deployment
     spec:
       containers:
       - name: prs
@@ -15,6 +23,8 @@ spec:
         env:
         - name: ALLOWED_HOSTS
           value: ".dbca.wa.gov.au"
+        - name: CSRF_TRUSTED_ORIGINS
+          value: "https://*.dbca.wa.gov.au"
         - name: CSRF_COOKIE_SECURE
           value: "True"
         - name: SESSION_COOKIE_SECURE
