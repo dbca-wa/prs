@@ -262,17 +262,18 @@ class PrsObjectDetail(LoginRequiredMixin, DetailView):
             if obj.notes.current():  # Related records.
                 context["related_notes"] = obj.notes.current()
             context["task_stopped"] = True if obj.state.name == "Stopped" else False
-            context["can_complete"] = True
-            if not obj.referral.has_proposed_condition:
+            if not obj.complete_date:
+                context["can_complete"] = True
+            else:
+                context["can_complete"] = False
+            if not obj.complete_date and not obj.referral.has_proposed_condition:
                 context["can_complete_msg"] = """You are unable to complete this task
                     as 'Response with advice' without first recording proposed condition(s)
                     on the referral."""
-                context["can_complete"] = False
-            if not obj.referral.has_location:
+            if not obj.complete_date and not obj.referral.has_location:
                 context["can_complete_msg"] = """You are unable to complete this task
                     as 'Assess a referral' without first recording at least one location
                     on the referral."""
-                context["can_complete"] = False
         if self.model == Record:
             if Task.objects.current().filter(records=obj):  # Related tasks.
                 context["related_tasks"] = Task.objects.current().filter(records=obj)
@@ -487,27 +488,25 @@ class PrsObjectDelete(LoginRequiredMixin, DeleteView):
             return redirect(self.get_object().get_absolute_url())
         return super().post(request, *args, **kwargs)
 
-    def delete(self, request, *args, **kwargs):
-        """
-        Calls the delete() method on the fetched object and then
-        redirects to the success URL.
-        """
+    def form_valid(self, form):
+        # Calls the delete() method on the fetched object and then redirects to the success URL.
         obj = self.get_object()
-        if request.POST.get("next", None):
-            success_url = request.POST["next"]
+        obj.delete()
+
+        if self.request.POST.get("next", None):
+            success_url = self.request.POST["next"]
         else:
             success_url = self.get_success_url()
-        obj.delete()
 
         # Find the referral associated with this object (may be the object itself)
         # and invalidate any cached detail fragment.
         if settings.REDIS_CACHE_HOST:
-            if obj._meta.model_name == 'referral':
+            if obj._meta.model_name == "referral":
                 referral = obj
             else:
                 referral = obj.referral
             if referral:
-                key = make_template_fragment_key('referral_detail', [referral.pk])
+                key = make_template_fragment_key("referral_detail", [referral.pk])
                 cache.delete(key)
 
         messages.success(self.request, f"{obj} has been deleted.")

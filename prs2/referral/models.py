@@ -451,7 +451,8 @@ class Referral(ReferralBaseModel):
             self.description = unidecode(self.description)
         if self.address:
             self.address = unidecode(self.address)
-        if self.location_set.current().exists():
+        # We need a PK to call self.location_set
+        if self.pk and self.location_set.current().exists():
             collection = GeometryCollection([l.poly for l in self.location_set.current() if l.poly])
             self.point = collection.centroid
         super().save(force_insert, force_update)

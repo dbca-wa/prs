@@ -507,23 +507,23 @@ class ReferralCreateChildTest(PrsViewsTestCase):
         Department\u2019s requirements?</p>\r\n<p>Regards</p>\r\n<p>John</p>\r\n
         </div>'''
         url = reverse('referral_create_child', kwargs={'pk': self.ref.pk, 'model': 'note'})
-        init_notes = self.ref.note_set.count()
+        initial_count = self.ref.note_set.count()
         resp = self.client.post(url, {'note_html': note_html})
         # Response should be a redirect.
         self.assertEqual(resp.status_code, 302)
         # Test that a new record now exists on the referral.
-        self.assertTrue(self.ref.note_set.count() > init_notes)
+        self.assertTrue(self.ref.note_set.count() > initial_count)
 
     def test_create_condition(self):
         """Test POST request to create a new condition on a referral
         """
         url = reverse('referral_create_child', kwargs={'pk': self.ref.pk, 'model': 'condition'})
-        init_conditions = self.ref.condition_set.count()
+        initial_count = self.ref.condition_set.count()
         resp = self.client.post(url, {'proposed_condition_html': '<p>Test condition</p>'})
         # Response should be a redirect.
         self.assertEqual(resp.status_code, 302)
         # Test that a new record now exists on the referral.
-        self.assertTrue(self.ref.condition_set.count() > init_conditions)
+        self.assertTrue(self.ref.condition_set.count() > initial_count)
 
     def test_relate_existing_object_to_task(self):
         """Test POST to relate existing note/record to a task
