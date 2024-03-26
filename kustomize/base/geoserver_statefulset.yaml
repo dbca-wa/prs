@@ -1,13 +1,21 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: prs-geoserver
+  labels:
+    app: prs-geoserver
 spec:
+  selector:
+    matchLabels:
+      app: prs-geoserver
   replicas: 1
-  strategy:
-    type: RollingUpdate
+  minReadySeconds: 30
   template:
+    metadata:
+      labels:
+        app: prs-geoserver
     spec:
+      terminationGracePeriodSeconds: 180
       containers:
       - name: prs-geoserver
         image: ghcr.io/dbca-wa/docker-geoserver:2.24.2
@@ -63,5 +71,3 @@ spec:
               - ALL
           # Note that Geoserver can't cope with a RO root filesystem.
           readOnlyRootFilesystem: false
-      restartPolicy: Always
-      terminationGracePeriodSeconds: 180

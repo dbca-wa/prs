@@ -24,5 +24,6 @@ patches:
   - path: service_patch.yaml
   - path: typesense_patch.yaml
   - path: typesense_service_patch.yaml
-  - path: geoserver_patch.yaml
+  - path: geoserver_statefulset_patch.yaml
+  - path: geoserver_headless_patch.yaml
   - path: geoserver_service_patch.yaml

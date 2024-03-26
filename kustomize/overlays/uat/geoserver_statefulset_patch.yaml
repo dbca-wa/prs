@@ -1,17 +1,10 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: prs-geoserver
-  labels:
-    app: prs-geoserver
 spec:
-  selector:
-    matchLabels:
-      app: prs-geoserver
+  serviceName: prs-geoserver-uat
   template:
-    metadata:
-      labels:
-        app: prs-geoserver
     spec:
       initContainers:
       - name: chown-pvc
@@ -32,4 +25,4 @@ spec:
       volumes:
         - name: prs-geoserver-data
           persistentVolumeClaim:
-            claimName: prs-geoserver-data-prod
+            claimName: prs-geoserver-data-uat
