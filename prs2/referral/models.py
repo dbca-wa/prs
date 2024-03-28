@@ -23,6 +23,7 @@ from pygeopkg.core.field import Field
 from pygeopkg.shared.enumeration import GeometryType, SQLFieldTypes
 from pygeopkg.shared.constants import SHAPE
 from pygeopkg.conversion.to_geopkg_geom import point_lists_to_gpkg_polygon, make_gpkg_geom_header
+import reversion
 from taggit.managers import TaggableManager
 from unidecode import unidecode
 
@@ -346,6 +347,7 @@ class ReferralBaseModel(ActiveModel, Audit):
         )
 
 
+@reversion.register()
 class Referral(ReferralBaseModel):
     """
     A planning referral which has been sent to the department for comment.
@@ -673,6 +675,7 @@ class RelatedReferral(models.Model):
         )
 
 
+@reversion.register()
 class Task(ReferralBaseModel):
     """
     Tasks that must be completed by users. Added against individual Referrals.
@@ -1069,6 +1072,7 @@ class Task(ReferralBaseModel):
         msg.send(fail_silently=False)
 
 
+@reversion.register()
 class Record(ReferralBaseModel):
     """A record is a reference to an electronic file, and is associated with a
     Referral.
@@ -1271,6 +1275,7 @@ class Record(ReferralBaseModel):
         return mark_safe(template.format(**d).strip())
 
 
+@reversion.register()
 class Note(ReferralBaseModel):
     """
     A note or comment about a referral. These notes are meant to supplement
@@ -1432,6 +1437,7 @@ class ModelCondition(ReferralBaseModel):
     )
 
 
+@reversion.register()
 class Condition(ReferralBaseModel):
     """Model type to handle proposed & approved conditions on referrals.
     Note that referral may be blank; this denotes a "standard" model condition.
@@ -1746,6 +1752,7 @@ class Clearance(models.Model):
         return mark_safe(template.format(**d).strip())
 
 
+@reversion.register()
 class Location(ReferralBaseModel):
     """
     A physical location that is associated with a single referral.

@@ -12,7 +12,7 @@
         <p style="font-size:10px;">
             Created
             {% if revision.user %}by {{ revision.user.get_full_name }}{% endif %}
-            at {{ revision.date_created|date:"d M Y, H:i"}} ({{ revision.comment }})
+            at {{ revision.date_created|date:"d M Y, H:i"}}{% if revision.comment %} ({{ revision.comment }}){% endif %}
         </p>
         {% endif %}
     {% endfor %}
@@ -26,7 +26,7 @@
             <p style="font-size:10px;">
                 Created
                 {% if revision.user %}by {{ revision.user.get_full_name }}{% endif %}
-                at {{ revision.date_created|date:"d M Y, H:i"}} ({{ revision.comment }})
+                at {{ revision.date_created|date:"d M Y, H:i"}}{% if revision.comment %} ({{ revision.comment }}){% endif %}
             </p>
             <br>
         {% endfor %}
