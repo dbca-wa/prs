@@ -7,7 +7,6 @@ from django.urls import reverse
 from django.db.models import FileField
 from django.utils import timezone
 import magic
-import reversion
 
 
 class ActiveModelManager(models.Manager):
@@ -33,31 +32,6 @@ class Audit(models.Model):
     created = models.DateTimeField(default=timezone.now, editable=False)
     modified = models.DateTimeField(auto_now=True, editable=False)
 
-    def __init__(self, *args, **kwargs):
-        super(Audit, self).__init__(*args, **kwargs)
-        self._changed_data = None
-        self._initial = {}
-        if self.pk:
-            for field in self._meta.fields:
-                self._initial[field.attname] = getattr(self, field.attname)
-
-    def has_changed(self):
-        """
-        Returns true if the current data differs from initial.
-        """
-        return bool(self.changed_data)
-
-    def _get_changed_data(self):
-        if self._changed_data is None:
-            self._changed_data = []
-            for field, value in self._initial.items():
-                if field in ["modified", "modifier_id"]:
-                    continue
-                if getattr(self, field) != value:
-                    self._changed_data.append(field)
-        return self._changed_data
-    changed_data = property(_get_changed_data)
-
     def save(self, *args, **kwargs):
         """This falls back on using an admin user if a request user object is absent (i.e. the
         object was saved outside the web application).
@@ -70,22 +44,8 @@ class Audit(models.Model):
         self.modifier = user
         if not self.pk:
             self.creator = user
-            created = True
-        else:
-            created = False
 
-        with reversion.create_revision():
-            super(Audit, self).save(*args, **kwargs)
-            reversion.set_user(user)
-
-            if created:
-                reversion.set_comment('Initial version.')
-            else:
-                if self.has_changed():
-                    comment = 'Changed ' + ', '.join(self.changed_data)
-                    reversion.set_comment(comment)
-                else:
-                    reversion.set_comment('Nothing changed.')
+        super(Audit, self).save(*args, **kwargs)
 
     def __str__(self):
         return str(self.pk)
