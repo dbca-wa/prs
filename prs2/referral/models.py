@@ -1773,7 +1773,7 @@ class Location(ReferralBaseModel):
         max_length=100, null=True, blank=True, validators=[MaxLengthValidator(100)]
     )
     postcode = models.CharField(
-        max_length=6, null=True, blank=True, validators=[MaxLengthValidator(6)]
+        max_length=32, null=True, blank=True, validators=[MaxLengthValidator(32)]
     )
     landuse = models.TextField(null=True, blank=True)
     lot_no = models.CharField(
