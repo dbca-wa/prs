@@ -445,8 +445,8 @@ class EmailedReferral(models.Model):
         if create_locations:
             new_locations = []
             for l in locations:
-                for f in l['FEATURES']:
-                    poly = Polygon(f['geometry']['rings'][0])
+                for feature in l['FEATURES']:
+                    poly = Polygon(feature['geometry']['rings'][0])
                     geom = GEOSGeometry(poly.wkt)
                     new_loc = Location(
                         address_suffix=l['NUMBER_FROM_SUFFIX'],
@@ -455,15 +455,19 @@ class EmailedReferral(models.Model):
                         locality=l['SUBURB'],
                         postcode=l['POSTCODE'],
                         referral=referral,
-                        poly=geom
+                        poly=geom,
                     )
                     try:  # NUMBER_FROM XML fields started to contain non-integer values :(
                         new_loc.address_no = int(l['NUMBER_FROM']) if l['NUMBER_FROM'] else None
                     except:
                         pass  # Just ignore the value if it can't be parsed as an integer.
                     with create_revision():
-                        new_loc.save()
-                        set_comment('Initial version.')
+                        try:
+                            new_loc.save()
+                            set_comment('Initial version.')
+                        except:
+                            LOGGER.error(f'Create Location failed (data: {l})')
+                            continue
                     new_locations.append(new_loc)
                     log = f'New PRS location generated: {new_loc}'
                     LOGGER.info(log)
