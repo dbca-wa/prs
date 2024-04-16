@@ -1,0 +1,7 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: prs-deployment-hpa
+spec:
+  scaleTargetRef:
+    name: prs-deployment-uat

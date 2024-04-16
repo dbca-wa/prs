@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   - celery.yaml
   - deployment.yaml
+  - deployment_hpa.yaml
   - service.yaml
   - typesense.yaml
   - typesense_service.yaml
