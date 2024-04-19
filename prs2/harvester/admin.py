@@ -29,7 +29,7 @@ class EmailedReferralAdmin(admin.ModelAdmin):
     actions = [harvest_referral]
     date_hierarchy = 'received'
     list_display = (
-        'received', 'from_email', 'subject', 'harvested', 'attachments_url',
+        'received', 'to_email', 'from_email', 'subject', 'harvested', 'attachments_url',
         'referral_url', 'processed')
     raw_id_fields = ('referral',)
     search_fields = ('subject',)
