@@ -349,7 +349,6 @@ class EmailedReferral(models.Model):
                     except Exception as e:
                         log = f'Error querying Landgate SLIP for spatial data (referral ref. {reference})'
                         LOGGER.error(log)
-                        LOGGER.error(resp.content)
                         LOGGER.exception(e)
                         self.log = self.log + f'{log}\n{resp.content}\n{e}\n'
                 else:
