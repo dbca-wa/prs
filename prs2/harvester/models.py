@@ -416,7 +416,7 @@ class EmailedReferral(models.Model):
             actions.append(f'{datetime.now().isoformat()} {log}')
 
         # Add triggers to the new referral.
-        if 'MRSZONE_TEXT' in app:
+        if 'MRSZONE_TEXT' in app and app['MRSZONE_TEXT']:
             triggers = [i.strip() for i in app['MRSZONE_TEXT'].split(',')]
         else:
             triggers = []
