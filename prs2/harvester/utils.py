@@ -66,7 +66,7 @@ def harvest_email(uid, message):
     if message and message.is_multipart():  # Should always be True.
         parts = [i for i in message.walk()]
     else:
-        LOGGER.error(f'Email UID {uid} is not of type multipart')
+        LOGGER.warning(f'Email UID {uid} is not of type multipart')
         return False
 
     message_body = None
