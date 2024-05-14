@@ -1314,7 +1314,8 @@ class Note(ReferralBaseModel):
         Overide the Note model save() to cleanse the HTML used.
         """
         self.note_html = dewordify_text(self.note_html)
-        self.note_html = clean_html(self.note_html)
+        if self.note_html:
+            self.note_html = clean_html(self.note_html)
         # Strip HTML tags and save as plain text.
         t = fromstring(self.note_html)
         self.note = t.text_content().strip()
@@ -1502,7 +1503,8 @@ class Condition(ReferralBaseModel):
         """
         if self.condition_html:
             self.condition_html = dewordify_text(self.condition_html)
-            self.condition_html = clean_html(self.condition_html)
+            if self.condition_html:
+                self.condition_html = clean_html(self.condition_html)
             t = fromstring(self.condition_html)
             self.condition = t.text_content().strip()
         else:
@@ -1510,9 +1512,10 @@ class Condition(ReferralBaseModel):
             self.condition = ""
         if self.proposed_condition_html:
             self.proposed_condition_html = dewordify_text(self.proposed_condition_html)
-            self.proposed_condition_html = clean_html(
-                self.proposed_condition_html
-            )
+            if self.proposed_condition_html:
+                self.proposed_condition_html = clean_html(
+                    self.proposed_condition_html
+                )
             t = fromstring(self.proposed_condition_html)
             self.proposed_condition = t.text_content().strip()
         else:
