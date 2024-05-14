@@ -8,7 +8,6 @@ spec:
   selector:
     matchLabels:
       app: prs-deployment
-  replicas: 2
   strategy:
     type: RollingUpdate
   template:

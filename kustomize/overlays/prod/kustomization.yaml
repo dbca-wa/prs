@@ -21,6 +21,7 @@ labels:
 patches:
   - path: celery_patch.yaml
   - path: deployment_patch.yaml
+  - path: deployment_hpa_patch.yaml
   - path: service_patch.yaml
   - path: typesense_patch.yaml
   - path: typesense_service_patch.yaml
@@ -29,4 +30,4 @@ patches:
   - path: geoserver_service_patch.yaml
 images:
   - name: ghcr.io/dbca-wa/prs
-    newTag: 2.5.45
+    newTag: 2.5.46

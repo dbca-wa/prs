@@ -8,7 +8,8 @@ import email
 from imaplib import IMAP4_SSL
 from io import StringIO
 import logging
-from lxml.html import clean, fromstring
+from lxml.html import fromstring
+from lxml_html_clean import clean_html
 import requests
 import time
 
@@ -65,7 +66,7 @@ def harvest_email(uid, message):
     if message and message.is_multipart():  # Should always be True.
         parts = [i for i in message.walk()]
     else:
-        LOGGER.error(f'Email UID {uid} is not of type multipart')
+        LOGGER.warning(f'Email UID {uid} is not of type multipart')
         return False
 
     message_body = None
@@ -99,7 +100,7 @@ def harvest_email(uid, message):
             )
             if message_body.get_content_type() == 'text/html':
                 # Strip the HTML from the message body and just save the text content.
-                t = fromstring(clean.clean_html(message_body.get_payload()))
+                t = fromstring(clean_html(message_body.get_payload()))
                 em_new.body = t.text_content().replace('=\n', '').strip()
             else:
                 em_new.body = message_body.get_payload()  # Plain text body.

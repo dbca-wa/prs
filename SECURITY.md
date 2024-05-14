@@ -17,7 +17,7 @@ repository, please report it to us as described below.
 **Please do not report security vulnerabilities through public GitHub issues.**
 
 Instead, please report any security vulnerabilities to
-[OIMSecurity@dbca.wa.gov.au](mailto:OIMSecurity@dbca.wa.gov.au).
+[cyber@dbca.wa.gov.au](mailto:cyber@dbca.wa.gov.au).
 
 You should receive a response within 1-2 business days. If for some reason you
 do not, please follow up via email to ensure we received your original message.
