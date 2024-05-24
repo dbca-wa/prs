@@ -1,4 +1,5 @@
 from dbca_utils.utils import env
+from django.db.utils import OperationalError
 import dj_database_url
 import os
 from pathlib import Path
@@ -275,6 +276,18 @@ BROKER_URL = env('CELERY_BROKER_URL', 'pyamqp://localhost//')
 CELERY_RESULT_BACKEND = 'django-db'
 CELERY_TIMEZONE = TIME_ZONE
 
+
+def sentry_excluded_exceptions(event, hint):
+    """Exclude defined class(es) of Exception from being reported to Sentry.
+    https://docs.sentry.io/platforms/python/configuration/filtering/#filtering-error-events
+    """
+    # Exclude database-related errors (connection error, timeout, DNS failure, etc.)
+    if hint['exc_info'][0] is OperationalError:
+        return None
+
+    return event
+
+
 # Sentry config
 SENTRY_DSN = env('SENTRY_DSN', None)
 SENTRY_SAMPLE_RATE = env('SENTRY_SAMPLE_RATE', 1.0)  # Error sampling rate
@@ -291,4 +304,5 @@ if SENTRY_DSN and SENTRY_ENVIRONMENT:
         profiles_sample_rate=SENTRY_PROFILES_SAMPLE_RATE,
         environment=SENTRY_ENVIRONMENT,
         release=APPLICATION_VERSION_NO,
+        before_send=sentry_excluded_exceptions,
     )
