@@ -1921,7 +1921,7 @@ class CadastreQuery(View):
 
 
 class ReferralMap(LoginRequiredMixin, TemplateView):
-    """A combined version of the index search which returns referrals with linked objects.
+    """A map view displaying all referral locations.
     """
     template_name = "referral/referral_map.html"
 
