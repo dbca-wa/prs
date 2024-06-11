@@ -462,7 +462,7 @@ class Referral(ReferralBaseModel):
 
         # Index the referral.
         try:
-            index_object.delay(pk=self.pk, model='referral')
+            index_object.delay_on_commit(pk=self.pk, model='referral')
         except Exception as ex:
             # Indexing failure should never block or return an exception. Log the error to stdout.
             LOGGER.exception(f"Error during indexing referral {self}")
@@ -763,7 +763,7 @@ class Task(ReferralBaseModel):
 
         # Index the task.
         try:
-            index_object.delay(pk=self.pk, model='task')
+            index_object.delay_on_commit(pk=self.pk, model='task')
         except Exception as ex:
             # Indexing failure should never block or return an exception. Log the error to stdout.
             LOGGER.exception(f"Error during indexing task {self}")
@@ -1128,7 +1128,7 @@ class Record(ReferralBaseModel):
 
         # Index the record.
         try:
-            index_object.delay(pk=self.pk, model='record')
+            index_object.delay_on_commit(pk=self.pk, model='record')
         except Exception as ex:
             # Indexing failure should never block or return an exception. Log the error to stdout.
             LOGGER.exception(f"Error during indexing record {self}")
@@ -1323,7 +1323,7 @@ class Note(ReferralBaseModel):
 
         # Index the note.
         try:
-            index_object.delay(pk=self.pk, model='note')
+            index_object.delay_on_commit(pk=self.pk, model='note')
         except Exception as ex:
             # Indexing failure should never block or return an exception. Log the error to stdout.
             LOGGER.exception(f"Error during indexing note {self}")
@@ -1526,7 +1526,7 @@ class Condition(ReferralBaseModel):
         # Index the condition.
         if self.referral:
             try:
-                index_object.delay(pk=self.pk, model='condition')
+                index_object.delay_on_commit(pk=self.pk, model='condition')
             except Exception as ex:
                 LOGGER.exception(f"Error during indexing condition {self}")
 
