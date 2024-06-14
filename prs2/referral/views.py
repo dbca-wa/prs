@@ -1022,6 +1022,10 @@ class LocationCreate(ReferralCreateChild):
             for k, v in form.items():
                 if not v:
                     form[k] = None
+            # EDGE CASE: very occasionally, address_no now contains non-numeric character.
+            # If so, remove the non-numeric characters.
+            if "address_no" in form and form["address_no"]:
+                form["address_no"] = re.sub(r"\D", "", form["address_no"])
             loc = Location(**form)
             if isinstance(poly, MultiPolygon):
                 loc.poly = poly[0]
@@ -1035,7 +1039,7 @@ class LocationCreate(ReferralCreateChild):
 
         # Invalidate any cached referral detail fragment.
         if settings.REDIS_CACHE_HOST:
-            key = make_template_fragment_key('referral_detail', [ref.pk])
+            key = make_template_fragment_key("referral_detail", [ref.pk])
             cache.delete(key)
 
         # Test for intersecting locations.
