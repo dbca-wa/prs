@@ -16,9 +16,13 @@ spec:
         app: prs-geoserver
     spec:
       terminationGracePeriodSeconds: 180
+      tolerations:
+      - effect: NoSchedule
+        key: high-memory-workload
+        operator: Exists
       containers:
       - name: prs-geoserver
-        image: ghcr.io/dbca-wa/docker-geoserver:2.24.2
+        image: ghcr.io/dbca-wa/docker-geoserver:2.24.3
         imagePullPolicy: IfNotPresent
         env:
         - name: TZ

@@ -8,9 +8,14 @@ spec:
   serviceName: prs-typesense
   template:
     spec:
+      terminationGracePeriodSeconds: 180
+      tolerations:
+      - effect: NoSchedule
+        key: high-memory-workload
+        operator: Exists
       containers:
       - name: prs-typesense
-        image: ghcr.io/dbca-wa/typesense:0.25.1
+        image: ghcr.io/dbca-wa/typesense:26.0
         imagePullPolicy: IfNotPresent
         env:
         - name: TZ

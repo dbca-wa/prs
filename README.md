@@ -75,6 +75,12 @@ Run a single Celery worker alongside the local webserver to test indexing:
 
     poetry run celery --app prs2 worker --loglevel INFO --events --without-heartbeat --without-gossip --without-mingle
 
+Note: a message broker service is required for Celery tasks to run; Redis
+is typically used for this purpose. The `CELERY_BROKER_URL` env variable
+should contain the broker URL value. Reference:
+
+https://docs.celeryq.dev/en/stable/getting-started/backends-and-brokers/redis.html#broker-redis
+
 # Testing
 
 Run unit tests as follows:

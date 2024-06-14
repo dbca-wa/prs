@@ -1,4 +1,6 @@
 from dbca_utils.utils import env
+from django.core.exceptions import DisallowedHost
+from django.db.utils import OperationalError
 import dj_database_url
 import os
 from pathlib import Path
@@ -271,9 +273,27 @@ TYPESENSE_PROTOCOL = env('TYPESENSE_PROTOCOL', 'http')
 TYPESENSE_CONN_TIMEOUT = env('TYPESENSE_CONN_TIMEOUT', 2)
 
 # Celery config
-BROKER_URL = env('CELERY_BROKER_URL', 'pyamqp://localhost//')
+BROKER_URL = env('CELERY_BROKER_URL', 'redis://localhost:6379/0')
 CELERY_RESULT_BACKEND = 'django-db'
 CELERY_TIMEZONE = TIME_ZONE
+
+
+def sentry_excluded_exceptions(event, hint):
+    """Exclude defined class(es) of Exception from being reported to Sentry.
+    These exception classes are generally related to operational or configuration issues,
+    and they are not errors that we want to capture.
+    https://docs.sentry.io/platforms/python/configuration/filtering/#filtering-error-events
+    """
+    if "exc_info" in hint and hint["exc_info"]:
+        # Exclude database-related errors (connection error, timeout, DNS failure, etc.)
+        if hint["exc_info"][0] is OperationalError:
+            return None
+        # Exclude exceptions related to host requests not in ALLOWED_HOSTS.
+        elif hint["exc_info"][0] is DisallowedHost:
+            return None
+
+    return event
+
 
 # Sentry config
 SENTRY_DSN = env('SENTRY_DSN', None)
@@ -291,4 +311,5 @@ if SENTRY_DSN and SENTRY_ENVIRONMENT:
         profiles_sample_rate=SENTRY_PROFILES_SAMPLE_RATE,
         environment=SENTRY_ENVIRONMENT,
         release=APPLICATION_VERSION_NO,
+        before_send=sentry_excluded_exceptions,
     )

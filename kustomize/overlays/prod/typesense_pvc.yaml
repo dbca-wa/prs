@@ -3,7 +3,7 @@ kind: PersistentVolumeClaim
 metadata:
   name: prs-typesense-data
 spec:
-  storageClassName: managed-csi-premium-retain
+  storageClassName: managed-csi-premium-retain-zrs
   volumeMode: Filesystem
   accessModes:
     - ReadWriteOnce
