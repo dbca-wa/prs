@@ -335,13 +335,15 @@ class ReferralUpdateTest(PrsViewsTestCase):
     def test_post(self):
         """Test that updating a referral actually changes it
         """
+        # Use referral type without avoid additional form validation.
+        ref_type = ReferralType.objects.get(slug='clearing-permit-dwer')
         resp = self.client.post(
             self.url,
             {
                 'referring_org': self.ref.referring_org.pk,
                 'reference': 'New reference value',
                 'referral_date': '21/12/2022',
-                'type': self.ref.type.pk,
+                'type': ref_type.pk,
                 'regions': [Region.objects.first().pk],
                 'save': 'Save',
             },
