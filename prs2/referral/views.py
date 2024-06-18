@@ -189,43 +189,56 @@ class IndexSearch(LoginRequiredMixin, TemplateView):
             paginator = Paginator(tuple(_ for _ in range(search_result["found"])), 20)
             context["page_obj"] = paginator.get_page(page)
 
-            # Replace underscores in search field names with spaces.
-            for hit in search_result["hits"]:
-                highlights = []
-                for highlight in hit["highlights"]:
-                    highlight["field"] = highlight["field"].replace("_", " ")
-                    highlights.append(highlight)
-                hit["highlights"] = highlights
-
             if collection == "referrals":
                 for hit in search_result["hits"]:
+                    highlights = []
+                    for key, value in hit["highlight"].items():
+                        # Replace underscores in search field names with spaces.
+                        highlights.append((key.replace("_", " "), value["snippet"]))
+                    hit["highlights"] = highlights
                     context["search_result"].append({
                         "object": Referral.objects.get(pk=hit["document"]["id"]),
-                        "highlights": hit["highlights"],
+                        "highlights": highlights,
                     })
             elif collection == "records":
                 for hit in search_result["hits"]:
+                    highlights = []
+                    for key, value in hit["highlight"].items():
+                        highlights.append((key.replace("_", " "), value["snippet"]))
+                    hit["highlights"] = highlights
                     context["search_result"].append({
                         "object": Record.objects.get(pk=hit["document"]["id"]),
-                        "highlights": hit["highlights"],
+                        "highlights": highlights,
                     })
             elif collection == "notes":
                 for hit in search_result["hits"]:
+                    highlights = []
+                    for key, value in hit["highlight"].items():
+                        highlights.append((key.replace("_", " "), value["snippet"]))
+                    hit["highlights"] = highlights
                     context["search_result"].append({
                         "object": Note.objects.get(pk=hit["document"]["id"]),
-                        "highlights": hit["highlights"],
+                        "highlights": highlights,
                     })
             elif collection == "tasks":
                 for hit in search_result["hits"]:
+                    highlights = []
+                    for key, value in hit["highlight"].items():
+                        highlights.append((key.replace("_", " "), value["snippet"]))
+                    hit["highlights"] = highlights
                     context["search_result"].append({
                         "object": Task.objects.get(pk=hit["document"]["id"]),
-                        "highlights": hit["highlights"],
+                        "highlights": highlights,
                     })
             elif collection == "conditions":
                 for hit in search_result["hits"]:
+                    highlights = []
+                    for key, value in hit["highlight"].items():
+                        highlights.append((key.replace("_", " "), value["snippet"]))
+                    hit["highlights"] = highlights
                     context["search_result"].append({
                         "object": Condition.objects.get(pk=hit["document"]["id"]),
-                        "highlights": hit["highlights"],
+                        "highlights": highlights,
                     })
 
         return context
@@ -262,10 +275,20 @@ class IndexSearchCombined(LoginRequiredMixin, TemplateView):
             search_result = client.collections["referrals"].documents.search(search_q)
             context["referrals_count"] = search_result["found"]
             for hit in search_result["hits"]:
+                # Explanation for the line below: the Typesense API search response
+                # returns a list of document resources, each containing a `highlight` key
+                # that consists of a dict which contains 1+ `<field_name>` keys, each of which
+                # consists of a dict containing the text snippet and matched tokens.
+                # Earlier (<0.25) versions of the API returned `highlights` as a list instead
+                # of `highlight` as this dict.
+                # This is REALLY AWKWARD in this instance, as the highlight(s) will be
+                # for some random `field_name`. So the next line just dumps out the FIRST
+                # element in the `highlight` dict for usage below (we only need one).
+                highlight = next(iter(hit["highlight"].values()))
                 ref = Referral.objects.get(pk=hit["document"]["id"])
                 referrals[ref.pk] = {
                     "referral": ref,
-                    "highlights": hit["highlights"],
+                    "highlight": highlight["snippet"],
                     "records": [],
                     "notes": [],
                     "tasks": [],
@@ -277,14 +300,15 @@ class IndexSearchCombined(LoginRequiredMixin, TemplateView):
             search_result = client.collections["records"].documents.search(search_q)
             context["records_count"] = search_result["found"]
             for hit in search_result["hits"]:
+                highlight = next(iter(hit["highlight"].values()))
                 ref = Referral.objects.get(pk=hit["document"]["referral_id"])
                 if ref.pk in referrals:
-                    referrals[ref.pk]["records"].append((hit["document"]["id"], hit["highlights"][0]))
+                    referrals[ref.pk]["records"].append((hit["document"]["id"], highlight["snippet"]))
                 else:
                     referrals[ref.pk] = {
                         "referral": ref,
-                        "highlights": [],
-                        "records": [(hit["document"]["id"], hit["highlights"][0])],
+                        "highlight": {},
+                        "records": [(hit["document"]["id"], highlight["snippet"])],
                         "notes": [],
                         "tasks": [],
                         "conditions": [],
@@ -295,15 +319,16 @@ class IndexSearchCombined(LoginRequiredMixin, TemplateView):
             search_result = client.collections["notes"].documents.search(search_q)
             context["notes_count"] = search_result["found"]
             for hit in search_result["hits"]:
+                highlight = next(iter(hit["highlight"].values()))
                 ref = Referral.objects.get(pk=hit["document"]["referral_id"])
                 if ref.pk in referrals:
-                    referrals[ref.pk]["notes"].append((hit["document"]["id"], hit["highlights"][0]))
+                    referrals[ref.pk]["notes"].append((hit["document"]["id"], highlight["snippet"]))
                 else:
                     referrals[ref.pk] = {
                         "referral": ref,
-                        "highlights": [],
+                        "highlight": {},
                         "records": [],
-                        "notes": [(hit["document"]["id"], hit["highlights"][0])],
+                        "notes": [(hit["document"]["id"], highlight["snippet"])],
                         "tasks": [],
                         "conditions": [],
                     }
@@ -313,16 +338,17 @@ class IndexSearchCombined(LoginRequiredMixin, TemplateView):
             search_result = client.collections["tasks"].documents.search(search_q)
             context["tasks_count"] = search_result["found"]
             for hit in search_result["hits"]:
+                highlight = next(iter(hit["highlight"].values()))
                 ref = Referral.objects.get(pk=hit["document"]["referral_id"])
                 if ref.pk in referrals:
-                    referrals[ref.pk]["tasks"].append((hit["document"]["id"], hit["highlights"][0]))
+                    referrals[ref.pk]["tasks"].append((hit["document"]["id"], highlight["snippet"]))
                 else:
                     referrals[ref.pk] = {
                         "referral": ref,
-                        "highlights": [],
+                        "highlight": {},
                         "records": [],
                         "notes": [],
-                        "tasks": [(hit["document"]["id"], hit["highlights"][0])],
+                        "tasks": [(hit["document"]["id"], highlight["snippet"])],
                         "conditions": [],
                     }
 
@@ -333,16 +359,17 @@ class IndexSearchCombined(LoginRequiredMixin, TemplateView):
             for hit in search_result["hits"]:
                 if "referral_id" in hit["document"]:
                     ref = Referral.objects.get(pk=hit["document"]["referral_id"])
+                    highlight = next(iter(hit["highlight"].values()))
                     if ref.pk in referrals:
-                        referrals[ref.pk]["conditions"].append((hit["document"]["id"], hit["highlights"][0]))
+                        referrals[ref.pk]["conditions"].append((hit["document"]["id"], highlight["snippet"]))
                     else:
                         referrals[ref.pk] = {
                             "referral": ref,
-                            "highlights": [],
+                            "highlight": {},
                             "records": [],
                             "notes": [],
                             "tasks": [],
-                            "conditions": [(hit["document"]["id"], hit["highlights"][0])],
+                            "conditions": [(hit["document"]["id"], highlight["snippet"])],
                         }
 
             # Combine the results into the template context (sort referrals by descending ID).

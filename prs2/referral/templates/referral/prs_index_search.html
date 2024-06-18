@@ -37,7 +37,7 @@
                         Search matches:
                         <ul>
                             {% for highlight in result.highlights %}
-                            <li>{{ highlight.field|capfirst }}: {{ highlight.snippet|safe }}</li>
+                            <li>{{ highlight.0|capfirst }}: {{ highlight.1|safe }}</li>
                             {% endfor %}
                         </ul>
                     </td>
