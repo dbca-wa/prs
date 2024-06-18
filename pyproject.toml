@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "prs"
-version = "2.5.47"
+version = "2.5.48"
 description = "Planning Referral System corporate application"
 authors = ["Ashley Felton <ashley.felton@dbca.wa.gov.au>"]
 license = "Apache-2.0"
@@ -37,7 +37,7 @@ django-crum = "0.7.9"
 django-storages = {version = "1.14.3", extras = ["azure"]}
 sentry-sdk = {version = "2.5.1", extras = ["django"]}
 crispy-bootstrap5 = "2024.2"
-redis = "5.0.5"
+redis = "5.0.6"
 xlsxwriter = "3.2.0"
 
 [tool.poetry.group.dev.dependencies]

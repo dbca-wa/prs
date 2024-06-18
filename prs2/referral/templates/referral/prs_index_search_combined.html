@@ -44,33 +44,31 @@
                     <td colspan="{{ referral_headers|length }}">
                         Search matches:
                         <ul>
-                        {% if result.highlights %}
-                            {% for highlight in result.highlights %}
-                            <li>{{ highlight.field|capfirst }}: {{ highlight.snippet|safe }}</li>
-                            {% endfor %}
+                        {% if result.highlight %}
+                        <li>{{ result.highlight|safe }}</li>
                         {% endif %}
 
                         {% if result.records %}
-                            {% for highlight in result.records %}
-                            <li><a href="{% url 'prs_object_detail' model='records' pk=highlight.0 %}">Record {{ highlight.0 }}</a>: {{ highlight.1.snippet|safe }}</li>
+                            {% for record in result.records %}
+                            <li><a href="{% url 'prs_object_detail' model='records' pk=record.0 %}">Record {{ record.0 }}</a>: {{ record.1|safe }}</li>
                             {% endfor %}
                         {% endif %}
 
                         {% if result.notes %}
-                            {% for highlight in result.notes %}
-                            <li><a href="{% url 'prs_object_detail' model='notes' pk=highlight.0 %}">Note {{ highlight.0 }}</a>: {{ highlight.1.snippet|safe }}</li>
+                            {% for note in result.notes %}
+                            <li><a href="{% url 'prs_object_detail' model='notes' pk=note.0 %}">Note {{ note.0 }}</a>: {{ note.1|safe }}</li>
                             {% endfor %}
                         {% endif %}
 
                         {% if result.tasks %}
-                            {% for highlight in result.tasks %}
-                            <li><a href="{% url 'prs_object_detail' model='tasks' pk=highlight.0 %}">Task {{ highlight.0 }}</a>: {{ highlight.1.snippet|safe }}</li>
+                            {% for task in result.tasks %}
+                            <li><a href="{% url 'prs_object_detail' model='tasks' pk=task.0 %}">Task {{ task.0 }}</a>: {{ task.1|safe }}</li>
                             {% endfor %}
                         {% endif %}
 
                         {% if result.conditions %}
-                            {% for highlight in result.conditions %}
-                            <li><a href="{% url 'prs_object_detail' model='conditions' pk=highlight.0 %}">Condition {{ highlight.0 }}</a>: {{ highlight.1.snippet|safe }}</li>
+                            {% for condition in result.conditions %}
+                            <li><a href="{% url 'prs_object_detail' model='conditions' pk=condition.0 %}">Condition {{ condition.0 }}</a>: {{ condition.1|safe }}</li>
                             {% endfor %}
                         {% endif %}
                         </ul>
