@@ -44,7 +44,7 @@ xlsxwriter = "3.2.0"
 ipython = "^8.25.0"
 ipdb = "^0.13.11"
 pre-commit = "^3.7.1"
-coverage = "7.5.3"
+coverage = "7.5.4"
 
 [build-system]
 requires = ["poetry-core"]
