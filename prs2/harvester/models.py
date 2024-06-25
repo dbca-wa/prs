@@ -14,6 +14,11 @@ from referral.models import (
     TaskType, Task, Location, LocalGovernment)
 from .utils import query_slip_esri
 LOGGER = logging.getLogger('harvester')
+# The list below is a case-sensitive list of filenames of email attachments
+# which will be skipped for import as PRS Records (they will still be downloaded).
+ATTACHMENT_FILENAME_BLOCKLIST = [
+    "image.png",
+]
 
 
 class EmailedReferral(models.Model):
@@ -133,20 +138,22 @@ class EmailedReferral(models.Model):
                     actions.append(f'{datetime.now().isoformat()} {log}')
 
                     # Add records to the referral (one per attachment).
-                    for att in attachments:
+                    for emailattachment in attachments:
+                        if emailattachment.name in ATTACHMENT_FILENAME_BLOCKLIST:
+                            continue
                         new_record = Record.objects.create(
-                            name=att.name, referral=referral, order_date=datetime.today())
+                            name=emailattachment.name, referral=referral, order_date=datetime.today())
                         # Duplicate the uploaded file.
-                        new_file = ContentFile(att.attachment.read())
-                        new_record.uploaded_file.save(att.name, new_file)
+                        new_file = ContentFile(emailattachment.attachment.read())
+                        new_record.uploaded_file.save(emailattachment.name, new_file)
                         new_record.save()
                         log = f'New PRS record generated: {new_record}'
                         LOGGER.info(log)
                         self.log = self.log + f'{log}\n'
                         actions.append(f'{datetime.now().isoformat()} {log}')
                         # Link the attachment to the new, generated record.
-                        att.record = new_record
-                        att.save()
+                        emailattachment.record = new_record
+                        emailattachment.save()
             else:
                 LOGGER.info(f'Referral ref. {reference} not found, skipping')
 
@@ -217,6 +224,8 @@ class EmailedReferral(models.Model):
 
                 # Add records to the referral (one per attachment).
                 for emailattachment in attachments:
+                    if emailattachment.name in ATTACHMENT_FILENAME_BLOCKLIST:
+                        continue
                     new_record = Record.objects.create(
                         name=emailattachment.name, referral=referral, order_date=datetime.today())
                     # Duplicate the uploaded file.
@@ -542,6 +551,8 @@ class EmailedReferral(models.Model):
 
             # Add records to the referral (one per attachment).
             for emailattachment in attachments:
+                if emailattachment.name in ATTACHMENT_FILENAME_BLOCKLIST:
+                    continue
                 new_record = Record.objects.create(
                     name=emailattachment.name,
                     referral=referral,
@@ -582,10 +593,10 @@ class EmailAttachment(models.Model):
 
     def get_xml_data(self):
         """Convenience function to conditionally return XML data from the
-        attachment (returns None if not an XML file).
+        attachment.xml (returns None otherwise).
         """
         d = None
-        if self.name.startswith('Application.xml'):
+        if self.name.lower() == 'application.xml':
             self.attachment.seek(0)
             d = xmltodict.parse(self.attachment.read())
         return d

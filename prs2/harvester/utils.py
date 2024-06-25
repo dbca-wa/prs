@@ -155,13 +155,14 @@ def harvest_unread_emails(from_email, purge_email=False):
     harvest each one. Optionally purge harvested emails on completion.
     """
     actions = []
+    LOGGER.info(f'Requesting unread emails from {from_email}')
+
     try:  # Handle IMAP connection error.
         imap = get_imap()
     except:
         LOGGER.warning('IMAP connection error')
         return actions
 
-    LOGGER.info(f'Requesting unread emails from {from_email}')
     actions.append(f'{datetime.now().isoformat()} Requesting unread emails from {from_email}')
     status, uids = unread_from_email(imap, from_email)
 
