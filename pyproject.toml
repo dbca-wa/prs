@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "prs"
-version = "2.5.49"
+version = "2.5.50"
 description = "Planning Referral System corporate application"
 authors = ["Ashley Felton <ashley.felton@dbca.wa.gov.au>"]
 license = "Apache-2.0"
@@ -23,7 +23,7 @@ lxml = {version = "5.2.2", extras = ["html-clean"]}
 xmltodict = "0.13.0"
 extract-msg = "0.48.5"
 django-extensions = "3.2.3"
-webtemplate-dbca = "1.7.0"
+webtemplate-dbca = "1.7.1"
 mixer = "7.2.2"
 geojson = "3.1.0"
 typesense = "0.21.0"

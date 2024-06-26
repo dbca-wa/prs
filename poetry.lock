@@ -2225,12 +2225,12 @@ files = [
 
 [[package]]
 name = "webtemplate-dbca"
-version = "1.7.0"
+version = "1.7.1"
 description = "Base HTML templates for DBCA Django projects"
 optional = false
 python-versions = "*"
 files = [
-    {file = "webtemplate-dbca-1.7.0.tar.gz", hash = "sha256:36d0cf2110b948f4008d0761d770409ddd069c16fec4f539ab1bfaeb834ca23b"},
+    {file = "webtemplate-dbca-1.7.1.tar.gz", hash = "sha256:0fe4ccd143dfee138c85969989a9757d14dbdf3387f1317f37f4667d90131da0"},
 ]
 
 [package.dependencies]
@@ -2288,4 +2288,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "49e882955f52f75a85d332967729c73506756c56baa5ea450640fea873f03578"
+content-hash = "2a58bc99d6bde5e3ca938172040e0e2d071951c37453667a524d21bae5b9939d"
