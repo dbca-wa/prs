@@ -10,6 +10,7 @@ from io import StringIO
 import logging
 from lxml.html import fromstring
 from lxml_html_clean import clean_html
+import re
 import requests
 import time
 
@@ -83,12 +84,19 @@ def harvest_email(uid, message):
     # Create & return EmailedReferral from the email body (if found).
     if message_body:
         try:
-            # Check the 'To' address against the whitelist of mailboxes.
-            to_e = email.utils.parseaddr(message.get('To'))[1]
-            # FIXME: skip the "To" whitelist check at present.
-            # if not to_e.lower() in settings.ASSESSOR_EMAILS:
-            #     LOGGER.info(f'Email UID {uid} to {to_e} harvest was skipped')
-            #     return None  # Not in the whitelist; skip.
+            # The "To" address might very well be a list of recipients.
+            # We'll check them against the list in settings.ASSESSOR_EMAILS,
+            # and use the first of those we match with.
+            to_emails = message.get('To').split(',')
+            pattern = r'\<(.+)\>'
+            to_e = ''
+            for rec in to_emails:
+                m = re.search(pattern, rec.strip())
+                if m:
+                    email_address = m.group(1).lower()
+                    if email_address in settings.ASSESSOR_EMAILS:
+                        to_e = email_address
+
             from_e = email.utils.parseaddr(message.get('From'))[1]
             # Parse the 'sent' date & time (assume AWST).
             ts = time.mktime(email.utils.parsedate(message.get('Date')))
