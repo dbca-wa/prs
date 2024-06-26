@@ -14,6 +14,11 @@ from referral.models import (
     TaskType, Task, Location, LocalGovernment)
 from .utils import query_slip_esri
 LOGGER = logging.getLogger('harvester')
+# The list below is a case-sensitive list of filenames of email attachments
+# which will be skipped for import as PRS Records (they will still be downloaded).
+ATTACHMENT_FILENAME_BLOCKLIST = [
+    "image.png",
+]
 
 
 class EmailedReferral(models.Model):
@@ -133,20 +138,22 @@ class EmailedReferral(models.Model):
                     actions.append(f'{datetime.now().isoformat()} {log}')
 
                     # Add records to the referral (one per attachment).
-                    for att in attachments:
+                    for emailattachment in attachments:
+                        if emailattachment.name in ATTACHMENT_FILENAME_BLOCKLIST:
+                            continue
                         new_record = Record.objects.create(
-                            name=att.name, referral=referral, order_date=datetime.today())
+                            name=emailattachment.name, referral=referral, order_date=datetime.today())
                         # Duplicate the uploaded file.
-                        new_file = ContentFile(att.attachment.read())
-                        new_record.uploaded_file.save(att.name, new_file)
+                        new_file = ContentFile(emailattachment.attachment.read())
+                        new_record.uploaded_file.save(emailattachment.name, new_file)
                         new_record.save()
                         log = f'New PRS record generated: {new_record}'
                         LOGGER.info(log)
                         self.log = self.log + f'{log}\n'
                         actions.append(f'{datetime.now().isoformat()} {log}')
                         # Link the attachment to the new, generated record.
-                        att.record = new_record
-                        att.save()
+                        emailattachment.record = new_record
+                        emailattachment.save()
             else:
                 LOGGER.info(f'Referral ref. {reference} not found, skipping')
 
@@ -156,50 +163,39 @@ class EmailedReferral(models.Model):
             LOGGER.info('Done')
             return actions
 
-        # SCENARIO: WAPC decision letter for a referral.
-        # Existing referral should exist, and the email should include application.xml
-        if self.subject.lower().startswith('wapc decision letter for application'):
-            if not attachments.filter(name__istartswith='application.xml'):
-                log = f'Skipping harvested decision letter {self.pk} (no XML attachment)'
+        # SCENARIO: WAPC decision letter for an existing referral.
+        if 'decision letter' in self.subject.lower():
+            # Try to parse a reference number from the subject line.
+            subject = self.subject.lower()
+            pattern = r'application\s(.+)'
+            m = re.search(pattern, subject)
+            if not m:
+                log = f'Skipping harvested decision letter {self.pk} (unable to find reference)'
                 LOGGER.info(log)
                 self.log = log
                 self.processed = True
                 self.save()
                 actions.append(f'{datetime.now().isoformat()} {log}')
                 return actions
-            else:
-                xml_file = attachments.get(name__istartswith='application.xml')
-            # Parse the attached XML file.
-            try:
-                d = xmltodict.parse(xml_file.attachment.read())
-            except Exception as e:
-                log = f'Harvested decision letter {self.pk} parsing of application.xml failed'
-                LOGGER.error(log)
-                LOGGER.exception(e)
-                self.log = self.log + f'{log}\n{e}\n'
-                LOGGER.info(f'Marking emailed decision letter {self.pk} as processed')
-                self.processed = True
-                self.save()
-                LOGGER.info('Done')
-                actions.append(f'{datetime.now().isoformat()} {log}')
-                return actions
-            app = d['APPLICATION']
-            reference = app['WAPC_APPLICATION_NO']
-            # New/existing referral object.
+
+            # We parsed a reference number from the subject line.
+            reference = m.group(1)
             if not Referral.objects.current().filter(reference__iexact=reference).exists():
-                log = f'Skipping harvested decision letter {self.pk} (no existing record)'
+                log = f'Skipping harvested decision letter {self.pk} (no existing referral)'
                 LOGGER.info(log)
                 self.log = log
                 self.processed = True
                 self.save()
                 actions.append(f'{datetime.now().isoformat()} {log}')
                 return actions
-            else:
-                log = f'Referral ref. {reference} exists in database'
-                LOGGER.info(log)
-                self.log = self.log + f'{log}\n'
-                actions.append(f'{datetime.now().isoformat()} {log}')
-                referral = Referral.objects.current().filter(reference__iexact=reference).order_by('-pk').first()
+
+            # We matched an existing referral.
+            log = f'Referral ref. {reference} exists in database'
+            LOGGER.info(log)
+            self.log = self.log + f'{log}\n'
+            actions.append(f'{datetime.now().isoformat()} {log}')
+            referral = Referral.objects.current().filter(reference__iexact=reference).order_by('-pk').first()
+
             # Save the EmailedReferral as a record on the referral.
             if create_records:
                 new_record = Record.objects.create(
@@ -217,6 +213,8 @@ class EmailedReferral(models.Model):
 
                 # Add records to the referral (one per attachment).
                 for emailattachment in attachments:
+                    if emailattachment.name in ATTACHMENT_FILENAME_BLOCKLIST:
+                        continue
                     new_record = Record.objects.create(
                         name=emailattachment.name, referral=referral, order_date=datetime.today())
                     # Duplicate the uploaded file.
@@ -542,6 +540,8 @@ class EmailedReferral(models.Model):
 
             # Add records to the referral (one per attachment).
             for emailattachment in attachments:
+                if emailattachment.name in ATTACHMENT_FILENAME_BLOCKLIST:
+                    continue
                 new_record = Record.objects.create(
                     name=emailattachment.name,
                     referral=referral,
@@ -582,10 +582,10 @@ class EmailAttachment(models.Model):
 
     def get_xml_data(self):
         """Convenience function to conditionally return XML data from the
-        attachment (returns None if not an XML file).
+        attachment.xml (returns None otherwise).
         """
         d = None
-        if self.name.startswith('Application.xml'):
+        if self.name.lower() == 'application.xml':
             self.attachment.seek(0)
             d = xmltodict.parse(self.attachment.read())
         return d
