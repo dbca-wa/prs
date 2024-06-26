@@ -163,50 +163,39 @@ class EmailedReferral(models.Model):
             LOGGER.info('Done')
             return actions
 
-        # SCENARIO: WAPC decision letter for a referral.
-        # Existing referral should exist, and the email should include application.xml
-        if self.subject.lower().startswith('wapc decision letter for application'):
-            if not attachments.filter(name__istartswith='application.xml'):
-                log = f'Skipping harvested decision letter {self.pk} (no XML attachment)'
+        # SCENARIO: WAPC decision letter for an existing referral.
+        if 'decision letter' in self.subject.lower():
+            # Try to parse a reference number from the subject line.
+            subject = self.subject.lower()
+            pattern = r'application\s(.+)'
+            m = re.search(pattern, subject)
+            if not m:
+                log = f'Skipping harvested decision letter {self.pk} (unable to find reference)'
                 LOGGER.info(log)
                 self.log = log
                 self.processed = True
                 self.save()
                 actions.append(f'{datetime.now().isoformat()} {log}')
                 return actions
-            else:
-                xml_file = attachments.get(name__istartswith='application.xml')
-            # Parse the attached XML file.
-            try:
-                d = xmltodict.parse(xml_file.attachment.read())
-            except Exception as e:
-                log = f'Harvested decision letter {self.pk} parsing of application.xml failed'
-                LOGGER.error(log)
-                LOGGER.exception(e)
-                self.log = self.log + f'{log}\n{e}\n'
-                LOGGER.info(f'Marking emailed decision letter {self.pk} as processed')
-                self.processed = True
-                self.save()
-                LOGGER.info('Done')
-                actions.append(f'{datetime.now().isoformat()} {log}')
-                return actions
-            app = d['APPLICATION']
-            reference = app['WAPC_APPLICATION_NO']
-            # New/existing referral object.
+
+            # We parsed a reference number from the subject line.
+            reference = m.group(1)
             if not Referral.objects.current().filter(reference__iexact=reference).exists():
-                log = f'Skipping harvested decision letter {self.pk} (no existing record)'
+                log = f'Skipping harvested decision letter {self.pk} (no existing referral)'
                 LOGGER.info(log)
                 self.log = log
                 self.processed = True
                 self.save()
                 actions.append(f'{datetime.now().isoformat()} {log}')
                 return actions
-            else:
-                log = f'Referral ref. {reference} exists in database'
-                LOGGER.info(log)
-                self.log = self.log + f'{log}\n'
-                actions.append(f'{datetime.now().isoformat()} {log}')
-                referral = Referral.objects.current().filter(reference__iexact=reference).order_by('-pk').first()
+
+            # We matched an existing referral.
+            log = f'Referral ref. {reference} exists in database'
+            LOGGER.info(log)
+            self.log = self.log + f'{log}\n'
+            actions.append(f'{datetime.now().isoformat()} {log}')
+            referral = Referral.objects.current().filter(reference__iexact=reference).order_by('-pk').first()
+
             # Save the EmailedReferral as a record on the referral.
             if create_records:
                 new_record = Record.objects.create(
