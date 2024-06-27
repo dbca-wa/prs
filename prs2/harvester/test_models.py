@@ -1,12 +1,14 @@
+from django.contrib.auth import get_user_model
 from django.core.files import File
 from django.utils import timezone
 from mixer.backend.django import mixer
 import os
-from referral.models import Agency, Region, DopTrigger, Referral, Task, Record
+from referral.models import Agency, Region, DopTrigger, Referral, Task, Record, LocalGovernment
 from referral.test_models import PrsTestCase
 import sys
 
 from harvester.models import EmailedReferral, EmailAttachment, RegionAssignee
+User = get_user_model()
 
 
 class HarvesterModelTestCase(PrsTestCase):
@@ -14,6 +16,8 @@ class HarvesterModelTestCase(PrsTestCase):
     def setUp(self):
         super(HarvesterModelTestCase, self).setUp()
         mixer.cycle(2).blend(RegionAssignee)
+        mixer.blend(LocalGovernment, name='BUNBURY', slug='bunbury')
+        self.admin = User.objects.get_or_create(username='admin')
 
 
 class RegionAssigneeModelTest(HarvesterModelTestCase):
@@ -63,10 +67,20 @@ class EmailedReferralModelTest(HarvesterModelTestCase):
         # NOTE: we don't test email harvesting or parsing.
         # NOTE: creation of Locations requires that we query the Landgate SLIP service.
         # As we can't commit the username or password, explicitly skip creation of locations here.
-        actions = self.e_ref.harvest(create_locations=False, assignee=self.n_user)
+        actions = self.e_ref.harvest(create_locations=False)
         # actions should not be an empty list.
         self.assertTrue(bool(actions))
         # >0 Referrals, Tasks and Records should have been created.
         self.assertTrue(Referral.objects.count() > ref_count)
         self.assertTrue(Task.objects.count() > task_count)
         self.assertTrue(Record.objects.count() > record_count)
+        # Admin user should now have a task.
+        self.assertTrue(Task.objects.filter(assigned_user=self.admin_user))
+
+    def test_harvest_with_assignee(self):
+        """Test the harvest() method with an assignee set
+        """
+        task_count = Task.objects.filter(assigned_user=self.n_user).count()
+        self.e_ref.harvest(create_locations=False, assignee=self.n_user)
+        # Normal user should now have a new task.
+        self.assertTrue(Task.objects.filter(assigned_user=self.n_user).count() > task_count)

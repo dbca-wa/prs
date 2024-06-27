@@ -59,6 +59,7 @@ class EmailedReferral(models.Model):
 
     def harvest(self, create_tasks=True, create_locations=True, create_records=True, assignee=False):
         """Undertake the harvest process for this emailed referral.
+        Allows tasks, locations and records to be optionally created.
         """
         actions = []
 
@@ -67,13 +68,9 @@ class EmailedReferral(models.Model):
             return actions
 
         User = get_user_model()
+        region = None
         dbca = Agency.objects.get(slug='dbca')
         wapc = Organisation.objects.get(slug='wapc')
-        assess_task = TaskType.objects.get(name='Assess a referral')
-        if not assignee:
-            assignee_default = User.objects.get(username=settings.REFERRAL_ASSIGNEE_FALLBACK)
-        else:
-            assignee_default = assignee
         attachments = self.emailattachment_set.all()
         self.log = ''
 
@@ -163,8 +160,13 @@ class EmailedReferral(models.Model):
             LOGGER.info('Done')
             return actions
 
-        # SCENARIO: WAPC decision letter for an existing referral.
+        # SCENARIO: Decision letter for an existing referral.
         if 'decision letter' in self.subject.lower():
+            log = f'Processing: {self.subject}'
+            LOGGER.info(log)
+            self.log = self.log + f'{log}\n'
+            actions.append(f'{datetime.now().isoformat()} {log}')
+
             # Try to parse a reference number from the subject line.
             subject = self.subject.lower()
             pattern = r'application\s(.+)'
@@ -190,7 +192,7 @@ class EmailedReferral(models.Model):
                 return actions
 
             # We matched an existing referral.
-            log = f'Referral ref. {reference} exists in database'
+            log = f'Referral ref. {reference} is present in database'
             LOGGER.info(log)
             self.log = self.log + f'{log}\n'
             actions.append(f'{datetime.now().isoformat()} {log}')
@@ -238,7 +240,9 @@ class EmailedReferral(models.Model):
             return actions
 
         # SCENARIO: a standard emailed referral.
-        # Must be an attachment named 'Application.xml' present to import.
+        # Must be an attachment named 'application.xml' present to import.
+        # Note that the email might be "x of y" emails, where the referral
+        # attachments are too large to send as a single email.
         if not attachments.filter(name__istartswith='application.xml'):
             log = f'Skipping harvested referral {self.pk} (no XML attachment)'
             LOGGER.info(log)
@@ -268,7 +272,7 @@ class EmailedReferral(models.Model):
         app = d['APPLICATION']
         reference = app['WAPC_APPLICATION_NO']
 
-        # New/existing referral object.
+        # Determine if this is a new or existing referral.
         if Referral.objects.current().filter(reference__iexact=reference):
             # Note if the the reference no. exists in PRS already.
             log = f'Referral ref. {reference} is already in database; using existing referral'
@@ -278,38 +282,91 @@ class EmailedReferral(models.Model):
             referral = Referral.objects.current().filter(reference__iexact=reference).order_by('-pk').first()
             referral_preexists = True
         else:
-            # No match with existing references.
-            log = f'Importing harvested referral ref. {reference} as new entity'
+            # No match with existing references; create a new referral.
+            log = f'Importing harvested referral ref. {reference} as new referral'
             LOGGER.info(log)
             self.log = f'{log}\n'
             actions.append(f'{datetime.now().isoformat()} {log}')
             referral = Referral(reference=reference)
             referral_preexists = False
+            # Referral type
+            if not ReferralType.objects.filter(name__istartswith=app['APP_TYPE']).exists():
+                log = f'Referral type {app["APP_TYPE"]} is not recognised type; skipping'
+                LOGGER.warning(log)
+                self.log = f'{log}\n'
+                self.processed = True
+                self.save()
+                actions.append(f'{datetime.now().isoformat()} {log}')
+                return actions
+            else:
+                referral.type = ReferralType.objects.filter(name__istartswith=app['APP_TYPE']).first()
 
-        # Referral type
-        if not ReferralType.objects.filter(name__istartswith=app['APP_TYPE']).exists():
-            log = f'Referral type {app["APP_TYPE"]} is not recognised type; skipping'
-            LOGGER.warning(log)
-            self.log = f'{log}\n'
-            self.processed = True
-            self.save()
+        # Save a new referral.
+        if referral_preexists is False:
+            referral.agency = dbca
+            referral.referring_org = wapc
+            referral.reference = reference
+            referral.description = app['DEVELOPMENT_DESCRIPTION'] if 'DEVELOPMENT_DESCRIPTION' in app else ''
+            referral.referral_date = self.received.date()
+            referral.address = app['LOCATION'] if 'LOCATION' in app else ''
+
+            # Set the LGA, if possible.
+            if LocalGovernment.objects.filter(name=app['LOCAL_GOVERNMENT']).exists():
+                referral.lga = LocalGovernment.objects.filter(name=app['LOCAL_GOVERNMENT']).first()
+            else:
+                log = f'LGA {app["LOCAL_GOVERNMENT"]} was not recognised'
+                LOGGER.warning(log)
+                self.log = self.log + f'{log}\n'
+                actions.append(f'{datetime.now().isoformat()} {log}')
+
+            with create_revision():
+                referral.save()
+                set_comment('Initial version.')
+
+            log = f'New PRS referral generated: {referral}'
+            LOGGER.info(log)
+            self.log = self.log + f'{log}\n'
             actions.append(f'{datetime.now().isoformat()} {log}')
-            return actions
-        else:
-            ref_type = ReferralType.objects.filter(name__istartswith=app['APP_TYPE']).first()
 
-        # Determine the intersecting region(s).
-        regions = []
-        assigned = None
-        # ADDRESS_DETAIL may or may not be a list :/
-        if not isinstance(app['ADDRESS_DETAIL']['DOP_ADDRESS_TYPE'], list):
-            addresses = [app['ADDRESS_DETAIL']['DOP_ADDRESS_TYPE']]
-        else:
-            addresses = app['ADDRESS_DETAIL']['DOP_ADDRESS_TYPE']
+        # For new referrals, record any WAPC triggers.
+        if referral_preexists is False:
+            # Add triggers to the new referral.
+            if 'MRSZONE_TEXT' in app and app['MRSZONE_TEXT']:
+                triggers = [i.strip() for i in app['MRSZONE_TEXT'].split(',')]
+            else:
+                triggers = []
+            added_trigger = False
+            for i in triggers:
+                # A couple of exceptions for DoP triggers follow (specific -> general trigger).
+                if i.startswith('BUSH FOREVER SITE'):
+                    added_trigger = True
+                    referral.dop_triggers.add(DopTrigger.objects.get(name='Bush Forever site'))
+                elif i.startswith('DPW ESTATE'):
+                    added_trigger = True
+                    referral.dop_triggers.add(DopTrigger.objects.get(name='Parks and Wildlife estate'))
+                elif i.find('REGIONAL PARK') > -1:
+                    added_trigger = True
+                    referral.dop_triggers.add(DopTrigger.objects.get(name='Regional Park'))
+                # All other triggers (don't use exists() in case of duplicates).
+                elif DopTrigger.objects.current().filter(name__istartswith=i).count() == 1:
+                    added_trigger = True
+                    referral.dop_triggers.add(DopTrigger.objects.current().get(name__istartswith=i))
+            # If we didn't link any DoP triggers, link the "No Parks and Wildlife trigger" tag.
+            if not added_trigger:
+                referral.dop_triggers.add(DopTrigger.objects.get(name='No Parks and Wildlife trigger'))
 
-        # Address geometry:
-        locations = []
-        if create_locations:
+        # For new referrals, add locations to the referral (one per polygon in each MP geometry).
+        # Obtain location geometry from Landgate SLIP.
+        # Also determine the intersecting DBCA region(s).
+        if create_locations and referral_preexists is False:
+            locations = []
+            regions = []
+            # ADDRESS_DETAIL may or may not be a list :/
+            if not isinstance(app['ADDRESS_DETAIL']['DOP_ADDRESS_TYPE'], list):
+                addresses = [app['ADDRESS_DETAIL']['DOP_ADDRESS_TYPE']]
+            else:
+                addresses = app['ADDRESS_DETAIL']['DOP_ADDRESS_TYPE']
+
             for a in addresses:
                 # Use the long/lat info to intersect DBCA regions.
                 try:
@@ -324,7 +381,8 @@ class EmailedReferral(models.Model):
                     self.log = f'{log}\n'
                     actions.append(f'{datetime.now().isoformat()} {log}')
                     intersected_region = False
-                # Use the PIN field to try returning geometry from SLIP.
+
+                # Use the PIN field to query SLIP for geometry.
                 if 'PIN' in a and a['PIN']:
                     try:
                         resp = query_slip_esri(a['PIN'])
@@ -353,93 +411,29 @@ class EmailedReferral(models.Model):
                     log = f'Address PIN could not be parsed ({a["PIN"]})'
                     LOGGER.warning(log)
                     self.log = self.log + f'{log}\n'
-        regions = set(regions)
-        # Business rules:
-        # Didn't intersect a region? Might be bad geometry in the XML.
-        # Likewise if >1 region was intersected, default to Swan Region
-        # and the designated fallback user.
-        if len(regions) == 0:
-            region = Region.objects.get(name='Swan')
-            assigned = assignee_default
-            log = f'No regions were intersected, defaulting to {region} ({assigned})'
-            LOGGER.info(log)
-            self.log = self.log + f'{log}\n'
-        elif len(regions) > 1:
-            region = Region.objects.get(name='Swan')
-            assigned = assignee_default
-            log = f'>1 regions were intersected ({regions}), defaulting to {region} ({assigned})'
-            LOGGER.info(log)
-            self.log = self.log + f'{log}\n'
-        else:
-            region = regions.pop()
-            try:
-                assigned = RegionAssignee.objects.get(region=region).user
-            except Exception:
-                log = f'No default assignee set for {region}, defaulting to {assignee_default}'
+
+            # Determine the intersecting DBCA region(s).
+            regions = set(regions)
+
+            # Business rules:
+            # Didn't intersect a region? Might be bad geometry in the XML.
+            # Likewise if >1 region was intersected, default to Swan Region.
+            if len(regions) == 0:
+                region = Region.objects.get(name='Swan')
+                log = f'No regions were intersected, defaulting to {region}'
                 LOGGER.info(log)
                 self.log = self.log + f'{log}\n'
-                actions.append(f'{datetime.now().isoformat()} {log}')
-                assigned = assignee_default
+            elif len(regions) > 1:
+                region = Region.objects.get(name='Swan')
+                log = f'>1 regions were intersected ({regions}), defaulting to {region}'
+                LOGGER.info(log)
+                self.log = self.log + f'{log}\n'
 
-        # Create/update the referral in PRS.
-        referral.type = ref_type
-        referral.agency = dbca
-        referral.referring_org = wapc
-        referral.reference = reference
-        referral.description = app['DEVELOPMENT_DESCRIPTION'] if 'DEVELOPMENT_DESCRIPTION' in app else ''
-        referral.referral_date = self.received.date()
-        referral.address = app['LOCATION'] if 'LOCATION' in app else ''
-        with create_revision():
-            referral.save()
-            set_comment('Initial version.')
+            if regions:
+                region = regions.pop()
+                referral.regions.add(region)
 
-        if referral_preexists:
-            log = f'PRS referral updated: {referral}'
-        else:
-            log = f'New PRS referral generated: {referral}'
-        LOGGER.info(log)
-        self.log = self.log + f'{log}\n'
-        actions.append(f'{datetime.now().isoformat()} {log}')
-
-        # Assign to a region.
-        referral.regions.add(region)
-        # Assign an LGA.
-        try:
-            referral.lga = LocalGovernment.objects.get(name=app['LOCAL_GOVERNMENT'])
-            referral.save()
-        except Exception:
-            log = f'LGA {app["LOCAL_GOVERNMENT"]} was not recognised'
-            LOGGER.warning(log)
-            self.log = self.log + f'{log}\n'
-            actions.append(f'{datetime.now().isoformat()} {log}')
-
-        # Add triggers to the new referral.
-        if 'MRSZONE_TEXT' in app and app['MRSZONE_TEXT']:
-            triggers = [i.strip() for i in app['MRSZONE_TEXT'].split(',')]
-        else:
-            triggers = []
-        added_trigger = False
-        for i in triggers:
-            # A couple of exceptions for DoP triggers follow (specific -> general trigger).
-            if i.startswith('BUSH FOREVER SITE'):
-                added_trigger = True
-                referral.dop_triggers.add(DopTrigger.objects.get(name='Bush Forever site'))
-            elif i.startswith('DPW ESTATE'):
-                added_trigger = True
-                referral.dop_triggers.add(DopTrigger.objects.get(name='Parks and Wildlife estate'))
-            elif i.find('REGIONAL PARK') > -1:
-                added_trigger = True
-                referral.dop_triggers.add(DopTrigger.objects.get(name='Regional Park'))
-            # All other triggers (don't use exists() in case of duplicates).
-            elif DopTrigger.objects.current().filter(name__istartswith=i).count() == 1:
-                added_trigger = True
-                referral.dop_triggers.add(DopTrigger.objects.current().get(name__istartswith=i))
-        # If we didn't link any DoP triggers, link the "No Parks and Wildlife trigger" tag.
-        if not added_trigger:
-            referral.dop_triggers.add(DopTrigger.objects.get(name='No Parks and Wildlife trigger'))
-
-        # Add locations to the new referral (one per polygon in each MP geometry).
-        if create_locations:
+            # Create new location objects.
             new_locations = []
             for l in locations:
                 for feature in l['FEATURES']:
@@ -486,14 +480,29 @@ class EmailedReferral(models.Model):
                     self.log = self.log + f'{log}\n'
                     actions.append(f'{datetime.now().isoformat()} {log}')
 
-        # Create an "Assess a referral" task and assign it to a user.
-        if create_tasks:
+        # New referrals only: create an "Assess a referral" task and assign it to a user.
+        if create_tasks and referral_preexists is False:
+            assess_task = TaskType.objects.get(name='Assess a referral')
+
+            # If a task assignee has not been specified, try to determine one from the region default.
+            if not assignee:
+                if region and RegionAssignee.objects.filter(region=region).exists():
+                    assignee_default = RegionAssignee.objects.get(region=region).user
+                else:
+                    assignee_default = User.objects.get(username=settings.REFERRAL_ASSIGNEE_FALLBACK)
+                    log = f'No task assignee set, defaulting to {assignee_default}'
+                    LOGGER.info(log)
+                    self.log = self.log + f'{log}\n'
+                    actions.append(f'{datetime.now().isoformat()} {log}')
+            else:
+                assignee_default = assignee
+
             new_task = Task(
                 type=assess_task,
                 referral=referral,
                 start_date=referral.referral_date,
                 description=referral.description,
-                assigned_user=assigned
+                assigned_user=assignee_default,
             )
             new_task.state = assess_task.initial_state
             if 'DUE_DATE' in app and app['DUE_DATE']:
@@ -507,14 +516,14 @@ class EmailedReferral(models.Model):
             with create_revision():
                 new_task.save()
                 set_comment('Initial version.')
-            log = f'New PRS task generated: {new_task} assigned to {assigned.get_full_name()}'
+            log = f'New PRS task generated: {new_task} assigned to {assignee_default.get_full_name()}'
             LOGGER.info(log)
             self.log = self.log + f'{log}\n'
             actions.append(f'{datetime.now().isoformat()} {log}')
 
             # Email the assigned user about the new task.
             new_task.email_user()
-            log = f'Task assignment email sent to {assigned.email}'
+            log = f'Task assignment email sent to {assignee_default.email}'
             LOGGER.info(log)
             self.log = self.log + f'{log}\n'
             actions.append(f'{datetime.now().isoformat()} {log}')
@@ -523,7 +532,7 @@ class EmailedReferral(models.Model):
         LOGGER.info(log)
         actions.append(log)
 
-        # Save the EmailedReferral as a record on the referral.
+        # Save the EmailedReferral as a record on the new or existing referral.
         if create_records:
             new_record = Record.objects.create(
                 name=self.subject, referral=referral, order_date=datetime.today())
