@@ -84,10 +84,15 @@ def harvest_email(uid, message):
     # Create & return EmailedReferral from the email body (if found).
     if message_body:
         try:
-            # The "To" address might very well be a list of recipients.
+            # The "To" or "CC" address might very well be a list of recipients.
             # We'll check them against the list in settings.ASSESSOR_EMAILS,
             # and use the first of those we match with.
-            to_emails = message.get('To').split(',')
+            to_emails = message.get('To')  # Might be None.
+            if not to_emails:  # Recipient(s) might be CC'd instead.
+                to_emails = message.get('CC')
+            if not to_emails:  # Still no recipient(s)
+                return False
+            to_emails = to_emails.split(',')
             pattern = r'\<(.+)\>'
             to_e = ''
             for rec in to_emails:
