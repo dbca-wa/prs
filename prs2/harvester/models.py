@@ -59,6 +59,7 @@ class EmailedReferral(models.Model):
 
     def harvest(self, create_tasks=True, create_locations=True, create_records=True, assignee=False):
         """Undertake the harvest process for this emailed referral.
+        Allows tasks, locations and records to be optionally created.
         """
         actions = []
 
@@ -67,13 +68,9 @@ class EmailedReferral(models.Model):
             return actions
 
         User = get_user_model()
+        region = None
         dbca = Agency.objects.get(slug='dbca')
         wapc = Organisation.objects.get(slug='wapc')
-        assess_task = TaskType.objects.get(name='Assess a referral')
-        if not assignee:
-            assignee_default = User.objects.get(username=settings.REFERRAL_ASSIGNEE_FALLBACK)
-        else:
-            assignee_default = assignee
         attachments = self.emailattachment_set.all()
         self.log = ''
 
@@ -416,36 +413,25 @@ class EmailedReferral(models.Model):
                     self.log = self.log + f'{log}\n'
 
             # Determine the intersecting DBCA region(s).
-            assigned = None
             regions = set(regions)
 
             # Business rules:
             # Didn't intersect a region? Might be bad geometry in the XML.
-            # Likewise if >1 region was intersected, default to Swan Region
-            # and the designated fallback user.
+            # Likewise if >1 region was intersected, default to Swan Region.
             if len(regions) == 0:
                 region = Region.objects.get(name='Swan')
-                assigned = assignee_default
-                log = f'No regions were intersected, defaulting to {region} ({assigned})'
+                log = f'No regions were intersected, defaulting to {region}'
                 LOGGER.info(log)
                 self.log = self.log + f'{log}\n'
             elif len(regions) > 1:
                 region = Region.objects.get(name='Swan')
-                assigned = assignee_default
-                log = f'>1 regions were intersected ({regions}), defaulting to {region} ({assigned})'
+                log = f'>1 regions were intersected ({regions}), defaulting to {region}'
                 LOGGER.info(log)
                 self.log = self.log + f'{log}\n'
-            else:
+
+            if regions:
                 region = regions.pop()
-                try:
-                    assigned = RegionAssignee.objects.get(region=region).user
-                except Exception:
-                    log = f'No default assignee set for {region}, defaulting to {assignee_default}'
-                    LOGGER.info(log)
-                    self.log = self.log + f'{log}\n'
-                    actions.append(f'{datetime.now().isoformat()} {log}')
-                    assigned = assignee_default
-            referral.regions.add(region)
+                referral.regions.add(region)
 
             # Create new location objects.
             new_locations = []
@@ -496,12 +482,27 @@ class EmailedReferral(models.Model):
 
         # New referrals only: create an "Assess a referral" task and assign it to a user.
         if create_tasks and referral_preexists is False:
+            assess_task = TaskType.objects.get(name='Assess a referral')
+
+            # If a task assignee has not been specified, try to determine one from the region default.
+            if not assignee:
+                if region and RegionAssignee.objects.filter(region=region).exists():
+                    assignee_default = RegionAssignee.objects.get(region=region).user
+                else:
+                    assignee_default = User.objects.get(username=settings.REFERRAL_ASSIGNEE_FALLBACK)
+                    log = f'No task assignee set, defaulting to {assignee_default}'
+                    LOGGER.info(log)
+                    self.log = self.log + f'{log}\n'
+                    actions.append(f'{datetime.now().isoformat()} {log}')
+            else:
+                assignee_default = assignee
+
             new_task = Task(
                 type=assess_task,
                 referral=referral,
                 start_date=referral.referral_date,
                 description=referral.description,
-                assigned_user=assigned
+                assigned_user=assignee_default,
             )
             new_task.state = assess_task.initial_state
             if 'DUE_DATE' in app and app['DUE_DATE']:
@@ -515,14 +516,14 @@ class EmailedReferral(models.Model):
             with create_revision():
                 new_task.save()
                 set_comment('Initial version.')
-            log = f'New PRS task generated: {new_task} assigned to {assigned.get_full_name()}'
+            log = f'New PRS task generated: {new_task} assigned to {assignee_default.get_full_name()}'
             LOGGER.info(log)
             self.log = self.log + f'{log}\n'
             actions.append(f'{datetime.now().isoformat()} {log}')
 
             # Email the assigned user about the new task.
             new_task.email_user()
-            log = f'Task assignment email sent to {assigned.email}'
+            log = f'Task assignment email sent to {assignee_default.email}'
             LOGGER.info(log)
             self.log = self.log + f'{log}\n'
             actions.append(f'{datetime.now().isoformat()} {log}')
