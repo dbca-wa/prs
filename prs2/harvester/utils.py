@@ -12,10 +12,11 @@ from lxml.html import fromstring
 from lxml_html_clean import clean_html
 import re
 import requests
-import time
+from zoneinfo import ZoneInfo
 
 
 LOGGER = logging.getLogger('harvester')
+UTC = ZoneInfo('UTC')
 
 
 def get_imap(mailbox='INBOX'):
@@ -103,9 +104,10 @@ def harvest_email(uid, message):
                         to_e = email_address
 
             from_e = email.utils.parseaddr(message.get('From'))[1]
-            # Parse the 'sent' date & time (assume AWST).
-            ts = time.mktime(email.utils.parsedate(message.get('Date')))
-            received = datetime.fromtimestamp(ts).astimezone(settings.TZ)
+            # Parse the 'sent' date & time (assume UTC from the server).
+            d = email.utils.parsedate(message.get('Date'))[0:6]  # Returns a tuple, but we only want part of it.
+            dt = datetime(*d, tzinfo=UTC)  # Construct datetime from the tuple.
+            received = dt.astimezone(settings.TZ)
             # Generate an EmailedReferral object.
             em_new = EmailedReferral(
                 received=received, email_uid=str(uid), to_email=to_e,
