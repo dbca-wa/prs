@@ -37,7 +37,7 @@ django-crum = "0.7.9"
 django-storages = {version = "1.14.3", extras = ["azure"]}
 sentry-sdk = {version = "2.6.0", extras = ["django"]}
 crispy-bootstrap5 = "2024.2"
-redis = "5.0.6"
+redis = "5.0.7"
 xlsxwriter = "3.2.0"
 
 [tool.poetry.group.dev.dependencies]
