@@ -41,7 +41,7 @@ redis = "5.0.6"
 xlsxwriter = "3.2.0"
 
 [tool.poetry.group.dev.dependencies]
-ipython = "^8.25.0"
+ipython = "^8.26.0"
 ipdb = "^0.13.11"
 pre-commit = "^3.7.1"
 coverage = "^7.5.4"
