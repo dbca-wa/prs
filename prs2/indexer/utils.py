@@ -1,9 +1,11 @@
 from django.conf import settings
 import docx2txt
 from extract_msg import Message
+from io import BytesIO
 from pdfminer import high_level
 import re
 import typesense
+from unidecode import unidecode
 
 
 def typesense_client():
@@ -69,7 +71,10 @@ def typesense_index_record(rec, client=None):
             if settings.LOCAL_MEDIA_STORAGE:
                 file_content = high_level.extract_text(open(rec.uploaded_file.path, 'rb'))
             else:
-                file_content = high_level.extract_text(open(rec.uploaded_file))
+                # Read the upload blob content into an in-memory file.
+                tmp = BytesIO()
+                tmp.write(rec.uploaded_file.read())
+                file_content = high_level.extract_text(tmp)
         except:
             pass
 
@@ -78,24 +83,31 @@ def typesense_index_record(rec, client=None):
         if settings.LOCAL_MEDIA_STORAGE:
             message = Message(rec.uploaded_file.path)
         else:
-            message = Message(rec.uploaded_file)
-        file_content = '{} {}'.format(message.subject, message.body.replace('\r\n', ' '))
+            # Read the upload blob content into an in-memory file.
+            tmp = BytesIO()
+            tmp.write(rec.uploaded_file.read())
+            message = Message(tmp)
+        file_content = f'{message.subject} {message.body}'
 
     # DOCX document content.
     if rec.extension == 'DOCX':
         if settings.LOCAL_MEDIA_STORAGE:
             file_content = docx2txt.process(rec.uploaded_file.path)
         else:
-            file_content = docx2txt.process(rec.uploaded_file)
+            # Read the upload blob content into an in-memory file.
+            tmp = BytesIO()
+            tmp.write(rec.uploaded_file.read())
+            file_content = docx2txt.process(tmp)
 
     # TXT document content.
     if rec.extension == 'TXT':
         if settings.LOCAL_MEDIA_STORAGE:
             file_content = open(rec.uploaded_file.path, 'r').read()
         else:
+            # Read the upload blob content directly.
             file_content = rec.uploaded_file.read()
 
-    # Trim down the content of uploaded files a little.
+    # Trim down the file content a little to aid indexing.
     if file_content:
         # Decode a bytes object to a string.
         if isinstance(file_content, bytes):
@@ -103,10 +115,12 @@ def typesense_index_record(rec, client=None):
         # Replace punctuation with a space.
         file_content = re.sub(r'[^\w\s]', ' ', file_content)
         # Replace newlines with a space.
-        file_content = file_content.replace('\r\n', ' ')
+        file_content = file_content.replace('\r', '').replace('\n', ' ')
         # Replace multiple spaces with a single one.
         file_content = re.sub(r'\s+', ' ', file_content)
         file_content = file_content.strip()
+        # Transliterate some unicode characters to ASCII.
+        file_content = unidecode(file_content)
 
     rec_document['file_content'] = file_content
     client.collections['records'].documents.upsert(rec_document)

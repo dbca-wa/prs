@@ -26,8 +26,10 @@ from pygeopkg.shared.constants import SHAPE
 from pygeopkg.conversion.to_geopkg_geom import point_lists_to_gpkg_polygon, make_gpkg_geom_header
 import reversion
 from taggit.managers import TaggableManager
+from typesense.exceptions import ObjectNotFound
 from unidecode import unidecode
 
+from indexer.utils import typesense_client
 from referral.base import Audit, ActiveModel
 from referral.utils import smart_truncate, dewordify_text, as_row_subtract_referral_cell
 from referral.tasks import index_object
@@ -1132,6 +1134,22 @@ class Record(ReferralBaseModel):
         except Exception as ex:
             # Indexing failure should never block or return an exception. Log the error to stdout.
             LOGGER.exception(f"Error during indexing record {self}")
+
+    def get_indexed_document(self, client=None):
+        """Query Typesense for any indexed document of this record.
+        """
+        if not self.uploaded_file:
+            return None
+
+        if not client:
+            client = typesense_client()
+
+        try:
+            document = client.collections['records'].documents[self.pk].retrieve()
+            return document
+        except ObjectNotFound:
+            # The uploaded file may not be indexed.
+            return None
 
     @property
     def filename(self):
