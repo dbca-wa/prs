@@ -22,7 +22,7 @@ spec:
         operator: Exists
       containers:
       - name: prs-geoserver
-        image: ghcr.io/dbca-wa/docker-geoserver:2.24.3
+        image: ghcr.io/dbca-wa/docker-geoserver:2.24.4
         imagePullPolicy: IfNotPresent
         env:
         - name: TZ
