@@ -91,17 +91,21 @@ def harvest_email(uid, message):
             to_emails = message.get('To')  # Might be None.
             if not to_emails:  # Recipient(s) might be CC'd instead.
                 to_emails = message.get('CC')
-            if not to_emails:  # Still no recipient(s)
-                return False
-            to_emails = to_emails.split(',')
-            pattern = r'\<(.+)\>'
-            to_e = ''
-            for rec in to_emails:
-                m = re.search(pattern, rec.strip())
-                if m:
-                    email_address = m.group(1).lower()
-                    if email_address in settings.ASSESSOR_EMAILS:
-                        to_e = email_address
+            if not to_emails:  # Still might be no recipient(s) if we've been BCC'd.
+                to_emails = ''
+
+            if to_emails:
+                to_emails = to_emails.split(',')
+                pattern = r'\<(.+)\>'
+                to_e = ''
+                for rec in to_emails:
+                    m = re.search(pattern, rec.strip())
+                    if m:
+                        email_address = m.group(1).lower()
+                        if email_address in settings.ASSESSOR_EMAILS:
+                            to_e = email_address
+            else:
+                to_e = 'BCC'
 
             from_e = email.utils.parseaddr(message.get('From'))[1]
             # Parse the 'sent' date & time (assume UTC from the server).
@@ -234,7 +238,7 @@ def import_harvested_refs():
     actions.append(f'{datetime.now().isoformat()} Starting import of harvested referrals')
     # Process harvested refs that are unprocessed at present.
     for er in EmailedReferral.objects.filter(referral__isnull=True, processed=False):
-        actions.append(er.harvest())
+        actions += er.harvest()
 
     LOGGER.info('Import process completed')
     actions.append(f'{datetime.now().isoformat()} Import process completed')

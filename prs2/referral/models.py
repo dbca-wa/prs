@@ -1048,8 +1048,8 @@ class Task(ReferralBaseModel):
         if not from_email:
             from_email = settings.APPLICATION_ALERTS_EMAIL
         to_email = self.assigned_user.email
-        referral_url = settings.SITE_URL + self.referral.get_absolute_url()
-        address = self.referral.address or "(not recorded)"
+        referral_url = f"https://{settings.SITE_URL}{self.referral.get_absolute_url()}"
+        address = self.referral.address or "not recorded"
         text_content = """This is an automated message to let you know that you have
             been assigned a PRS task ({0}) by the sending user.\n
             This task is attached to referral ID {1}.\nThe referral reference is: {2}.\n
@@ -1060,7 +1060,7 @@ class Task(ReferralBaseModel):
         html_content = """<p>This is an automated message to let you know that you have
             been assigned a PRS task ({0}) by the sending user.</p>
             <p>The task is attached to referral {1}, located at this URL:</p>
-            <p>{2}</p>
+            <p><a href="{2}">{2}</a></p>
             <p>The referral reference is: {3}</p>
             <p>The referral address is: {4}</p>
             """.format(

@@ -30,4 +30,4 @@ patches:
   - path: geoserver_service_patch.yaml
 images:
   - name: ghcr.io/dbca-wa/prs
-    newTag: 2.5.51
+    newTag: 2.5.52
