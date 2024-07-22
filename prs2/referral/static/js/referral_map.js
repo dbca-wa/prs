@@ -1,6 +1,5 @@
 "use strict";
-// NOTE: some global variables are set in the base template.
-
+// NOTE: some global constants are set in the base template.
 // Define baselayer tile layers.
 const landgateOrthomosaic = L.tileLayer.wms(mapproxy_url, {
   layers: 'virtual-mosaic',
@@ -31,7 +30,7 @@ const cadastre = L.tileLayer.wms(mapproxy_url, {
   minZoom: 13,
 });
 const prsLocations = L.tileLayer.wms(prs_geoserver_url, {
-  layers: 'prs:prs_locations_view',
+  layers: prs_layer_name,
   format: 'image/png',
   transparent: true,
   opacity: 0.75,
