@@ -48,6 +48,7 @@ else:
 
 # PRS may deploy its own instance of Geoserver.
 PRS_GEOSERVER_URL = env('PRS_GEOSERVER_URL', '')
+PRS_LAYER_NAME = env('PRS_LAYER_NAME', '')
 MAPPROXY_URL = env('MAPPROXY_URL', '')
 GEOCODER_URL = env('GEOCODER_URL', '')
 GEOSERVER_URL = env('GEOSERVER_URL', '')
