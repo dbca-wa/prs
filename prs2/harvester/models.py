@@ -406,7 +406,6 @@ class EmailedReferral(models.Model):
                         log = f'Error querying Landgate SLIP for spatial data (referral ref. {reference})'
                         LOGGER.error(log)
                         LOGGER.exception(e)
-                        self.log = self.log + f'{log}\n{resp.content}\n{e}\n'
                 else:
                     log = f'Address PIN could not be parsed ({a["PIN"]})'
                     LOGGER.warning(log)
