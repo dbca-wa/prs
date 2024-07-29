@@ -44,7 +44,7 @@ django-storages = {version = "1.14.4", extras = ["azure"]}
 [tool.poetry.group.dev.dependencies]
 ipython = "^8.26.0"
 ipdb = "^0.13.11"
-pre-commit = "^3.7.1"
+pre-commit = "^3.8.0"
 coverage = "^7.5.4"
 
 [build-system]
