@@ -37,7 +37,7 @@ whitenoise = {version = "6.7.0", extras = ["brotli"]}
 django-crum = "0.7.9"
 sentry-sdk = {version = "2.10.0", extras = ["django"]}
 crispy-bootstrap5 = "2024.2"
-redis = "5.0.7"
+redis = "5.0.8"
 xlsxwriter = "3.2.0"
 django-storages = {version = "1.14.4", extras = ["azure"]}
 
