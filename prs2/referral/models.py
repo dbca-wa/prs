@@ -1,5 +1,10 @@
+import json
+import logging
+import os
 from copy import copy
 from datetime import date
+
+import reversion
 from django.conf import settings
 from django.contrib.auth.signals import user_logged_in
 from django.contrib.gis.db import models
@@ -9,31 +14,27 @@ from django.core.validators import MaxLengthValidator
 from django.db.models import Q
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils.safestring import mark_safe
 from django.utils.html import escape
+from django.utils.safestring import mark_safe
 from extract_msg import Message
-from geojson import Feature, Polygon, FeatureCollection, dumps
-import json
-import logging
+from geojson import Feature, FeatureCollection, Polygon, dumps
+from indexer.utils import typesense_client
 from lxml.html import fromstring
 from lxml_html_clean import clean_html
-import os
+from pygeopkg.conversion.to_geopkg_geom import (make_gpkg_geom_header,
+                                                point_lists_to_gpkg_polygon)
+from pygeopkg.core.field import Field
 from pygeopkg.core.geopkg import GeoPackage
 from pygeopkg.core.srs import SRS
-from pygeopkg.core.field import Field
-from pygeopkg.shared.enumeration import GeometryType, SQLFieldTypes
 from pygeopkg.shared.constants import SHAPE
-from pygeopkg.conversion.to_geopkg_geom import point_lists_to_gpkg_polygon, make_gpkg_geom_header
-import reversion
+from pygeopkg.shared.enumeration import GeometryType, SQLFieldTypes
+from referral.base import ActiveModel, Audit
+from referral.tasks import index_object
+from referral.utils import (as_row_subtract_referral_cell, dewordify_text,
+                            smart_truncate)
 from taggit.managers import TaggableManager
 from typesense.exceptions import ObjectNotFound
 from unidecode import unidecode
-
-from indexer.utils import typesense_client
-from referral.base import Audit, ActiveModel
-from referral.utils import smart_truncate, dewordify_text, as_row_subtract_referral_cell
-from referral.tasks import index_object
-
 
 LOGGER = logging.getLogger("prs")
 # Australian state choices, for addresses.
@@ -614,7 +615,7 @@ class Referral(ReferralBaseModel):
         xml = 'referral/{}.xml'.format(template)
         return render_to_string(xml, {
             'REFERRAL_PK': self.pk,
-            'PRS_GEOSERVER_URL': settings.PRS_GEOSERVER_URL
+            'KMI_GEOSERVER_URL': settings.KMI_GEOSERVER_URL
         })
 
     def generate_gpkg(self):
@@ -1167,7 +1168,7 @@ class Record(ReferralBaseModel):
     @property
     def extension(self):
         try:
-            if self.uploaded_file and self.uploaded_file.size:
+            if self.uploaded_file:
                 ext = os.path.splitext(self.uploaded_file.name)[1]
                 return ext.replace(".", "").upper()
             else:

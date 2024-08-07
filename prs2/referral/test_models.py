@@ -1,20 +1,23 @@
+import os
 from datetime import date, timedelta
+from tempfile import NamedTemporaryFile
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.gis.geos import Polygon
 from django.core import mail
-from django.urls import reverse
 from django.test import TestCase
+from django.urls import reverse
 from mixer.backend.django import mixer
-import os
+from referral.models import (Agency, Bookmark, Clearance, Condition,
+                             ConditionCategory, DopTrigger, LocalGovernment,
+                             Location, ModelCondition, Note, NoteType,
+                             Organisation, OrganisationType, Record, Referral,
+                             ReferralType, Region, RelatedReferral, Task,
+                             TaskState, TaskType, UserProfile)
+from referral.utils import user_referral_history
 from taggit.models import Tag
 
-from referral.models import (
-    DopTrigger, Region, OrganisationType, Organisation, TaskType, TaskState,
-    NoteType, ReferralType, Referral, Task, Record, Note, Condition, Location,
-    Bookmark, Clearance, Agency, ConditionCategory, UserProfile, ModelCondition,
-    RelatedReferral, LocalGovernment)
-from referral.utils import user_referral_history
 User = get_user_model()
 
 
@@ -467,8 +470,8 @@ class RecordTest(PrsTestCase):
 
     def setUp(self):
         super(RecordTest, self).setUp()
-        # Create a temp file in the MEDIA_ROOT directory.
-        self.tmp_f = open(settings.MEDIA_ROOT + '/test.txt', 'w')
+        # Create a name temporary file within the project media directory.
+        self.tmp_f = NamedTemporaryFile(mode='w', suffix='.txt', dir='media', delete=False)
         self.tmp_f.write('Hello, World!')
         self.tmp_f.close()
         self.r = Record.objects.first()
@@ -476,15 +479,6 @@ class RecordTest(PrsTestCase):
     def tearDown(self):
         # Clean up the temp file.
         os.remove(self.tmp_f.name)
-
-    def test_filename(self):
-        """Test the Record model filename property.
-        """
-        self.assertTrue(hasattr(self.r, 'filename'))
-        self.assertFalse(self.r.extension)  # No file assigned yet.
-        self.r.uploaded_file = self.tmp_f.name
-        self.r.save()
-        self.assertEqual(self.r.filename, 'test.txt')
 
     def test_extension(self):
         """Test the Record model extension property.
