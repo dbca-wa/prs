@@ -8,7 +8,7 @@ def template_context(request):
         'site_title': settings.APPLICATION_TITLE,
         'site_acronym': settings.APPLICATION_ACRONYM,
         'version_no': settings.APPLICATION_VERSION_NO,
-        'prs_geoserver_url': settings.PRS_GEOSERVER_URL,
+        'kmi_geoserver_url': settings.KMI_GEOSERVER_URL,
         'prs_layer_name': settings.PRS_LAYER_NAME,
         'mapproxy_url': settings.MAPPROXY_URL,
         'geocoder_url': settings.GEOCODER_URL,

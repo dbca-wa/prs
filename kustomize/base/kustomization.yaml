@@ -7,6 +7,3 @@ resources:
   - service.yaml
   - typesense.yaml
   - typesense_service.yaml
-  - geoserver_statefulset.yaml
-  - geoserver_headless.yaml
-  - geoserver_service.yaml

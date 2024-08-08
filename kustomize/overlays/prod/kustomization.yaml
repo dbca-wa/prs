@@ -8,7 +8,6 @@ resources:
   - ingress.yaml
   - pdb.yaml
   - typesense_pvc.yaml
-  - geoserver_pvc.yaml
 secretGenerator:
   - name: prs-env
     type: Opaque
@@ -25,9 +24,6 @@ patches:
   - path: service_patch.yaml
   - path: typesense_patch.yaml
   - path: typesense_service_patch.yaml
-  - path: geoserver_statefulset_patch.yaml
-  - path: geoserver_headless_patch.yaml
-  - path: geoserver_service_patch.yaml
 images:
   - name: ghcr.io/dbca-wa/prs
-    newTag: 2.5.53
+    newTag: 2.5.54

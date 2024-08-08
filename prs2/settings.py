@@ -1,13 +1,13 @@
+import os
+import sys
+import tomllib
+from pathlib import Path
+from zoneinfo import ZoneInfo
+
+import dj_database_url
 from dbca_utils.utils import env
 from django.core.exceptions import DisallowedHost
 from django.db.utils import OperationalError
-import dj_database_url
-import os
-from pathlib import Path
-import sys
-import tomllib
-from zoneinfo import ZoneInfo
-
 
 # Project paths
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -39,6 +39,9 @@ LOCAL_MEDIA_STORAGE = env('LOCAL_MEDIA_STORAGE', False)
 if LOCAL_MEDIA_STORAGE:
     DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+    # Ensure that the local media directory exists.
+    if not os.path.exists(MEDIA_ROOT):
+        os.makedirs(MEDIA_ROOT)
 else:
     DEFAULT_FILE_STORAGE = 'storages.backends.azure_storage.AzureStorage'
     AZURE_ACCOUNT_NAME = env('AZURE_ACCOUNT_NAME', 'name')
@@ -47,7 +50,7 @@ else:
     AZURE_URL_EXPIRATION_SECS = env('AZURE_URL_EXPIRATION_SECS', 3600)  # Default one hour.
 
 # PRS may deploy its own instance of Geoserver.
-PRS_GEOSERVER_URL = env('PRS_GEOSERVER_URL', '')
+KMI_GEOSERVER_URL = env('KMI_GEOSERVER_URL', '')
 PRS_LAYER_NAME = env('PRS_LAYER_NAME', '')
 MAPPROXY_URL = env('MAPPROXY_URL', '')
 GEOCODER_URL = env('GEOCODER_URL', '')

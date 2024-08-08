@@ -29,7 +29,7 @@ const cadastre = L.tileLayer.wms(mapproxy_url, {
   zoomOffset: -2,
   minZoom: 13,
 });
-const prsLocations = L.tileLayer.wms(prs_geoserver_url, {
+const prsLocations = L.tileLayer.wms(kmi_geoserver_url, {
   layers: prs_layer_name,
   format: 'image/png',
   transparent: true,
