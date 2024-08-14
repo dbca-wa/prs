@@ -30,14 +30,3 @@ spec:
     matchLabels:
       app: prs-typesense
       variant: uat
----
-apiVersion: policy/v1
-kind: PodDisruptionBudget
-metadata:
-  name: prs-geoserver-pdb
-spec:
-  minAvailable: 0
-  selector:
-    matchLabels:
-      app: prs-geoserver
-      variant: uat
