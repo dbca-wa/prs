@@ -622,7 +622,10 @@ class Referral(ReferralBaseModel):
         xml = "referral/{}.xml".format(template)
         return render_to_string(
             xml,
-            {"REFERRAL_PK": self.pk, "KMI_GEOSERVER_URL": settings.KMI_GEOSERVER_URL},
+            {
+                "REFERRAL_PK": self.pk,
+                "KMI_GEOSERVER_URL": f"{settings.KMI_GEOSERVER_URL}/ows",
+            },
         )
 
     def generate_gpkg(self):
