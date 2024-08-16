@@ -79,7 +79,7 @@ Note: a message broker service is required for Celery tasks to run; Redis
 is typically used for this purpose. The `CELERY_BROKER_URL` env variable
 should contain the broker URL value. Reference:
 
-https://docs.celeryq.dev/en/stable/getting-started/backends-and-brokers/redis.html#broker-redis
+<https://docs.celeryq.dev/en/stable/getting-started/backends-and-brokers/redis.html#broker-redis>
 
 # Testing
 
@@ -106,11 +106,11 @@ To build a new Docker image from the `Dockerfile`:
 
 This project includes the following pre-commit hooks:
 
-- TruffleHog: https://docs.trufflesecurity.com/docs/scanning-git/precommit-hooks/
+- TruffleHog: <https://docs.trufflesecurity.com/docs/scanning-git/precommit-hooks/>
 
 Pre-commit hooks may have additional system dependencies to run. Optionally
 install pre-commit hooks locally like so:
 
     poetry run pre-commit install
 
-Reference: https://pre-commit.com/
+Reference: <https://pre-commit.com/>

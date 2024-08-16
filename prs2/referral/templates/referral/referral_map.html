@@ -38,7 +38,8 @@
 <script>
     // Remove the lot filter control.
     lotFilter.remove();
-    // Change default layers.
+    // Change default display layers.
+    map.removeLayer(landgateOrthomosaic);
     map.addLayer(waCoast);
     map.removeLayer(cadastre);
     map.addLayer(prsLocations)

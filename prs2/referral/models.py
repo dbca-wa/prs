@@ -21,8 +21,10 @@ from geojson import Feature, FeatureCollection, Polygon, dumps
 from indexer.utils import typesense_client
 from lxml.html import fromstring
 from lxml_html_clean import clean_html
-from pygeopkg.conversion.to_geopkg_geom import (make_gpkg_geom_header,
-                                                point_lists_to_gpkg_polygon)
+from pygeopkg.conversion.to_geopkg_geom import (
+    make_gpkg_geom_header,
+    point_lists_to_gpkg_polygon,
+)
 from pygeopkg.core.field import Field
 from pygeopkg.core.geopkg import GeoPackage
 from pygeopkg.core.srs import SRS
@@ -30,8 +32,7 @@ from pygeopkg.shared.constants import SHAPE
 from pygeopkg.shared.enumeration import GeometryType, SQLFieldTypes
 from referral.base import ActiveModel, Audit
 from referral.tasks import index_object
-from referral.utils import (as_row_subtract_referral_cell, dewordify_text,
-                            smart_truncate)
+from referral.utils import as_row_subtract_referral_cell, dewordify_text, smart_truncate
 from taggit.managers import TaggableManager
 from typesense.exceptions import ObjectNotFound
 from unidecode import unidecode
@@ -51,8 +52,8 @@ AU_STATE_CHOICES = (
 
 
 class ReferralLookup(ActiveModel, Audit):
-    """Abstract model type for lookup-table objects.
-    """
+    """Abstract model type for lookup-table objects."""
+
     name = models.CharField(max_length=200)
     description = models.CharField(
         max_length=200, null=True, blank=True, validators=[MaxLengthValidator(200)]
@@ -73,8 +74,7 @@ class ReferralLookup(ActiveModel, Audit):
         return self.name
 
     def save(self, force_insert=False, force_update=False, *args, **kwargs):
-        """Overide save() to cleanse text input fields.
-        """
+        """Overide save() to cleanse text input fields."""
         self.name = unidecode(self.name)
         if self.description:
             self.description = unidecode(self.description)
@@ -94,11 +94,9 @@ class ReferralLookup(ActiveModel, Audit):
         Returns a string of HTML that renders the object details as table row cells.
         Remember to enclose output of this function in <tr> tags.
         """
-        template = (
-            """<td><a href="{url}">{name}</a></td>
+        template = """<td><a href="{url}">{name}</a></td>
             <td>{description}</td>
             <td><span style="display:none">{modified_ts} </span>{modified}</td>"""
-        )
         d = copy(self.__dict__)
         d["url"] = self.get_absolute_url()
         if self.description:
@@ -141,14 +139,15 @@ class Region(ReferralLookup):
     """
     Lookup table of DPaW regions.
     """
+
     region_mpoly = models.MultiPolygonField(
         srid=4283, null=True, blank=True, help_text="Optional."
     )
 
 
 class LocalGovernment(ReferralLookup):
-    """Lookup table of Local Government Authority name.
-    """
+    """Lookup table of Local Government Authority name."""
+
     pass
 
 
@@ -156,6 +155,7 @@ class OrganisationType(ReferralLookup):
     """
     Lookup table for Organistion types.
     """
+
     pass
 
 
@@ -163,6 +163,7 @@ class Organisation(ReferralLookup):
     """
     Lookup table of Organisations that send planning referrals to the department.
     """
+
     type = models.ForeignKey(
         OrganisationType, on_delete=models.PROTECT, help_text="The organisation type."
     )
@@ -256,6 +257,7 @@ class TaskState(ReferralLookup):
     * not ongoing and an assessment (e.g. Response with advice, Response with
       objection)
     """
+
     task_type = models.ForeignKey(
         "TaskType",
         on_delete=models.PROTECT,
@@ -281,6 +283,7 @@ class TaskType(ReferralLookup):
     something to fall back on. This is an arbitrary number which can be changed
     for each type.
     """
+
     initial_state = models.ForeignKey(
         TaskState,
         on_delete=models.PROTECT,
@@ -299,6 +302,7 @@ class ReferralType(ReferralLookup):
     database.
     Having a "default" task type is not essential, though highly recommended.
     """
+
     initial_task = models.ForeignKey(
         TaskType,
         on_delete=models.PROTECT,
@@ -314,6 +318,7 @@ class NoteType(ReferralLookup):
     Lookup field for Note model type - e.g. email, letter, conversation. Not meant
     to be accessed anywhere but the Admin site.
     """
+
     icon = models.ImageField(upload_to="img", blank=True, null=True)
 
 
@@ -321,6 +326,7 @@ class Agency(ReferralLookup):
     """
     Lookup field to distinguish different govt Agencies by acronym (DER, DPaW, etc.)
     """
+
     code = models.CharField(max_length=16)
 
     class Meta(ReferralLookup.Meta):
@@ -331,6 +337,7 @@ class ReferralBaseModel(ActiveModel, Audit):
     """
     Base abstract model class for object types that are not lookups.
     """
+
     headers = None
     tools_template = None
 
@@ -356,6 +363,7 @@ class Referral(ReferralBaseModel):
     """
     A planning referral which has been sent to the department for comment.
     """
+
     type = models.ForeignKey(
         ReferralType,
         on_delete=models.PROTECT,
@@ -459,13 +467,15 @@ class Referral(ReferralBaseModel):
             self.address = unidecode(self.address)
         # We need a PK to call self.location_set
         if self.pk and self.location_set.current().exists():
-            collection = GeometryCollection([l.poly for l in self.location_set.current() if l.poly])
+            collection = GeometryCollection(
+                [l.poly for l in self.location_set.current() if l.poly]
+            )
             self.point = collection.centroid
         super().save(force_insert, force_update)
 
         # Index the referral.
         try:
-            index_object.delay_on_commit(pk=self.pk, model='referral')
+            index_object.delay_on_commit(pk=self.pk, model="referral")
         except Exception as ex:
             # Indexing failure should never block or return an exception. Log the error to stdout.
             LOGGER.exception(f"Error during indexing referral {self}")
@@ -493,20 +503,17 @@ class Referral(ReferralBaseModel):
 
     @property
     def has_location(self):
-        """Returns True if Locations exist on this referral, else False.
-        """
+        """Returns True if Locations exist on this referral, else False."""
         return self.location_set.current().exists()
 
     @property
     def has_condition(self):
-        """Returns True if Conditions exist on this referral, else False.
-        """
+        """Returns True if Conditions exist on this referral, else False."""
         return self.condition_set.current().exists()
 
     @property
     def has_proposed_condition(self):
-        """ Checks if Task has 'Proposed Condition' text
-        """
+        """Checks if Task has 'Proposed Condition' text"""
         return self.has_condition and any(
             c.proposed_condition for c in self.condition_set.current()
         )
@@ -604,7 +611,7 @@ class Referral(ReferralBaseModel):
             return True
         return False
 
-    def generate_qgis_layer(self, template='qgis_layer_v2-8'):
+    def generate_qgis_layer(self, template="qgis_layer_v2-8"):
         """Generates and returns the content for a QGIS layer definition.
         Optionally specify the name of the template (defaults to the v2.8
         compatible template).
@@ -612,51 +619,70 @@ class Referral(ReferralBaseModel):
         # Only return a value for a referral with child locations.
         if not self.location_set.current().filter(poly__isnull=False).exists():
             return None
-        xml = 'referral/{}.xml'.format(template)
-        return render_to_string(xml, {
-            'REFERRAL_PK': self.pk,
-            'KMI_GEOSERVER_URL': settings.KMI_GEOSERVER_URL
-        })
+        xml = "referral/{}.xml".format(template)
+        return render_to_string(
+            xml,
+            {
+                "REFERRAL_PK": self.pk,
+                "KMI_GEOSERVER_URL": f"{settings.KMI_GEOSERVER_URL}/ows",
+            },
+        )
 
     def generate_gpkg(self):
-        """Generates and returns a Geopackage file-like object.
-        """
-        path = '/tmp/prs_referral_{}.gpkg'.format(self.pk)
-        gpkg = GeoPackage.create(path, flavor='EPSG')
+        """Generates and returns a Geopackage file-like object."""
+        path = "/tmp/prs_referral_{}.gpkg".format(self.pk)
+        gpkg = GeoPackage.create(path, flavor="EPSG")
         srs_wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]'
         srs = SRS("WGS 84", "EPSG", 4326, srs_wkt)
         fields = (
             # Field('modified', SQLFieldTypes.datetime),  # datetime caused the create_feature_class step to throw an exception.
-            Field('referral', SQLFieldTypes.integer),
-            Field('referral_type', SQLFieldTypes.text),
-            Field('referral_reference', SQLFieldTypes.text),
-            Field('referring_org', SQLFieldTypes.text),
+            Field("referral", SQLFieldTypes.integer),
+            Field("referral_type", SQLFieldTypes.text),
+            Field("referral_reference", SQLFieldTypes.text),
+            Field("referring_org", SQLFieldTypes.text),
         )
-        fc = gpkg.create_feature_class('prs_referrals', srs, fields=fields, shape_type=GeometryType.polygon)
-        field_names = [SHAPE, 'referral', 'referral_type', 'referral_reference', 'referring_org']
+        fc = gpkg.create_feature_class(
+            "prs_referrals", srs, fields=fields, shape_type=GeometryType.polygon
+        )
+        field_names = [
+            SHAPE,
+            "referral",
+            "referral_type",
+            "referral_reference",
+            "referring_org",
+        ]
         rows = []
         # We have to use the point_lists_to_gpkg_polygon function to insert WKB into the geopkg.
         hdr = make_gpkg_geom_header(4326)
         for loc in self.location_set.current().filter(poly__isnull=False):
             gpkg_wkb = point_lists_to_gpkg_polygon(hdr, loc.poly.coords)
-            rows.append((gpkg_wkb, loc.referral.pk, loc.referral.type.name, loc.referral.reference, loc.referral.referring_org.name))
+            rows.append(
+                (
+                    gpkg_wkb,
+                    loc.referral.pk,
+                    loc.referral.type.name,
+                    loc.referral.reference,
+                    loc.referral.referring_org.name,
+                )
+            )
         fc.insert_rows(field_names, rows)
-        return open(path, 'rb')  # Return the gpkg file object.
+        return open(path, "rb")  # Return the gpkg file object.
 
     def generate_geojson(self):
-        """Generates and returns GeoJSON.
-        """
+        """Generates and returns GeoJSON."""
         features = []
         for loc in self.location_set.current().filter(poly__isnull=False):
-            features.append(Feature(
-                geometry=Polygon(loc.poly.coords),
-                properties={
-                    'referral': loc.referral.pk,
-                    'referral_type': loc.referral.type.name,
-                    'referral_reference': loc.referral.reference,
-                    'referring_org': loc.referral.referring_org.name,
-                },
-            ))
+            features.append(
+                Feature(
+                    geometry=Polygon(loc.poly.coords),
+                    properties={
+                        "referral": loc.referral.pk,
+                        "referral_type": loc.referral.type.name,
+                        "referral_reference": loc.referral.reference,
+                        "referring_org": loc.referral.referring_org.name,
+                    },
+                )
+            )
         return dumps(FeatureCollection(features))
 
 
@@ -666,6 +692,7 @@ class RelatedReferral(models.Model):
     Trying to create this relationship without the intermediate class generated
     some really odd recursion errors.
     """
+
     from_referral = models.ForeignKey(
         Referral, on_delete=models.PROTECT, related_name="from_referral"
     )
@@ -685,6 +712,7 @@ class Task(ReferralBaseModel):
     Tasks that must be completed by users. Added against individual Referrals.
     This is how we record and manage our workflow.
     """
+
     type = models.ForeignKey(
         TaskType,
         on_delete=models.PROTECT,
@@ -758,15 +786,14 @@ class Task(ReferralBaseModel):
         ordering = ["-pk", "due_date"]
 
     def save(self, force_insert=False, force_update=False, *args, **kwargs):
-        """Overide save() to cleanse text input to the description field.
-        """
+        """Overide save() to cleanse text input to the description field."""
         if self.description:
             self.description = unidecode(self.description)
         super().save(force_insert, force_update)
 
         # Index the task.
         try:
-            index_object.delay_on_commit(pk=self.pk, model='task')
+            index_object.delay_on_commit(pk=self.pk, model="task")
         except Exception as ex:
             # Indexing failure should never block or return an exception. Log the error to stdout.
             LOGGER.exception(f"Error during indexing task {self}")
@@ -824,19 +851,13 @@ class Task(ReferralBaseModel):
         """
         d = copy(self.__dict__)
         if self.state.name == "Stopped":
-            template = (
-                """<td><a href="{start_url}" title="Start"><i class="fa fa-play"></i></a></td>"""
-            )
+            template = """<td><a href="{start_url}" title="Start"><i class="fa fa-play"></i></a></td>"""
             d["start_url"] = reverse(
                 "task_action", kwargs={"pk": self.pk, "action": "start"}
             )
         elif not self.complete_date:
-            template = (
-                """<td><a href="{edit_url}" title="Edit"><i class="far fa-edit"></i></a>"""
-            )
-            template += (
-                """ <a href="{complete_url}" title="Complete"><i class="far fa-check-circle"></i></a>"""
-            )
+            template = """<td><a href="{edit_url}" title="Edit"><i class="far fa-edit"></i></a>"""
+            template += """ <a href="{complete_url}" title="Complete"><i class="far fa-check-circle"></i></a>"""
             template += """
                 <a href="{stop_url}" title="Stop"><i class="fa fa-stop"></i></a>
                 <a href="{reassign_url}" title="Reassign"><i class="fa fa-share"></i></a>
@@ -955,8 +976,7 @@ class Task(ReferralBaseModel):
         return mark_safe(template.format(**d))
 
     def as_row_for_index_print(self):
-        """As above, minus the column for icons.
-        """
+        """As above, minus the column for icons."""
         template = """<td>{type}</td>"""
         # If the task referral has an address, combine it into the next cell.
         if self.referral.address:
@@ -1055,9 +1075,7 @@ class Task(ReferralBaseModel):
             been assigned a PRS task ({0}) by the sending user.\n
             This task is attached to referral ID {1}.\nThe referral reference is: {2}.\n
             The referral address is: {3}\n
-            """.format(
-            self.pk, self.referral.pk, self.referral.reference, address
-        )
+            """.format(self.pk, self.referral.pk, self.referral.reference, address)
         html_content = """<p>This is an automated message to let you know that you have
             been assigned a PRS task ({0}) by the sending user.</p>
             <p>The task is attached to referral {1}, located at this URL:</p>
@@ -1081,6 +1099,7 @@ class Record(ReferralBaseModel):
     """A record is a reference to an electronic file, and is associated with a
     Referral.
     """
+
     name = models.CharField(
         max_length=512,
         help_text="The name/description of the record (max 512 characters).",
@@ -1112,33 +1131,33 @@ class Record(ReferralBaseModel):
     tools_template = "referral/record_tools.html"
 
     def __str__(self):
-        return 'Record {} ({})'.format(self.pk, smart_truncate(self.name, length=256))
+        return "Record {} ({})".format(self.pk, smart_truncate(self.name, length=256))
 
     def save(self, force_insert=False, force_update=False, *args, **kwargs):
-        """Overide save() to cleanse text input fields.
-        """
-        self.name = unidecode(self.name).replace('\r\n', '').strip()
+        """Overide save() to cleanse text input fields."""
+        self.name = unidecode(self.name).replace("\r\n", "").strip()
         if self.description:
             self.description = unidecode(self.description)
 
         # If the file is a .MSG we take the sent date of the email and use it for order_date.
         if self.extension == "MSG":
             msg = Message(self.uploaded_file)
-            if msg.date and not self.order_date:  # Don't override any existing order_date.
+            if (
+                msg.date and not self.order_date
+            ):  # Don't override any existing order_date.
                 self.order_date = msg.date
 
         super().save(force_insert, force_update)
 
         # Index the record.
         try:
-            index_object.delay_on_commit(pk=self.pk, model='record')
+            index_object.delay_on_commit(pk=self.pk, model="record")
         except Exception as ex:
             # Indexing failure should never block or return an exception. Log the error to stdout.
             LOGGER.exception(f"Error during indexing record {self}")
 
     def get_indexed_document(self, client=None):
-        """Query Typesense for any indexed document of this record.
-        """
+        """Query Typesense for any indexed document of this record."""
         if not self.uploaded_file:
             return None
 
@@ -1146,7 +1165,7 @@ class Record(ReferralBaseModel):
             client = typesense_client()
 
         try:
-            document = client.collections['records'].documents[self.pk].retrieve()
+            document = client.collections["records"].documents[self.pk].retrieve()
             return document
         except ObjectNotFound:
             # The uploaded file may not be indexed.
@@ -1245,8 +1264,7 @@ class Record(ReferralBaseModel):
         return mark_safe(template.format(**d))
 
     def as_row_minus_referral(self):
-        """Removes the HTML cell containing the parent referral details.
-        """
+        """Removes the HTML cell containing the parent referral details."""
         return as_row_subtract_referral_cell(self.as_row())
 
     def as_tbody(self):
@@ -1301,6 +1319,7 @@ class Note(ReferralBaseModel):
     A note or comment about a referral. These notes are meant to supplement
     formal record-keeping procedures only. HTML-formatted text is allowed.
     """
+
     referral = models.ForeignKey(Referral, on_delete=models.PROTECT)
     type = models.ForeignKey(
         NoteType,
@@ -1336,13 +1355,14 @@ class Note(ReferralBaseModel):
         if self.note_html:
             self.note_html = clean_html(self.note_html)
         # Strip HTML tags and save as plain text.
-        t = fromstring(self.note_html)
-        self.note = t.text_content().strip()
+        if self.note_html:
+            t = fromstring(self.note_html)
+            self.note = t.text_content().strip()
         super().save(force_insert, force_update)
 
         # Index the note.
         try:
-            index_object.delay_on_commit(pk=self.pk, model='note')
+            index_object.delay_on_commit(pk=self.pk, model="note")
         except Exception as ex:
             # Indexing failure should never block or return an exception. Log the error to stdout.
             LOGGER.exception(f"Error during indexing note {self}")
@@ -1404,8 +1424,7 @@ class Note(ReferralBaseModel):
         return mark_safe(template.format(**d))
 
     def as_row_minus_referral(self):
-        """Removes the HTML cell containing the parent referral details.
-        """
+        """Removes the HTML cell containing the parent referral details."""
         return as_row_subtract_referral_cell(self.as_row())
 
     def as_tbody(self):
@@ -1435,16 +1454,15 @@ class Note(ReferralBaseModel):
 
 
 class ConditionCategory(ReferralLookup):
-    """Lookup table for Condition categories.
-    """
+    """Lookup table for Condition categories."""
 
     class Meta(ReferralLookup.Meta):
         verbose_name_plural = "condition categories"
 
 
 class ModelCondition(ReferralBaseModel):
-    """Represents a 'model condition' with standard text.
-    """
+    """Represents a 'model condition' with standard text."""
+
     category = models.ForeignKey(
         ConditionCategory, on_delete=models.PROTECT, blank=True, null=True
     )
@@ -1463,6 +1481,7 @@ class Condition(ReferralBaseModel):
     """Model type to handle proposed & approved conditions on referrals.
     Note that referral may be blank; this denotes a "standard" model condition.
     """
+
     referral = models.ForeignKey(
         Referral, on_delete=models.PROTECT, blank=True, null=True
     )
@@ -1532,9 +1551,7 @@ class Condition(ReferralBaseModel):
         if self.proposed_condition_html:
             self.proposed_condition_html = dewordify_text(self.proposed_condition_html)
             if self.proposed_condition_html:
-                self.proposed_condition_html = clean_html(
-                    self.proposed_condition_html
-                )
+                self.proposed_condition_html = clean_html(self.proposed_condition_html)
             t = fromstring(self.proposed_condition_html)
             self.proposed_condition = t.text_content().strip()
         else:
@@ -1545,7 +1562,7 @@ class Condition(ReferralBaseModel):
         # Index the condition.
         if self.referral:
             try:
-                index_object.delay_on_commit(pk=self.pk, model='condition')
+                index_object.delay_on_commit(pk=self.pk, model="condition")
             except Exception as ex:
                 LOGGER.exception(f"Error during indexing condition {self}")
 
@@ -1647,8 +1664,7 @@ class Condition(ReferralBaseModel):
         return mark_safe(template.format(**d).strip())
 
     def add_clearance(self, task, deposited_plan=None):
-        """Get or create a Clearance object on this Condition.
-        """
+        """Get or create a Clearance object on this Condition."""
         clearance, created = Clearance.objects.get_or_create(
             condition=self, task=task, deposited_plan=deposited_plan
         )
@@ -1678,6 +1694,7 @@ class Clearance(models.Model):
     """
     Intermediate class for relationships between Condition and Task objects.
     """
+
     condition = models.ForeignKey(Condition, on_delete=models.PROTECT)
     task = models.ForeignKey(Task, on_delete=models.PROTECT)
     date_created = models.DateField(auto_now_add=True)
@@ -1722,7 +1739,9 @@ class Clearance(models.Model):
             <td class="referral-id-cell"><a href="{referral_url}">{referral}</a></td>"""
         d = copy(self.__dict__)
         d["url"] = self.get_absolute_url()
-        d["identifier"] = escape(self.condition.identifier) if self.condition.identifier else ""
+        d["identifier"] = (
+            escape(self.condition.identifier) if self.condition.identifier else ""
+        )
         d["condition"] = escape(smart_truncate(self.condition.condition, length=400))
         # Condition "category" is actually an optional single tag.
         if self.condition.tags.exists():
@@ -1730,7 +1749,9 @@ class Clearance(models.Model):
         else:
             d["category"] = ""
         if self.task.description:
-            d["task"] = escape(smart_truncate(unidecode(self.task.description), length=400))
+            d["task"] = escape(
+                smart_truncate(unidecode(self.task.description), length=400)
+            )
         else:
             d["task"] = self.task.type.name
         d["deposited_plan"] = escape(self.deposited_plan) if self.deposited_plan else ""
@@ -1780,6 +1801,7 @@ class Location(ReferralBaseModel):
     """
     A physical location that is associated with a single referral.
     """
+
     address_no = models.IntegerField(
         null=True, blank=True, verbose_name="address number"
     )
@@ -1888,8 +1910,7 @@ class Location(ReferralBaseModel):
         return mark_safe(template.format(**d))
 
     def as_row_minus_referral(self):
-        """Removes the HTML cell containing the parent referral details.
-        """
+        """Removes the HTML cell containing the parent referral details."""
         return as_row_subtract_referral_cell(self.as_row())
 
     def as_tbody(self):
@@ -1911,8 +1932,7 @@ class Location(ReferralBaseModel):
         return mark_safe(template.format(**d).strip())
 
     def get_regions_intersected(self):
-        """Returns a list of Regions whose geometry intersects this Location.
-        """
+        """Returns a list of Regions whose geometry intersects this Location."""
         regions = []
         if not self.poly:
             return regions
@@ -1927,6 +1947,7 @@ class Bookmark(ReferralBaseModel):
     """
     Users are able to bookmark referrals for faster access.
     """
+
     referral = models.ForeignKey(Referral, on_delete=models.PROTECT)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -1943,8 +1964,7 @@ class Bookmark(ReferralBaseModel):
     headers = ["Referral ID", "Bookmark description", "Actions"]
 
     def save(self, force_insert=False, force_update=False, *args, **kwargs):
-        """Overide save() to cleanse text input to the description field.
-        """
+        """Overide save() to cleanse text input to the description field."""
         if self.description:
             self.description = unidecode(self.description)
         super().save(force_insert, force_update)
@@ -1987,6 +2007,7 @@ class UserProfile(models.Model):
     """
     An extension of the Django auth model, to add additional fields to each User
     """
+
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     agency = models.ForeignKey(Agency, on_delete=models.PROTECT, blank=True, null=True)
     # Referral history is a list of 2-tuples: (referral pk, datetime)
@@ -2013,14 +2034,15 @@ class UserProfile(models.Model):
         return None
 
     def is_prs_user(self):
-        """Returns group membership of the PRS user group.
-        """
+        """Returns group membership of the PRS user group."""
         return self.user.groups.filter(name=settings.PRS_USER_GROUP).exists()
 
     def is_power_user(self):
-        """Returns group membership of the PRS power user group (or is_superuser==True).
-        """
-        return self.user.is_superuser or self.user.groups.filter(name=settings.PRS_POWER_USER_GROUP).exists()
+        """Returns group membership of the PRS power user group (or is_superuser==True)."""
+        return (
+            self.user.is_superuser
+            or self.user.groups.filter(name=settings.PRS_POWER_USER_GROUP).exists()
+        )
 
 
 def create_user_profile(**kwargs):
