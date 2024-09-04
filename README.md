@@ -11,9 +11,13 @@ environment. With Poetry installed, change into the project directory and run:
 
     poetry install
 
-To run Python commands in the virtualenv, thereafter run them like so:
+Activate the virtualenv like so:
 
-    poetry run python manage.py
+    poetry shell
+
+To run Python commands in the activated virtualenv, thereafter run them like so:
+
+    python manage.py
 
 Manage new or updating project dependencies with Poetry also, like so:
 
@@ -65,15 +69,15 @@ Credentials for Azure should be defined in the following environment variables:
 
 Use `runserver` to run a local copy of the application:
 
-    poetry run python manage.py runserver 0:8080
+    python manage.py runserver 0:8080
 
 Run console commands manually:
 
-    poetry run python manage.py shell_plus
+    python manage.py shell_plus
 
 Run a single Celery worker alongside the local webserver to test indexing:
 
-    poetry run celery --app prs2 worker --loglevel INFO --events --without-heartbeat --without-gossip --without-mingle
+    celery --app prs2 worker --loglevel INFO --events --without-heartbeat --without-gossip --without-mingle
 
 Note: a message broker service is required for Celery tasks to run; Redis
 is typically used for this purpose. The `CELERY_BROKER_URL` env variable
@@ -85,16 +89,16 @@ should contain the broker URL value. Reference:
 
 Run unit tests as follows:
 
-    poetry run python manage.py test --keepdb -v2 --settings prs2.test-settings
+    python manage.py test --keepdb -v2 --settings prs2.test-settings
 
 To run tests for e.g. models only:
 
-    poetry run python manage.py test prs2.referral.test_models --keepdb -v2 --settings prs2.test-settings
+    python manage.py test prs2.referral.test_models --keepdb -v2 --settings prs2.test-settings
 
 To obtain coverage reports:
 
-    poetry run coverage run --source='.' manage.py test --keepdb -v2 --settings prs2.test-settings
-    poetry run coverage report -m
+    coverage run --source='.' manage.py test --keepdb -v2 --settings prs2.test-settings
+    coverage report -m
 
 # Docker image
 
@@ -111,6 +115,6 @@ This project includes the following pre-commit hooks:
 Pre-commit hooks may have additional system dependencies to run. Optionally
 install pre-commit hooks locally like so:
 
-    poetry run pre-commit install
+    pre-commit install
 
 Reference: <https://pre-commit.com/>
