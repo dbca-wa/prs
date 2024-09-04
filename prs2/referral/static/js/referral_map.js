@@ -29,20 +29,26 @@ const waCoast = L.tileLayer(
 
 // Define overlay tile layers.
 // Cadastre uses KB as the source, not KMI.
-const cadastre = L.tileLayer.wms(mapproxy_url, {
-  layers: 'dbca-cadastre',
-  format: 'image/png',
-  transparent: true,
-  opacity: 0.75,
-  minZoom: 13,
-});
+const cadastre = L.tileLayer.wms(
+  mapproxy_url,
+  {
+    layers: 'dbca-cadastre',
+    format: 'image/png',
+    transparent: true,
+    opacity: 0.75,
+    minZoom: 13,
+  }
+);
 // PRS uses WMS, being a "live" layer.
-const prsLocations = L.tileLayer.wms(kmi_geoserver_url + "/ows", {
-  layers: prs_layer_name,
-  format: 'image/png',
-  transparent: true,
-  opacity: 0.75,
-});
+const prsLocations = L.tileLayer.wms(
+  kmi_geoserver_url + "/ows",
+  {
+    layers: prs_layer_name,
+    format: 'image/png',
+    transparent: true,
+    opacity: 0.75,
+  }
+);
 const dbcaRegions = L.tileLayer(
   geoserver_wmts_url_overlay + "&layer=cddp:dbca_regions",
   {
@@ -55,6 +61,7 @@ const dbcaTenure = L.tileLayer(
   {
     tileSize: 1024,
     zoomOffset: -2,
+    opacity: 0.75,
   },
 );
 const regionalParks = L.tileLayer(
@@ -76,6 +83,7 @@ const ucl = L.tileLayer(
   {
     tileSize: 1024,
     zoomOffset: -2,
+    opacity: 0.75,
   },
 );
 const lgaBoundaries = L.tileLayer(
