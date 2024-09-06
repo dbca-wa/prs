@@ -13,7 +13,7 @@ const landgateOrthomosaic = L.tileLayer(
   },
 );
 const mapboxStreets = L.tileLayer(
-  geoserver_wmts_url_base + "&layer=dbca:mapbox-streets",
+  geoserver_wmts_url_base + "&layer=public:mapbox-streets",
   {
     tileSize: 1024,
     zoomOffset: -2,
@@ -50,7 +50,7 @@ const prsLocations = L.tileLayer.wms(
   }
 );
 const dbcaRegions = L.tileLayer(
-  geoserver_wmts_url_overlay + "&layer=cddp:dbca_regions",
+  geoserver_wmts_url_overlay + "&layer=cddp:kaartdijin-boodja-public_CPT_DBCA_REGIONS",
   {
     tileSize: 1024,
     zoomOffset: -2,
