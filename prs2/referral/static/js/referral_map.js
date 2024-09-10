@@ -1,56 +1,102 @@
 "use strict";
 // NOTE: some global constants are set in the base template.
-const geoserver_wmts_url = kmi_geoserver_url + "/gwc/service/wmts?service=WMTS&request=GetTile&version=1.0.0&tilematrixset=mercator&tilematrix=mercator:{z}&tilecol={x}&tilerow={y}&format=image/png"
+const geoserver_wmts_url = kmi_geoserver_url + "/gwc/service/wmts?service=WMTS&request=GetTile&version=1.0.0&tilematrixset=gda94&tilematrix=gda94:{z}&tilecol={x}&tilerow={y}";
+const geoserver_wmts_url_base = geoserver_wmts_url + "&format=image/jpeg";
+const geoserver_wmts_url_overlay = geoserver_wmts_url + "&format=image/png";
 
 // Define baselayer tile layers.
 const landgateOrthomosaic = L.tileLayer(
-  geoserver_wmts_url + "&layer=landgate:virtual_mosaic",
+  geoserver_wmts_url_base + "&layer=landgate:virtual_mosaic",
+  {
+    tileSize: 1024,
+    zoomOffset: -2,
+  },
 );
 const mapboxStreets = L.tileLayer(
-  geoserver_wmts_url + "&layer=dbca:mapbox-streets",
+  geoserver_wmts_url_base + "&layer=public:mapbox-streets",
+  {
+    tileSize: 1024,
+    zoomOffset: -2,
+  },
 );
 const waCoast = L.tileLayer(
-  geoserver_wmts_url + "&layer=public:wa_coast_pub",
+  geoserver_wmts_url_base + "&layer=public:wa_coast_pub",
+  {
+    tileSize: 1024,
+    zoomOffset: -2,
+  },
 );
 
 // Define overlay tile layers.
 // Cadastre uses KB as the source, not KMI.
-const cadastre = L.tileLayer.wms(mapproxy_url, {
-  layers: 'dbca-cadastre',
-  format: 'image/png',
-  transparent: true,
-  opacity: 0.75,
-  minZoom: 13,
-});
+const cadastre = L.tileLayer.wms(
+  mapproxy_url,
+  {
+    layers: 'dbca-cadastre',
+    format: 'image/png',
+    transparent: true,
+    opacity: 0.75,
+    minZoom: 13,
+  }
+);
 // PRS uses WMS, being a "live" layer.
-const prsLocations = L.tileLayer.wms(kmi_geoserver_url + "/ows", {
-  layers: prs_layer_name,
-  format: 'image/png',
-  transparent: true,
-  opacity: 0.75,
-});
+const prsLocations = L.tileLayer.wms(
+  kmi_geoserver_url + "/ows",
+  {
+    layers: prs_layer_name,
+    format: 'image/png',
+    transparent: true,
+    opacity: 0.75,
+  }
+);
 const dbcaRegions = L.tileLayer(
-  geoserver_wmts_url + "&layer=cddp:dbca_regions",
+  geoserver_wmts_url_overlay + "&layer=cddp:kaartdijin-boodja-public_CPT_DBCA_REGIONS",
+  {
+    tileSize: 1024,
+    zoomOffset: -2,
+  },
 );
 const dbcaTenure = L.tileLayer(
-  geoserver_wmts_url + "&layer=cddp:dbca_managed_tenure",
+  geoserver_wmts_url_overlay + "&layer=cddp:dbca_managed_tenure",
+  {
+    tileSize: 1024,
+    zoomOffset: -2,
+    opacity: 0.75,
+  },
 );
 const regionalParks = L.tileLayer(
-  geoserver_wmts_url + "&layer=cddp:regional_parks",
+  geoserver_wmts_url_overlay + "&layer=cddp:regional_parks",
+  {
+    tileSize: 1024,
+    zoomOffset: -2,
+  },
 );
 const swanCannDevContArea = L.tileLayer(
-  geoserver_wmts_url + "&layer=cddp:cpt_swan_cann_dev_cont_area",
+  geoserver_wmts_url_overlay + "&layer=cddp:cpt_swan_cann_dev_cont_area",
+  {
+    tileSize: 1024,
+    zoomOffset: -2,
+  },
 );
 const ucl = L.tileLayer(
-  geoserver_wmts_url + "&layer=cddp:unallocated_crown_land",
+  geoserver_wmts_url_overlay + "&layer=cddp:unallocated_crown_land",
+  {
+    tileSize: 1024,
+    zoomOffset: -2,
+    opacity: 0.75,
+  },
 );
 const lgaBoundaries = L.tileLayer(
-  geoserver_wmts_url + "&layer=cddp:local_gov_authority",
+  geoserver_wmts_url_overlay + "&layer=cddp:local_gov_authority",
+  {
+    tileSize: 1024,
+    zoomOffset: -2,
+  },
 );
 
 // Define map.
 var map = L.map('map', {
-  crs: L.CRS.EPSG3857,
+  crs: L.CRS.EPSG4326,  // WGS 84
   center: [-31.96, 115.87],
   zoom: 16,
   minZoom: 6,
