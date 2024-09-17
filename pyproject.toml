@@ -47,6 +47,13 @@ ipdb = "^0.13.13"
 pre-commit = "^3.8.0"
 coverage = "^7.5.4"
 
+[tool.ruff]
+line-length = 120
+indent-width = 4
+
+[tool.ruff.lint]
+ignore = ["E265", "E501", "E722"]
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
