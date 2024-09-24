@@ -3,7 +3,7 @@
 This project is the Department of Biodiversity, Conservation and Attractions
 [Planning Referral System](https://prs.dbca.wa.gov.au/) corporate application.
 
-# Installation
+## Installation
 
 The recommended way to set up this project for development is using
 [Poetry](https://python-poetry.org/docs/) to install and manage a virtual Python
@@ -23,9 +23,9 @@ Manage new or updating project dependencies with Poetry also, like so:
 
     poetry add newpackage==1.0
 
-# Environment variables
+## Environment variables
 
-This project uses **django-confy** to set environment variables (in a `.env` file).
+This project uses **python-dotenv** to set environment variables (in a `.env` file).
 The following variables are required for the project to run:
 
     DATABASE_URL="postgis://USER:PASSWORD@HOST:5432/DATABASE_NAME"
@@ -53,7 +53,7 @@ Variables below may also need to be defined in production (context-dependent):
     SLIP_PASSWORD="slip_password"
     SLIP_ESRI_FS_URL="https://wfs.slip.url.au/endpoint"
 
-# Media uploads
+## Media uploads
 
 By default, PRS assumes that user-uploaded media will be saved to Azure blob
 storage. To use local storage, set the environment variable `LOCAL_MEDIA_STORAGE=True`
@@ -65,7 +65,7 @@ Credentials for Azure should be defined in the following environment variables:
     AZURE_ACCOUNT_KEY=key
     AZURE_CONTAINER=container_name
 
-# Running
+## Running
 
 Use `runserver` to run a local copy of the application:
 
@@ -85,7 +85,7 @@ should contain the broker URL value. Reference:
 
 <https://docs.celeryq.dev/en/stable/getting-started/backends-and-brokers/redis.html#broker-redis>
 
-# Testing
+## Testing
 
 Run unit tests as follows:
 
@@ -100,13 +100,13 @@ To obtain coverage reports:
     coverage run --source='.' manage.py test --keepdb -v2 --settings prs2.test-settings
     coverage report -m
 
-# Docker image
+## Docker image
 
 To build a new Docker image from the `Dockerfile`:
 
     docker image build -t ghcr.io/dbca-wa/prs .
 
-# Pre-commit hooks
+## Pre-commit hooks
 
 This project includes the following pre-commit hooks:
 

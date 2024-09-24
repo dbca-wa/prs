@@ -1,13 +1,12 @@
-from django.db import connections
-from django.http import HttpResponse, HttpResponseServerError
 import logging
 
+from django.db import connections
+from django.http import HttpResponse, HttpResponseServerError
 
 LOGGER = logging.getLogger("django")
 
 
 class HealthCheckMiddleware(object):
-
     def __init__(self, get_response):
         self.get_response = get_response
 
@@ -20,8 +19,7 @@ class HealthCheckMiddleware(object):
         return self.get_response(request)
 
     def liveness(self, request):
-        """Returns that the server is alive.
-        """
+        """Returns that the server is alive."""
         return HttpResponse("OK")
 
     def readiness(self, request):
@@ -33,6 +31,7 @@ class HealthCheckMiddleware(object):
             cursor = connections["default"].cursor()
             cursor.execute("SELECT 1;")
             row = cursor.fetchone()
+            cursor.close()
             if row is None:
                 return HttpResponseServerError("Database: invalid response")
         except Exception as e:
@@ -43,12 +42,11 @@ class HealthCheckMiddleware(object):
 
 
 class PrsMiddleware(object):
-
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
         response = self.get_response(request)
         # Reference: http://www.gnuterrypratchett.com/
-        response['X-Clacks-Overhead'] = 'GNU Terry Pratchett'
+        response["X-Clacks-Overhead"] = "GNU Terry Pratchett"
         return response
