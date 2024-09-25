@@ -1,5 +1,10 @@
+import json
+import logging
+import re
 from copy import copy
-from datetime import datetime, date, timedelta
+from datetime import date, datetime, timedelta
+
+from dbca_utils.utils import env
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -10,82 +15,65 @@ from django.core.cache.utils import make_template_fragment_key
 from django.core.mail import EmailMultiAlternatives
 from django.core.paginator import Paginator
 from django.core.serializers import serialize
-from django.urls import reverse
-from django.db.models import Q, F
-from django.http import (
-    HttpResponse,
-    HttpResponseRedirect,
-    JsonResponse,
-    HttpResponseForbidden,
-    HttpResponseBadRequest,
-)
+from django.db.models import F, Q
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
-from django.views.generic import View, ListView, TemplateView, FormView
-import json
-import logging
-import re
-from taggit.models import Tag
-
+from django.views.generic import FormView, ListView, TemplateView, View
+from indexer.utils import typesense_client
+from referral.forms import (
+    ClearanceCreateForm,
+    IntersectingReferralForm,
+    LocationForm,
+    ReferralCreateForm,
+    TagReplaceForm,
+    TaskCancelForm,
+    TaskCompleteForm,
+    TaskCreateForm,
+    TaskForm,
+    TaskInheritForm,
+    TaskReassignForm,
+    TaskStartForm,
+    TaskStopForm,
+)
 from referral.models import (
-    Task,
-    Clearance,
-    Referral,
-    Condition,
-    Note,
-    Record,
-    Location,
-    Bookmark,
-    RelatedReferral,
-    TaskState,
-    Organisation,
-    TaskType,
     Agency,
+    Bookmark,
+    Clearance,
+    Condition,
+    Location,
+    Note,
+    Organisation,
+    Record,
+    Referral,
     ReferralType,
+    RelatedReferral,
+    Task,
+    TaskState,
+    TaskType,
 )
 from referral.utils import (
-    is_model_or_string,
     breadcrumbs_li,
-    smart_truncate,
-    user_task_history,
-    user_referral_history,
-    prs_user,
+    is_model_or_string,
     is_prs_power_user,
-    query_cadastre,
+    prs_user,
     query_caddy,
+    smart_truncate,
+    user_referral_history,
+    user_task_history,
+    wfs_getfeature,
 )
-from referral.forms import (
-    ReferralCreateForm,
-    TaskCreateForm,
-    ClearanceCreateForm,
-    LocationForm,
-    TaskForm,
-    TaskCompleteForm,
-    TaskStopForm,
-    TaskStartForm,
-    TaskReassignForm,
-    TaskCancelForm,
-    TaskInheritForm,
-    IntersectingReferralForm,
-    TagReplaceForm,
-)
-from referral.views_base import (
-    PrsObjectDetail,
-    PrsObjectList,
-    PrsObjectCreate,
-    PrsObjectUpdate,
-    PrsObjectDelete,
-)
-from indexer.utils import typesense_client
+from referral.views_base import PrsObjectCreate, PrsObjectDelete, PrsObjectDetail, PrsObjectList, PrsObjectUpdate
+from taggit.models import Tag
 
 LOGGER = logging.getLogger("prs")
 
 
 class SiteHome(LoginRequiredMixin, ListView):
-    """Site home page view. Returns an object list of tasks (ongoing or stopped).
-    """
+    """Site home page view. Returns an object list of tasks (ongoing or stopped)."""
 
     stopped_tasks = False
     printable = False
@@ -110,9 +98,7 @@ class SiteHome(LoginRequiredMixin, ListView):
         context["headers"] = copy(Task.headers_site_home)
         if not self.stopped_tasks:
             context["stopped_tasks_exist"] = (
-                Task.objects.current()
-                .filter(assigned_user=self.request.user, state__name="Stopped")
-                .exists()
+                Task.objects.current().filter(assigned_user=self.request.user, state__name="Stopped").exists()
             )
         # Printable view only: pop the last element from 'headers'
         if "print" in self.request.GET or self.printable:
@@ -123,8 +109,7 @@ class SiteHome(LoginRequiredMixin, ListView):
 
 
 class HelpPage(LoginRequiredMixin, TemplateView):
-    """Help page (static template view).
-    """
+    """Help page (static template view)."""
 
     template_name = "help_page.html"
 
@@ -161,11 +146,11 @@ class IndexSearch(LoginRequiredMixin, TemplateView):
             client = typesense_client()
             page = self.request.GET.get("page", 1)
             search_q = {
-                'q': self.request.GET["q"],
-                'sort_by': 'created:desc',
-                'num_typos': 0,
-                'page': page,
-                'per_page': 20,
+                "q": self.request.GET["q"],
+                "sort_by": "created:desc",
+                "num_typos": 0,
+                "page": page,
+                "per_page": 20,
             }
 
             if collection == "referrals":
@@ -196,57 +181,67 @@ class IndexSearch(LoginRequiredMixin, TemplateView):
                         # Replace underscores in search field names with spaces.
                         highlights.append((key.replace("_", " "), value["snippet"]))
                     hit["highlights"] = highlights
-                    context["search_result"].append({
-                        "object": Referral.objects.get(pk=hit["document"]["id"]),
-                        "highlights": highlights,
-                    })
+                    context["search_result"].append(
+                        {
+                            "object": Referral.objects.get(pk=hit["document"]["id"]),
+                            "highlights": highlights,
+                        }
+                    )
             elif collection == "records":
                 for hit in search_result["hits"]:
                     highlights = []
                     for key, value in hit["highlight"].items():
                         highlights.append((key.replace("_", " "), value["snippet"]))
                     hit["highlights"] = highlights
-                    context["search_result"].append({
-                        "object": Record.objects.get(pk=hit["document"]["id"]),
-                        "highlights": highlights,
-                    })
+                    context["search_result"].append(
+                        {
+                            "object": Record.objects.get(pk=hit["document"]["id"]),
+                            "highlights": highlights,
+                        }
+                    )
             elif collection == "notes":
                 for hit in search_result["hits"]:
                     highlights = []
                     for key, value in hit["highlight"].items():
                         highlights.append((key.replace("_", " "), value["snippet"]))
                     hit["highlights"] = highlights
-                    context["search_result"].append({
-                        "object": Note.objects.get(pk=hit["document"]["id"]),
-                        "highlights": highlights,
-                    })
+                    context["search_result"].append(
+                        {
+                            "object": Note.objects.get(pk=hit["document"]["id"]),
+                            "highlights": highlights,
+                        }
+                    )
             elif collection == "tasks":
                 for hit in search_result["hits"]:
                     highlights = []
                     for key, value in hit["highlight"].items():
                         highlights.append((key.replace("_", " "), value["snippet"]))
                     hit["highlights"] = highlights
-                    context["search_result"].append({
-                        "object": Task.objects.get(pk=hit["document"]["id"]),
-                        "highlights": highlights,
-                    })
+                    context["search_result"].append(
+                        {
+                            "object": Task.objects.get(pk=hit["document"]["id"]),
+                            "highlights": highlights,
+                        }
+                    )
             elif collection == "conditions":
                 for hit in search_result["hits"]:
                     highlights = []
                     for key, value in hit["highlight"].items():
                         highlights.append((key.replace("_", " "), value["snippet"]))
                     hit["highlights"] = highlights
-                    context["search_result"].append({
-                        "object": Condition.objects.get(pk=hit["document"]["id"]),
-                        "highlights": highlights,
-                    })
+                    context["search_result"].append(
+                        {
+                            "object": Condition.objects.get(pk=hit["document"]["id"]),
+                            "highlights": highlights,
+                        }
+                    )
 
         return context
 
 
 class IndexSearchCombined(LoginRequiredMixin, TemplateView):
-    """A combined version of the index search which returns referrals with linked objects.
-    """
+    """A combined version of the index search which returns referrals with linked objects."""
+
     template_name = "referral/prs_index_search_combined.html"
 
     def get_context_data(self, **kwargs):
@@ -264,9 +259,9 @@ class IndexSearchCombined(LoginRequiredMixin, TemplateView):
             context["referral_headers"] = Referral.headers
             client = typesense_client()
             search_q = {
-                'q': self.request.GET["q"],
-                'sort_by': 'created:desc',
-                'num_typos': 0,
+                "q": self.request.GET["q"],
+                "sort_by": "created:desc",
+                "num_typos": 0,
             }
             referrals = {}
 
@@ -397,8 +392,7 @@ class IndexSearchCombined(LoginRequiredMixin, TemplateView):
 
 
 class ReferralCreate(PrsObjectCreate):
-    """Dedicated create view for new referrals.
-    """
+    """Dedicated create view for new referrals."""
 
     model = Referral
     form_class = ReferralCreateForm
@@ -415,9 +409,7 @@ class ReferralCreate(PrsObjectCreate):
         context["title"] = "CREATE A NEW REFERRAL"
         context["page_title"] = "PRS | Referrals | Create"
         # Pass in a serialised list of tag names.
-        context["tags"] = json.dumps(
-            [t.name for t in Tag.objects.all().order_by("name")]
-        )
+        context["tags"] = json.dumps([t.name for t in Tag.objects.all().order_by("name")])
         return context
 
     def get_initial(self):
@@ -474,18 +466,14 @@ class ReferralCreate(PrsObjectCreate):
                 This task is attached to referral ID {0}.\n
                 The referrer's reference is {1}.\n
                 The referral address is {2}\n
-                """.format(
-                new_ref.id, new_ref.reference, address
-            )
+                """.format(new_ref.id, new_ref.reference, address)
             html_content = """<p>This is an automated message to let you know
                 that you have been assigned a PRS task by the sending user.</p>
                 <p>This task is attached to referral ID {0}</a>, at this URL:</p>
                 <p>{1}</p>
                 <p>The referrer's reference is: {2}.</p>
                 <p>The referral address is {3}.</p>
-                """.format(
-                new_ref.pk, ref_url, new_ref.reference, address
-            )
+                """.format(new_ref.pk, ref_url, new_ref.reference, address)
             msg = EmailMultiAlternatives(subject, text_content, from_email, [to_email])
             msg.attach_alternative(html_content, "text/html")
             # Email should fail gracefully - ie no Exception raised on failure.
@@ -497,9 +485,7 @@ class ReferralCreate(PrsObjectCreate):
         if req.POST.get("save"):
             return redirect(new_ref.get_absolute_url())
         else:
-            return redirect(
-                reverse("referral_location_create", kwargs={"pk": new_ref.pk})
-            )
+            return redirect(reverse("referral_location_create", kwargs={"pk": new_ref.pk}))
 
 
 class ReferralDetail(PrsObjectDetail):
@@ -568,9 +554,7 @@ class ReferralDetail(PrsObjectDetail):
         context["rel_model"] = self.related_model
         # Test if the user has bookmarked this referral.
         if Bookmark.objects.filter(referral=ref, user=self.request.user).exists():
-            context["bookmark"] = Bookmark.objects.filter(
-                referral=ref, user=self.request.user
-            )[0]
+            context["bookmark"] = Bookmark.objects.filter(referral=ref, user=self.request.user)[0]
 
         # Add context for each child model type: task_list, note_list, etc.
         table = """<table class="table table-striped table-bordered table-condensed prs-object-table">
@@ -589,12 +573,7 @@ class ReferralDetail(PrsObjectDetail):
                 headers.remove("Referral ID")
                 headers.append("Actions")
                 thead = "".join(["<th>{}</th>".format(h) for h in headers])
-                rows = [
-                    "<tr>{}{}</tr>".format(
-                        o.as_row_minus_referral(), o.as_row_actions()
-                    )
-                    for o in obj_qs
-                ]
+                rows = ["<tr>{}{}</tr>".format(o.as_row_minus_referral(), o.as_row_actions()) for o in obj_qs]
                 tbody = "".join(rows)
                 obj_tab_html = table.format(thead, tbody)
                 if m == Location:  # Append a div for the map viewer.
@@ -603,9 +582,7 @@ class ReferralDetail(PrsObjectDetail):
                 context[obj_list] = obj_qs
             else:
                 context["{}_count".format(m._meta.object_name.lower())] = 0
-                context[obj_tab] = "No {} found for this referral".format(
-                    m._meta.verbose_name_plural
-                )
+                context[obj_tab] = "No {} found for this referral".format(m._meta.verbose_name_plural)
                 context[obj_list] = None
 
         # Add child locations serialised as GeoJSON (if geometry exists).
@@ -631,15 +608,11 @@ class ReferralCreateChild(PrsObjectCreate):
         if "id" in self.kwargs:  # Relating to existing object.
             child_obj = child_model.objects.get(pk=self.kwargs["id"])
             if self.kwargs["type"] == "addnote":
-                context["title"] = "ADD EXISTING NOTE(S) TO {}".format(
-                    child_obj
-                ).upper()
+                context["title"] = "ADD EXISTING NOTE(S) TO {}".format(child_obj).upper()
                 context["page_title"] = "PRS | Add note(s) to {}".format(child_obj)
                 last_breadcrumb = "Add note(s) to {}".format(child_obj)
             elif "addrecord" in self.kwargs.values():
-                context["title"] = "ADD EXISTING RECORD(S) TO {}".format(
-                    child_obj
-                ).upper()
+                context["title"] = "ADD EXISTING RECORD(S) TO {}".format(child_obj).upper()
                 context["page_title"] = "PRS | Add record(s) to {}".format(child_obj)
                 last_breadcrumb = "Add record(s) to {}".format(child_obj)
             elif "addnewnote" in self.kwargs.values():
@@ -742,7 +715,7 @@ class ReferralCreateChild(PrsObjectCreate):
 
         # Invalidate any cached referral detail fragment.
         if settings.REDIS_CACHE_HOST:
-            key = make_template_fragment_key('referral_detail', [self.object.referral.pk])
+            key = make_template_fragment_key("referral_detail", [self.object.referral.pk])
             cache.delete(key)
 
         redirect_url = redirect_url if redirect_url else self.get_success_url()
@@ -771,9 +744,7 @@ class ReferralCreateChild(PrsObjectCreate):
                 note.records.add(obj)
         messages.success(
             self.request,
-            "The note has been added to {} {}.".format(
-                self.kwargs["model"].capitalize(), self.kwargs["id"]
-            ),
+            "The note has been added to {} {}.".format(self.kwargs["model"].capitalize(), self.kwargs["id"]),
         )
 
     def create_new_note(self, form):
@@ -824,9 +795,7 @@ class ReferralCreateChild(PrsObjectCreate):
                 record.note_set.add(obj)
         messages.success(
             self.request,
-            "The record has been added to {} {}.".format(
-                self.kwargs["model"].capitalize(), self.kwargs["id"]
-            ),
+            "The record has been added to {} {}.".format(self.kwargs["model"].capitalize(), self.kwargs["id"]),
         )
 
     def create_new_record(self, form):
@@ -859,37 +828,27 @@ class ReferralCreateChild(PrsObjectCreate):
         return redirect_url
 
     def get_condition_choices(self):
-        """Return conditions with 'approved' text only.
-        """
-        condition_qs = (
-            Condition.objects.current()
-            .filter(referral=self.parent_referral)
-            .exclude(condition="")
-        )
+        """Return conditions with 'approved' text only."""
+        condition_qs = Condition.objects.current().filter(referral=self.parent_referral).exclude(condition="")
         condition_choices = []
         for i in condition_qs:
             condition_choices.append(
                 (
                     i.id,
-                    "{0} - {1}".format(
-                        i.identifier or "", smart_truncate(i.condition, 100)
-                    ),
+                    "{0} - {1}".format(i.identifier or "", smart_truncate(i.condition, 100)),
                 )
             )
         return condition_choices
 
     def create_clearance(self, form):
-        """For each of the chosen conditions in the form, create one clearance task.
-        """
+        """For each of the chosen conditions in the form, create one clearance task."""
         request = self.request
 
         tasks = []
         for i in form.cleaned_data["conditions"]:
             condition = Condition.objects.get(pk=i)
             clearance_task = Task()
-            clearance_task.type = TaskType.objects.get(
-                name="Conditions clearance request"
-            )
+            clearance_task.type = TaskType.objects.get(name="Conditions clearance request")
             clearance_task.referral = condition.referral
             clearance_task.assigned_user = form.cleaned_data["assigned_user"]
             clearance_task.start_date = form.cleaned_data["start_date"]
@@ -901,34 +860,22 @@ class ReferralCreateChild(PrsObjectCreate):
                 clearance_task.due_date = date.today() + timedelta(days=clearance_task.type.target_days)
             clearance_task.creator, clearance_task.modifier = request.user, request.user
             clearance_task.save()
-            condition.add_clearance(
-                task=clearance_task, deposited_plan=form.cleaned_data["deposited_plan"]
-            )
+            condition.add_clearance(task=clearance_task, deposited_plan=form.cleaned_data["deposited_plan"])
             # If the user checked the "Email user" box, send them a notification.
             if request.POST.get("email_user"):
-                subject = "PRS referral {0} - new clearance request notification".format(
-                    clearance_task.referral.pk
-                )
+                subject = "PRS referral {0} - new clearance request notification".format(clearance_task.referral.pk)
                 from_email = request.user.email
                 to_email = clearance_task.assigned_user.email
-                referral_url = (
-                    settings.SITE_URL + clearance_task.referral.get_absolute_url()
-                )
+                referral_url = settings.SITE_URL + clearance_task.referral.get_absolute_url()
                 text_content = """This is an automated message to let you know that you have
                     been assigned PRS clearance request {0} by the sending user.\n
                     This clearance request is attached to referral ID {1}.\n
-                    """.format(
-                    clearance_task.pk, clearance_task.referral.pk
-                )
+                    """.format(clearance_task.pk, clearance_task.referral.pk)
                 html_content = """<p>This is an automated message to let you know that you have
                     been assigned PRS clearance request {0} by the sending user.</p>
                     <p>This task is attached to referral ID {1}</a>, at this URL:</p>
-                    <p>{2}</p>""".format(
-                    clearance_task.pk, clearance_task.referral.pk, referral_url
-                )
-                msg = EmailMultiAlternatives(
-                    subject, text_content, from_email, [to_email]
-                )
+                    <p>{2}</p>""".format(clearance_task.pk, clearance_task.referral.pk, referral_url)
+                msg = EmailMultiAlternatives(subject, text_content, from_email, [to_email])
                 msg.attach_alternative(html_content, "text/html")
                 # Email should fail gracefully - ie no Exception raised on failure.
                 msg.send(fail_silently=True)
@@ -958,18 +905,10 @@ class ReferralCreateChild(PrsObjectCreate):
             html_content += '<p><a href="{}">Condition ID {}</a></p>'.format(
                 settings.SITE_URL + obj.get_absolute_url(), obj.pk
             )
-            text_content += "The condition was created by {}.\n".format(
-                obj.creator.get_full_name()
-            )
-            html_content += "<p>The condition was created by {}.</p>".format(
-                obj.creator.get_full_name()
-            )
-            text_content += (
-                "This is an automatically-generated email - please do not reply.\n"
-            )
-            html_content += (
-                "<p>This is an automatically-generated email - please do not reply.</p>"
-            )
+            text_content += "The condition was created by {}.\n".format(obj.creator.get_full_name())
+            html_content += "<p>The condition was created by {}.</p>".format(obj.creator.get_full_name())
+            text_content += "This is an automatically-generated email - please do not reply.\n"
+            html_content += "<p>This is an automatically-generated email - please do not reply.</p>"
             msg = EmailMultiAlternatives(subject, text_content, from_email, to_email)
             msg.attach_alternative(html_content, "text/html")
             # Email should fail gracefully - ie no Exception raised on failure.
@@ -1101,8 +1040,7 @@ class LocationCreate(ReferralCreateChild):
             return HttpResponseRedirect(self.get_success_url())
 
     def polygon_intersects(self, locations):
-        """ Check to see if the location polygon intersects with any other locations.
-        """
+        """Check to see if the location polygon intersects with any other locations."""
         intersecting_locations = []
         for location in locations:
             if location.poly:
@@ -1159,9 +1097,7 @@ class LocationIntersects(PrsObjectCreate):
 
         messages.success(
             self.request,
-            "{} Referral relationship(s) created.".format(
-                len(form.cleaned_data["related_refs"])
-            ),
+            "{} Referral relationship(s) created.".format(len(form.cleaned_data["related_refs"])),
         )
         return redirect(self.get_success_url())
 
@@ -1173,11 +1109,7 @@ class LocationIntersects(PrsObjectCreate):
         for loc_id in loc_ids:
             location = get_object_or_404(Location, pk=loc_id)
             geom = location.poly.wkt
-            intersects = (
-                Location.objects.current()
-                .exclude(id=location.id)
-                .filter(poly__isnull=False)
-            )
+            intersects = Location.objects.current().exclude(id=location.id).filter(poly__isnull=False)
             # Get a qs of intersecting locations
             intersects = intersects.filter(poly__intersects=geom)
             # Get a qs of referrals
@@ -1240,7 +1172,7 @@ class RecordUpload(LoginRequiredMixin, View):
         # Invalidate the cached referral detail fragment.
         if settings.REDIS_CACHE_HOST:
             referral = rec.referral
-            key = make_template_fragment_key('referral_detail', [referral.pk])
+            key = make_template_fragment_key("referral_detail", [referral.pk])
             cache.delete(key)
 
         return JsonResponse(
@@ -1273,9 +1205,7 @@ class TaskAction(PrsObjectUpdate):
         task = self.get_object()
 
         if action == "update" and task.stop_date and not task.restart_date:
-            messages.error(
-                request, "You can't edit a stopped task - restart the task first!"
-            )
+            messages.error(request, "You can't edit a stopped task - restart the task first!")
             return redirect(task.get_absolute_url())
         if action == "stop" and task.complete_date:
             messages.error(request, "You can't stop a completed task!")
@@ -1318,11 +1248,7 @@ class TaskAction(PrsObjectUpdate):
                 "LSU - s121 diversification permits",
             ]
         )
-        if (
-            action == "complete"
-            and task.referral.type in trigger_ref_type
-            and not task.referral.has_location
-        ):
+        if action == "complete" and task.referral.type in trigger_ref_type and not task.referral.has_location:
             msg = """You are unable to complete this task without first
                 recording location(s) on the referral.
                 <a href="{}">Click here to create location(s).</a>""".format(
@@ -1356,9 +1282,7 @@ class TaskAction(PrsObjectUpdate):
         # Create a breadcrumb trail: Home[URL] > Tasks[URL] > ID[URL] > Action
         action = self.kwargs["action"]
         obj = self.get_object()
-        context["page_title"] = "PRS | Tasks | {} | {}".format(
-            obj.pk, action.capitalize()
-        )
+        context["page_title"] = "PRS | Tasks | {} | {}".format(obj.pk, action.capitalize())
         links = [
             (reverse("site_home"), "Home"),
             (reverse("prs_object_list", kwargs={"model": "tasks"}), "Tasks"),
@@ -1371,9 +1295,7 @@ class TaskAction(PrsObjectUpdate):
         context["breadcrumb_trail"] = breadcrumbs_li(links)
         context["title"] = action.upper() + " TASK"
         # Pass in a serialised list of tag names.
-        context["tags"] = json.dumps(
-            [t.name for t in Tag.objects.all().order_by("name")]
-        )
+        context["tags"] = json.dumps([t.name for t in Tag.objects.all().order_by("name")])
         return context
 
     def get_success_url(self):
@@ -1430,9 +1352,7 @@ class TaskAction(PrsObjectUpdate):
         elif action == "complete":
             if obj.type.name == "Assess a referral":
                 # Rule: proposed condition is mandatory for some 'Assess' task outcomes.
-                trigger_outcome = TaskState.objects.filter(
-                    name__in=["Response with condition"]
-                )
+                trigger_outcome = TaskState.objects.filter(name__in=["Response with condition"])
                 trigger_ref_type = ReferralType.objects.filter(
                     name__in=[
                         "Development application",
@@ -1494,9 +1414,7 @@ class ReferralRecent(PrsObjectList):
         # UserProfile referral_history is a list of lists ([pk, date]).
         try:  # Empty history fails.
             history_list = json.loads(self.request.user.userprofile.referral_history)
-            return Referral.objects.current().filter(
-                pk__in=[i[0] for i in history_list]
-            )
+            return Referral.objects.current().filter(pk__in=[i[0] for i in history_list])
         except Exception:
             return Referral.objects.none()
 
@@ -1544,8 +1462,7 @@ class ReferralReferenceSearch(PrsObjectList):
 
 
 class TagList(PrsObjectList):
-    """Custom view to return a readonly list of tags (rendered HTML or JSON).
-    """
+    """Custom view to return a readonly list of tags (rendered HTML or JSON)."""
 
     model = Tag
     template_name = "referral/tag_list.html"
@@ -1574,16 +1491,12 @@ class TagReplace(LoginRequiredMixin, FormView):
 
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_superuser and not is_prs_power_user(request):
-            return HttpResponseForbidden(
-                "You do not have permission to use this function."
-            )
+            return HttpResponseForbidden("You do not have permission to use this function.")
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["page_title"] = " | ".join(
-            [settings.APPLICATION_ACRONYM, "Replace tag"]
-        )
+        context["page_title"] = " | ".join([settings.APPLICATION_ACRONYM, "Replace tag"])
         context["title"] = "REPLACE TAG"
         return context
 
@@ -1605,15 +1518,12 @@ class TagReplace(LoginRequiredMixin, FormView):
                 obj.tags.add(new)
         # Finally, delete the old tag
         old.delete()
-        messages.success(
-            self.request, 'All "{}" tags have been replaced by "{}"'.format(old, new)
-        )
+        messages.success(self.request, 'All "{}" tags have been replaced by "{}"'.format(old, new))
         return HttpResponseRedirect(reverse("tag_list"))
 
 
 class ReferralTagged(PrsObjectList):
-    """Override the Referral model list view to filter tagged objects.
-    """
+    """Override the Referral model list view to filter tagged objects."""
 
     model = Referral
 
@@ -1645,8 +1555,7 @@ class ReferralTagged(PrsObjectList):
 
 
 class BookmarkList(PrsObjectList):
-    """Override to default object list to only show current user bookmarks.
-    """
+    """Override to default object list to only show current user bookmarks."""
 
     model = Bookmark
 
@@ -1679,9 +1588,7 @@ class ReferralDelete(PrsObjectDelete):
 
         # Delete referral relationships
         # We can just call delete on this queryset.
-        RelatedReferral.objects.filter(
-            Q(from_referral=ref) | Q(to_referral=ref)
-        ).delete()
+        RelatedReferral.objects.filter(Q(from_referral=ref) | Q(to_referral=ref)).delete()
         # Delete any tags on the referral
         ref.tags.clear()
         # Delete tasks
@@ -1719,8 +1626,7 @@ class ReferralDelete(PrsObjectDelete):
 
 
 class ReferralRelate(PrsObjectList):
-    """Custom list view to search referrals to relate together.
-    """
+    """Custom list view to search referrals to relate together."""
 
     model = Referral
     template_name = "referral/referral_relate.html"
@@ -1753,14 +1659,14 @@ class ReferralRelate(PrsObjectList):
         # NOTE: query parameters always live in request.GET.
         if not self.request.GET.get("ref_pk", None):
             raise AttributeError(
-                "Relate view {} must be called with a "
-                "ref_pk query parameter.".format(self.__class__.__name__)
+                "Relate view {} must be called with a " "ref_pk query parameter.".format(self.__class__.__name__)
             )
 
         if "create" not in self.request.GET and "delete" not in self.request.GET:
             raise AttributeError(
-                "Relate view {} must be called with either "
-                "create or delete query parameters.".format(self.__class__.__name__)
+                "Relate view {} must be called with either " "create or delete query parameters.".format(
+                    self.__class__.__name__
+                )
             )
 
         ref1 = self.get_object()
@@ -1776,9 +1682,9 @@ class ReferralRelate(PrsObjectList):
 
         # Invalidate the cached referral detail fragments.
         if settings.REDIS_CACHE_HOST:
-            key = make_template_fragment_key('referral_detail', [ref1.pk])
+            key = make_template_fragment_key("referral_detail", [ref1.pk])
             cache.delete(key)
-            key = make_template_fragment_key('referral_detail', [ref2.pk])
+            key = make_template_fragment_key("referral_detail", [ref2.pk])
             cache.delete(key)
 
         return redirect(ref1.get_absolute_url())
@@ -1833,15 +1739,11 @@ class ConditionClearanceCreate(PrsObjectCreate):
 
         # On Cancel, redirect to the Condition URL.
         if request.POST.get("cancel"):
-            return HttpResponseRedirect(
-                reverse(
-                    "prs_object_detail", kwargs={"pk": obj.pk, "model": "conditions"}
-                )
-            )
+            return HttpResponseRedirect(reverse("prs_object_detail", kwargs={"pk": obj.pk, "model": "conditions"}))
 
         # Invalidate any cached referral detail fragment.
         if settings.REDIS_CACHE_HOST:
-            key = make_template_fragment_key('referral_detail', [obj.referral.pk])
+            key = make_template_fragment_key("referral_detail", [obj.referral.pk])
             cache.delete(key)
 
         return super().post(request, *args, **kwargs)
@@ -1861,64 +1763,48 @@ class ConditionClearanceCreate(PrsObjectCreate):
             self.request.user,
         )
         clearance_task.save()
-        obj.add_clearance(
-            task=clearance_task, deposited_plan=form.cleaned_data["deposited_plan"]
-        )
+        obj.add_clearance(task=clearance_task, deposited_plan=form.cleaned_data["deposited_plan"])
         messages.success(self.request, "New clearance request created successfully.")
 
         # If the user check the "Email user" box, send them a notification.
         if self.request.POST.get("email_user"):
-            subject = "PRS referral {0} - new clearance request notification".format(
-                clearance_task.referral.pk
-            )
+            subject = "PRS referral {0} - new clearance request notification".format(clearance_task.referral.pk)
             from_email = self.request.user.email
             to_email = clearance_task.assigned_user.email
-            referral_url = (
-                settings.SITE_URL + clearance_task.referral.get_absolute_url()
-            )
+            referral_url = settings.SITE_URL + clearance_task.referral.get_absolute_url()
             text_content = """This is an automated message to let you know that you have
                 been assigned PRS clearance request {0} by the sending user.\n
                 This clearance request is attached to referral ID {1}.\n
-                """.format(
-                clearance_task.pk, clearance_task.referral.pk
-            )
+                """.format(clearance_task.pk, clearance_task.referral.pk)
             html_content = """<p>This is an automated message to let you know that you have
                 been assigned PRS clearance request {0} by the sending user.</p>
                 <p>This task is attached to referral ID {1}, at this URL:</p>
-                <p>{2}</p>""".format(
-                clearance_task.pk, clearance_task.referral.pk, referral_url
-            )
+                <p>{2}</p>""".format(clearance_task.pk, clearance_task.referral.pk, referral_url)
             msg = EmailMultiAlternatives(subject, text_content, from_email, [to_email])
             msg.attach_alternative(html_content, "text/html")
             # Email should fail gracefully - ie no Exception raised on failure.
             msg.send(fail_silently=True)
 
         # Business rule: for each new clearance request, email users in the PRS power users group.
-        subject = "PRS referral {} - new condition clearance request notification".format(
-            clearance_task.referral.pk
-        )
+        subject = "PRS referral {} - new condition clearance request notification".format(clearance_task.referral.pk)
         from_email = "PRS-Alerts@dbca.wa.gov.au"
         pu_group = Group.objects.get(name=settings.PRS_POWER_USER_GROUP)
         to_email = [user.email for user in pu_group.user_set.filter(is_active=True)]
 
-        text_content = "This is an automated message to let you know that the following clearance request was just created:\n"
-        html_content = "<p>This is an automated message to let you know that the following clearance request was just created:</p>"
+        text_content = (
+            "This is an automated message to let you know that the following clearance request was just created:\n"
+        )
+        html_content = (
+            "<p>This is an automated message to let you know that the following clearance request was just created:</p>"
+        )
         text_content += "* Task ID {}\n".format(clearance_task.pk)
         html_content += '<p><a href="{}">Task ID {}</a></p>'.format(
             settings.SITE_URL + clearance_task.get_absolute_url(), clearance_task.pk
         )
-        text_content += "The clearance task was created by {}.\n".format(
-            clearance_task.creator.get_full_name()
-        )
-        html_content += "<p>The clearance task was created by {}.</p>".format(
-            clearance_task.creator.get_full_name()
-        )
-        text_content += (
-            "This is an automatically-generated email - please do not reply.\n"
-        )
-        html_content += (
-            "<p>This is an automatically-generated email - please do not reply.</p>"
-        )
+        text_content += "The clearance task was created by {}.\n".format(clearance_task.creator.get_full_name())
+        html_content += "<p>The clearance task was created by {}.</p>".format(clearance_task.creator.get_full_name())
+        text_content += "This is an automatically-generated email - please do not reply.\n"
+        html_content += "<p>This is an automatically-generated email - please do not reply.</p>"
         msg = EmailMultiAlternatives(subject, text_content, from_email, to_email)
         msg.attach_alternative(html_content, "text/html")
         # Email should fail gracefully - i.e. no Exception raised on failure.
@@ -1937,40 +1823,38 @@ class InfobaseShortcut(View):
         record = get_object_or_404(Record, pk=self.kwargs["pk"])
         if record.infobase_id:
             response = HttpResponse(content_type="application/octet-stream")
-            response[
-                "Content-Disposition"
-            ] = "attachment; filename=infobase_{}.obr".format(record.infobase_id)
+            response["Content-Disposition"] = "attachment; filename=infobase_{}.obr".format(record.infobase_id)
             # The HttpResponse is a file-like object; write the Infobase ID and return it.
             response.write(record.infobase_id)
             return response
         else:
-            messages.warning(
-                request, "That record is not associated with an InfoBase object ID."
-            )
+            messages.warning(request, "That record is not associated with an InfoBase object ID.")
             return HttpResponseRedirect(record.get_absolute_url())
 
 
 class CadastreQuery(View):
-    """Basic view endpoint to send a CQL filter query to the Cadastre spatial service.
-    """
+    """Basic view endpoint to send a CQL filter query to the Cadastre spatial service."""
+
     http_method_names = ["get"]
 
     def get(self, request, *args, **kwargs):
         cql_filter = request.GET.get("cql_filter", None)
         if not cql_filter:
+            # This view requires a CQL filter value.
             return HttpResponseBadRequest("Bad request")
         crs = request.GET.get("crs", None)
+        type_name = env("CADASTRE_LAYER_NAME")
         if crs:
-            resp = query_cadastre(cql_filter, crs)
+            resp = wfs_getfeature(type_name, cql_filter, crs)
         else:
-            resp = query_cadastre(cql_filter)
+            resp = wfs_getfeature(type_name, cql_filter)
 
         return JsonResponse(resp)
 
 
 class ReferralMap(LoginRequiredMixin, TemplateView):
-    """A map view displaying all referral locations.
-    """
+    """A map view displaying all referral locations."""
+
     template_name = "referral/referral_map.html"
 
     def get_context_data(self, **kwargs):
@@ -1980,8 +1864,8 @@ class ReferralMap(LoginRequiredMixin, TemplateView):
 
 
 class GeocodeQuery(View):
-    """Basic view endpoint to send a geocode query to the Caddy spatial service.
-    """
+    """Basic view endpoint to send a geocode query to the Caddy spatial service."""
+
     http_method_names = ["get"]
 
     def get(self, request, *args, **kwargs):
