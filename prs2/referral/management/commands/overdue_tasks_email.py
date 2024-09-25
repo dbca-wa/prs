@@ -3,11 +3,11 @@ from referral.utils import overdue_task_email
 
 
 class Command(BaseCommand):
-    help = 'Send email to users notifying about overdue tasks'
+    help = "Send email to users notifying about overdue tasks"
 
     def handle(self, *args, **options):
         try:
             overdue_task_email()
-            self.stdout.write('Done')
+            self.stdout.write("Done")
         except Exception:
-            raise CommandError('Unable to send overdue tasks email to users')
+            raise CommandError("Unable to send overdue tasks email to users")
