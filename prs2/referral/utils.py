@@ -323,7 +323,12 @@ def wfs_getfeature(type_name, crs="EPSG:4326", cql_filter=None, max_features=50)
     if cql_filter:
         params["cql_filter"] = cql_filter
     resp = requests.get(url, auth=auth, params=params)
-    resp.raise_for_status()
+    try:
+        resp.raise_for_status()
+    except:
+        # On exception, return an empty dict.
+        return {}
+
     return resp.json()
 
 
@@ -333,7 +338,12 @@ def query_caddy(q):
     auth = (env("GEOSERVER_SSO_USER", None), env("GEOSERVER_SSO_PASS", None))
     params = {"q": q}
     resp = requests.get(url, auth=auth, params=params)
-    resp.raise_for_status()
+    try:
+        resp.raise_for_status()
+    except:
+        # On exception, return an empty list.
+        return []
+
     return resp.json()
 
 

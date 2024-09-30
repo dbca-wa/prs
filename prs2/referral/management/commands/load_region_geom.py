@@ -30,6 +30,10 @@ class Command(BaseCommand):
         field = options["field"]
         regions_data = wfs_getfeature(type_name)
 
+        if "features" not in regions_data:
+            self.stdout.write("No data returned")
+            return
+
         for feature in regions_data["features"]:
             region = Region.objects.get(name__iexact=feature["properties"][field])
             region.region_mpoly = GEOSGeometry(str(feature["geometry"]))
