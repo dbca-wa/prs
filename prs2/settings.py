@@ -8,6 +8,7 @@ import dj_database_url
 from dbca_utils.utils import env
 from django.core.exceptions import DisallowedHost
 from django.db.utils import OperationalError
+from redis.exceptions import ConnectionError
 
 # Project paths
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -47,9 +48,7 @@ else:
     AZURE_ACCOUNT_NAME = env("AZURE_ACCOUNT_NAME", "name")
     AZURE_ACCOUNT_KEY = env("AZURE_ACCOUNT_KEY", "key")
     AZURE_CONTAINER = env("AZURE_CONTAINER", "container")
-    AZURE_URL_EXPIRATION_SECS = env(
-        "AZURE_URL_EXPIRATION_SECS", 3600
-    )  # Default one hour.
+    AZURE_URL_EXPIRATION_SECS = env("AZURE_URL_EXPIRATION_SECS", 3600)  # Default one hour.
 
 # PRS may deploy its own instance of Geoserver.
 KMI_GEOSERVER_URL = env("KMI_GEOSERVER_URL", "")
@@ -298,6 +297,9 @@ def sentry_excluded_exceptions(event, hint):
         # Exclude exceptions related to host requests not in ALLOWED_HOSTS.
         elif hint["exc_info"][0] is DisallowedHost:
             return None
+        # Exclude Redis service connection errors.
+        elif hint["exc_info"][0] is ConnectionError:
+            return None
 
     return event
 
@@ -305,12 +307,8 @@ def sentry_excluded_exceptions(event, hint):
 # Sentry config
 SENTRY_DSN = env("SENTRY_DSN", None)
 SENTRY_SAMPLE_RATE = env("SENTRY_SAMPLE_RATE", 1.0)  # Error sampling rate
-SENTRY_TRANSACTION_SAMPLE_RATE = env(
-    "SENTRY_TRANSACTION_SAMPLE_RATE", 0.0
-)  # Transaction sampling
-SENTRY_PROFILES_SAMPLE_RATE = env(
-    "SENTRY_PROFILES_SAMPLE_RATE", 0.0
-)  # Proportion of sampled transactions to profile.
+SENTRY_TRANSACTION_SAMPLE_RATE = env("SENTRY_TRANSACTION_SAMPLE_RATE", 0.0)  # Transaction sampling
+SENTRY_PROFILES_SAMPLE_RATE = env("SENTRY_PROFILES_SAMPLE_RATE", 0.0)  # Proportion of sampled transactions to profile.
 SENTRY_ENVIRONMENT = env("SENTRY_ENVIRONMENT", None)
 if SENTRY_DSN and SENTRY_ENVIRONMENT:
     import sentry_sdk
