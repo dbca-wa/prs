@@ -1,22 +1,43 @@
 from django.contrib.gis.geos import GEOSGeometry
-from django.core.management.base import BaseCommand, CommandError
-import json
+from django.core.management.base import BaseCommand
 from referral.models import Region
+from referral.utils import wfs_getfeature
 
 
 class Command(BaseCommand):
-    help = 'Loads Region geometry from serialised GeoJSON (dpaw_regions.json)'
+    help = "Loads Region geometry from a Geoserver layer WFS"
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--typename",
+            action="store",
+            required=True,
+            type=str,
+            dest="typename",
+            help="typeName value for WFS GetFeature request (namespace:featuretype)",
+        )
+        parser.add_argument(
+            "--field",
+            action="store",
+            required=True,
+            type=str,
+            dest="field",
+            help="GeoJSON property key containing the region name",
+        )
 
     def handle(self, *args, **options):
-        try:
-            regions_json = json.load(open('dpaw_regions.json', 'r'))
-        except IOError:
-            raise CommandError('dpaw_regions.json file not present')
+        type_name = options["typename"]
+        field = options["field"]
+        regions_data = wfs_getfeature(type_name)
 
-        for f in regions_json['features']:
-            region = Region.objects.get(name__istartswith=f['properties']['region'])
-            region.region_mpoly = GEOSGeometry(json.dumps(f['geometry']))
+        if "features" not in regions_data:
+            self.stdout.write("No data returned")
+            return
+
+        for feature in regions_data["features"]:
+            region = Region.objects.get(name__iexact=feature["properties"][field])
+            region.region_mpoly = GEOSGeometry(str(feature["geometry"]))
             region.save()
-            self.stdout.write('{} geometry updated'.format(region))
+            self.stdout.write("{} region geometry updated".format(region))
 
-        self.stdout.write('Done!')
+        self.stdout.write("Completed")

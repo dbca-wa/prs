@@ -1,4 +1,8 @@
-from datetime import datetime, date
+import json
+import re
+from datetime import date, datetime
+
+import requests
 from dbca_utils.utils import env
 from django.apps import apps
 from django.conf import settings
@@ -8,10 +12,7 @@ from django.db.models import Q
 from django.db.models.base import ModelBase
 from django.utils.encoding import smart_str
 from django.utils.safestring import mark_safe
-import json
 from reversion.models import Version
-import re
-import requests
 from unidecode import unidecode
 
 
@@ -177,9 +178,7 @@ def user_referral_history(user, referral):
         else:
             new_ref_history.append(i)
     # Add the passed-in referral to the end of the new list.
-    new_ref_history.append(
-        [referral.id, datetime.strftime(datetime.today(), "%d-%m-%Y")]
-    )
+    new_ref_history.append([referral.id, datetime.strftime(datetime.today(), "%d-%m-%Y")])
     # History can be a maximum of 20 referrals; slice the new list accordingly.
     if len(new_ref_history) > 20:
         new_ref_history = new_ref_history[-20:]
@@ -189,16 +188,13 @@ def user_referral_history(user, referral):
 
 
 def user_task_history(user, task, comment=None):
-    """Utility function to update the task history in a user's profile.
-    """
+    """Utility function to update the task history in a user's profile."""
     profile = user.userprofile
     if not profile.task_history:
         task_history = []
     else:
         task_history = json.loads(profile.task_history)
-    task_history.append(
-        [task.pk, datetime.strftime(datetime.today(), "%d-%m-%Y"), comment]
-    )
+    task_history.append([task.pk, datetime.strftime(datetime.today(), "%d-%m-%Y"), comment])
     profile.task_history = json.dumps(task_history)
     profile.save()
 
@@ -231,9 +227,7 @@ def is_prs_power_user(request):
 
 
 def prs_user(request):
-    return (
-        is_prs_user(request) or is_prs_power_user(request) or request.user.is_superuser
-    )
+    return is_prs_user(request) or is_prs_power_user(request) or request.user.is_superuser
 
 
 def update_revision_history(app_model):
@@ -265,10 +259,10 @@ def update_revision_history(app_model):
 
 
 def overdue_task_email():
-    """A utility function to send an email to each user with tasks that are overdue.
-    """
+    """A utility function to send an email to each user with tasks that are overdue."""
     from django.contrib.auth.models import Group
-    from .models import TaskState, Task
+
+    from .models import Task, TaskState
 
     prs_grp = Group.objects.get(name=settings.PRS_USER_GROUP)
     users = prs_grp.user_set.filter(is_active=True)
@@ -295,20 +289,14 @@ def overdue_task_email():
                 assigned to you within PRS are currently overdue:</p>
                 <ul>"""
             for t in ongoing_tasks:
-                text_content += "* Referral ID {} - {}\n".format(
-                    t.referral.pk, t.type.name
-                )
+                text_content += "* Referral ID {} - {}\n".format(t.referral.pk, t.type.name)
                 html_content += '<li><a href="{}">Referral ID {} - {}</a></li>'.format(
                     settings.SITE_URL + t.referral.get_absolute_url(),
                     t.referral.pk,
                     t.type.name,
                 )
-            text_content += (
-                "This is an automatically-generated email - please do not reply.\n"
-            )
-            html_content += (
-                "</ul><p>This is an automatically-generated email - please do not reply.</p>"
-            )
+            text_content += "This is an automatically-generated email - please do not reply.\n"
+            html_content += "</ul><p>This is an automatically-generated email - please do not reply.</p>"
             msg = EmailMultiAlternatives(subject, text_content, from_email, to_email)
             msg.attach_alternative(html_content, "text/html")
             # Email should fail gracefully - ie no Exception raised on failure.
@@ -317,35 +305,45 @@ def overdue_task_email():
     return True
 
 
-def query_cadastre(cql_filter, crs="EPSG:4326"):
-    """A utility function to query the internal DBCA Cadastre dataset via the passed-in CQL filter
+def wfs_getfeature(type_name, crs="EPSG:4326", cql_filter=None, max_features=50):
+    """A utility function to perform a GetFeature request on a WFS endpoint
     and return results as GeoJSON.
     """
-    url = env('GEOSERVER_URL', None)
-    auth = (env('GEOSERVER_SSO_USER', None), env('GEOSERVER_SSO_PASS', None))
-    type_name = env('CADASTRE_LAYER_NAME', '')
+    url = env("GEOSERVER_URL", None)
+    auth = (env("GEOSERVER_SSO_USER", None), env("GEOSERVER_SSO_PASS", None))
     params = {
-        'service': 'WFS',
-        'version': '2.0.0',
-        'typeName': type_name,
-        'request': 'getFeature',
-        'outputFormat': 'json',
-        'SRSName': f'urn:x-ogc:def:crs:{crs}',
-        'cql_filter': cql_filter,
+        "service": "WFS",
+        "version": "1.1.0",
+        "typeName": type_name,
+        "request": "getFeature",
+        "outputFormat": "json",
+        "SRSName": f"urn:x-ogc:def:crs:{crs}",
+        "maxFeatures": max_features,
     }
+    if cql_filter:
+        params["cql_filter"] = cql_filter
     resp = requests.get(url, auth=auth, params=params)
-    resp.raise_for_status()
+    try:
+        resp.raise_for_status()
+    except:
+        # On exception, return an empty dict.
+        return {}
+
     return resp.json()
 
 
 def query_caddy(q):
-    """Utility function to proxy queries to the Caddy geocoder service.
-    """
-    url = env('GEOCODER_URL', None)
-    auth = (env('GEOSERVER_SSO_USER', None), env('GEOSERVER_SSO_PASS', None))
-    params = {'q': q}
+    """Utility function to proxy queries to the Caddy geocoder service."""
+    url = env("GEOCODER_URL", None)
+    auth = (env("GEOSERVER_SSO_USER", None), env("GEOSERVER_SSO_PASS", None))
+    params = {"q": q}
     resp = requests.get(url, auth=auth, params=params)
-    resp.raise_for_status()
+    try:
+        resp.raise_for_status()
+    except:
+        # On exception, return an empty list.
+        return []
+
     return resp.json()
 
 

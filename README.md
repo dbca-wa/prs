@@ -117,4 +117,8 @@ install pre-commit hooks locally like so:
 
     pre-commit install
 
+To run Python commands in the virtualenv, thereafter run them like so:
+
+    python manage.py
+
 Reference: <https://pre-commit.com/>
