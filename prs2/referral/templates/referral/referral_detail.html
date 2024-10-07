@@ -1,98 +1,151 @@
 {% extends "base_prs.html" %}
-{% load static cache %}
-
+{% load static %}
 {% block extra_style %}
-{{ block.super }}
-{% if geojson_locations %}
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.min.css" integrity="sha512-1xoFisiGdy9nvho8EgXuXvnpR5GAMSjFwp40gSRE3NwdUdIMIKuPa7bqoUhLD0O/5tPNhteAsE5XyyMi5reQVA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.css" integrity="sha256-RTALnHN76PJ32RJx2mxggy+RUt9TIRV+mfPLSLbI75A=" crossorigin="anonymous" />
-<link rel="stylesheet" type="text/css" href="{% static 'css/leaflet-search.min.css' %}" />
-{% endif %}
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.1/min/basic.min.css" integrity="sha256-RvDmZ4ZtPtrWmZdibCa80jCE32m21xuR5SuW6zfJaW4=" crossorigin="anonymous" />
-<link rel="stylesheet" type="text/css" href="{% static 'css/prs_dropzone_5.7.1.css' %}" />
-<link href="https://cdn.datatables.net/v/bs5/dt-1.13.8/date-1.5.1/datatables.min.css" rel="stylesheet">
-<style>
-    #map { width:100%; height: 480px;}
-</style>
+    {{ block.super }}
+    {% if geojson_locations %}
+        <link rel="stylesheet"
+              href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.min.css"
+              integrity="sha512-1xoFisiGdy9nvho8EgXuXvnpR5GAMSjFwp40gSRE3NwdUdIMIKuPa7bqoUhLD0O/5tPNhteAsE5XyyMi5reQVA=="
+              crossorigin="anonymous"
+              referrerpolicy="no-referrer" />
+        <link rel="stylesheet"
+              href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.css"
+              integrity="sha256-RTALnHN76PJ32RJx2mxggy+RUt9TIRV+mfPLSLbI75A="
+              crossorigin="anonymous" />
+        <link rel="stylesheet"
+              type="text/css"
+              href="{% static 'css/leaflet-search.min.css' %}" />
+    {% endif %}
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.1/min/basic.min.css"
+          integrity="sha256-RvDmZ4ZtPtrWmZdibCa80jCE32m21xuR5SuW6zfJaW4="
+          crossorigin="anonymous" />
+    <link rel="stylesheet"
+          type="text/css"
+          href="{% static 'css/prs_dropzone_5.7.1.css' %}" />
+    <link href="https://cdn.datatables.net/v/bs5/dt-1.13.8/date-1.5.1/datatables.min.css"
+          rel="stylesheet">
+    <style>#map { width:100%; height: 480px;}</style>
 {% endblock extra_style %}
-
 {% block navbar_item_extra %}
-<li class="nav-item dropdown">
     <li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle" href="#" id="referralDetailNavbarDropdown" data-bs-toggle="dropdown" role="button" aria-expanded="false">
-            Referral <span class="caret"></span>
-        </a>
-        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="referralDetailNavbarDropdown">
-            {% if prs_user %}
-                <a class="dropdown-item" href="{% url 'referral_create_child' pk=referral.pk model='note' %}" title="Add note">Add a note</a>
-                <a class="dropdown-item" href="{% url 'referral_create_child' pk=referral.pk model='record' %}" title="Add record">Add a record</a>
-                <a class="dropdown-item" href="{% url 'referral_create_child' pk=referral.pk model='task' %}" title="Add task">Add a task</a>
-                <a class="dropdown-item" href="{% url 'referral_create_child' pk=referral.pk model='condition' %}" title="Add condition">Add a condition</a>
-                {% if condition_count %}
-                <a class="dropdown-item" href="{% url 'referral_create_child_type' pk=referral.pk model='task' type='clearance' %}" title="Add request">Add a clearance request</a>
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle"
+               href="#"
+               id="referralDetailNavbarDropdown"
+               data-bs-toggle="dropdown"
+               role="button"
+               aria-expanded="false">
+                Referral <span class="caret"></span>
+            </a>
+            <div class="dropdown-menu dropdown-menu-right"
+                 aria-labelledby="referralDetailNavbarDropdown">
+                {% if prs_user %}
+                    <a class="dropdown-item"
+                       href="{% url 'referral_create_child' pk=referral.pk model='note' %}"
+                       title="Add note">Add a note</a>
+                    <a class="dropdown-item"
+                       href="{% url 'referral_create_child' pk=referral.pk model='record' %}"
+                       title="Add record">Add a record</a>
+                    <a class="dropdown-item"
+                       href="{% url 'referral_create_child' pk=referral.pk model='task' %}"
+                       title="Add task">Add a task</a>
+                    <a class="dropdown-item"
+                       href="{% url 'referral_create_child' pk=referral.pk model='condition' %}"
+                       title="Add condition">Add a condition</a>
+                    {% if condition_count %}
+                        <a class="dropdown-item"
+                           href="{% url 'referral_create_child_type' pk=referral.pk model='task' type='clearance' %}"
+                           title="Add request">Add a clearance request</a>
+                    {% endif %}
+                    <a class="dropdown-item"
+                       href="{% url 'referral_location_create' pk=referral.pk %}"
+                       title="Add location">Create location(s)</a>
+                    <a class="dropdown-item"
+                       href="{% url 'referral_relate' pk=referral.pk %}"
+                       title="Add related">Add a related referral</a>
+                    <a class="dropdown-item"
+                       href="{% url 'prs_object_update' model='referral' pk=referral.pk %}"
+                       title="Edit referral">Edit this referral</a>
                 {% endif %}
-                <a class="dropdown-item" href="{% url 'referral_location_create' pk=referral.pk %}" title="Add location">Create location(s)</a>
-                <a class="dropdown-item" href="{% url 'referral_relate' pk=referral.pk %}" title="Add related">Add a related referral</a>
-                <a class="dropdown-item" href="{% url 'prs_object_update' model='referral' pk=referral.pk %}" title="Edit referral">Edit this referral</a>
-            {% endif %}
-            {% if geojson_locations %}
-                <a class="dropdown-item" href="{% url 'referral_detail' pk=referral.pk %}?generate_qgis=true" title="Generate QGIS layer (v2.8)">Generate QGIS layer (v2.8)</a>
-                <a class="dropdown-item" href="{% url 'referral_detail' pk=referral.pk %}?generate_qgis=true&qgis_ver=2_16" title="Generate QGIS layer (v2.16+)">Generate QGIS layer (v2.16+)</a>
-                <a class="dropdown-item" href="{% url 'referral_detail' pk=referral.pk %}?generate_gpkg=true" title="Generate Geopackage">Generate Geopackage</a>
-                <a class="dropdown-item" href="{% url 'referral_detail' pk=referral.pk %}?generate_geojson=true" title="Generate GeoJSON">Generate GeoJSON</a>
-            {% endif %}
-            {% if prs_power_user %}
-                <a class="dropdown-item" href="{% url 'referral_delete' pk=referral.pk %}" title="Delete referral">Delete referral</a>
-            {% endif %}
-            {% if prs_user %}
-                {% if bookmark %}
-                    <a class="dropdown-item" href="{% url 'prs_object_delete' model='bookmark' pk=bookmark.pk %}" title="Remove bookmark">Remove bookmark</a>
-                {% else %}
-                    <a class="dropdown-item" href="{% url 'referral_create_child' pk=referral.pk model='bookmark' %}" title="Add bookmark">Bookmark this referral</a>
+                {% if geojson_locations %}
+                    <a class="dropdown-item"
+                       href="{% url 'referral_detail' pk=referral.pk %}?generate_qgis=true"
+                       title="Generate QGIS layer (v2.8)">Generate QGIS layer (v2.8)</a>
+                    <a class="dropdown-item"
+                       href="{% url 'referral_detail' pk=referral.pk %}?generate_qgis=true&qgis_ver=2_16"
+                       title="Generate QGIS layer (v2.16+)">Generate QGIS layer (v2.16+)</a>
+                    <a class="dropdown-item"
+                       href="{% url 'referral_detail' pk=referral.pk %}?generate_gpkg=true"
+                       title="Generate Geopackage">Generate Geopackage</a>
+                    <a class="dropdown-item"
+                       href="{% url 'referral_detail' pk=referral.pk %}?generate_geojson=true"
+                       title="Generate GeoJSON">Generate GeoJSON</a>
                 {% endif %}
-            {% endif %}
-            <a class="dropdown-item" href="{% url 'referral_detail' pk=referral.pk %}?print=notes" title="Print notes">Print all notes</a>
-            <a class="dropdown-item" href="{% url 'prs_object_history' model='referral' pk=referral.pk %}" title="Referral history">Referral change history</a>
-        </div>
-    </li>
-</li>
-{% endblock navbar_item_extra %}
-
-{% block page_content_inner %}
-{% cache 600 referral_detail referral.pk %}
-<!-- Tags and related referrals pane -->
-{% if not object.is_deleted %}
-    <h1>{{ title }}</h1>
-    <div class="row">
-        <div class="col-sm-12 col-md-8">
-            {% if object.related_refs.all %}
-            <div class="alert alert-info">
-                <h4>Related referrals:</h4>
-                {% for ref in object.related_refs.all %}
-                    <form method="post" action="{% url 'referral_relate' pk=referral.id %}?ref_pk={{ ref.pk }}&delete=">
-                        {% csrf_token %}
-                        <a href="{% url 'referral_detail' pk=ref.pk %}" class="tooltip-help">
-                            {{ ref.type }}, ref. {{ ref.reference }} (referral ID {{ ref.pk }})
-                        </a>
-                        {% if prs_user %}
-                            <button type="submit" class="btn">
-                                <i class="far fa-trash-alt"></i>
-                            </button>
-                        {% endif %}
-                    </form>
-                {% endfor %}
+                {% if prs_power_user %}
+                    <a class="dropdown-item"
+                       href="{% url 'referral_delete' pk=referral.pk %}"
+                       title="Delete referral">Delete referral</a>
+                {% endif %}
+                {% if prs_user %}
+                    {% if bookmark %}
+                        <a class="dropdown-item"
+                           href="{% url 'prs_object_delete' model='bookmark' pk=bookmark.pk %}"
+                           title="Remove bookmark">Remove bookmark</a>
+                    {% else %}
+                        <a class="dropdown-item"
+                           href="{% url 'referral_create_child' pk=referral.pk model='bookmark' %}"
+                           title="Add bookmark">Bookmark this referral</a>
+                    {% endif %}
+                {% endif %}
+                <a class="dropdown-item"
+                   href="{% url 'referral_detail' pk=referral.pk %}?print=notes"
+                   title="Print notes">Print all notes</a>
+                <a class="dropdown-item"
+                   href="{% url 'prs_object_history' model='referral' pk=referral.pk %}"
+                   title="Referral history">Referral change history</a>
             </div>
-            {% endif %}
-        </div>
-        <div class="col-sm-12 col-md-4">
-            <div class="alert alert-warning">
-                {% if object.tags.all %}
-                    <h4>Key issues:</h4>
-                    {% for tag in object.tags.all %}
-                    <a href="{% url 'referral_tagged' slug=tag.slug %}"><span class="label label-primary">{{ tag.name }}</span></a>
-                        {% if forloop.last %}{% else %}, {% endif %}
-                    {% endfor %}
-                {% else %}
+        </li>
+    </li>
+{% endblock navbar_item_extra %}
+{% block page_content_inner %}
+    <!-- Tags and related referrals pane -->
+    {% if not object.is_deleted %}
+        <h1>{{ title }}</h1>
+        <div class="row">
+            <div class="col-sm-12 col-md-8">
+                {% if object.related_refs.all %}
+                    <div class="alert alert-info">
+                        <h4>Related referrals:</h4>
+                        {% for ref in object.related_refs.all %}
+                            <form method="post"
+                                  action="{% url 'referral_relate' pk=referral.id %}?ref_pk={{ ref.pk }}&delete=">
+                                {% csrf_token %}
+                                <a href="{% url 'referral_detail' pk=ref.pk %}" class="tooltip-help">
+                                    {{ ref.type }}, ref. {{ ref.reference }} (referral ID {{ ref.pk }})
+                                </a>
+                                {% if prs_user %}
+                                    <button type="submit" class="btn">
+                                        <i class="far fa-trash-alt"></i>
+                                    </button>
+                                {% endif %}
+                            </form>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="col-sm-12 col-md-4">
+                <div class="alert alert-warning">
+                    {% if object.tags.all %}
+                        <h4>Key issues:</h4>
+                        {% for tag in object.tags.all %}
+                            <a href="{% url 'referral_tagged' slug=tag.slug %}"><span class="label label-primary">{{ tag.name }}</span></a>
+                            {% if forloop.last %}
+                            {% else %}
+                                ,
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
                     No issues recorded</a>
                 {% endif %}
             </div>
@@ -112,142 +165,154 @@
         </div>
         <div class="col-sm-12 col-md-4">
             {% if prs_user %}
-            <div id="file-uploader">
-                <form action="{% url 'referral_record_upload' pk=object.pk %}" class="dropzone" id="id_referral_dropzone">
-                    <div class="dz-message">Drop files here or click to upload.</div>
-                </form>
-            </div>
+                <div id="file-uploader">
+                    <form action="{% url 'referral_record_upload' pk=object.pk %}"
+                          class="dropzone"
+                          id="id_referral_dropzone">
+                        <div class="dz-message">Drop files here or click to upload.</div>
+                    </form>
+                </div>
             {% endif %}
         </div>
-    </div><!-- /.row -->
-
+    </div>
+    <!-- /.row -->
     <div class="row">
         <div class="col">
             <!-- Navigation tabs -->
             <ul class="nav nav-tabs">
                 <li class="nav-item">
-                    <a
-                        class="nav-link{% if rel_model == 'tasks' %} active{% endif %}"
-                        id="tasks-tab"
-                        data-bs-toggle="tab"
-                        href="#tab_tasks"
-                        aria-controls="tab_tasks"
-                        aria-selected="{% if rel_model == 'tasks' %}true{% else %}false{% endif %}">
-                        {% if task_count %}<strong>Tasks ({{ task_count }})</strong>{% else %}Tasks{% endif %}
+                    <a class="nav-link{% if rel_model == 'tasks' %} active{% endif %}"
+                       id="tasks-tab"
+                       data-bs-toggle="tab"
+                       href="#tab_tasks"
+                       aria-controls="tab_tasks"
+                       aria-selected="{% if rel_model == 'tasks' %}true{% else %}false{% endif %}">
+                        {% if task_count %}
+                            <strong>Tasks ({{ task_count }})</strong>
+                        {% else %}
+                            Tasks
+                        {% endif %}
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a
-                        class="nav-link{% if rel_model == 'notes' %} active{% endif %}"
-                        id="notes-tab"
-                        data-bs-toggle="tab"
-                        href="#tab_notes"
-                        aria-controls="tab_notes"
-                        aria-selected="{% if rel_model == 'notes' %}true{% else %}false{% endif %}">
-                        {% if note_count %}<strong>Notes ({{ note_count }})</strong>{% else %}Notes{% endif %}
+                    <a class="nav-link{% if rel_model == 'notes' %} active{% endif %}"
+                       id="notes-tab"
+                       data-bs-toggle="tab"
+                       href="#tab_notes"
+                       aria-controls="tab_notes"
+                       aria-selected="{% if rel_model == 'notes' %}true{% else %}false{% endif %}">
+                        {% if note_count %}
+                            <strong>Notes ({{ note_count }})</strong>
+                        {% else %}
+                            Notes
+                        {% endif %}
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a
-                        class="nav-link{% if rel_model == 'records' %} active{% endif %}"
-                        id="records-tab"
-                        data-bs-toggle="tab"
-                        href="#tab_records"
-                        aria-controls="tab_records"
-                        aria-selected="{% if rel_model == 'records' %}true{% else %}false{% endif %}">
-                        {% if record_count %}<strong>Records ({{ record_count }})</strong>{% else %}Records{% endif %}
+                    <a class="nav-link{% if rel_model == 'records' %} active{% endif %}"
+                       id="records-tab"
+                       data-bs-toggle="tab"
+                       href="#tab_records"
+                       aria-controls="tab_records"
+                       aria-selected="{% if rel_model == 'records' %}true{% else %}false{% endif %}">
+                        {% if record_count %}
+                            <strong>Records ({{ record_count }})</strong>
+                        {% else %}
+                            Records
+                        {% endif %}
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a
-                        class="nav-link{% if rel_model == 'locations' %} active{% endif %}"
-                        id="locations-tab"
-                        data-bs-toggle="tab"
-                        href="#tab_locations"
-                        aria-controls="tab_locations"
-                        aria-selected="{% if rel_model == 'locations' %}true{% else %}false{% endif %}">
-                        {% if location_count %}<strong>Locations ({{ location_count }})</strong>{% else %}Locations{% endif %}
+                    <a class="nav-link{% if rel_model == 'locations' %} active{% endif %}"
+                       id="locations-tab"
+                       data-bs-toggle="tab"
+                       href="#tab_locations"
+                       aria-controls="tab_locations"
+                       aria-selected="{% if rel_model == 'locations' %}true{% else %}false{% endif %}">
+                        {% if location_count %}
+                            <strong>Locations ({{ location_count }})</strong>
+                        {% else %}
+                            Locations
+                        {% endif %}
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a
-                        class="nav-link{% if rel_model == 'conditions' %} active{% endif %}"
-                        id="conditions-tab"
-                        data-bs-toggle="tab"
-                        href="#tab_conditions"
-                        aria-controls="tab_conditions"
-                        aria-selected="{% if rel_model == 'conditions' %}true{% else %}false{% endif %}">
-                        {% if condition_count %}<strong>Conditions ({{ condition_count }})</strong>{% else %}Conditions{% endif %}
+                    <a class="nav-link{% if rel_model == 'conditions' %} active{% endif %}"
+                       id="conditions-tab"
+                       data-bs-toggle="tab"
+                       href="#tab_conditions"
+                       aria-controls="tab_conditions"
+                       aria-selected="{% if rel_model == 'conditions' %}true{% else %}false{% endif %}">
+                        {% if condition_count %}
+                            <strong>Conditions ({{ condition_count }})</strong>
+                        {% else %}
+                            Conditions
+                        {% endif %}
                     </a>
                 </li>
             </ul>
             <div class="tab-content">
-                <div
-                    class="tab-pane{% if rel_model == 'tasks' %} active{% endif %}"
-                    id="tab_tasks"
-                    role="tabpanel"
-                    aria-labelledby="tasks-tab">
-                    {{ tab_task }}
-                </div>
-                <div
-                    class="tab-pane{% if rel_model == 'notes' %} active{% endif %}"
-                    id="tab_notes"
-                    role="tabpanel"
-                    aria-labelledby="notes-tab">
-                    {{ tab_note }}
-                </div>
-                <div
-                    class="tab-pane{% if rel_model == 'records' %} active{% endif %}"
-                    id="tab_records"
-                    role="tabpanel"
-                    aria-labelledby="records-tab">
-                    {{ tab_record }}
-                </div>
-                <div
-                    class="tab-pane{% if rel_model == 'locations' %} active{% endif %}"
-                    id="tab_locations"
-                    role="tabpanel"
-                    aria-labelledby="locations-tab">
-                    {{ tab_location }}
-                </div>
-                <div
-                    class="tab-pane{% if rel_model == 'conditions' %} active{% endif %}"
-                    id="tab_conditions"
-                    role="tabpanel"
-                    aria-labelledby="conditions-tab">
-                    {{ tab_condition }}
-                </div>
+                <div class="tab-pane{% if rel_model == 'tasks' %} active{% endif %}"
+                     id="tab_tasks"
+                     role="tabpanel"
+                     aria-labelledby="tasks-tab">{{ tab_task }}</div>
+                <div class="tab-pane{% if rel_model == 'notes' %} active{% endif %}"
+                     id="tab_notes"
+                     role="tabpanel"
+                     aria-labelledby="notes-tab">{{ tab_note }}</div>
+                <div class="tab-pane{% if rel_model == 'records' %} active{% endif %}"
+                     id="tab_records"
+                     role="tabpanel"
+                     aria-labelledby="records-tab">{{ tab_record }}</div>
+                <div class="tab-pane{% if rel_model == 'locations' %} active{% endif %}"
+                     id="tab_locations"
+                     role="tabpanel"
+                     aria-labelledby="locations-tab">{{ tab_location }}</div>
+                <div class="tab-pane{% if rel_model == 'conditions' %} active{% endif %}"
+                     id="tab_conditions"
+                     role="tabpanel"
+                     aria-labelledby="conditions-tab">{{ tab_condition }}</div>
             </div>
-        </div><!-- /.col -->
-    </div><!-- /.row -->
+        </div>
+        <!-- /.col -->
+    </div>
+    <!-- /.row -->
 {% endif %}
-{% endcache %}
-
 {% if geojson_locations %}
-<hr>
-<div class="row">
-    <div class="col">
-        <p>
-            <button class="btn btn-primary" role="button" data-bs-toggle="collapse" data-bs-target="#id_collapseMap" aria-expanded="true" aria-controls="id_collapseMap">
-                Show/hide locations
-            </button>
-        </p>
-        <div class="collapse show" id="id_collapseMap">
-            <div class="card card-body" id="map"></div>
+    <hr>
+    <div class="row">
+        <div class="col">
+            <p>
+                <button class="btn btn-primary"
+                        role="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#id_collapseMap"
+                        aria-expanded="true"
+                        aria-controls="id_collapseMap">Show/hide locations</button>
+            </p>
+            <div class="collapse show" id="id_collapseMap">
+                <div class="card card-body" id="map"></div>
+            </div>
         </div>
     </div>
-</div>
 {% endif %}
 {% endblock page_content_inner %}
-
 {% block extra_js %}
-{{ block.super }}
-{% if geojson_locations %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.min.js" integrity="sha512-SeiQaaDh73yrb56sTW/RgVdi/mMqNeM2oBwubFHagc5BkixSpP1fvqF47mKzPGWYSSy4RwbBunrJBQ4Co8fRWA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.js" integrity="sha256-6H5xWuqlbGtfk8UL9eMYmp14brCbCw1ZZialT8fHLRE=" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-search/3.0.2/leaflet-search.min.js" integrity="sha512-lmt2nQGwuhA/7xEG4KjOuzy+kBQVOgpBNFxJR2yWp8J57H8nYxWC8J7Y5woDbqBBpBVHHLbFEi503u5K49KcOA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script src="{% static 'js/referral_map.js' %}"></script>
-<script>
+    {{ block.super }}
+    {% if geojson_locations %}
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.min.js"
+                integrity="sha512-SeiQaaDh73yrb56sTW/RgVdi/mMqNeM2oBwubFHagc5BkixSpP1fvqF47mKzPGWYSSy4RwbBunrJBQ4Co8fRWA=="
+                crossorigin="anonymous"
+                referrerpolicy="no-referrer"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.js"
+                integrity="sha256-6H5xWuqlbGtfk8UL9eMYmp14brCbCw1ZZialT8fHLRE="
+                crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-search/3.0.2/leaflet-search.min.js"
+                integrity="sha512-lmt2nQGwuhA/7xEG4KjOuzy+kBQVOgpBNFxJR2yWp8J57H8nYxWC8J7Y5woDbqBBpBVHHLbFEi503u5K49KcOA=="
+                crossorigin="anonymous"
+                referrerpolicy="no-referrer"></script>
+        <script src="{% static 'js/referral_map.js' %}"></script>
+        <script>
     // Add Location polygons to the map display and zoom to their bounds.
     var geojsonFeatures = JSON.parse('{{ geojson_locations|escapejs }}');
     var locationsLayer = L.geoJson(null, {
@@ -256,11 +321,13 @@
     locationsLayer.addData(geojsonFeatures);
     map.fitBounds(locationsLayer.getBounds());
     locationsLayer.addTo(map);
-</script>
-{% endif %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.1/dropzone.min.js" integrity="sha256-fegGeSK7Ez4lvniVEiz1nKMx9pYtlLwPNRPf6uc8d+8=" crossorigin="anonymous"></script>
-<script src="https://cdn.datatables.net/v/bs5/dt-1.13.8/date-1.5.1/datatables.min.js"></script>
-<script type="text/javascript">
+        </script>
+    {% endif %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.1/dropzone.min.js"
+            integrity="sha256-fegGeSK7Ez4lvniVEiz1nKMx9pYtlLwPNRPf6uc8d+8="
+            crossorigin="anonymous"></script>
+    <script src="https://cdn.datatables.net/v/bs5/dt-1.13.8/date-1.5.1/datatables.min.js"></script>
+    <script type="text/javascript">
     // Configure file upload Dropzone element - needs to happen outside of $(function(){}).
     Dropzone.options.idReferralDropzone = {
         paramName: "file",
@@ -292,5 +359,5 @@
             });
         });
     });
-</script>
+    </script>
 {% endblock extra_js %}

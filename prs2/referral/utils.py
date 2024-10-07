@@ -325,11 +325,12 @@ def wfs_getfeature(type_name, crs="EPSG:4326", cql_filter=None, max_features=50)
     resp = requests.get(url, auth=auth, params=params)
     try:
         resp.raise_for_status()
+        response = resp.json()
     except:
         # On exception, return an empty dict.
         return {}
 
-    return resp.json()
+    return response
 
 
 def query_caddy(q):
@@ -340,11 +341,12 @@ def query_caddy(q):
     resp = requests.get(url, auth=auth, params=params)
     try:
         resp.raise_for_status()
+        response = resp.json()
     except:
         # On exception, return an empty list.
         return []
 
-    return resp.json()
+    return response
 
 
 def get_previous_pages(page_num, count=5):

@@ -1,44 +1,23 @@
+import json
+import logging
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.admin import site
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.cache import cache
-from django.core.cache.utils import make_template_fragment_key
 from django.core.serializers import serialize
 from django.db.models import F
-from django.urls import reverse
-from django.http import (
-    HttpResponse,
-    HttpResponseBadRequest,
-    HttpResponseRedirect,
-    Http404,
-)
+from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import redirect
 from django.template.defaultfilters import slugify
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-from django.views.generic import (
-    View,
-    ListView,
-    DetailView,
-    CreateView,
-    UpdateView,
-    DeleteView,
-)
-import json
-import logging
+from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView, View
+from referral.forms import FORMS_MAP
+from referral.utils import breadcrumbs_li, get_next_pages, get_previous_pages, get_query, is_model_or_string, prs_user
 from reversion.models import Version
 from taggit.models import Tag
-
-from referral.forms import FORMS_MAP
-from referral.utils import (
-    is_model_or_string,
-    breadcrumbs_li,
-    get_query,
-    prs_user,
-    get_previous_pages,
-    get_next_pages,
-)
 
 logger = logging.getLogger("prs")
 
@@ -47,6 +26,7 @@ class PrsObjectList(LoginRequiredMixin, ListView):
     """A general-purpose view class to use for listing and searching PRS
     objects. Extend this class to customise the view for each model type.
     """
+
     paginate_by = 20
     template_name = "referral/prs_object_list.html"
 
@@ -60,8 +40,7 @@ class PrsObjectList(LoginRequiredMixin, ListView):
         return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
-        """Define the queryset of objects to return.
-        """
+        """Define the queryset of objects to return."""
         qs = super().get_queryset()
         # By default, filter out "inactive" objects.
         if "effective_to" in [f.name for f in self.model._meta.get_fields()]:
@@ -105,6 +84,7 @@ class PrsObjectCreate(LoginRequiredMixin, CreateView):
     Note that most PRS objects are associated with Referral models, thus they
     use the ``ReferralChildObjectCreate`` view instead.
     """
+
     template_name = "referral/change_form.html"
 
     def dispatch(self, request, *args, **kwargs):
@@ -112,9 +92,7 @@ class PrsObjectCreate(LoginRequiredMixin, CreateView):
             messages.warning(
                 request,
                 """You do not have permission to edit data.
-            Please contact the application owner(s): {}""".format(
-                    ", ".join([i[0] for i in settings.MANAGERS])
-                ),
+            Please contact the application owner(s): {}""".format(", ".join([i[0] for i in settings.MANAGERS])),
             )
             return HttpResponseRedirect(reverse("site_home"))
 
@@ -130,9 +108,7 @@ class PrsObjectCreate(LoginRequiredMixin, CreateView):
         model_type = m.verbose_name.capitalize()
         context["model_type"] = model_type
         context["title"] = "CREATE {}".format(self.model._meta.object_name.upper())
-        context["page_title"] = " | ".join(
-            [settings.APPLICATION_ACRONYM, "Create " + model_type]
-        )
+        context["page_title"] = " | ".join([settings.APPLICATION_ACRONYM, "Create " + model_type])
         context["page_heading"] = "CREATE " + model_type.upper()
         model_list_url = reverse(
             "prs_object_list",
@@ -180,19 +156,6 @@ class PrsObjectCreate(LoginRequiredMixin, CreateView):
         self.object.save()
         messages.success(self.request, "{0} has been created.".format(self.object))
 
-        # Find the referral associated with this object (may be the object itself)
-        # and invalidate any cached detail fragment.
-        if settings.REDIS_CACHE_HOST:
-            if self.object._meta.model_name == "referral":
-                referral = self.object
-            elif hasattr(self.object, "referral"):
-                referral = self.object.referral
-            else:
-                referral = None
-            if referral:
-                key = make_template_fragment_key("referral_detail", [referral.pk])
-                cache.delete(key)
-
         return HttpResponseRedirect(self.get_success_url())
 
     def get_success_url(self):
@@ -206,8 +169,8 @@ class PrsObjectCreate(LoginRequiredMixin, CreateView):
 
 
 class PrsObjectDetail(LoginRequiredMixin, DetailView):
-    """A general-purpose view class to use for displaying a single PRS object.
-    """
+    """A general-purpose view class to use for displaying a single PRS object."""
+
     template_name = "referral/prs_object_detail.html"
 
     def dispatch(self, request, *args, **kwargs):
@@ -217,7 +180,7 @@ class PrsObjectDetail(LoginRequiredMixin, DetailView):
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
-        from referral.models import Task, Record, Note, Location
+        from referral.models import Location, Note, Record, Task
 
         context = super().get_context_data(**kwargs)
         context["object_type"] = self.model._meta.verbose_name
@@ -287,9 +250,7 @@ class PrsObjectDetail(LoginRequiredMixin, DetailView):
         if self.model == Location:
             # Add child locations serialised as GeoJSON (if geometry exists).
             if obj:
-                context["geojson_locations"] = serialize(
-                    "geojson", [obj], geometry_field="poly", srid=4283
-                )
+                context["geojson_locations"] = serialize("geojson", [obj], geometry_field="poly", srid=4283)
         return context
 
 
@@ -298,6 +259,7 @@ class PrsObjectUpdate(LoginRequiredMixin, UpdateView):
     using a form.
     Extend this class to customise the view for each model type.
     """
+
     template_name = "referral/change_form.html"
 
     def dispatch(self, request, *args, **kwargs):
@@ -305,9 +267,7 @@ class PrsObjectUpdate(LoginRequiredMixin, UpdateView):
             messages.warning(
                 request,
                 """You do not have permission to edit data.
-            Please contact the application owner(s): {}""".format(
-                    ", ".join([i[0] for i in settings.MANAGERS])
-                ),
+            Please contact the application owner(s): {}""".format(", ".join([i[0] for i in settings.MANAGERS])),
             )
             return HttpResponseRedirect(reverse("site_home"))
 
@@ -326,9 +286,7 @@ class PrsObjectUpdate(LoginRequiredMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         obj = self.get_object()
         context["title"] = "UPDATE {}".format(obj._meta.object_name).upper()
-        context["page_title"] = "PRS | {} | {} | Update".format(
-            obj._meta.verbose_name_plural.capitalize(), obj.pk
-        )
+        context["page_title"] = "PRS | {} | {} | Update".format(obj._meta.verbose_name_plural.capitalize(), obj.pk)
         context["page_heading"] = "UPDATE " + obj._meta.verbose_name.upper()
         # Create a breadcrumb trail: Home[URL] > Model[URL] > ID > History
         context["breadcrumb_trail"] = breadcrumbs_li(
@@ -358,21 +316,7 @@ class PrsObjectUpdate(LoginRequiredMixin, UpdateView):
 
     def form_valid(self, form):
         self.object = form.save()
-
-        # Find the referral associated with this object (may be the object itself)
-        # and invalidate any cached detail fragment.
-        if settings.REDIS_CACHE_HOST:
-            if self.object._meta.model_name == 'referral':
-                referral = self.object
-            else:
-                referral = self.object.referral
-            if referral:
-                key = make_template_fragment_key('referral_detail', [referral.pk])
-                cache.delete(key)
-
-        messages.success(
-            self.request, "{0} has been updated.".format(self.get_object())
-        )
+        messages.success(self.request, "{0} has been updated.".format(self.get_object()))
         return HttpResponseRedirect(self.get_success_url())
 
 
@@ -381,6 +325,7 @@ class PrsObjectHistory(PrsObjectDetail):
     history of a PRS object.
     Extend this class to customise the view for each model type.
     """
+
     template_name = "referral/prs_object_history.html"
 
     def dispatch(self, request, *args, **kwargs):
@@ -393,12 +338,8 @@ class PrsObjectHistory(PrsObjectDetail):
         context = super().get_context_data(**kwargs)
         obj = self.get_object()
         context["title"] = "CHANGE HISTORY: {}".format(obj)
-        context["page_title"] = " | ".join(
-            [settings.APPLICATION_ACRONYM, self.get_object().__str__(), "History"]
-        )
-        context["page_heading"] = (
-            self.model._meta.verbose_name.upper() + " CHANGE HISTORY"
-        )
+        context["page_title"] = " | ".join([settings.APPLICATION_ACRONYM, self.get_object().__str__(), "History"])
+        context["page_heading"] = self.model._meta.verbose_name.upper() + " CHANGE HISTORY"
         # Create a breadcrumb trail: Home[URL] > Model[URL] > ID > History
         context["breadcrumb_trail"] = breadcrumbs_li(
             [
@@ -425,6 +366,7 @@ class PrsObjectDelete(LoginRequiredMixin, DeleteView):
     """A general-purpose view for confirming the deletion of a PRS object.
     Extend this class to customise the view for each model type.
     """
+
     template_name = "referral/prs_object_delete.html"
 
     def dispatch(self, request, *args, **kwargs):
@@ -432,9 +374,7 @@ class PrsObjectDelete(LoginRequiredMixin, DeleteView):
             messages.warning(
                 request,
                 """You do not have permission to edit data.
-            Please contact the application owner(s): {}""".format(
-                    ", ".join([i[0] for i in settings.MANAGERS])
-                ),
+            Please contact the application owner(s): {}""".format(", ".join([i[0] for i in settings.MANAGERS])),
             )
             return HttpResponseRedirect(reverse("site_home"))
 
@@ -498,17 +438,6 @@ class PrsObjectDelete(LoginRequiredMixin, DeleteView):
         else:
             success_url = self.get_success_url()
 
-        # Find the referral associated with this object (may be the object itself)
-        # and invalidate any cached detail fragment.
-        if settings.REDIS_CACHE_HOST:
-            if obj._meta.model_name == "referral":
-                referral = obj
-            else:
-                referral = obj.referral
-            if referral:
-                key = make_template_fragment_key("referral_detail", [referral.pk])
-                cache.delete(key)
-
         messages.success(self.request, f"{obj} has been deleted.")
         return HttpResponseRedirect(success_url)
 
@@ -521,6 +450,7 @@ class PrsObjectTag(LoginRequiredMixin, View):
     Default to adding the tag, unless the ``delete`` query param is also
     passed in.
     """
+
     http_method_names = ["post"]
     model = None
     pk_url_kwarg = "pk"
@@ -532,10 +462,7 @@ class PrsObjectTag(LoginRequiredMixin, View):
             self.model = is_model_or_string(kwargs["model"])
         # is_model_or_string() returns None if the model doesn't exist.
         if not self.model:
-            raise AttributeError(
-                "Object tag view {} must be called with an "
-                "model.".format(self.__class__.__name__)
-            )
+            raise AttributeError("Object tag view {} must be called with an " "model.".format(self.__class__.__name__))
         return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -550,22 +477,16 @@ class PrsObjectTag(LoginRequiredMixin, View):
             queryset = queryset.filter(pk=pk)
         else:
             raise AttributeError(
-                "Object tag view {} must be called with an "
-                "object pk.".format(self.__class__.__name__)
+                "Object tag view {} must be called with an " "object pk.".format(self.__class__.__name__)
             )
         try:
             obj = queryset.get()
         except queryset.model.DoesNotExist:
-            raise Http404(
-                "No {} found matching the query".format(
-                    queryset.model._meta.verbose_name_plural
-                )
-            )
+            raise Http404("No {} found matching the query".format(queryset.model._meta.verbose_name_plural))
         return obj
 
     def post(self, request, *args, **kwargs):
-        """Handles POST requests, and adds or remove a tag on an object.
-        """
+        """Handles POST requests, and adds or remove a tag on an object."""
         obj = self.get_object()
         tag = request.POST.get("tag", None)
         if not tag:

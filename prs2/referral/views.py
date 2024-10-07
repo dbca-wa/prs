@@ -10,8 +10,6 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Group
 from django.contrib.gis.geos import GEOSGeometry, MultiPolygon
-from django.core.cache import cache
-from django.core.cache.utils import make_template_fragment_key
 from django.core.mail import EmailMultiAlternatives
 from django.core.paginator import Paginator
 from django.core.serializers import serialize
@@ -713,11 +711,6 @@ class ReferralCreateChild(PrsObjectCreate):
         if not messages.get_messages(self.request):
             messages.success(self.request, "{} has been created.".format(self.object))
 
-        # Invalidate any cached referral detail fragment.
-        if settings.REDIS_CACHE_HOST:
-            key = make_template_fragment_key("referral_detail", [self.object.referral.pk])
-            cache.delete(key)
-
         redirect_url = redirect_url if redirect_url else self.get_success_url()
         return HttpResponseRedirect(redirect_url)
 
@@ -1020,11 +1013,6 @@ class LocationCreate(ReferralCreateChild):
 
         messages.success(request, "{} location(s) created.".format(len(forms)))
 
-        # Invalidate any cached referral detail fragment.
-        if settings.REDIS_CACHE_HOST:
-            key = make_template_fragment_key("referral_detail", [ref.pk])
-            cache.delete(key)
-
         # Test for intersecting locations.
         intersecting_locations = self.polygon_intersects(locations)
         if intersecting_locations:
@@ -1169,11 +1157,6 @@ class RecordUpload(LoginRequiredMixin, View):
             rec.order_date = date.today()
 
         rec.save()
-        # Invalidate the cached referral detail fragment.
-        if settings.REDIS_CACHE_HOST:
-            referral = rec.referral
-            key = make_template_fragment_key("referral_detail", [referral.pk])
-            cache.delete(key)
 
         return JsonResponse(
             {
@@ -1680,13 +1663,6 @@ class ReferralRelate(PrsObjectList):
                 ref1.remove_relationship(ref2)
                 messages.success(request, "Referral relation removed")
 
-        # Invalidate the cached referral detail fragments.
-        if settings.REDIS_CACHE_HOST:
-            key = make_template_fragment_key("referral_detail", [ref1.pk])
-            cache.delete(key)
-            key = make_template_fragment_key("referral_detail", [ref2.pk])
-            cache.delete(key)
-
         return redirect(ref1.get_absolute_url())
 
 
@@ -1740,11 +1716,6 @@ class ConditionClearanceCreate(PrsObjectCreate):
         # On Cancel, redirect to the Condition URL.
         if request.POST.get("cancel"):
             return HttpResponseRedirect(reverse("prs_object_detail", kwargs={"pk": obj.pk, "model": "conditions"}))
-
-        # Invalidate any cached referral detail fragment.
-        if settings.REDIS_CACHE_HOST:
-            key = make_template_fragment_key("referral_detail", [obj.referral.pk])
-            cache.delete(key)
 
         return super().post(request, *args, **kwargs)
 

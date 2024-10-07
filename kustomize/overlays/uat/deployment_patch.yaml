@@ -167,3 +167,13 @@ spec:
             secretKeyRef:
               name: prs-env-uat
               key: REDIS_CACHE_HOST
+        - name: API_RESPONSE_CACHE_SECONDS
+          valueFrom:
+            secretKeyRef:
+              name: prs-env-uat
+              key: API_RESPONSE_CACHE_SECONDS
+        - name: CACHE_MIDDLEWARE_SECONDS
+          valueFrom:
+            secretKeyRef:
+              name: prs-env-uat
+              key: CACHE_MIDDLEWARE_SECONDS
