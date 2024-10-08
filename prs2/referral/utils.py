@@ -306,7 +306,7 @@ def overdue_task_email():
     return True
 
 
-def wfs_getfeature(type_name, crs="EPSG:4326", cql_filter=None, max_features=50):
+def wfs_getfeature(type_name, cql_filter=None, crs="EPSG:4326", max_features=50):
     """A utility function to perform a GetFeature request on a WFS endpoint
     and return results as GeoJSON.
     """
@@ -330,7 +330,7 @@ def wfs_getfeature(type_name, crs="EPSG:4326", cql_filter=None, max_features=50)
     except Exception as e:
         logger = logging.getLogger("prs")
         logger.warning(f"Exception during WFS getFeature request to {url}: {params}")
-        logger.error(e)
+        logger.warning(e)
         # On exception, return an empty dict.
         return {}
 
@@ -349,7 +349,7 @@ def query_caddy(q):
     except Exception as e:
         logger = logging.getLogger("prs")
         logger.warning(f"Exception during query: {url}?q={q}")
-        logger.error(e)
+        logger.warning(e)
         # On exception, return an empty list.
         return []
 
