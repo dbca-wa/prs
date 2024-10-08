@@ -1,4 +1,5 @@
 import json
+import logging
 import re
 from datetime import date, datetime
 
@@ -305,7 +306,7 @@ def overdue_task_email():
     return True
 
 
-def wfs_getfeature(type_name, crs="EPSG:4326", cql_filter=None, max_features=50):
+def wfs_getfeature(type_name, cql_filter=None, crs="EPSG:4326", max_features=50):
     """A utility function to perform a GetFeature request on a WFS endpoint
     and return results as GeoJSON.
     """
@@ -326,7 +327,10 @@ def wfs_getfeature(type_name, crs="EPSG:4326", cql_filter=None, max_features=50)
     try:
         resp.raise_for_status()
         response = resp.json()
-    except:
+    except Exception as e:
+        logger = logging.getLogger("prs")
+        logger.warning(f"Exception during WFS getFeature request to {url}: {params}")
+        logger.warning(e)
         # On exception, return an empty dict.
         return {}
 
@@ -342,7 +346,10 @@ def query_caddy(q):
     try:
         resp.raise_for_status()
         response = resp.json()
-    except:
+    except Exception as e:
+        logger = logging.getLogger("prs")
+        logger.warning(f"Exception during query: {url}?q={q}")
+        logger.warning(e)
         # On exception, return an empty list.
         return []
 
