@@ -14,38 +14,38 @@ spec:
         app: prs-typesense
     spec:
       initContainers:
-      - name: data-vol-chown
-        image: busybox
-        command:
-          - /bin/chown
-          - -R
-          - "10001:10001"
-          - /data
-        volumeMounts:
-          - mountPath: /data
-            name: prs-typesense-data
+        - name: data-vol-chown
+          image: busybox
+          command:
+            - /bin/chown
+            - -R
+            - "10001:10001"
+            - /data
+          volumeMounts:
+            - mountPath: /data
+              name: prs-typesense-data
       containers:
-      - name: prs-typesense
-        startupProbe:
-          httpGet:
-            path: /health/
-            port: 8108
-            scheme: HTTP
-          # Allow sufficient time for prod collections to be loaded.
-          initialDelaySeconds: 300
-          periodSeconds: 15
-          timeoutSeconds: 3
-          successThreshold: 1
-          failureThreshold: 3
-        env:
-        - name: TYPESENSE_API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: prs-env-prod
-              key: TYPESENSE_API_KEY
-        volumeMounts:
-          - mountPath: /data
-            name: prs-typesense-data
+        - name: prs-typesense
+          startupProbe:
+            httpGet:
+              path: /health/
+              port: 8108
+              scheme: HTTP
+            # Allow sufficient time for prod collections to be loaded.
+            initialDelaySeconds: 300
+            periodSeconds: 15
+            timeoutSeconds: 3
+            successThreshold: 1
+            failureThreshold: 3
+          env:
+            - name: TYPESENSE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: prs-env-prod
+                  key: TYPESENSE_API_KEY
+          volumeMounts:
+            - mountPath: /data
+              name: prs-typesense-data
       volumes:
         - name: prs-typesense-data
           persistentVolumeClaim:
