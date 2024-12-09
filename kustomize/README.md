@@ -24,7 +24,7 @@ kubectl apply -k overlays/uat --dry-run=client -o yaml
 kubectl apply -k overlays/uat
 ```
 
-# References:
+## References
 
 - <https://kubernetes.io/docs/tasks/manage-kubernetes-objects/kustomization/>
 - <https://github.com/kubernetes-sigs/kustomize>
