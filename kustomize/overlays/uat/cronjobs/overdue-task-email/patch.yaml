@@ -10,18 +10,18 @@ spec:
       template:
         spec:
           containers:
-          - name: prs-cronjob
-            args: ["manage.py", "overdue_tasks_email"]
-            env:
-            - name: SITE_URL
-              value: "prs-uat.dbca.wa.gov.au"
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-uat
-                  key: DATABASE_URL
-            - name: EMAIL_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-uat
-                  key: EMAIL_HOST
+            - name: prs-cronjob
+              args: ["manage.py", "overdue_tasks_email"]
+              env:
+                - name: SITE_URL
+                  value: "prs-uat.dbca.wa.gov.au"
+                - name: DATABASE_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: prs-env-uat
+                      key: DATABASE_URL
+                - name: EMAIL_HOST
+                  valueFrom:
+                    secretKeyRef:
+                      name: prs-env-uat
+                      key: EMAIL_HOST

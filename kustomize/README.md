@@ -2,7 +2,7 @@
 
 Declarative management of Kubernetes objects using Kustomize.
 
-# How to use
+## How to use
 
 Within an overlay directory, create a `.env` file to contain required secret
 values in the format KEY=value (i.e. `overlays/uat/.env`). Example:
@@ -24,8 +24,8 @@ kubectl apply -k overlays/uat --dry-run=client -o yaml
 kubectl apply -k overlays/uat
 ```
 
-# References:
+## References
 
-* https://kubernetes.io/docs/tasks/manage-kubernetes-objects/kustomization/
-* https://github.com/kubernetes-sigs/kustomize
-* https://github.com/kubernetes-sigs/kustomize/tree/master/examples
+- <https://kubernetes.io/docs/tasks/manage-kubernetes-objects/kustomization/>
+- <https://github.com/kubernetes-sigs/kustomize>
+- <https://github.com/kubernetes-sigs/kustomize/tree/master/examples>

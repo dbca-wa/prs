@@ -13,10 +13,12 @@ secretGenerator:
     type: Opaque
     envs:
       - .env
+generatorOptions:
+  disableNameSuffixHash: true
 labels:
-  - pairs:
+  - includeSelectors: true
+    pairs:
       variant: prod
-    includeSelectors: true
 patches:
   - path: celery_patch.yaml
   - path: deployment_patch.yaml

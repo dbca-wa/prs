@@ -10,125 +10,125 @@ spec:
       template:
         spec:
           containers:
-          - name: prs-cronjob
-            args: ["manage.py", "harvest_email_referrals", "--email"]
-            env:
-            - name: SITE_URL
-              value: "prs-uat.dbca.wa.gov.au"
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-uat
-                  key: DATABASE_URL
-            - name: KMI_GEOSERVER_URL
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-uat
-                  key: KMI_GEOSERVER_URL
-            - name: GEOSERVER_URL
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-uat
-                  key: GEOSERVER_URL
-            - name: CADASTRE_LAYER_NAME
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-uat
-                  key: CADASTRE_LAYER_NAME
-            - name: GEOSERVER_SSO_USER
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-uat
-                  key: GEOSERVER_SSO_USER
-            - name: GEOSERVER_SSO_PASS
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-uat
-                  key: GEOSERVER_SSO_PASS
-            - name: SLIP_ESRI_FS_URL
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-uat
-                  key: SLIP_ESRI_FS_URL
-            - name: SLIP_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-uat
-                  key: SLIP_USERNAME
-            - name: SLIP_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-uat
-                  key: SLIP_PASSWORD
-            - name: EMAIL_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-uat
-                  key: EMAIL_HOST
-            - name: REFERRAL_EMAIL_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-uat
-                  key: REFERRAL_EMAIL_HOST
-            - name: REFERRAL_EMAIL_USER
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-uat
-                  key: REFERRAL_EMAIL_USER
-            - name: REFERRAL_EMAIL_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-uat
-                  key: REFERRAL_EMAIL_PASSWORD
-            - name: REFERRAL_ASSIGNEE_FALLBACK
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-uat
-                  key: REFERRAL_ASSIGNEE_FALLBACK
-            - name: PLANNING_EMAILS
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-uat
-                  key: PLANNING_EMAILS
-            - name: ASSESSOR_EMAILS
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-uat
-                  key: ASSESSOR_EMAILS
-            - name: TYPESENSE_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-uat
-                  key: TYPESENSE_HOST
-            - name: TYPESENSE_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-uat
-                  key: TYPESENSE_API_KEY
-            - name: CELERY_BROKER_URL
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-uat
-                  key: CELERY_BROKER_URL
-            - name: AZURE_ACCOUNT_NAME
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-uat
-                  key: AZURE_ACCOUNT_NAME
-            - name: AZURE_ACCOUNT_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-uat
-                  key: AZURE_ACCOUNT_KEY
-            - name: AZURE_CONTAINER
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-uat
-                  key: AZURE_CONTAINER
-            - name: SENTRY_DSN
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-uat
-                  key: SENTRY_DSN
-            - name: SENTRY_ENVIRONMENT
-              value: "uat"
+            - name: prs-cronjob
+              args: ["manage.py", "harvest_email_referrals", "--email"]
+              env:
+                - name: SITE_URL
+                  value: "prs-uat.dbca.wa.gov.au"
+                - name: DATABASE_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: prs-env-uat
+                      key: DATABASE_URL
+                - name: KMI_GEOSERVER_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: prs-env-uat
+                      key: KMI_GEOSERVER_URL
+                - name: GEOSERVER_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: prs-env-uat
+                      key: GEOSERVER_URL
+                - name: CADASTRE_LAYER_NAME
+                  valueFrom:
+                    secretKeyRef:
+                      name: prs-env-uat
+                      key: CADASTRE_LAYER_NAME
+                - name: GEOSERVER_SSO_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: prs-env-uat
+                      key: GEOSERVER_SSO_USER
+                - name: GEOSERVER_SSO_PASS
+                  valueFrom:
+                    secretKeyRef:
+                      name: prs-env-uat
+                      key: GEOSERVER_SSO_PASS
+                - name: SLIP_ESRI_FS_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: prs-env-uat
+                      key: SLIP_ESRI_FS_URL
+                - name: SLIP_USERNAME
+                  valueFrom:
+                    secretKeyRef:
+                      name: prs-env-uat
+                      key: SLIP_USERNAME
+                - name: SLIP_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: prs-env-uat
+                      key: SLIP_PASSWORD
+                - name: EMAIL_HOST
+                  valueFrom:
+                    secretKeyRef:
+                      name: prs-env-uat
+                      key: EMAIL_HOST
+                - name: REFERRAL_EMAIL_HOST
+                  valueFrom:
+                    secretKeyRef:
+                      name: prs-env-uat
+                      key: REFERRAL_EMAIL_HOST
+                - name: REFERRAL_EMAIL_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: prs-env-uat
+                      key: REFERRAL_EMAIL_USER
+                - name: REFERRAL_EMAIL_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: prs-env-uat
+                      key: REFERRAL_EMAIL_PASSWORD
+                - name: REFERRAL_ASSIGNEE_FALLBACK
+                  valueFrom:
+                    secretKeyRef:
+                      name: prs-env-uat
+                      key: REFERRAL_ASSIGNEE_FALLBACK
+                - name: PLANNING_EMAILS
+                  valueFrom:
+                    secretKeyRef:
+                      name: prs-env-uat
+                      key: PLANNING_EMAILS
+                - name: ASSESSOR_EMAILS
+                  valueFrom:
+                    secretKeyRef:
+                      name: prs-env-uat
+                      key: ASSESSOR_EMAILS
+                - name: TYPESENSE_HOST
+                  valueFrom:
+                    secretKeyRef:
+                      name: prs-env-uat
+                      key: TYPESENSE_HOST
+                - name: TYPESENSE_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: prs-env-uat
+                      key: TYPESENSE_API_KEY
+                - name: CELERY_BROKER_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: prs-env-uat
+                      key: CELERY_BROKER_URL
+                - name: AZURE_ACCOUNT_NAME
+                  valueFrom:
+                    secretKeyRef:
+                      name: prs-env-uat
+                      key: AZURE_ACCOUNT_NAME
+                - name: AZURE_ACCOUNT_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: prs-env-uat
+                      key: AZURE_ACCOUNT_KEY
+                - name: AZURE_CONTAINER
+                  valueFrom:
+                    secretKeyRef:
+                      name: prs-env-uat
+                      key: AZURE_CONTAINER
+                - name: SENTRY_DSN
+                  valueFrom:
+                    secretKeyRef:
+                      name: prs-env-uat
+                      key: SENTRY_DSN
+                - name: SENTRY_ENVIRONMENT
+                  value: "uat"

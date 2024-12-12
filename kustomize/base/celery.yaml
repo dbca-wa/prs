@@ -9,29 +9,29 @@ spec:
   template:
     spec:
       containers:
-      - name: prs-celery
-        image: ghcr.io/dbca-wa/prs
-        env:
-        - name: TZ
-          value: "Australia/Perth"
-        resources:
-          requests:
-            memory: "128Mi"
-            cpu: "10m"
-          limits:
-            memory: "2Gi"
-            cpu: "1000m"
-        securityContext:
-          runAsNonRoot: true
-          privileged: false
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-              - ALL
-          readOnlyRootFilesystem: true
-        volumeMounts:
-          - mountPath: /tmp
-            name: tmpfs-ram
+        - name: prs-celery
+          image: ghcr.io/dbca-wa/prs
+          env:
+            - name: TZ
+              value: "Australia/Perth"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "10m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+          securityContext:
+            runAsNonRoot: true
+            privileged: false
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+          volumeMounts:
+            - mountPath: /tmp
+              name: tmpfs-ram
       volumes:
         - name: tmpfs-ram
           emptyDir:

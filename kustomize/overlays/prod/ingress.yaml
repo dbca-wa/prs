@@ -5,13 +5,13 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - host: prs.dbca.wa.gov.au
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: prs-clusterip-prod
-            port:
-              number: 8080
+    - host: prs.dbca.wa.gov.au
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: prs-clusterip-prod
+                port:
+                  number: 8080
