@@ -45,7 +45,7 @@ django-storages = { version = "1.14.4", extras = ["azure"] }
 ipython = "^8.30.0"
 ipdb = "^0.13.13"
 pre-commit = "^4.0.1"
-coverage = "^7.6.8"
+coverage = "^7.6.10"
 
 [tool.ruff]
 line-length = 120
