@@ -15,7 +15,7 @@ spec:
           operator: Exists
       containers:
         - name: prs-typesense
-          image: ghcr.io/dbca-wa/typesense:26.0
+          image: ghcr.io/dbca-wa/typesense:27.0
           imagePullPolicy: IfNotPresent
           env:
             - name: TZ
