@@ -39,19 +39,14 @@ dependencies = [
   "django-storages[azure] == 1.14.4",
 ]
 
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.poetry]
-package-mode = false
-
-[tool.poetry.group.dev.dependencies]
-ipython = "^8.31.0"
-ipdb = "^0.13.13"
-pre-commit = "^4.0.1"
-coverage = "^7.6.10"
-mixer = "^7.2.2"
+[dependency-groups]
+dev = [
+  "ipython >= 8.31.0",
+  "ipdb >= 0.13.13",
+  "mixer >= 7.2.2",
+  "pre-commit >= 4.0.1",
+  "coverage >= 7.6.10",
+]
 
 [tool.ruff]
 line-length = 120
