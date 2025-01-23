@@ -13,16 +13,17 @@ spec:
           image: ghcr.io/dbca-wa/prs
           env:
             - name: TZ
-              value: "Australia/Perth"
+              value: 'Australia/Perth'
           resources:
             requests:
-              memory: "128Mi"
-              cpu: "10m"
+              memory: '128Mi'
+              cpu: '10m'
             limits:
-              memory: "2Gi"
-              cpu: "1000m"
+              memory: '2Gi'
+              cpu: '1000m'
           securityContext:
             runAsNonRoot: true
+            runAsUser: 1000
             privileged: false
             allowPrivilegeEscalation: false
             capabilities:
@@ -35,5 +36,5 @@ spec:
       volumes:
         - name: tmpfs-ram
           emptyDir:
-            medium: "Memory"
+            medium: 'Memory'
       restartPolicy: Always

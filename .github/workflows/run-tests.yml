@@ -1,4 +1,4 @@
-name: "Run unit tests"
+name: 'Run unit tests'
 
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
@@ -16,7 +16,7 @@ jobs:
       DATABASE_URL: postgis://postgres:postgres@localhost:5432/postgres
     services:
       postgres:
-        image: postgis/postgis:15-3.4-alpine
+        image: postgis/postgis:15-3.5-alpine
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -29,19 +29,6 @@ jobs:
           - 5672:5672
     steps:
       #----------------------------------------------
-      # Checkout repo and set up Python
-      #----------------------------------------------
-      - name: Checkout repo
-        uses: actions/checkout@v4
-        id: checkout-repo
-        with:
-          fetch-depth: 0
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        id: setup-python
-        with:
-          python-version: "3.12"
-      #----------------------------------------------
       # Install GDAL into the environment
       #----------------------------------------------
       - name: Install GDAL
@@ -51,47 +38,38 @@ jobs:
           sudo apt-get update
           sudo apt-get install --no-install-recommends --yes gdal-bin libgdal-dev
       #----------------------------------------------
-      # Install & configure Poetry
+      # Checkout repo
       #----------------------------------------------
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+      - name: Checkout repo
+        uses: actions/checkout@main
+        id: checkout-repo
         with:
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-          installer-parallel: true
+          fetch-depth: 0
       #----------------------------------------------
-      # Load cached venv if cache exists
+      # Install & configure uv
       #----------------------------------------------
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v4
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@v5
         with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+          enable-cache: true
       #----------------------------------------------
-      # Install project dependencies if cache does not exist
+      # Install project dependencies
       #----------------------------------------------
-      - name: Install cached dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --no-root
+      - name: Install dependencies
+        run: uv sync
       #----------------------------------------------
       # Run migrations (we need to because we have to start
       # the celery worker before running unit tests)
       #----------------------------------------------
       - name: Run DB migrations
-        run: |
-          source .venv/bin/activate
-          python manage.py migrate
+        run: uv run python manage.py migrate
       - name: Run celery worker for tests
-        run: |
-          source .venv/bin/activate
-          celery --app prs2 worker --loglevel error --detach
+        run: uv run celery --app prs2 worker --loglevel error --detach
       #----------------------------------------------
       # Run unit tests
       #----------------------------------------------
       - name: Run tests
         run: |
-          source .venv/bin/activate
-          python manage.py collectstatic
+          uv run python manage.py collectstatic
           # NOTE: we can't run tests in parallel, because setup() may break DB constraints.
-          python manage.py test --noinput --failfast --verbosity 0 --settings prs2.test-settings
+          uv run python manage.py test --noinput --failfast --verbosity 0 --settings prs2.test-settings
