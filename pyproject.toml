@@ -35,7 +35,7 @@ dependencies = [
   "sentry-sdk[django]==2.20.0",
   "crispy-bootstrap5 == 2024.10",
   "redis == 5.2.1",
-  "xlsxwriter == 3.2.0",
+  "xlsxwriter == 3.2.1",
   "django-storages[azure] == 1.14.4",
 ]
 
