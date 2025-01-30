@@ -322,3 +322,6 @@ if SENTRY_DSN and SENTRY_ENVIRONMENT:
         release=APPLICATION_VERSION_NO,
         before_send=sentry_excluded_exceptions,
     )
+
+# Sentry crons
+SENTRY_CRON_HARVEST_EMAIL = env("SENTRY_CRON_HARVEST_EMAIL", None)
