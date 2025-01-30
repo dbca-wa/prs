@@ -5,7 +5,7 @@ metadata:
   labels:
     app: prs-cronjob
 spec:
-  schedule: ""
+  schedule: ''
   concurrencyPolicy: Forbid
   jobTemplate:
     spec:
@@ -17,13 +17,14 @@ spec:
           containers:
             - name: prs-cronjob
               image: ghcr.io/dbca-wa/prs
-              command: ["python"]
-              args: ["--version"]
+              command: ['python']
+              args: ['--version']
               env:
                 - name: TZ
-                  value: "Australia/Perth"
+                  value: 'Australia/Perth'
               securityContext:
                 runAsNonRoot: true
+                runAsUser: 1000
                 privileged: false
                 allowPrivilegeEscalation: false
                 capabilities:
@@ -36,4 +37,4 @@ spec:
           volumes:
             - name: tmpfs-ram
               emptyDir:
-                medium: "Memory"
+                medium: 'Memory'

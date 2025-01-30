@@ -4,23 +4,17 @@ metadata:
   name: prs-cronjob
 spec:
   # Every hour between 09:00-17:00, Mon-Fri (AWST -> UTC)
-  schedule: "0 1-9 * * 1-5"
+  schedule: '0 1-9 * * 1-5'
   jobTemplate:
     spec:
       template:
         spec:
           containers:
             - name: prs-cronjob
-              args:
-                [
-                  "manage.py",
-                  "harvest_email_referrals",
-                  "--email-report",
-                  "--purge-email",
-                ]
+              args: ['manage.py', 'harvest_email_referrals', '--email-report', '--purge-email']
               env:
                 - name: SITE_URL
-                  value: "prs.dbca.wa.gov.au"
+                  value: 'prs.dbca.wa.gov.au'
                 - name: DATABASE_URL
                   valueFrom:
                     secretKeyRef:
@@ -142,4 +136,9 @@ spec:
                       name: prs-env-prod
                       key: SENTRY_DSN
                 - name: SENTRY_ENVIRONMENT
-                  value: "prod"
+                  value: 'prod'
+                - name: SENTRY_CRON_HARVEST_EMAIL
+                  valueFrom:
+                    secretKeyRef:
+                      name: prs-env-prod
+                      key: SENTRY_CRON_HARVEST_EMAIL
