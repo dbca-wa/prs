@@ -1,8 +1,11 @@
+import logging
+
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
-import logging
-from harvester.utils import harvest_unread_emails, import_harvested_refs, email_harvest_actions
+from harvester.utils import email_harvest_actions, harvest_unread_emails, import_harvested_refs
+from sentry_sdk.crons import capture_checkin
+from sentry_sdk.crons.consts import MonitorStatus
 
 
 class Command(BaseCommand):
@@ -27,6 +30,15 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         logger = logging.getLogger("harvester")
+
+        # Optionally run this management command in the context of a Sentry cron monitor.
+        if settings.SENTRY_CRON_HARVEST_EMAIL:
+            logger.info(f"Checking in Sentry Cron Monitor: {settings.SENTRY_CRON_HARVEST_EMAIL}")
+            check_in_id = capture_checkin(
+                monitor_slug=settings.SENTRY_CRON_HARVEST_EMAIL,
+                status=MonitorStatus.IN_PROGRESS,
+            )
+
         actions = []
 
         # Download unread emails from each specifed source email address.
@@ -49,3 +61,10 @@ class Command(BaseCommand):
             logger.info("Completed, email sent")
         else:
             logger.info("Completed")
+
+        if settings.SENTRY_CRON_HARVEST_EMAIL:
+            capture_checkin(
+                monitor_slug=settings.SENTRY_CRON_HARVEST_EMAIL,
+                check_in_id=check_in_id,
+                status=MonitorStatus.OK,
+            )

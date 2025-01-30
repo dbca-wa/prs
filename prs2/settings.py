@@ -8,7 +8,7 @@ import dj_database_url
 from dbca_utils.utils import env
 from django.core.exceptions import DisallowedHost
 from django.db.utils import OperationalError
-from redis.exceptions import ConnectionError
+from redis.exceptions import ConnectionError, TimeoutError
 
 # Project paths
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -297,8 +297,8 @@ def sentry_excluded_exceptions(event, hint):
         # Exclude exceptions related to host requests not in ALLOWED_HOSTS.
         elif hint["exc_info"][0] is DisallowedHost:
             return None
-        # Exclude Redis service connection errors.
-        elif hint["exc_info"][0] is ConnectionError:
+        # Exclude Redis service connection or timeout errors.
+        elif hint["exc_info"][0] in [ConnectionError, TimeoutError]:
             return None
 
     return event
@@ -322,3 +322,6 @@ if SENTRY_DSN and SENTRY_ENVIRONMENT:
         release=APPLICATION_VERSION_NO,
         before_send=sentry_excluded_exceptions,
     )
+
+# Sentry crons
+SENTRY_CRON_HARVEST_EMAIL = env("SENTRY_CRON_HARVEST_EMAIL", None)

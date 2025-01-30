@@ -46,7 +46,7 @@ RUN groupadd -r -g 1000 app \
   && useradd -r -u 1000 -d /app -g app -N app
 
 COPY --from=builder_base --chown=app:app /app /app
-# make sure we use the virtualenv by default
+# Make sure we use the virtualenv by default
 ENV PATH="/app/.venv/bin:$PATH"
 
 # Install the project.
