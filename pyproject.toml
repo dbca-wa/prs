@@ -21,7 +21,7 @@ dependencies = [
   "python-magic == 0.4.27",
   "lxml[html-clean] == 5.3.0",
   "xmltodict == 0.14.2",
-  "extract-msg == 0.52.0",
+  "extract-msg == 0.53.1",
   "webtemplate-dbca == 1.7.2",
   "geojson == 3.2.0",
   "typesense == 0.21.0",
