@@ -38,3 +38,4 @@ spec:
           emptyDir:
             medium: 'Memory'
       restartPolicy: Always
+      automountServiceAccountToken: false

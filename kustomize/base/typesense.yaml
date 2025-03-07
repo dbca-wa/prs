@@ -19,16 +19,16 @@ spec:
           imagePullPolicy: IfNotPresent
           env:
             - name: TZ
-              value: "Australia/Perth"
+              value: 'Australia/Perth'
             - name: TYPESENSE_DATA_DIR
-              value: "/data"
+              value: '/data'
           resources:
             requests:
-              memory: "128Mi"
-              cpu: "10m"
+              memory: '128Mi'
+              cpu: '10m'
             limits:
-              memory: "6Gi"
-              cpu: "1000m"
+              memory: '6Gi'
+              cpu: '1000m'
           startupProbe:
             httpGet:
               path: /health/
@@ -69,3 +69,4 @@ spec:
                 - ALL
             readOnlyRootFilesystem: true
       restartPolicy: Always
+      automountServiceAccountToken: false
