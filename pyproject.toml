@@ -6,8 +6,8 @@ authors = [{ name = "Ashley Felton", email = "ashley.felton@dbca.wa.gov.au" }]
 license = "Apache-2.0"
 requires-python = ">=3.12,<4.0"
 dependencies = [
-  "django == 4.2.18",
-  "psycopg[binary,pool]==3.2.4",
+  "django==4.2.20",
+  "psycopg[binary,pool]==3.2.5",
   "dbca-utils == 2.0.3",
   "python-dotenv == 1.0.1",
   "dj-database-url == 2.3.0",
@@ -54,3 +54,7 @@ indent-width = 4
 
 [tool.ruff.lint]
 ignore = ["E265", "E501", "E722"]
+
+# Reference: https://www.djlint.com/docs/configuration/
+[tool.djlint]
+profile = "django"
