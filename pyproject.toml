@@ -1,13 +1,13 @@
 [project]
 name = "prs"
-version = "2.5.62"
+version = "2.5.63"
 description = "Planning Referral System corporate application"
 authors = [{ name = "Ashley Felton", email = "ashley.felton@dbca.wa.gov.au" }]
 license = "Apache-2.0"
 requires-python = ">=3.12,<4.0"
 dependencies = [
-  "django == 4.2.18",
-  "psycopg[binary,pool]==3.2.4",
+  "django==4.2.20",
+  "psycopg[binary,pool]==3.2.6",
   "dbca-utils == 2.0.3",
   "python-dotenv == 1.0.1",
   "dj-database-url == 2.3.0",
@@ -19,9 +19,9 @@ dependencies = [
   "unidecode == 1.3.8",
   "pillow == 11.1.0",
   "python-magic == 0.4.27",
-  "lxml[html-clean] == 5.3.0",
+  "lxml[html-clean]==5.3.1",
   "xmltodict == 0.14.2",
-  "extract-msg == 0.52.0",
+  "extract-msg==0.54.0",
   "webtemplate-dbca == 1.7.2",
   "geojson == 3.2.0",
   "typesense == 0.21.0",
@@ -30,22 +30,22 @@ dependencies = [
   "celery == 5.4.0",
   "django-celery-results == 2.5.1",
   "pygeopkg == 0.1.3",
-  "whitenoise[brotli] == 6.8.2",
+  "whitenoise[brotli]==6.9.0",
   "django-crum == 0.7.9",
-  "sentry-sdk[django]==2.20.0",
+  "sentry-sdk[django]==2.24.1",
   "crispy-bootstrap5 == 2024.10",
   "redis == 5.2.1",
   "xlsxwriter==3.2.2",
-  "django-storages[azure] == 1.14.4",
+  "django-storages[azure]==1.14.5",
 ]
 
 [dependency-groups]
 dev = [
-  "ipython >= 8.31.0",
-  "ipdb >= 0.13.13",
-  "mixer >= 7.2.2",
-  "pre-commit >= 4.0.1",
-  "coverage >= 7.6.10",
+  "ipython>=8.31.0",
+  "ipdb>=0.13.13",
+  "mixer>=7.2.2",
+  "pre-commit>=4.0.1",
+  "coverage>=7.6.10",
 ]
 
 [tool.ruff]
@@ -54,3 +54,7 @@ indent-width = 4
 
 [tool.ruff.lint]
 ignore = ["E265", "E501", "E722"]
+
+# Reference: https://www.djlint.com/docs/configuration/
+[tool.djlint]
+profile = "django"
