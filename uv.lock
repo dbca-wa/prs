@@ -531,9 +531,12 @@ wheels = [
 
 [[package]]
 name = "docx2txt"
-version = "0.8"
+version = "0.9"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/7d/7d/60ee3f2b16d9bfdfa72e8599470a2c1a5b759cb113c6fe1006be28359327/docx2txt-0.8.tar.gz", hash = "sha256:2c06d98d7cfe2d3947e5760a57d924e3ff07745b379c8737723922e7009236e5", size = 2814 }
+sdist = { url = "https://files.pythonhosted.org/packages/ea/07/4486a038624e885e227fe79111914c01f55aa70a51920ff1a7f2bd216d10/docx2txt-0.9.tar.gz", hash = "sha256:18013f6229b14909028b19aa7bf4f8f3d6e4632d7b089ab29f7f0a4d1f660e28", size = 3613 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d6/51/756e71bec48ece0ecc2a10e921ef2756e197dcb7e478f2b43673b6683902/docx2txt-0.9-py3-none-any.whl", hash = "sha256:e3718c0653fd6f2fcf4b51b02a61452ad1c38a4c163bcf0a6fd9486cd38f529a", size = 4025 },
+]
 
 [[package]]
 name = "easygui"
@@ -1039,7 +1042,7 @@ requires-dist = [
     { name = "django-reversion", specifier = "==5.1.0" },
     { name = "django-storages", extras = ["azure"], specifier = "==1.14.5" },
     { name = "django-taggit", specifier = "==6.1.0" },
-    { name = "docx2txt", specifier = "==0.8" },
+    { name = "docx2txt", specifier = "==0.9" },
     { name = "extract-msg", specifier = "==0.54.0" },
     { name = "geojson", specifier = "==3.2.0" },
     { name = "gunicorn", specifier = "==23.0.0" },
@@ -1048,11 +1051,11 @@ requires-dist = [
     { name = "pillow", specifier = "==11.1.0" },
     { name = "psycopg", extras = ["binary", "pool"], specifier = "==3.2.6" },
     { name = "pygeopkg", specifier = "==0.1.3" },
-    { name = "python-dotenv", specifier = "==1.0.1" },
+    { name = "python-dotenv", specifier = "==1.1.0" },
     { name = "python-magic", specifier = "==0.4.27" },
     { name = "redis", specifier = "==5.2.1" },
     { name = "sentry-sdk", extras = ["django"], specifier = "==2.24.1" },
-    { name = "typesense", specifier = "==0.21.0" },
+    { name = "typesense", specifier = "==1.0.3" },
     { name = "unidecode", specifier = "==1.3.8" },
     { name = "webtemplate-dbca", specifier = "==1.7.2" },
     { name = "whitenoise", extras = ["brotli"], specifier = "==6.9.0" },
@@ -1198,11 +1201,11 @@ wheels = [
 
 [[package]]
 name = "python-dotenv"
-version = "1.0.1"
+version = "1.1.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/bc/57/e84d88dfe0aec03b7a2d4327012c1627ab5f03652216c63d49846d7a6c58/python-dotenv-1.0.1.tar.gz", hash = "sha256:e324ee90a023d808f1959c46bcbc04446a10ced277783dc6ee09987c37ec10ca", size = 39115 }
+sdist = { url = "https://files.pythonhosted.org/packages/88/2c/7bb1416c5620485aa793f2de31d3df393d3686aa8a8506d11e10e13c5baf/python_dotenv-1.1.0.tar.gz", hash = "sha256:41f90bc6f5f177fb41f53e87666db362025010eb28f60a01c9143bfa33a2b2d5", size = 39920 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6a/3e/b68c118422ec867fa7ab88444e1274aa40681c606d59ac27de5a5588f082/python_dotenv-1.0.1-py3-none-any.whl", hash = "sha256:f7b63ef50f1b690dddf550d03497b66d609393b40b564ed0d674909a68ebf16a", size = 19863 },
+    { url = "https://files.pythonhosted.org/packages/1e/18/98a99ad95133c6a6e2005fe89faedf294a748bd5dc803008059409ac9b1e/python_dotenv-1.1.0-py3-none-any.whl", hash = "sha256:d7c01d9e2293916c18baf562d95698754b0dbbb5e74d457c45d4f6561fb9d55d", size = 20256 },
 ]
 
 [[package]]
@@ -1352,14 +1355,14 @@ wheels = [
 
 [[package]]
 name = "typesense"
-version = "0.21.0"
+version = "1.0.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "requests" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/73/c4/b9ee39e15503c7e284bdb8afb5f2b8d06ee06e7abc33ed56c17388ab24e6/typesense-0.21.0.tar.gz", hash = "sha256:24470525b577300bd81fe43029dddd9269b942b20b49236edf049f6ecead7c8e", size = 14030 }
+sdist = { url = "https://files.pythonhosted.org/packages/67/bf/3bfa71ccd801d0a4b06206b5d0bcf4f399204901865924e36fe7cbf459a6/typesense-1.0.3.tar.gz", hash = "sha256:5e80e0fc71fd8a4eff9d3b8d25e7c312db5e4d542b635d3eea96d87ed129cf33", size = 43136 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/88/2c/e3f25e6e2c5ddb0c8b6e78115f6acd1be3167da1bbe361ae0bcff5c90512/typesense-0.21.0-py3-none-any.whl", hash = "sha256:e4330f103a40af98ba2b0ffd817392a84a537e04816221c9a283faadea7718f0", size = 21143 },
+    { url = "https://files.pythonhosted.org/packages/51/42/9823c42f2b383deae16c1ecb27566d0b1054a28e31fad145bab62ff17897/typesense-1.0.3-py3-none-any.whl", hash = "sha256:b5976a8f6b9afb451ebbd4763778198ac8d62ecf401bc7cd702490171b36d2c9", size = 68283 },
 ]
 
 [[package]]
