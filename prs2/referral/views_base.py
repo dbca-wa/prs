@@ -29,6 +29,7 @@ class PrsObjectList(LoginRequiredMixin, ListView):
 
     paginate_by = 20
     template_name = "referral/prs_object_list.html"
+    http_method_names = ["get", "head", "options"]
 
     def dispatch(self, request, *args, **kwargs):
         # kwargs must include a Model class, or a string.
@@ -86,6 +87,7 @@ class PrsObjectCreate(LoginRequiredMixin, CreateView):
     """
 
     template_name = "referral/change_form.html"
+    http_method_names = ["get", "post", "head", "options"]
 
     def dispatch(self, request, *args, **kwargs):
         if not prs_user(request):
@@ -172,6 +174,7 @@ class PrsObjectDetail(LoginRequiredMixin, DetailView):
     """A general-purpose view class to use for displaying a single PRS object."""
 
     template_name = "referral/prs_object_detail.html"
+    http_method_names = ["get", "head", "options"]
 
     def dispatch(self, request, *args, **kwargs):
         # kwargs must include a Model class, or a string.
@@ -261,6 +264,7 @@ class PrsObjectUpdate(LoginRequiredMixin, UpdateView):
     """
 
     template_name = "referral/change_form.html"
+    http_method_names = ["get", "post", "put", "patch", "head", "options"]
 
     def dispatch(self, request, *args, **kwargs):
         if not prs_user(request):
@@ -327,6 +331,7 @@ class PrsObjectHistory(PrsObjectDetail):
     """
 
     template_name = "referral/prs_object_history.html"
+    http_method_names = ["get", "head", "options"]
 
     def dispatch(self, request, *args, **kwargs):
         # kwargs must include a Model class, or a string.
@@ -368,6 +373,7 @@ class PrsObjectDelete(LoginRequiredMixin, DeleteView):
     """
 
     template_name = "referral/prs_object_delete.html"
+    http_method_names = ["get", "post", "put", "patch", "head", "options"]
 
     def dispatch(self, request, *args, **kwargs):
         if not prs_user(request):
@@ -451,7 +457,7 @@ class PrsObjectTag(LoginRequiredMixin, View):
     passed in.
     """
 
-    http_method_names = ["post"]
+    http_method_names = ["post", "put", "patch", "head", "options"]
     model = None
     pk_url_kwarg = "pk"
 

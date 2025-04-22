@@ -1613,6 +1613,7 @@ class ReferralRelate(PrsObjectList):
 
     model = Referral
     template_name = "referral/referral_relate.html"
+    http_method_names = ["get", "post", "put", "patch", "head", "options"]
 
     def get_object(self):
         return Referral.objects.get(pk=self.kwargs["pk"])
@@ -1790,6 +1791,8 @@ class InfobaseShortcut(View):
     file extension.
     """
 
+    http_method_names = ["get"]
+
     def get(self, request, *args, **kwargs):
         record = get_object_or_404(Record, pk=self.kwargs["pk"])
         if record.infobase_id:
@@ -1827,6 +1830,7 @@ class ReferralMap(LoginRequiredMixin, TemplateView):
     """A map view displaying all referral locations."""
 
     template_name = "referral/referral_map.html"
+    http_method_names = ["get"]
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
