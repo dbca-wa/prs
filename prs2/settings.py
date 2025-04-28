@@ -34,17 +34,27 @@ INTERNAL_IPS = ["127.0.0.1", "::1"]
 ROOT_URLCONF = "prs2.urls"
 WSGI_APPLICATION = "prs2.wsgi.application"
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        # Use whitenoise to add compression and caching support for static files.
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 # Assume Azure blob storage is used for media uploads, unless explicitly set as local storage.
 LOCAL_MEDIA_STORAGE = env("LOCAL_MEDIA_STORAGE", False)
 if LOCAL_MEDIA_STORAGE:
-    DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
     MEDIA_ROOT = os.path.join(BASE_DIR, "media")
     # Ensure that the local media directory exists.
     if not os.path.exists(MEDIA_ROOT):
         os.makedirs(MEDIA_ROOT)
 else:
-    DEFAULT_FILE_STORAGE = "storages.backends.azure_storage.AzureStorage"
+    STORAGES["default"] = {
+        "BACKEND": "storages.backends.azure_storage.AzureStorage",
+    }
     AZURE_ACCOUNT_NAME = env("AZURE_ACCOUNT_NAME", "name")
     AZURE_ACCOUNT_KEY = env("AZURE_ACCOUNT_KEY", "key")
     AZURE_CONTAINER = env("AZURE_CONTAINER", "container")
@@ -127,7 +137,9 @@ LOGIN_URL = "/login/"
 LOGIN_REDIRECT_URL = "/"
 APPLICATION_TITLE = "Planning Referral System"
 APPLICATION_ACRONYM = "PRS"
-project = tomllib.load(open(os.path.join(BASE_DIR, "pyproject.toml"), "rb"))
+pyproject = open(os.path.join(BASE_DIR, "pyproject.toml"), "rb")
+project = tomllib.load(pyproject)
+pyproject.close()
 APPLICATION_VERSION_NO = project["project"]["version"]
 APPLICATION_ALERTS_EMAIL = "PRS-Alerts@dbca.wa.gov.au"
 SITE_URL = env("SITE_URL", "localhost")
@@ -201,7 +213,6 @@ TIME_ZONE = "Australia/Perth"
 TZ = ZoneInfo(TIME_ZONE)
 USE_TZ = True
 USE_I18N = False
-USE_L10N = True
 # Sensible AU date input formats
 DATE_INPUT_FORMATS = (
     "%d/%m/%Y",
@@ -219,7 +230,6 @@ DATE_INPUT_FORMATS = (
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 STATIC_URL = "/static/"
 STATICFILES_DIRS = (os.path.join(BASE_DIR, "prs2", "static"),)
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 WHITENOISE_ROOT = STATIC_ROOT
 
 # Media uploads
