@@ -14,17 +14,13 @@ from django.core.validators import MaxLengthValidator
 from django.db.models import Q
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils.html import escape
-from django.utils.safestring import mark_safe
+from django.utils.html import escape, format_html
 from extract_msg import Message
 from geojson import Feature, FeatureCollection, Polygon, dumps
 from indexer.utils import typesense_client
 from lxml.html import fromstring
 from lxml_html_clean import clean_html
-from pygeopkg.conversion.to_geopkg_geom import (
-    make_gpkg_geom_header,
-    point_lists_to_gpkg_polygon,
-)
+from pygeopkg.conversion.to_geopkg_geom import make_gpkg_geom_header, point_lists_to_gpkg_polygon
 from pygeopkg.core.field import Field
 from pygeopkg.core.geopkg import GeoPackage
 from pygeopkg.core.srs import SRS
@@ -55,15 +51,9 @@ class ReferralLookup(ActiveModel, Audit):
     """Abstract model type for lookup-table objects."""
 
     name = models.CharField(max_length=200)
-    description = models.CharField(
-        max_length=200, null=True, blank=True, validators=[MaxLengthValidator(200)]
-    )
-    slug = models.SlugField(
-        unique=True, help_text="Must be unique. Automatically generated from name."
-    )
-    public = models.BooleanField(
-        default=True, help_text="Is this lookup selection available to all users?"
-    )
+    description = models.CharField(max_length=200, null=True, blank=True, validators=[MaxLengthValidator(200)])
+    slug = models.SlugField(unique=True, help_text="Must be unique. Automatically generated from name.")
+    public = models.BooleanField(default=True, help_text="Is this lookup selection available to all users?")
     headers = ["Name", "Description", "Last modified"]
 
     class Meta:
@@ -100,12 +90,12 @@ class ReferralLookup(ActiveModel, Audit):
         d = copy(self.__dict__)
         d["url"] = self.get_absolute_url()
         if self.description:
-            d["description"] = escape(unidecode(self.description))
+            d["description"] = unidecode(self.description)
         else:
             d["description"] = ""
         d["modified"] = self.modified.strftime("%d %b %Y")
         d["modified_ts"] = self.modified.isoformat()
-        return mark_safe(template.format(**d))
+        return format_html(template, **d)
 
     def as_tbody(self):
         """
@@ -123,7 +113,7 @@ class ReferralLookup(ActiveModel, Audit):
         d["creator"] = self.creator.get_full_name()
         d["modified"] = self.modified.strftime("%d-%b-%Y")
         d["modifier"] = self.modifier.get_full_name()
-        return mark_safe(template.format(**d))
+        return format_html(template, **d)
 
 
 class DopTrigger(ReferralLookup):
@@ -140,9 +130,7 @@ class Region(ReferralLookup):
     Lookup table of DPaW regions.
     """
 
-    region_mpoly = models.MultiPolygonField(
-        srid=4283, null=True, blank=True, help_text="Optional."
-    )
+    region_mpoly = models.MultiPolygonField(srid=4283, null=True, blank=True, help_text="Optional.")
 
 
 class LocalGovernment(ReferralLookup):
@@ -164,18 +152,14 @@ class Organisation(ReferralLookup):
     Lookup table of Organisations that send planning referrals to the department.
     """
 
-    type = models.ForeignKey(
-        OrganisationType, on_delete=models.PROTECT, help_text="The organisation type."
-    )
+    type = models.ForeignKey(OrganisationType, on_delete=models.PROTECT, help_text="The organisation type.")
     list_name = models.CharField(
         max_length=100,
         help_text="""Name as it will appear in the alphabetised selection lists (e.g. "Broome,
             Shire of"). Put acronyms (e.g. OEPA) at the end.""",
         validators=[MaxLengthValidator(100)],
     )
-    telephone = models.CharField(
-        max_length=20, null=True, blank=True, help_text="Include the area code."
-    )
+    telephone = models.CharField(max_length=20, null=True, blank=True, help_text="Include the area code.")
     fax = models.CharField(
         max_length=20,
         null=True,
@@ -200,13 +184,9 @@ class Organisation(ReferralLookup):
         help_text="Postal address line 2 (optional). Maximum 100 characters.",
         validators=[MaxLengthValidator(100)],
     )
-    suburb = models.CharField(
-        max_length=100, null=True, blank=True, validators=[MaxLengthValidator(100)]
-    )
+    suburb = models.CharField(max_length=100, null=True, blank=True, validators=[MaxLengthValidator(100)])
     state = models.IntegerField(choices=AU_STATE_CHOICES, default=8)
-    postcode = models.CharField(
-        max_length=4, null=True, blank=True, validators=[MaxLengthValidator(4)]
-    )
+    postcode = models.CharField(max_length=4, null=True, blank=True, validators=[MaxLengthValidator(4)])
     # Use alt_model_name when we don't want to override Meta verbose_name.
     alt_model_name = "referring organisation"
 
@@ -238,7 +218,7 @@ class Organisation(ReferralLookup):
         d["modifier"] = self.modifier.get_full_name()
         d["address2"] = d["address2"] or "&nbsp;"
         d["state"] = self.get_state_display()
-        return mark_safe(template.format(**d))
+        return format_html(template, **d)
 
 
 class TaskState(ReferralLookup):
@@ -402,12 +382,8 @@ class Referral(ReferralBaseModel):
         validators=[MaxLengthValidator(100)],
         help_text="[Searchable] The DPaW file this referral is filed within. Maximum 100 characters.",
     )
-    description = models.TextField(
-        blank=True, null=True, help_text="[Searchable] Optional."
-    )
-    referral_date = models.DateField(
-        verbose_name="received date", help_text="Date that the referral was received."
-    )
+    description = models.TextField(blank=True, null=True, help_text="[Searchable] Optional.")
+    referral_date = models.DateField(verbose_name="received date", help_text="Date that the referral was received.")
     address = models.CharField(
         max_length=200,
         blank=True,
@@ -415,9 +391,7 @@ class Referral(ReferralBaseModel):
         validators=[MaxLengthValidator(200)],
         help_text="[Searchable] Physical address of the planning proposal. Maximum 200 characters.",
     )
-    point = models.PointField(
-        srid=4283, blank=True, null=True, editable=False, help_text="Optional."
-    )
+    point = models.PointField(srid=4283, blank=True, null=True, editable=False, help_text="Optional.")
     dop_triggers = models.ManyToManyField(
         DopTrigger,
         related_name="dop_triggers",
@@ -467,16 +441,14 @@ class Referral(ReferralBaseModel):
             self.address = unidecode(self.address)
         # We need a PK to call self.location_set
         if self.pk and self.location_set.current().exists():
-            collection = GeometryCollection(
-                [l.poly for l in self.location_set.current() if l.poly]
-            )
+            collection = GeometryCollection([l.poly for l in self.location_set.current() if l.poly])
             self.point = collection.centroid
         super().save(force_insert, force_update)
 
         # Index the referral.
         try:
             index_object.delay_on_commit(pk=self.pk, model="referral")
-        except Exception as ex:
+        except Exception:
             # Indexing failure should never block or return an exception. Log the error to stdout.
             LOGGER.exception(f"Error during indexing referral {self}")
 
@@ -514,9 +486,7 @@ class Referral(ReferralBaseModel):
     @property
     def has_proposed_condition(self):
         """Checks if Task has 'Proposed Condition' text"""
-        return self.has_condition and any(
-            c.proposed_condition for c in self.condition_set.current()
-        )
+        return self.has_condition and any(c.proposed_condition for c in self.condition_set.current())
 
     def as_row(self):
         """
@@ -543,15 +513,14 @@ class Referral(ReferralBaseModel):
             d["referral_date"] = ""
             d["referral_date_ts"] = ""
         if self.address:
-            d["address"] = escape(unidecode(self.address))
+            d["address"] = unidecode(self.address)
         else:
             d["address"] = ""
         if self.description:
-            d["description"] = escape(smart_truncate(self.description, length=200))
+            d["description"] = smart_truncate(self.description, length=200)
         else:
             d["description"] = ""
-        d["reference"] = escape(self.reference)
-        return mark_safe(template.format(**d))
+        return format_html(template, **d)
 
     def as_tbody(self):
         """
@@ -569,7 +538,6 @@ class Referral(ReferralBaseModel):
             <tr><th>DoP Trigger(s)</th><td>{dop_triggers}</td></tr>
             <tr><th>File no.</th><td>{file_no}</td></tr>"""
         d = copy(self.__dict__)
-        d["reference"] = escape(self.reference)
         d["url"] = self.get_absolute_url()
         d["type"] = self.type.name
         d["regions"] = self.regions_str
@@ -577,28 +545,24 @@ class Referral(ReferralBaseModel):
         d["referring_org"] = self.referring_org
         d["file_no"] = self.file_no or ""
         if self.description:
-            d["description"] = escape(unidecode(self.description))
+            d["description"] = unidecode(self.description)
         else:
             d["description"] = ""
         d["referral_date"] = self.referral_date.strftime("%d-%b-%Y")
         if self.address:
-            d["address"] = escape(unidecode(self.address))
+            d["address"] = unidecode(self.address)
         else:
             d["address"] = ""
         d["lga"] = self.lga.name if self.lga else ""
-        return mark_safe(template.format(**d).strip())
+        return format_html(template, **d)
 
     def add_relationship(self, referral):
         # Disallow self-referential relationships:
         if self == referral:
             return None
         else:
-            forward_rel, created = RelatedReferral.objects.get_or_create(
-                from_referral=self, to_referral=referral
-            )
-            backward_rel, created = RelatedReferral.objects.get_or_create(
-                from_referral=referral, to_referral=self
-            )
+            forward_rel, created = RelatedReferral.objects.get_or_create(from_referral=self, to_referral=referral)
+            backward_rel, created = RelatedReferral.objects.get_or_create(from_referral=referral, to_referral=self)
             return forward_rel
 
     def remove_relationship(self, referral):
@@ -641,9 +605,7 @@ class Referral(ReferralBaseModel):
             Field("referral_reference", SQLFieldTypes.text),
             Field("referring_org", SQLFieldTypes.text),
         )
-        fc = gpkg.create_feature_class(
-            "prs_referrals", srs, fields=fields, shape_type=GeometryType.polygon
-        )
+        fc = gpkg.create_feature_class("prs_referrals", srs, fields=fields, shape_type=GeometryType.polygon)
         field_names = [
             SHAPE,
             "referral",
@@ -693,17 +655,11 @@ class RelatedReferral(models.Model):
     some really odd recursion errors.
     """
 
-    from_referral = models.ForeignKey(
-        Referral, on_delete=models.PROTECT, related_name="from_referral"
-    )
-    to_referral = models.ForeignKey(
-        Referral, on_delete=models.PROTECT, related_name="to_referral"
-    )
+    from_referral = models.ForeignKey(Referral, on_delete=models.PROTECT, related_name="from_referral")
+    to_referral = models.ForeignKey(Referral, on_delete=models.PROTECT, related_name="to_referral")
 
     def __str__(self):
-        return "{0} ({1} to {2})".format(
-            self.pk, self.from_referral.pk, self.to_referral.pk
-        )
+        return "{0} ({1} to {2})".format(self.pk, self.from_referral.pk, self.to_referral.pk)
 
 
 @reversion.register()
@@ -726,30 +682,18 @@ class Task(ReferralBaseModel):
         related_name="refer_task_assigned_user",
         help_text="The officer responsible for completing the task.",
     )
-    description = models.TextField(
-        blank=True, null=True, help_text="Description of the task requirements."
-    )
-    start_date = models.DateField(
-        blank=True, null=True, help_text="Date on which this task was started."
-    )
-    due_date = models.DateField(
-        blank=True, null=True, help_text="Date by which the task must be completed."
-    )
+    description = models.TextField(blank=True, null=True, help_text="Description of the task requirements.")
+    start_date = models.DateField(blank=True, null=True, help_text="Date on which this task was started.")
+    due_date = models.DateField(blank=True, null=True, help_text="Date by which the task must be completed.")
     complete_date = models.DateField(
         blank=True,
         null=True,
         verbose_name="completed date",
         help_text="Date that the task was completed.",
     )
-    stop_date = models.DateField(
-        blank=True, null=True, help_text="Date that the task was stopped."
-    )
-    restart_date = models.DateField(
-        blank=True, null=True, help_text="Date that a stopped task was restarted."
-    )
-    stop_time = models.IntegerField(
-        default=0, editable=False, help_text="Cumulative time stopped in days."
-    )
+    stop_date = models.DateField(blank=True, null=True, help_text="Date that the task was stopped.")
+    restart_date = models.DateField(blank=True, null=True, help_text="Date that a stopped task was restarted.")
+    stop_time = models.IntegerField(default=0, editable=False, help_text="Cumulative time stopped in days.")
     state = models.ForeignKey(
         TaskState,
         on_delete=models.PROTECT,
@@ -794,7 +738,7 @@ class Task(ReferralBaseModel):
         # Index the task.
         try:
             index_object.delay_on_commit(pk=self.pk, model="task")
-        except Exception as ex:
+        except Exception:
             # Indexing failure should never block or return an exception. Log the error to stdout.
             LOGGER.exception(f"Error during indexing task {self}")
 
@@ -817,10 +761,10 @@ class Task(ReferralBaseModel):
         d["url"] = self.get_absolute_url()
         d["type"] = self.type.name
         if self.description:
-            d["description"] = escape(smart_truncate(self.description, length=200))
+            d["description"] = smart_truncate(self.description, length=200)
         else:
             d["description"] = ""
-        d["address"] = escape(self.referral.address) if self.referral.address else ""
+        d["address"] = self.referral.address or ""
         d["referral_url"] = self.referral.get_absolute_url()
         d["referral"] = self.referral
         d["assigned_user"] = self.assigned_user.get_full_name()
@@ -843,7 +787,7 @@ class Task(ReferralBaseModel):
             d["complete_date"] = ""
             d["complete_date_ts"] = ""
         d["state"] = self.state
-        return mark_safe(template.format(**d))
+        return format_html(template, **d)
 
     def as_row_actions(self):
         """Returns a HTML table cell containing icons with links to suitable
@@ -852,9 +796,7 @@ class Task(ReferralBaseModel):
         d = copy(self.__dict__)
         if self.state.name == "Stopped":
             template = """<td><a href="{start_url}" title="Start"><i class="fa fa-play"></i></a></td>"""
-            d["start_url"] = reverse(
-                "task_action", kwargs={"pk": self.pk, "action": "start"}
-            )
+            d["start_url"] = reverse("task_action", kwargs={"pk": self.pk, "action": "start"})
         elif not self.complete_date:
             template = """<td><a href="{edit_url}" title="Edit"><i class="far fa-edit"></i></a>"""
             template += """ <a href="{complete_url}" title="Complete"><i class="far fa-check-circle"></i></a>"""
@@ -863,27 +805,15 @@ class Task(ReferralBaseModel):
                 <a href="{reassign_url}" title="Reassign"><i class="fa fa-share"></i></a>
                 <a href="{cancel_url}" title="Cancel"><i class="fa fa-ban"></i></a>
                 <a href="{delete_url}" title="Delete"><i class="far fa-trash-alt"></i></a></td>"""
-            d["edit_url"] = reverse(
-                "task_action", kwargs={"pk": self.pk, "action": "update"}
-            )
-            d["reassign_url"] = reverse(
-                "task_action", kwargs={"pk": self.pk, "action": "reassign"}
-            )
-            d["complete_url"] = reverse(
-                "task_action", kwargs={"pk": self.pk, "action": "complete"}
-            )
-            d["stop_url"] = reverse(
-                "task_action", kwargs={"pk": self.pk, "action": "stop"}
-            )
-            d["cancel_url"] = reverse(
-                "task_action", kwargs={"pk": self.pk, "action": "cancel"}
-            )
-            d["delete_url"] = reverse(
-                "prs_object_delete", kwargs={"pk": self.pk, "model": "task"}
-            )
+            d["edit_url"] = reverse("task_action", kwargs={"pk": self.pk, "action": "update"})
+            d["reassign_url"] = reverse("task_action", kwargs={"pk": self.pk, "action": "reassign"})
+            d["complete_url"] = reverse("task_action", kwargs={"pk": self.pk, "action": "complete"})
+            d["stop_url"] = reverse("task_action", kwargs={"pk": self.pk, "action": "stop"})
+            d["cancel_url"] = reverse("task_action", kwargs={"pk": self.pk, "action": "cancel"})
+            d["delete_url"] = reverse("prs_object_delete", kwargs={"pk": self.pk, "model": "task"})
         else:
             template = "<td></td>"
-        return mark_safe(template.format(**d))
+        return format_html(template, **d)
 
     def as_row_minus_referral(self):
         """
@@ -916,9 +846,7 @@ class Task(ReferralBaseModel):
         of values as a row for the site home view.
         """
         template = "<td>{type}</td>"
-        if (
-            self.referral.address
-        ):  # If the referral has an address, include it in the description field.
+        if self.referral.address:  # If the referral has an address, include it in the description field.
             template += "<td>{description}<br><b>Address: </b>{address}</td>"
         else:
             template += "<td>{description}</td>"
@@ -927,9 +855,7 @@ class Task(ReferralBaseModel):
             <td>{referring_org}</td>
             <td>{reference}</td>
             <td><span style="display:none">{due_date_ts} </span>{due_date}</td>"""
-        if (
-            self.is_stopped
-        ):  # Render a different set of action icons if the task is stopped.
+        if self.is_stopped:  # Render a different set of action icons if the task is stopped.
             template += """<td class="action-icons-cell">
                 <a href="{start_url}" title="Start"><i class="fa fa-play"></i></a></td>"""
         elif not self.complete_date:  # Render icons if the task is not completed.
@@ -943,15 +869,15 @@ class Task(ReferralBaseModel):
         d = copy(self.__dict__)
         d["type"] = self.type.name
         if self.description:
-            d["description"] = escape(smart_truncate(self.description, length=200))
+            d["description"] = smart_truncate(self.description, length=200)
         else:
             d["description"] = ""
         d["referral_url"] = self.referral.get_absolute_url()
         d["referral_pk"] = self.referral.pk
         d["referring_org"] = self.referral.referring_org
-        d["reference"] = escape(self.referral.reference)
+        d["reference"] = self.referral.reference
         if self.referral.address:
-            d["address"] = escape(unidecode(self.referral.address))
+            d["address"] = unidecode(self.referral.address)
         else:
             d["address"] = ""
         if self.due_date:
@@ -960,20 +886,12 @@ class Task(ReferralBaseModel):
         else:
             d["due_date"] = ""
             d["due_date_ts"] = ""
-        d["start_url"] = reverse(
-            "task_action", kwargs={"pk": self.pk, "action": "start"}
-        )
-        d["complete_url"] = reverse(
-            "task_action", kwargs={"pk": self.pk, "action": "complete"}
-        )
-        d["reassign_url"] = reverse(
-            "task_action", kwargs={"pk": self.pk, "action": "reassign"}
-        )
+        d["start_url"] = reverse("task_action", kwargs={"pk": self.pk, "action": "start"})
+        d["complete_url"] = reverse("task_action", kwargs={"pk": self.pk, "action": "complete"})
+        d["reassign_url"] = reverse("task_action", kwargs={"pk": self.pk, "action": "reassign"})
         d["stop_url"] = reverse("task_action", kwargs={"pk": self.pk, "action": "stop"})
-        d["cancel_url"] = reverse(
-            "task_action", kwargs={"pk": self.pk, "action": "cancel"}
-        )
-        return mark_safe(template.format(**d))
+        d["cancel_url"] = reverse("task_action", kwargs={"pk": self.pk, "action": "cancel"})
+        return format_html(template, **d)
 
     def as_row_for_index_print(self):
         """As above, minus the column for icons."""
@@ -1006,7 +924,7 @@ class Task(ReferralBaseModel):
             d["due_date"] = self.due_date.strftime("%d %b %Y")
         else:
             d["due_date"] = ""
-        return mark_safe(template.format(**d))
+        return format_html(template, **d)
 
     def as_tbody(self):
         """
@@ -1026,11 +944,9 @@ class Task(ReferralBaseModel):
             <tr><th>Stop time (days)</th><td>{stop_time}</td></tr>"""
         d = copy(self.__dict__)
         d["type"] = self.type.name
-        d["referral_url"] = reverse(
-            "referral_detail", kwargs={"pk": self.referral.pk, "related_model": "tasks"}
-        )
+        d["referral_url"] = reverse("referral_detail", kwargs={"pk": self.referral.pk, "related_model": "tasks"})
         d["referral_id"] = self.referral.pk
-        d["reference"] = escape(self.referral.reference)
+        d["reference"] = self.referral.reference
         d["assigned_user"] = self.assigned_user.get_full_name()
         d["state"] = self.state.name
         if self.start_date:
@@ -1054,18 +970,16 @@ class Task(ReferralBaseModel):
         if d["stop_time"] == 0:
             d["stop_time"] = ""
         if self.description:
-            d["description"] = escape(unidecode(self.description))
+            d["description"] = unidecode(self.description)
         else:
             d["description"] = ""
-        return mark_safe(template.format(**d).strip())
+        return format_html(template, **d)
 
     def email_user(self, from_email=None):
         """Method to email the assigned user a notification message about this
         task.
         """
-        subject = "PRS task assignment notification (referral ID {0})".format(
-            self.referral.pk
-        )
+        subject = "PRS task assignment notification (referral ID {0})".format(self.referral.pk)
         if not from_email:
             from_email = settings.APPLICATION_ALERTS_EMAIL
         to_email = self.assigned_user.email
@@ -1142,9 +1056,7 @@ class Record(ReferralBaseModel):
         # If the file is a .MSG we take the sent date of the email and use it for order_date.
         if self.extension == "MSG":
             msg = Message(self.uploaded_file)
-            if (
-                msg.date and not self.order_date
-            ):  # Don't override any existing order_date.
+            if msg.date and not self.order_date:  # Don't override any existing order_date.
                 self.order_date = msg.date
 
         super().save(force_insert, force_update)
@@ -1152,7 +1064,7 @@ class Record(ReferralBaseModel):
         # Index the record.
         try:
             index_object.delay_on_commit(pk=self.pk, model="record")
-        except Exception as ex:
+        except Exception:
             # Indexing failure should never block or return an exception. Log the error to stdout.
             LOGGER.exception(f"Error during indexing record {self}")
 
@@ -1223,7 +1135,6 @@ class Record(ReferralBaseModel):
             <td>{filesize}</td>"""
         d = copy(self.__dict__)
         d["url"] = self.get_absolute_url()
-        d["name"] = escape(self.name)
         if self.order_date:
             d["order_date"] = self.order_date.strftime("%d %b %Y")
             d["order_date_ts"] = self.order_date.isoformat()
@@ -1246,7 +1157,7 @@ class Record(ReferralBaseModel):
             d["download_url"] = ""
             d["filetype"] = ""
             d["filesize"] = ""
-        return mark_safe(template.format(**d))
+        return format_html(template, **d)
 
     def as_row_actions(self):
         """Returns a HTML table cell containing icons with links to suitable
@@ -1255,13 +1166,9 @@ class Record(ReferralBaseModel):
         template = """<td><a href="{edit_url}" title="Edit"><i class="far fa-edit"></i></a>
             <a href="{delete_url}" title="Delete"><i class="far fa-trash-alt"></i></a></td>"""
         d = copy(self.__dict__)
-        d["edit_url"] = reverse(
-            "prs_object_update", kwargs={"pk": self.pk, "model": "records"}
-        )
-        d["delete_url"] = reverse(
-            "prs_object_delete", kwargs={"pk": self.pk, "model": "records"}
-        )
-        return mark_safe(template.format(**d))
+        d["edit_url"] = reverse("prs_object_update", kwargs={"pk": self.pk, "model": "records"})
+        d["delete_url"] = reverse("prs_object_delete", kwargs={"pk": self.pk, "model": "records"})
+        return format_html(template, **d)
 
     def as_row_minus_referral(self):
         """Removes the HTML cell containing the parent referral details."""
@@ -1280,23 +1187,19 @@ class Record(ReferralBaseModel):
             <tr><th>File size</th><td>{filesize}</td></tr>
             <tr><th>Date</th><td>{order_date}</td</tr>"""
         d = copy(self.__dict__)
-        d["name"] = escape(self.name)
         d["referral_url"] = reverse(
             "referral_detail",
             kwargs={"pk": self.referral.pk, "related_model": "records"},
         )
         d["referral"] = self.referral
-        d["reference"] = escape(self.referral.reference)
+        d["reference"] = self.referral.reference
         if self.infobase_id:
             d["infobase_url"] = reverse("infobase_shortcut", kwargs={"pk": self.pk})
             d["infobase_id"] = self.infobase_id
         else:
             d["infobase_url"] = ""
             d["infobase_id"] = ""
-        if self.description:
-            d["description"] = escape(self.description)
-        else:
-            d["description"] = ""
+        d["description"] = self.description or ""
         if self.uploaded_file:
             d["download_url"] = self.uploaded_file.url
             d["filetype"] = self.extension
@@ -1310,7 +1213,7 @@ class Record(ReferralBaseModel):
         else:
             d["order_date"] = ""
         d["creator"] = self.creator.get_full_name()
-        return mark_safe(template.format(**d).strip())
+        return format_html(template, **d)
 
 
 @reversion.register()
@@ -1363,7 +1266,7 @@ class Note(ReferralBaseModel):
         # Index the note.
         try:
             index_object.delay_on_commit(pk=self.pk, model="note")
-        except Exception as ex:
+        except Exception:
             # Indexing failure should never block or return an exception. Log the error to stdout.
             LOGGER.exception(f"Error during indexing note {self}")
 
@@ -1391,9 +1294,7 @@ class Note(ReferralBaseModel):
         d = copy(self.__dict__)
         d["url"] = self.get_absolute_url()
         if self.type:
-            d["type"] = '<img src="/static/{}" title="{}" />'.format(
-                self.type.icon.__str__(), self.type.name
-            )
+            d["type"] = '<img src="/static/{}" title="{}" />'.format(self.type.icon.__str__(), self.type.name)
         else:
             d["type"] = ""
         d["creator"] = self.creator.get_full_name()
@@ -1406,7 +1307,7 @@ class Note(ReferralBaseModel):
         d["note"] = smart_truncate(unidecode(self.note), length=400)
         d["referral_url"] = self.referral.get_absolute_url()
         d["referral"] = self.referral
-        return mark_safe(template.format(**d))
+        return format_html(template, **d)
 
     def as_row_actions(self):
         """Returns a HTML table cell containing icons with links to suitable
@@ -1415,13 +1316,9 @@ class Note(ReferralBaseModel):
         d = copy(self.__dict__)
         template = """<td><a href="{edit_url}" title="Edit"><i class="far fa-edit"></i></a>
             <a href="{delete_url}" title="Delete"><i class="far fa-trash-alt"></i></a></td>"""
-        d["edit_url"] = reverse(
-            "prs_object_update", kwargs={"pk": self.pk, "model": "notes"}
-        )
-        d["delete_url"] = reverse(
-            "prs_object_delete", kwargs={"pk": self.pk, "model": "notes"}
-        )
-        return mark_safe(template.format(**d))
+        d["edit_url"] = reverse("prs_object_update", kwargs={"pk": self.pk, "model": "notes"})
+        d["delete_url"] = reverse("prs_object_delete", kwargs={"pk": self.pk, "model": "notes"})
+        return format_html(template, **d)
 
     def as_row_minus_referral(self):
         """Removes the HTML cell containing the parent referral details."""
@@ -1438,9 +1335,7 @@ class Note(ReferralBaseModel):
             <tr><th>Date</th><td>{order_date}</td</tr>
             <tr class="highlight"><th>Note</th><td>{note_html}</td></tr>"""
         d = copy(self.__dict__)
-        d["referral_url"] = reverse(
-            "referral_detail", kwargs={"pk": self.referral.pk, "related_model": "notes"}
-        )
+        d["referral_url"] = reverse("referral_detail", kwargs={"pk": self.referral.pk, "related_model": "notes"})
         d["referral"] = self.referral
         d["reference"] = self.referral.reference
         d["type"] = self.type or ""
@@ -1450,7 +1345,7 @@ class Note(ReferralBaseModel):
         else:
             d["order_date"] = ""
         d["note_html"] = unidecode(self.note_html)
-        return mark_safe(template.format(**d).strip())
+        return format_html(template, **d)
 
 
 class ConditionCategory(ReferralLookup):
@@ -1463,9 +1358,7 @@ class ConditionCategory(ReferralLookup):
 class ModelCondition(ReferralBaseModel):
     """Represents a 'model condition' with standard text."""
 
-    category = models.ForeignKey(
-        ConditionCategory, on_delete=models.PROTECT, blank=True, null=True
-    )
+    category = models.ForeignKey(ConditionCategory, on_delete=models.PROTECT, blank=True, null=True)
     condition = models.TextField(help_text="Model condition")
     identifier = models.CharField(
         max_length=100,
@@ -1482,9 +1375,7 @@ class Condition(ReferralBaseModel):
     Note that referral may be blank; this denotes a "standard" model condition.
     """
 
-    referral = models.ForeignKey(
-        Referral, on_delete=models.PROTECT, blank=True, null=True
-    )
+    referral = models.ForeignKey(Referral, on_delete=models.PROTECT, blank=True, null=True)
     condition = models.TextField(editable=False, blank=True, null=True)
     condition_html = models.TextField(
         blank=True,
@@ -1514,9 +1405,7 @@ class Condition(ReferralBaseModel):
         editable=False,
         symmetrical=True,
     )
-    category = models.ForeignKey(
-        ConditionCategory, on_delete=models.PROTECT, blank=True, null=True
-    )
+    category = models.ForeignKey(ConditionCategory, on_delete=models.PROTECT, blank=True, null=True)
     model_condition = models.ForeignKey(
         ModelCondition,
         on_delete=models.PROTECT,
@@ -1563,7 +1452,7 @@ class Condition(ReferralBaseModel):
         if self.referral:
             try:
                 index_object.delay_on_commit(pk=self.pk, model="condition")
-            except Exception as ex:
+            except Exception:
                 LOGGER.exception(f"Error during indexing condition {self}")
 
     def as_row(self):
@@ -1579,11 +1468,9 @@ class Condition(ReferralBaseModel):
             <td class="referral-id-cell"><a href="{referral_url}">{referral}</a></td>"""
         d = copy(self.__dict__)
         d["url"] = self.get_absolute_url()
-        d["identifier"] = escape(self.identifier) if self.identifier else ""
+        d["identifier"] = self.identifier or ""
         if self.proposed_condition:
-            d["proposed_condition"] = smart_truncate(
-                self.proposed_condition, length=300
-            )
+            d["proposed_condition"] = smart_truncate(self.proposed_condition, length=300)
         else:
             d["proposed_condition"] = ""
         d["condition"] = smart_truncate(self.condition, length=300)
@@ -1600,7 +1487,7 @@ class Condition(ReferralBaseModel):
         else:
             d["referral_url"] = ""
         d["referral"] = self.referral or ""
-        return mark_safe(template.format(**d))
+        return format_html(template, **d)
 
     def as_row_actions(self):
         """Returns a HTML table cell containing icons with links to suitable
@@ -1610,16 +1497,10 @@ class Condition(ReferralBaseModel):
             <a href="{edit_url}" title="Edit"><i class="far fa-edit"></i></a>
             <a href="{delete_url}" title="Delete"><i class="far fa-trash-alt"></i></a></td>"""
         d = copy(self.__dict__)
-        d["add_clearance_url"] = reverse(
-            "condition_clearance_add", kwargs={"pk": self.pk}
-        )
-        d["edit_url"] = reverse(
-            "prs_object_update", kwargs={"pk": self.pk, "model": "conditions"}
-        )
-        d["delete_url"] = reverse(
-            "prs_object_delete", kwargs={"pk": self.pk, "model": "conditions"}
-        )
-        return mark_safe(template.format(**d))
+        d["add_clearance_url"] = reverse("condition_clearance_add", kwargs={"pk": self.pk})
+        d["edit_url"] = reverse("prs_object_update", kwargs={"pk": self.pk, "model": "conditions"})
+        d["delete_url"] = reverse("prs_object_delete", kwargs={"pk": self.pk, "model": "conditions"})
+        return format_html(template, **d)
 
     def as_row_minus_referral(self):
         """
@@ -1645,12 +1526,12 @@ class Condition(ReferralBaseModel):
                 kwargs={"pk": self.referral.pk, "related_model": "conditions"},
             )
             d["referral"] = self.referral
-            d["reference"] = escape(self.referral.reference)
+            d["reference"] = self.referral.reference
         else:
             d["referral_url"] = ""
             d["referral"] = ""
             d["reference"] = ""
-        d["identifier"] = escape(self.identifier) if self.identifier else ""
+        d["identifier"] = self.identifier or ""
         if self.model_condition:
             d["model_condition"] = self.model_condition.condition
         else:
@@ -1661,13 +1542,11 @@ class Condition(ReferralBaseModel):
             d["category"] = self.category.name
         else:
             d["category"] = ""
-        return mark_safe(template.format(**d).strip())
+        return format_html(template, **d)
 
     def add_clearance(self, task, deposited_plan=None):
         """Get or create a Clearance object on this Condition."""
-        clearance, created = Clearance.objects.get_or_create(
-            condition=self, task=task, deposited_plan=deposited_plan
-        )
+        clearance, created = Clearance.objects.get_or_create(condition=self, task=task, deposited_plan=deposited_plan)
         return clearance
 
 
@@ -1677,14 +1556,10 @@ class ClearanceManager(models.Manager):
     """
 
     def current(self):
-        return self.filter(
-            task__effective_to__isnull=True, condition__effective_to__isnull=True
-        )
+        return self.filter(task__effective_to__isnull=True, condition__effective_to__isnull=True)
 
     def active(self):
-        return self.filter(
-            task__effective_to__isnull=True, condition__effective_to__isnull=True
-        )
+        return self.filter(task__effective_to__isnull=True, condition__effective_to__isnull=True)
 
     def deleted(self):
         return self.filter(task__effective_to__isnull=False)
@@ -1698,9 +1573,7 @@ class Clearance(models.Model):
     condition = models.ForeignKey(Condition, on_delete=models.PROTECT)
     task = models.ForeignKey(Task, on_delete=models.PROTECT)
     date_created = models.DateField(auto_now_add=True)
-    deposited_plan = models.CharField(
-        max_length=200, null=True, blank=True, validators=[MaxLengthValidator(200)]
-    )
+    deposited_plan = models.CharField(max_length=200, null=True, blank=True, validators=[MaxLengthValidator(200)])
     headers = [
         "Clearance",
         "Condition no.",
@@ -1713,17 +1586,13 @@ class Clearance(models.Model):
     objects = ClearanceManager()
 
     def __str__(self):
-        return "{0} condition {1} has task {2}".format(
-            self.pk, self.condition.pk, self.task.pk
-        )
+        return "{0} condition {1} has task {2}".format(self.pk, self.condition.pk, self.task.pk)
 
     class Meta:
         ordering = ["-pk"]
 
     def get_absolute_url(self):
-        return reverse(
-            "prs_object_detail", kwargs={"model": "clearance", "pk": self.pk}
-        )
+        return reverse("prs_object_detail", kwargs={"model": "clearance", "pk": self.pk})
 
     def as_row(self):
         """
@@ -1739,25 +1608,21 @@ class Clearance(models.Model):
             <td class="referral-id-cell"><a href="{referral_url}">{referral}</a></td>"""
         d = copy(self.__dict__)
         d["url"] = self.get_absolute_url()
-        d["identifier"] = (
-            escape(self.condition.identifier) if self.condition.identifier else ""
-        )
-        d["condition"] = escape(smart_truncate(self.condition.condition, length=400))
+        d["identifier"] = self.condition.identifier or ""
+        d["condition"] = smart_truncate(self.condition.condition, length=400)
         # Condition "category" is actually an optional single tag.
         if self.condition.tags.exists():
             d["category"] = self.condition.tags.first().name
         else:
             d["category"] = ""
         if self.task.description:
-            d["task"] = escape(
-                smart_truncate(unidecode(self.task.description), length=400)
-            )
+            d["task"] = smart_truncate(unidecode(self.task.description), length=400)
         else:
             d["task"] = self.task.type.name
-        d["deposited_plan"] = escape(self.deposited_plan) if self.deposited_plan else ""
+        d["deposited_plan"] = self.deposited_plan or ""
         d["referral"] = self.task.referral
         d["referral_url"] = self.task.referral.get_absolute_url()
-        return mark_safe(template.format(**d))
+        return format_html(template, **d)
 
     def as_tbody(self):
         """
@@ -1779,21 +1644,17 @@ class Clearance(models.Model):
             d["referral_desc"] = unidecode(self.task.referral.description)
         else:
             d["referral_desc"] = ""
-        d["condition_url"] = reverse(
-            "prs_object_detail", kwargs={"pk": self.condition.pk, "model": "conditions"}
-        )
+        d["condition_url"] = reverse("prs_object_detail", kwargs={"pk": self.condition.pk, "model": "conditions"})
         d["condition"] = self.condition
         d["condition_html"] = self.condition.condition_html
-        d["task_url"] = reverse(
-            "prs_object_detail", kwargs={"pk": self.task.pk, "model": "tasks"}
-        )
+        d["task_url"] = reverse("prs_object_detail", kwargs={"pk": self.task.pk, "model": "tasks"})
         d["task"] = self.task
         if self.task.description:
             d["task_desc"] = unidecode(self.task.description)
         else:
             d["task_desc"] = ""
         d["deposited_plan"] = self.deposited_plan or ""
-        return mark_safe(template.format(**d).strip())
+        return format_html(template, **d)
 
 
 @reversion.register()
@@ -1802,24 +1663,12 @@ class Location(ReferralBaseModel):
     A physical location that is associated with a single referral.
     """
 
-    address_no = models.IntegerField(
-        null=True, blank=True, verbose_name="address number"
-    )
-    address_suffix = models.CharField(
-        max_length=10, null=True, blank=True, validators=[MaxLengthValidator(10)]
-    )
-    road_name = models.CharField(
-        max_length=100, null=True, blank=True, validators=[MaxLengthValidator(100)]
-    )
-    road_suffix = models.CharField(
-        max_length=100, null=True, blank=True, validators=[MaxLengthValidator(100)]
-    )
-    locality = models.CharField(
-        max_length=100, null=True, blank=True, validators=[MaxLengthValidator(100)]
-    )
-    postcode = models.CharField(
-        max_length=32, null=True, blank=True, validators=[MaxLengthValidator(32)]
-    )
+    address_no = models.IntegerField(null=True, blank=True, verbose_name="address number")
+    address_suffix = models.CharField(max_length=10, null=True, blank=True, validators=[MaxLengthValidator(10)])
+    road_name = models.CharField(max_length=100, null=True, blank=True, validators=[MaxLengthValidator(100)])
+    road_suffix = models.CharField(max_length=100, null=True, blank=True, validators=[MaxLengthValidator(100)])
+    locality = models.CharField(max_length=100, null=True, blank=True, validators=[MaxLengthValidator(100)])
+    postcode = models.CharField(max_length=32, null=True, blank=True, validators=[MaxLengthValidator(32)])
     landuse = models.TextField(null=True, blank=True)
     lot_no = models.CharField(
         max_length=100,
@@ -1829,9 +1678,7 @@ class Location(ReferralBaseModel):
         validators=[MaxLengthValidator(100)],
     )
     lot_desc = models.TextField(null=True, blank=True)
-    strata_lot_no = models.CharField(
-        max_length=100, null=True, blank=True, validators=[MaxLengthValidator(100)]
-    )
+    strata_lot_no = models.CharField(max_length=100, null=True, blank=True, validators=[MaxLengthValidator(100)])
     strata_lot_desc = models.TextField(null=True, blank=True)
     reserve = models.TextField(null=True, blank=True)
     cadastre_obj_id = models.IntegerField(null=True, blank=True)
@@ -1879,9 +1726,7 @@ class Location(ReferralBaseModel):
             <td>{polygon}</td>
             <td class="referral-id-cell"><a href="{referral_url}">{referral}</a></td>"""
         d = copy(self.__dict__)
-        d["url"] = reverse(
-            "prs_object_detail", kwargs={"pk": self.pk, "model": "locations"}
-        )
+        d["url"] = reverse("prs_object_detail", kwargs={"pk": self.pk, "model": "locations"})
         d["address"] = self.nice_address or "none"
         if self.poly:
             d["polygon"] = '<img src="/static/img/draw_polyline.png" alt="Polygon" />'
@@ -1892,7 +1737,7 @@ class Location(ReferralBaseModel):
             kwargs={"pk": self.referral.pk, "related_model": "locations"},
         )
         d["referral"] = self.referral
-        return mark_safe(template.format(**d))
+        return format_html(template, **d)
 
     def as_row_actions(self):
         """Returns a HTML table cell containing icons with links to suitable
@@ -1901,13 +1746,9 @@ class Location(ReferralBaseModel):
         template = """<td><a href="{edit_url}" title="Edit"><i class="far fa-edit"></i></a>
             <a href="{delete_url}" title="Delete"><i class="far fa-trash-alt"></i></a></td>"""
         d = copy(self.__dict__)
-        d["edit_url"] = reverse(
-            "prs_object_update", kwargs={"pk": self.pk, "model": "locations"}
-        )
-        d["delete_url"] = reverse(
-            "prs_object_delete", kwargs={"pk": self.pk, "model": "locations"}
-        )
-        return mark_safe(template.format(**d))
+        d["edit_url"] = reverse("prs_object_update", kwargs={"pk": self.pk, "model": "locations"})
+        d["delete_url"] = reverse("prs_object_delete", kwargs={"pk": self.pk, "model": "locations"})
+        return format_html(template, **d)
 
     def as_row_minus_referral(self):
         """Removes the HTML cell containing the parent referral details."""
@@ -1927,9 +1768,9 @@ class Location(ReferralBaseModel):
             kwargs={"pk": self.referral.pk, "related_model": "locations"},
         )
         d["referral"] = self.referral
-        d["reference"] = escape(self.referral.reference)
+        d["reference"] = self.referral.reference
         d["address"] = self.nice_address or "none"
-        return mark_safe(template.format(**d).strip())
+        return format_html(template, **d)
 
     def get_regions_intersected(self):
         """Returns a list of Regions whose geometry intersects this Location."""
@@ -1981,10 +1822,8 @@ class Bookmark(ReferralBaseModel):
         d["referral_url"] = self.referral.get_absolute_url()
         d["referral"] = self.referral
         d["description"] = self.description
-        d["delete_url"] = reverse(
-            "prs_object_delete", kwargs={"pk": self.pk, "model": "bookmarks"}
-        )
-        return mark_safe(template.format(**d))
+        d["delete_url"] = reverse("prs_object_delete", kwargs={"pk": self.pk, "model": "bookmarks"})
+        return format_html(template, **d)
 
     def as_tbody(self):
         """
@@ -2000,7 +1839,7 @@ class Bookmark(ReferralBaseModel):
         d["reference"] = self.referral.reference
         d["user"] = self.user.get_full_name()
         d["description"] = self.description
-        return mark_safe(template.format(**d))
+        return format_html(template, **d)
 
 
 class UserProfile(models.Model):
@@ -2039,10 +1878,7 @@ class UserProfile(models.Model):
 
     def is_power_user(self):
         """Returns group membership of the PRS power user group (or is_superuser==True)."""
-        return (
-            self.user.is_superuser
-            or self.user.groups.filter(name=settings.PRS_POWER_USER_GROUP).exists()
-        )
+        return self.user.is_superuser or self.user.groups.filter(name=settings.PRS_POWER_USER_GROUP).exists()
 
 
 def create_user_profile(**kwargs):
