@@ -15,6 +15,7 @@ from django.db.models import Q
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.html import escape, format_html
+from django.utils.safestring import mark_safe
 from extract_msg import Message
 from geojson import Feature, FeatureCollection, Polygon, dumps
 from indexer.utils import typesense_client
@@ -1294,7 +1295,9 @@ class Note(ReferralBaseModel):
         d = copy(self.__dict__)
         d["url"] = self.get_absolute_url()
         if self.type:
-            d["type"] = '<img src="/static/{}" title="{}" />'.format(self.type.icon.__str__(), self.type.name)
+            d["type"] = mark_safe(
+                '<img src="/static/{}" title="{}" />'.format(self.type.icon.__str__(), self.type.name)
+            )
         else:
             d["type"] = ""
         d["creator"] = self.creator.get_full_name()
@@ -1344,7 +1347,7 @@ class Note(ReferralBaseModel):
             d["order_date"] = self.order_date.strftime("%d-%b-%Y")
         else:
             d["order_date"] = ""
-        d["note_html"] = unidecode(self.note_html)
+        d["note_html"] = mark_safe(unidecode(self.note_html))
         return format_html(template, **d)
 
 
@@ -1536,8 +1539,8 @@ class Condition(ReferralBaseModel):
             d["model_condition"] = self.model_condition.condition
         else:
             d["model_condition"] = ""
-        d["proposed_condition_html"] = unidecode(self.proposed_condition_html)
-        d["condition_html"] = unidecode(self.condition_html)
+        d["proposed_condition_html"] = mark_safe(unidecode(self.proposed_condition_html))
+        d["condition_html"] = mark_safe(unidecode(self.condition_html))
         if self.category:
             d["category"] = self.category.name
         else:
@@ -1646,7 +1649,7 @@ class Clearance(models.Model):
             d["referral_desc"] = ""
         d["condition_url"] = reverse("prs_object_detail", kwargs={"pk": self.condition.pk, "model": "conditions"})
         d["condition"] = self.condition
-        d["condition_html"] = self.condition.condition_html
+        d["condition_html"] = mark_safe(self.condition.condition_html)
         d["task_url"] = reverse("prs_object_detail", kwargs={"pk": self.task.pk, "model": "tasks"})
         d["task"] = self.task
         if self.task.description:
@@ -1729,7 +1732,7 @@ class Location(ReferralBaseModel):
         d["url"] = reverse("prs_object_detail", kwargs={"pk": self.pk, "model": "locations"})
         d["address"] = self.nice_address or "none"
         if self.poly:
-            d["polygon"] = '<img src="/static/img/draw_polyline.png" alt="Polygon" />'
+            d["polygon"] = mark_safe('<img src="/static/img/draw_polyline.png" alt="Polygon" />')
         else:
             d["polygon"] = ""
         d["referral_url"] = reverse(
