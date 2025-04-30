@@ -35,10 +35,10 @@ FROM python:3.12-slim-bookworm
 LABEL org.opencontainers.image.authors=asi@dbca.wa.gov.au
 LABEL org.opencontainers.image.source=https://github.com/dbca-wa/prs
 
-# Install OS packages
-RUN apt-get update -y \
+# Install required OS packages.
+RUN apt-get update \
   && apt-get upgrade -y \
-  && apt-get install -y gdal-bin proj-bin libmagic-dev \
+  && apt-get install -y --no-install-recommends gdal-bin proj-bin libmagic-dev \
   && rm -rf /var/lib/apt/lists/*
 
 # Create a non-root user.
@@ -46,16 +46,17 @@ RUN groupadd -r -g 1000 app \
   && useradd -r -u 1000 -d /app -g app -N app
 
 COPY --from=builder_base --chown=app:app /app /app
-# Make sure we use the virtualenv by default
-ENV PATH="/app/.venv/bin:$PATH"
-# Run Python unbuffered
-ENV PYTHONUNBUFFERED=1
+# Make sure we use the virtualenv by default.
+# Run Python unbuffered.
+ENV PATH=/app/.venv/bin:$PATH \
+  PYTHONUNBUFFERED=1
 
 # Install the project.
 WORKDIR /app
 COPY gunicorn.py manage.py pyproject.toml ./
 COPY prs2 ./prs2
-RUN python manage.py collectstatic --noinput
+RUN python -m compileall prs2 \
+  && python manage.py collectstatic --noinput
 USER app
 EXPOSE 8080
 CMD ["gunicorn", "prs2.wsgi", "--config", "gunicorn.py"]
