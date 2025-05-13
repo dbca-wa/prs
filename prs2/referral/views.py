@@ -1180,7 +1180,7 @@ class TaskAction(PrsObjectUpdate):
 
     def get(self, request, *args, **kwargs):
         """Business rule/sanity check on task state (disallow some state
-        changes for tasks). Ensures that actions that shouldn't be able t
+        changes for tasks). Ensures that actions that shouldn't be able to
         occur, don't occur. E.g. can't stop a task that is already stopped
         or already completed.
         """
