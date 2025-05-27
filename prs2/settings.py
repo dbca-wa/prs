@@ -63,7 +63,6 @@ else:
 # PRS may deploy its own instance of Geoserver.
 KMI_GEOSERVER_URL = env("KMI_GEOSERVER_URL", "")
 PRS_LAYER_NAME = env("PRS_LAYER_NAME", "")
-MAPPROXY_URL = env("MAPPROXY_URL", "")
 GEOCODER_URL = env("GEOCODER_URL", "")
 GEOSERVER_URL = env("GEOSERVER_URL", "")
 GEOSERVER_SSO_USER = env("GEOSERVER_SSO_USER", "username")

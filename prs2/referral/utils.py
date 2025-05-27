@@ -310,7 +310,8 @@ def wfs_getfeature(type_name, cql_filter=None, crs="EPSG:4326", max_features=50)
     """A utility function to perform a GetFeature request on a WFS endpoint
     and return results as GeoJSON.
     """
-    url = env("GEOSERVER_URL", None)
+    geoserver_url = env("GEOSERVER_URL", "")
+    url = f"{geoserver_url}/ows"
     auth = (env("GEOSERVER_SSO_USER", None), env("GEOSERVER_SSO_PASS", None))
     params = {
         "service": "WFS",
