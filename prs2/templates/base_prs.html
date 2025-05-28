@@ -216,7 +216,7 @@
     {% comment %}Make additional Javascript variables available from passed-in template context{% endcomment %}
     {{ javascript_context|json_script:"javascript_context" }}
     <script>
-    // Parse additional variables from the DOM element above.
+    {% comment %}Parse additional variables from the DOM element above.{% endcomment %}
     const context = JSON.parse(document.getElementById('javascript_context').textContent);
     </script>
 {% endblock %}

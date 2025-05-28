@@ -98,14 +98,12 @@ def breadcrumbs_li(links):
     Reference: https://getbootstrap.com/docs/4.1/components/breadcrumb/
     """
     crumbs = ""
-    li_str = '<li class="breadcrumb-item"><a href="{}">{}</a></li>'
-    li_str_active = '<li class="breadcrumb-item active"><span>{}</span></li>'
     # Iterate over the list, except for the last item.
     if len(links) > 1:
         for i in links[:-1]:
-            crumbs += li_str.format(i[0], i[1])
+            crumbs += f"<li class='breadcrumb-item'><a href='{i[0]}'>{i[1]}</a></li>"
     # Add the final "active" item.
-    crumbs += li_str_active.format(links[-1][1])
+    crumbs += f"<li class='breadcrumb-item active'><span>{links[-1][1]}</span></li>"
     return crumbs
 
 

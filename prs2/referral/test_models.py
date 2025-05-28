@@ -90,12 +90,8 @@ class PrsTestCase(TestCase):
 
         if not Referral.objects.exists():
             # Create some referral data
-            mixer.cycle(2).blend(
-                Referral, type=mixer.SELECT, agency=mixer.SELECT, referring_org=mixer.SELECT, referral_date=date.today()
-            )
-            mixer.cycle(2).blend(
-                Task, type=mixer.SELECT, referral=mixer.SELECT, state=mixer.SELECT, assigned_user=self.n_user
-            )
+            mixer.cycle(2).blend(Referral, type=mixer.SELECT, agency=mixer.SELECT, referring_org=mixer.SELECT, referral_date=date.today())
+            mixer.cycle(2).blend(Task, type=mixer.SELECT, referral=mixer.SELECT, state=mixer.SELECT, assigned_user=self.n_user)
             mixer.cycle(2).blend(Note, referral=mixer.SELECT, type=mixer.SELECT, note=mixer.RANDOM)
             mixer.cycle(2).blend(Record, referral=mixer.SELECT)
             mixer.cycle(2).blend(ModelCondition, category=mixer.SELECT)
@@ -482,7 +478,7 @@ class RecordTest(PrsTestCase):
         self.tmp_f.close()
         self.r.uploaded_file = self.tmp_f.name
         self.r.save()
-        self.assertEqual(self.r.filesize_str, "10.0Kb")
+        self.assertEqual(self.r.filesize_str, "10.0 Kb")
 
     def test_as_row(self):
         """Test the Record model as_row() method."""

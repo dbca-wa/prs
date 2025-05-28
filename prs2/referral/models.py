@@ -3,6 +3,7 @@ import logging
 import os
 from copy import copy
 from datetime import date
+from tempfile import NamedTemporaryFile
 
 import reversion
 from django.conf import settings
@@ -327,7 +328,7 @@ class ReferralBaseModel(ActiveModel, Audit):
         ordering = ["-created"]
 
     def __str__(self):
-        return "{0} {1}".format(self._meta.object_name, self.pk)
+        return f"{self._meta.object_name} {self.pk}"
 
     def get_absolute_url(self):
         return reverse(
@@ -584,7 +585,7 @@ class Referral(ReferralBaseModel):
         # Only return a value for a referral with child locations.
         if not self.location_set.current().filter(poly__isnull=False).exists():
             return None
-        xml = "referral/{}.xml".format(template)
+        xml = f"referral/{template}.xml"
         return render_to_string(
             xml,
             {
@@ -595,8 +596,8 @@ class Referral(ReferralBaseModel):
 
     def generate_gpkg(self):
         """Generates and returns a Geopackage file-like object."""
-        path = "/tmp/prs_referral_{}.gpkg".format(self.pk)
-        gpkg = GeoPackage.create(path, flavor="EPSG")
+        path = NamedTemporaryFile()
+        gpkg = GeoPackage.create(path.name, flavor="EPSG")
         srs_wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]'
         srs = SRS("WGS 84", "EPSG", 4326, srs_wkt)
         fields = (
@@ -660,7 +661,7 @@ class RelatedReferral(models.Model):
     to_referral = models.ForeignKey(Referral, on_delete=models.PROTECT, related_name="to_referral")
 
     def __str__(self):
-        return "{0} ({1} to {2})".format(self.pk, self.from_referral.pk, self.to_referral.pk)
+        return f"{self.pk} ({self.from_referral.pk} to {self.to_referral.pk})"
 
 
 @reversion.register()
@@ -980,30 +981,25 @@ class Task(ReferralBaseModel):
         """Method to email the assigned user a notification message about this
         task.
         """
-        subject = "PRS task assignment notification (referral ID {0})".format(self.referral.pk)
+        subject = f"PRS task assignment notification (referral ID {self.referral.pk})"
         if not from_email:
             from_email = settings.APPLICATION_ALERTS_EMAIL
         to_email = self.assigned_user.email
         referral_url = f"https://{settings.SITE_URL}{self.referral.get_absolute_url()}"
         address = self.referral.address or "not recorded"
-        text_content = """This is an automated message to let you know that you have
-            been assigned a PRS task ({0}) by the sending user.\n
-            This task is attached to referral ID {1}.\nThe referral reference is: {2}.\n
-            The referral address is: {3}\n
-            """.format(self.pk, self.referral.pk, self.referral.reference, address)
-        html_content = """<p>This is an automated message to let you know that you have
-            been assigned a PRS task ({0}) by the sending user.</p>
-            <p>The task is attached to referral {1}, located at this URL:</p>
-            <p><a href="{2}">{2}</a></p>
-            <p>The referral reference is: {3}</p>
-            <p>The referral address is: {4}</p>
-            """.format(
-            self.type.name,
-            self.referral.pk,
-            referral_url,
-            self.referral.reference,
-            address,
-        )
+        text_content = f"""This is an automated message to let you know that you have
+            been assigned a PRS task ({self.pk}) by the sending user.\n
+            This task is attached to referral ID {self.referral.pk}.\n
+            The referral reference is: {self.referral.reference}.\n
+            The referral address is: {address}\n
+            """
+        html_content = f"""<p>This is an automated message to let you know that you have
+            been assigned a PRS task ({self.type.name}) by the sending user.</p>
+            <p>The task is attached to referral ID {self.referral.pk}, located at this URL:</p>
+            <p><a href="{referral_url}">{referral_url}</a></p>
+            <p>The referral reference is: {self.referral.reference}</p>
+            <p>The referral address is: {address}</p>
+            """
         msg = EmailMultiAlternatives(subject, text_content, from_email, [to_email])
         msg.attach_alternative(html_content, "text/html")
         msg.send(fail_silently=False)
@@ -1046,7 +1042,7 @@ class Record(ReferralBaseModel):
     tools_template = "referral/record_tools.html"
 
     def __str__(self):
-        return "Record {} ({})".format(self.pk, smart_truncate(self.name, length=256))
+        return f"Record {self.pk} ({smart_truncate(self.name, length=256)})"
 
     def save(self, force_insert=False, force_update=False, *args, **kwargs):
         """Overide save() to cleanse text input fields."""
@@ -1115,7 +1111,7 @@ class Record(ReferralBaseModel):
                 num = self.uploaded_file.size
                 for x in ["b", "Kb", "Mb", "Gb"]:
                     if num < 1024.0:
-                        return "{:3.1f}{}".format(num, x)
+                        return f"{num:3.1f} {x}"
                     num /= 1024.0
             else:
                 return ""
@@ -1277,7 +1273,7 @@ class Note(ReferralBaseModel):
         text = text.replace("\n", " ").replace("\r", " ")  # Replace newlines.
         words = text.split(" ")
         if len(words) > x:
-            return "{}...".format(" ".join(words[:x]))
+            return f"{' '.join(words[:x])}..."
         else:
             return text
 
@@ -1295,9 +1291,7 @@ class Note(ReferralBaseModel):
         d = copy(self.__dict__)
         d["url"] = self.get_absolute_url()
         if self.type:
-            d["type"] = mark_safe(
-                '<img src="/static/{}" title="{}" />'.format(self.type.icon.__str__(), self.type.name)
-            )
+            d["type"] = mark_safe(f'<img src="/static/{self.type.icon.__str__()}" title="{self.type.name}" />')
         else:
             d["type"] = ""
         d["creator"] = self.creator.get_full_name()
@@ -1589,7 +1583,7 @@ class Clearance(models.Model):
     objects = ClearanceManager()
 
     def __str__(self):
-        return "{0} condition {1} has task {2}".format(self.pk, self.condition.pk, self.task.pk)
+        return f"{self.pk} condition {self.condition.pk} has task {self.task.pk}"
 
     class Meta:
         ordering = ["-pk"]
@@ -1857,7 +1851,7 @@ class UserProfile(models.Model):
     task_history = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        return "{0}".format(self.user.username)
+        return self.user.username
 
     def last_referral(self):
         """

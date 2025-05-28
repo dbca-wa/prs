@@ -1,5 +1,4 @@
 import json
-import logging
 import re
 from copy import copy
 from datetime import date, datetime, timedelta
@@ -67,8 +66,6 @@ from referral.utils import (
 from referral.views_base import PrsObjectCreate, PrsObjectDelete, PrsObjectDetail, PrsObjectList, PrsObjectUpdate
 from taggit.models import Tag
 
-LOGGER = logging.getLogger("prs")
-
 
 class SiteHome(LoginRequiredMixin, ListView):
     """Site home page view. Returns an object list of tasks (ongoing or stopped)."""
@@ -95,9 +92,7 @@ class SiteHome(LoginRequiredMixin, ListView):
         context["stopped_tasks"] = self.stopped_tasks
         context["headers"] = copy(Task.headers_site_home)
         if not self.stopped_tasks:
-            context["stopped_tasks_exist"] = (
-                Task.objects.current().filter(assigned_user=self.request.user, state__name="Stopped").exists()
-            )
+            context["stopped_tasks_exist"] = Task.objects.current().filter(assigned_user=self.request.user, state__name="Stopped").exists()
         # Printable view only: pop the last element from 'headers'
         if "print" in self.request.GET or self.printable:
             context["headers"].pop()
@@ -414,9 +409,7 @@ class ReferralCreate(PrsObjectCreate):
         initial = super().get_initial()
         initial["assigned_user"] = self.request.user
         try:
-            initial["referring_org"] = Organisation.objects.current().get(
-                name__iexact="western australian planning commission"
-            )
+            initial["referring_org"] = Organisation.objects.current().get(name__iexact="western australian planning commission")
             initial["task_type"] = TaskType.objects.get(name="Assess a referral")
             initial["agency"] = Agency.objects.get(code="DBCA")
         except Exception:
@@ -453,25 +446,24 @@ class ReferralCreate(PrsObjectCreate):
         new_task.save()
         # If the user checked the "Email user" box, send an email notification.
         if req.POST.get("email_user"):
-            subject = "PRS new referral notification ({0}), reference: {1}"
-            subject = subject.format(new_ref.id, new_ref.reference)
+            subject = f"PRS new referral notification ({new_ref.id}), reference: {new_ref.reference}"
             from_email = req.user.email
             to_email = new_task.assigned_user.email
             ref_url = settings.SITE_URL + new_ref.get_absolute_url()
             address = new_ref.address or "(not recorded)"
-            text_content = """This is an automated message to let you know that
+            text_content = f"""This is an automated message to let you know that
                 you have been assigned a PRS task by the sending user.\n
-                This task is attached to referral ID {0}.\n
-                The referrer's reference is {1}.\n
-                The referral address is {2}\n
-                """.format(new_ref.id, new_ref.reference, address)
-            html_content = """<p>This is an automated message to let you know
+                This task is attached to referral ID {new_ref.pk}.\n
+                The referrer's reference is {new_ref.reference}.\n
+                The referral address is {address}\n
+                """
+            html_content = f"""<p>This is an automated message to let you know
                 that you have been assigned a PRS task by the sending user.</p>
-                <p>This task is attached to referral ID {0}</a>, at this URL:</p>
-                <p>{1}</p>
-                <p>The referrer's reference is: {2}.</p>
-                <p>The referral address is {3}.</p>
-                """.format(new_ref.pk, ref_url, new_ref.reference, address)
+                <p>This task is attached to referral ID {new_ref.pk}</a>, at this URL:</p>
+                <p>{ref_url}</p>
+                <p>The referrer's reference is: {new_ref.reference}.</p>
+                <p>The referral address is {address}.</p>
+                """
             msg = EmailMultiAlternatives(subject, text_content, from_email, [to_email])
             msg.attach_alternative(html_content, "text/html")
             # Email should fail gracefully - ie no Exception raised on failure.
@@ -514,7 +506,7 @@ class ReferralDetail(PrsObjectDetail):
         ref = self.get_object()
         # Deleted? Redirect home.
         if ref.is_deleted():
-            messages.warning(self.request, "Referral {} not found.".format(ref.id))
+            messages.warning(self.request, f"Referral {ref.pk} not found.")
             return HttpResponseRedirect(reverse("site_home"))
         # Override the get() to optionally return a QGIS layer definition.
         if "generate_qgis" in request.GET and ref.location_set.current().exists():
@@ -522,21 +514,21 @@ class ReferralDetail(PrsObjectDetail):
                 content = ref.generate_qgis_layer("qgis_layer_v2-16")
             else:
                 content = ref.generate_qgis_layer()
-            fn = "prs_referral_{}.qlr".format(ref.pk)
+            fn = f"prs_referral_{ref.pk}.qlr"
             resp = HttpResponse(content, content_type="application/x-qgis-project")
-            resp["Content-Disposition"] = 'attachment; filename="{}"'.format(fn)
+            resp["Content-Disposition"] = f'attachment; filename="{fn}"'
             return resp
         elif "generate_gpkg" in request.GET and ref.location_set.current().exists():
             content = ref.generate_gpkg()
-            fn = "prs_referral_{}.gpkg".format(ref.pk)
+            fn = f"prs_referral_{ref.pk}.gpkg"
             resp = HttpResponse(content, content_type="application/x-sqlite3")
-            resp["Content-Disposition"] = 'attachment; filename="{}"'.format(fn)
+            resp["Content-Disposition"] = f'attachment; filename="{fn}"'
             return resp
         elif "generate_geojson" in request.GET and ref.location_set.current().exists():
             content = ref.generate_geojson()
-            fn = "prs_referral_{}.geojson".format(ref.pk)
+            fn = f"prs_referral_{ref.pk}.geojson"
             resp = HttpResponse(content, content_type="application/geo+json")
-            resp["Content-Disposition"] = 'attachment; filename="{}"'.format(fn)
+            resp["Content-Disposition"] = f'attachment; filename="{fn}"'
             return resp
 
         # Call user_referral_history with the current referral.
@@ -547,47 +539,47 @@ class ReferralDetail(PrsObjectDetail):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         ref = self.get_object()
-        context["title"] = "REFERRAL DETAILS: {}".format(ref.pk)
-        context["page_title"] = "PRS | Referrals | {}".format(ref.pk)
+        context["title"] = f"REFERRAL DETAILS: {ref.pk}"
+        context["page_title"] = f"PRS | Referrals | {ref.pk}"
         context["rel_model"] = self.related_model
         # Test if the user has bookmarked this referral.
         if Bookmark.objects.filter(referral=ref, user=self.request.user).exists():
             context["bookmark"] = Bookmark.objects.filter(referral=ref, user=self.request.user)[0]
 
-        # Add context for each child model type: task_list, note_list, etc.
-        table = """<table class="table table-striped table-bordered table-condensed prs-object-table">
-        <thead><tr>{}</tr></thead><tbody>{}<tbody></table>"""
+        # Generate a table for each child model type: task_list, note_list, etc. and add to the context.
         for m in [Task, Note, Record, Location, Condition]:
-            obj_tab = "tab_{}".format(m._meta.model_name)
-            obj_list = "{}_list".format(m._meta.model_name)
+            obj_tab = f"tab_{m._meta.model_name}"
+            obj_list = f"{m._meta.model_name}_list"
             if m.objects.current().filter(referral=ref):
-                context["{}_count".format(m._meta.object_name.lower())] = (
-                    m.objects.current().filter(referral=ref).count()
-                )
+                obj_name = m._meta.object_name.lower()
+                context[f"{obj_name}_count"] = m.objects.current().filter(referral=ref).count()
                 obj_qs = m.objects.current().filter(referral=ref)
                 if m is Record:  # Sort records newest > oldest (nulls last).
                     obj_qs = obj_qs.order_by(F("order_date").desc(nulls_last=True))
                 headers = copy(m.headers)
                 headers.remove("Referral ID")
                 headers.append("Actions")
-                thead = "".join(["<th>{}</th>".format(h) for h in headers])
-                rows = ["<tr>{}{}</tr>".format(o.as_row_minus_referral(), o.as_row_actions()) for o in obj_qs]
+                # Construct the <thead> element.
+                thead = "".join([f"<th>{header}</th>" for header in headers])
+                # Construct the <tbody> element.
+                rows = [f"<tr>{obj.as_row_minus_referral()}{obj.as_row_actions()}</tr>" for obj in obj_qs]
                 tbody = "".join(rows)
-                obj_tab_html = table.format(thead, tbody)
+                # Construct the <table> element.
+                table_html = f"""<table class="table table-striped table-bordered table-condensed prs-object-table">
+                <thead><tr>{thead}</tr></thead><tbody>{tbody}<tbody></table>"""
                 if m == Location:  # Append a div for the map viewer.
-                    obj_tab_html += '<div id="ref_locations"></div>'
-                context[obj_tab] = mark_safe(obj_tab_html)
+                    table_html += '<div id="ref_locations"></div>'
+                obj_tab_html = mark_safe(table_html)
+                context[obj_tab] = obj_tab_html
                 context[obj_list] = obj_qs
             else:
-                context["{}_count".format(m._meta.object_name.lower())] = 0
-                context[obj_tab] = "No {} found for this referral".format(m._meta.verbose_name_plural)
+                context[f"{m._meta.object_name.lower()}_count"] = 0
+                context[obj_tab] = f"No {m._meta.verbose_name_plural} found for this referral"
                 context[obj_list] = None
 
         # Add child locations serialised as GeoJSON (if geometry exists).
         if any([loc.poly for loc in ref.location_set.current()]):
-            context["geojson_locations"] = serialize(
-                "geojson", ref.location_set.current(), geometry_field="poly", srid=4283
-            )
+            context["geojson_locations"] = serialize("geojson", ref.location_set.current(), geometry_field="poly", srid=4283)
 
         context["has_conditions"] = ref.condition_set.exists()
         return context
@@ -604,32 +596,32 @@ class ReferralCreateChild(PrsObjectCreate):
         referral_id = self.parent_referral.pk
         child_model = is_model_or_string(self.kwargs["model"].capitalize())
         if "id" in self.kwargs:  # Relating to existing object.
-            child_obj = child_model.objects.get(pk=self.kwargs["id"])
+            child_obj = str(child_model.objects.get(pk=self.kwargs["id"]))
             if self.kwargs["type"] == "addnote":
-                context["title"] = "ADD EXISTING NOTE(S) TO {}".format(child_obj).upper()
-                context["page_title"] = "PRS | Add note(s) to {}".format(child_obj)
-                last_breadcrumb = "Add note(s) to {}".format(child_obj)
+                context["title"] = f"ADD EXISTING NOTE(S) TO {child_obj.upper()}"
+                context["page_title"] = f"PRS | Add note(s) to {child_obj}"
+                last_breadcrumb = f"Add note(s) to {child_obj}"
             elif "addrecord" in self.kwargs.values():
-                context["title"] = "ADD EXISTING RECORD(S) TO {}".format(child_obj).upper()
-                context["page_title"] = "PRS | Add record(s) to {}".format(child_obj)
-                last_breadcrumb = "Add record(s) to {}".format(child_obj)
+                context["title"] = f"ADD EXISTING RECORD(S) TO {child_obj.upper()}"
+                context["page_title"] = f"PRS | Add record(s) to {child_obj}"
+                last_breadcrumb = f"Add record(s) to {child_obj}"
             elif "addnewnote" in self.kwargs.values():
-                context["title"] = "ADD NOTE TO {}".format(child_obj).upper()
-                context["page_title"] = "PRS | Add note to {}".format(child_obj)
-                last_breadcrumb = "Add note to {}".format(child_obj)
+                context["title"] = f"ADD NOTE TO {child_obj.upper()}"
+                context["page_title"] = f"PRS | Add note to {child_obj}"
+                last_breadcrumb = f"Add note to {child_obj}"
             elif "addnewrecord" in self.kwargs.values():
-                context["title"] = "ADD RECORD TO {}".format(child_obj).upper()
-                context["page_title"] = "PRS | Add record to {}".format(child_obj)
-                last_breadcrumb = "Add record to {}".format(child_obj)
+                context["title"] = f"ADD RECORD TO {child_obj.upper()}"
+                context["page_title"] = f"PRS | Add record to {child_obj}"
+                last_breadcrumb = f"Add record to {child_obj}"
         else:  # New child object.
             # Special case: clearance request task
             if "type" in self.kwargs and self.kwargs["type"] == "clearance":
                 child_model = "Clearance Request"
             else:
                 child_model = self.kwargs["model"].capitalize()
-            context["title"] = "CREATE A NEW {}".format(child_model).upper()
-            context["page_title"] = "PRS | Create {}".format(child_model)
-            last_breadcrumb = "Create {}".format(child_model)
+            context["title"] = f"CREATE A NEW {child_model.upper()}"
+            context["page_title"] = f"PRS | Create {child_model}"
+            last_breadcrumb = f"Create {child_model}"
         links = [
             (reverse("site_home"), "Home"),
             (reverse("prs_object_list", kwargs={"model": "referrals"}), "Referrals"),
@@ -709,7 +701,7 @@ class ReferralCreateChild(PrsObjectCreate):
             self.object.save()
 
         if not messages.get_messages(self.request):
-            messages.success(self.request, "{} has been created.".format(self.object))
+            messages.success(self.request, f"{self.object} has been created.")
 
         redirect_url = redirect_url if redirect_url else self.get_success_url()
         return HttpResponseRedirect(redirect_url)
@@ -735,10 +727,7 @@ class ReferralCreateChild(PrsObjectCreate):
                 note.task_set.add(obj)
             else:
                 note.records.add(obj)
-        messages.success(
-            self.request,
-            "The note has been added to {} {}.".format(self.kwargs["model"].capitalize(), self.kwargs["id"]),
-        )
+        messages.success(self.request, f"The note has been added to {self.kwargs['model'].capitalize()} {self.kwargs['id']}.")
 
     def create_new_note(self, form):
         request = self.request
@@ -786,10 +775,7 @@ class ReferralCreateChild(PrsObjectCreate):
                 record.task_set.add(obj)
             else:
                 record.note_set.add(obj)
-        messages.success(
-            self.request,
-            "The record has been added to {} {}.".format(self.kwargs["model"].capitalize(), self.kwargs["id"]),
-        )
+        messages.success(self.request, f"The record has been added to {self.kwargs["model"].capitalize()} {self.kwargs["id"]}.")
 
     def create_new_record(self, form):
         request = self.request
@@ -825,12 +811,7 @@ class ReferralCreateChild(PrsObjectCreate):
         condition_qs = Condition.objects.current().filter(referral=self.parent_referral).exclude(condition="")
         condition_choices = []
         for i in condition_qs:
-            condition_choices.append(
-                (
-                    i.id,
-                    "{0} - {1}".format(i.identifier or "", smart_truncate(i.condition, 100)),
-                )
-            )
+            condition_choices.append((i.id, f"{i.identifier or ""} - {smart_truncate(i.condition, 100)}"))
         return condition_choices
 
     def create_clearance(self, form):
@@ -856,32 +837,29 @@ class ReferralCreateChild(PrsObjectCreate):
             condition.add_clearance(task=clearance_task, deposited_plan=form.cleaned_data["deposited_plan"])
             # If the user checked the "Email user" box, send them a notification.
             if request.POST.get("email_user"):
-                subject = "PRS referral {0} - new clearance request notification".format(clearance_task.referral.pk)
+                subject = f"PRS referral {clearance_task.referral.pk} - new clearance request notification"
                 from_email = request.user.email
                 to_email = clearance_task.assigned_user.email
                 referral_url = settings.SITE_URL + clearance_task.referral.get_absolute_url()
-                text_content = """This is an automated message to let you know that you have
-                    been assigned PRS clearance request {0} by the sending user.\n
-                    This clearance request is attached to referral ID {1}.\n
-                    """.format(clearance_task.pk, clearance_task.referral.pk)
-                html_content = """<p>This is an automated message to let you know that you have
-                    been assigned PRS clearance request {0} by the sending user.</p>
-                    <p>This task is attached to referral ID {1}</a>, at this URL:</p>
-                    <p>{2}</p>""".format(clearance_task.pk, clearance_task.referral.pk, referral_url)
+                text_content = f"""This is an automated message to let you know that you have
+                    been assigned PRS clearance request {clearance_task.pk} by the sending user.\n
+                    This clearance request is attached to referral ID {clearance_task.referral.pk}.\n
+                    """
+                html_content = f"""<p>This is an automated message to let you know that you have
+                    been assigned PRS clearance request {clearance_task.pk} by the sending user.</p>
+                    <p>This task is attached to referral ID {clearance_task.referral.pk}</a>, at this URL:</p>
+                    <p>{referral_url}</p>"""
                 msg = EmailMultiAlternatives(subject, text_content, from_email, [to_email])
                 msg.attach_alternative(html_content, "text/html")
                 # Email should fail gracefully - ie no Exception raised on failure.
                 msg.send(fail_silently=True)
             tasks.append(clearance_task.pk)
 
-        messages.success(
-            self.request,
-            "New Clearance {0} has been created.".format(str(tasks).strip("[]")),
-        )
+        messages.success(self.request, f"New Clearance {str(tasks).strip("[]")} has been created.")
 
     def create_condition(self, obj):
         obj.save()
-        messages.success(self.request, "{} has been created.".format(obj))
+        messages.success(self.request, f"{obj} has been created.")
         # If no model condition was chosen, email users in the 'PRS power user' group.
         pu_group = Group.objects.get(name=settings.PRS_POWER_USER_GROUP)
         users = pu_group.user_set.filter(is_active=True)
@@ -894,12 +872,10 @@ class ReferralCreateChild(PrsObjectCreate):
                 that the following condition was just created by:\n"""
             html_content = """<p>This is an automated message to let you know
                 that the following condition was just created:</p>"""
-            text_content += "* Condition ID {}\n".format(obj.pk)
-            html_content += '<p><a href="{}">Condition ID {}</a></p>'.format(
-                settings.SITE_URL + obj.get_absolute_url(), obj.pk
-            )
-            text_content += "The condition was created by {}.\n".format(obj.creator.get_full_name())
-            html_content += "<p>The condition was created by {}.</p>".format(obj.creator.get_full_name())
+            text_content += f"* Condition ID {obj.pk}\n"
+            html_content += f"<p><a href='{settings.SITE_URL}{obj.get_absolute_url()}'>Condition ID {obj.pk}</a></p>"
+            text_content += f"The condition was created by {obj.creator.get_full_name()}.\n"
+            html_content += f"<p>The condition was created by {obj.creator.get_full_name()}.</p>"
             text_content += "This is an automatically-generated email - please do not reply.\n"
             html_content += "<p>This is an automatically-generated email - please do not reply.</p>"
             msg = EmailMultiAlternatives(subject, text_content, from_email, to_email)
@@ -964,9 +940,7 @@ class LocationCreate(ReferralCreateChild):
         context["address"] = ref.address
         # Add any existing referral locations serialised as GeoJSON.
         if any([loc.poly for loc in ref.location_set.current()]):
-            context["geojson_locations"] = serialize(
-                "geojson", ref.location_set.current(), geometry_field="poly", srid=4283
-            )
+            context["geojson_locations"] = serialize("geojson", ref.location_set.current(), geometry_field="poly", srid=4283)
         return context
 
     def get_success_url(self):
@@ -1011,7 +985,7 @@ class LocationCreate(ReferralCreateChild):
             loc.save()
             locations.append(loc)
 
-        messages.success(request, "{} location(s) created.".format(len(forms)))
+        messages.success(request, f"{len(forms)} location(s) created.")
 
         # Test for intersecting locations.
         intersecting_locations = self.polygon_intersects(locations)
@@ -1032,11 +1006,7 @@ class LocationCreate(ReferralCreateChild):
         intersecting_locations = []
         for location in locations:
             if location.poly:
-                other_locs = (
-                    Location.objects.current()
-                    .exclude(pk=location.pk)
-                    .filter(poly__isnull=False, poly__intersects=location.poly)
-                )
+                other_locs = Location.objects.current().exclude(pk=location.pk).filter(poly__isnull=False, poly__intersects=location.poly)
                 if other_locs.exists():
                     intersecting_locations.append(location.pk)
         return intersecting_locations
@@ -1083,10 +1053,7 @@ class LocationIntersects(PrsObjectCreate):
         for ref in form.cleaned_data["related_refs"]:
             self.parent_referral.add_relationship(ref)
 
-        messages.success(
-            self.request,
-            "{} Referral relationship(s) created.".format(len(form.cleaned_data["related_refs"])),
-        )
+        messages.success(self.request, f"{len(form.cleaned_data["related_refs"])} Referral relationship(s) created.")
         return redirect(self.get_success_url())
 
     def referral_intersecting_locations(self):
@@ -1232,11 +1199,8 @@ class TaskAction(PrsObjectUpdate):
             ]
         )
         if action == "complete" and task.referral.type in trigger_ref_type and not task.referral.has_location:
-            msg = """You are unable to complete this task without first
-                recording location(s) on the referral.
-                <a href="{}">Click here to create location(s).</a>""".format(
-                reverse("referral_location_create", kwargs={"pk": task.referral.pk})
-            )
+            url = reverse("referral_location_create", kwargs={"pk": task.referral.pk})
+            msg = f"You are unable to complete this task without first recording location(s) on the referral. <a href='{url}'>Click here to create location(s).</a>"
             messages.warning(self.request, msg)
             return redirect(task.get_absolute_url())
         return super().get(request, *args, **kwargs)
@@ -1265,7 +1229,7 @@ class TaskAction(PrsObjectUpdate):
         # Create a breadcrumb trail: Home[URL] > Tasks[URL] > ID[URL] > Action
         action = self.kwargs["action"]
         obj = self.get_object()
-        context["page_title"] = "PRS | Tasks | {} | {}".format(obj.pk, action.capitalize())
+        context["page_title"] = f"PRS | Tasks | {obj.pk} | {action.capitalize()}"
         links = [
             (reverse("site_home"), "Home"),
             (reverse("prs_object_list", kwargs={"model": "tasks"}), "Tasks"),
@@ -1306,11 +1270,7 @@ class TaskAction(PrsObjectUpdate):
             obj.stop_time = obj.stop_time + (obj.restart_date - obj.stop_date).days
         elif action == "inherit":
             user_task_history(
-                self.request.user,
-                obj,
-                "Inherited from {0} by {1}".format(
-                    obj.assigned_user.get_full_name(), self.request.user.get_full_name()
-                ),
+                self.request.user, obj, f"Inherited from {obj.assigned_user.get_full_name()} by {self.request.user.get_full_name()}"
             )
             obj.assigned_user = self.request.user
         elif action == "cancel":
@@ -1320,12 +1280,7 @@ class TaskAction(PrsObjectUpdate):
             # Don't capture "self reassignment" in task history.
             if obj.assigned_user != self.request.user:
                 user_task_history(
-                    self.request.user,
-                    obj,
-                    "Reassigned to {0} by {1}".format(
-                        obj.assigned_user.get_full_name(),
-                        self.request.user.get_full_name(),
-                    ),
+                    self.request.user, obj, f"Reassigned to {obj.assigned_user.get_full_name()} by {self.request.user.get_full_name()}"
                 )
             if self.request.POST.get("email_user"):
                 obj.email_user(self.request.user.email)
@@ -1343,20 +1298,13 @@ class TaskAction(PrsObjectUpdate):
                         "Subdivision",
                     ]
                 )
-                if (
-                    obj.state in trigger_outcome
-                    and obj.referral.type in trigger_ref_type
-                    and not obj.referral.has_proposed_condition
-                ):
-                    msg = """You are unable to complete this task as 'Response
-                        with conditions' without first recording proposed
-                        condition(s) on the referral.
-                        <a href="{}">Click here to create a condition.</a>""".format(
-                        reverse(
-                            "referral_create_child",
-                            kwargs={"pk": obj.referral.pk, "model": "condition"},
-                        )
+                if obj.state in trigger_outcome and obj.referral.type in trigger_ref_type and not obj.referral.has_proposed_condition:
+                    url = reverse(
+                        "referral_create_child",
+                        kwargs={"pk": obj.referral.pk, "model": "condition"},
                     )
+                    msg = f"""You are unable to complete this task as 'Response with conditions' without first recording proposed
+                        condition(s) on the referral. <a href="{url}">Click here to create a condition.</a>"""
                     messages.warning(self.request, mark_safe(msg))
                     return redirect(obj.get_absolute_url())
                 # Rule: >0 Tags are mandatory for some 'Assess' task outcomes.
@@ -1501,7 +1449,7 @@ class TagReplace(LoginRequiredMixin, FormView):
                 obj.tags.add(new)
         # Finally, delete the old tag
         old.delete()
-        messages.success(self.request, 'All "{}" tags have been replaced by "{}"'.format(old, new))
+        messages.success(self.request, f"All '{old}' tags have been replaced by '{new}'")
         return HttpResponseRedirect(reverse("tag_list"))
 
 
@@ -1603,7 +1551,7 @@ class ReferralDelete(PrsObjectDelete):
         for i in bookmarks:
             i.delete()
         ref.delete()
-        messages.success(request, "{0} deleted.".format(self.model._meta.object_name))
+        messages.success(request, f"{self.model._meta.object_name} deleted.")
 
         return redirect("site_home")
 
@@ -1642,16 +1590,10 @@ class ReferralRelate(PrsObjectList):
         """
         # NOTE: query parameters always live in request.GET.
         if not self.request.GET.get("ref_pk", None):
-            raise AttributeError(
-                "Relate view {} must be called with a " "ref_pk query parameter.".format(self.__class__.__name__)
-            )
+            raise AttributeError(f"Relate view {self.__class__.__name__} must be called with a " "ref_pk query parameter.")
 
         if "create" not in self.request.GET and "delete" not in self.request.GET:
-            raise AttributeError(
-                "Relate view {} must be called with either " "create or delete query parameters.".format(
-                    self.__class__.__name__
-                )
-            )
+            raise AttributeError(f"Relate view {self.__class__.__name__} must be called with either " "create or delete query parameters.")
 
         ref1 = self.get_object()
         ref2 = get_object_or_404(Referral, pk=self.request.GET.get("ref_pk"))
@@ -1740,41 +1682,34 @@ class ConditionClearanceCreate(PrsObjectCreate):
 
         # If the user check the "Email user" box, send them a notification.
         if self.request.POST.get("email_user"):
-            subject = "PRS referral {0} - new clearance request notification".format(clearance_task.referral.pk)
+            subject = f"PRS referral {clearance_task.referral.pk} - new clearance request notification"
             from_email = self.request.user.email
             to_email = clearance_task.assigned_user.email
             referral_url = settings.SITE_URL + clearance_task.referral.get_absolute_url()
-            text_content = """This is an automated message to let you know that you have
-                been assigned PRS clearance request {0} by the sending user.\n
-                This clearance request is attached to referral ID {1}.\n
-                """.format(clearance_task.pk, clearance_task.referral.pk)
-            html_content = """<p>This is an automated message to let you know that you have
-                been assigned PRS clearance request {0} by the sending user.</p>
-                <p>This task is attached to referral ID {1}, at this URL:</p>
-                <p>{2}</p>""".format(clearance_task.pk, clearance_task.referral.pk, referral_url)
+            text_content = f"""This is an automated message to let you know that you have
+                been assigned PRS clearance request {clearance_task.pk} by the sending user.\n
+                This clearance request is attached to referral ID {clearance_task.referral.pk}.\n"""
+            html_content = f"""<p>This is an automated message to let you know that you have
+                been assigned PRS clearance request {clearance_task.pk} by the sending user.</p>
+                <p>This task is attached to referral ID {clearance_task.referral.pk}, at this URL:</p>
+                <p>{referral_url}</p>"""
             msg = EmailMultiAlternatives(subject, text_content, from_email, [to_email])
             msg.attach_alternative(html_content, "text/html")
             # Email should fail gracefully - ie no Exception raised on failure.
             msg.send(fail_silently=True)
 
         # Business rule: for each new clearance request, email users in the PRS power users group.
-        subject = "PRS referral {} - new condition clearance request notification".format(clearance_task.referral.pk)
+        subject = f"PRS referral {clearance_task.referral.pk} - new condition clearance request notification"
         from_email = "PRS-Alerts@dbca.wa.gov.au"
         pu_group = Group.objects.get(name=settings.PRS_POWER_USER_GROUP)
         to_email = [user.email for user in pu_group.user_set.filter(is_active=True)]
 
-        text_content = (
-            "This is an automated message to let you know that the following clearance request was just created:\n"
-        )
-        html_content = (
-            "<p>This is an automated message to let you know that the following clearance request was just created:</p>"
-        )
-        text_content += "* Task ID {}\n".format(clearance_task.pk)
-        html_content += '<p><a href="{}">Task ID {}</a></p>'.format(
-            settings.SITE_URL + clearance_task.get_absolute_url(), clearance_task.pk
-        )
-        text_content += "The clearance task was created by {}.\n".format(clearance_task.creator.get_full_name())
-        html_content += "<p>The clearance task was created by {}.</p>".format(clearance_task.creator.get_full_name())
+        text_content = "This is an automated message to let you know that the following clearance request was just created:\n"
+        html_content = "<p>This is an automated message to let you know that the following clearance request was just created:</p>"
+        text_content += f"* Task ID {clearance_task.pk}\n"
+        html_content += f"<p><a href='{settings.SITE_URL}{clearance_task.get_absolute_url()}'>Task ID {clearance_task.pk}</a></p>"
+        text_content += f"The clearance task was created by {clearance_task.creator.get_full_name()}.\n"
+        html_content += f"<p>The clearance task was created by {clearance_task.creator.get_full_name()}.</p>"
         text_content += "This is an automatically-generated email - please do not reply.\n"
         html_content += "<p>This is an automatically-generated email - please do not reply.</p>"
         msg = EmailMultiAlternatives(subject, text_content, from_email, to_email)
@@ -1797,7 +1732,7 @@ class InfobaseShortcut(View):
         record = get_object_or_404(Record, pk=self.kwargs["pk"])
         if record.infobase_id:
             response = HttpResponse(content_type="application/octet-stream")
-            response["Content-Disposition"] = "attachment; filename=infobase_{}.obr".format(record.infobase_id)
+            response["Content-Disposition"] = f"attachment; filename=infobase_{record.infobase_id}.obr"
             # The HttpResponse is a file-like object; write the Infobase ID and return it.
             response.write(record.infobase_id)
             return response

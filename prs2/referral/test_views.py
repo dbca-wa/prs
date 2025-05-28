@@ -1,31 +1,31 @@
+import json
+import uuid
 from datetime import date, timedelta
+
 from django.contrib.auth import get_user_model
 from django.contrib.gis.geos import Polygon
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.urls import reverse
 from django.test import Client
+from django.urls import reverse
 from django.utils.http import urlencode
-import json
 from mixer.backend.django import mixer
-from taggit.models import Tag
-import uuid
-
 from referral.models import (
-    Organisation,
-    ReferralType,
-    TaskType,
-    Task,
-    Record,
-    Note,
-    Condition,
-    Location,
-    Clearance,
     Bookmark,
-    Region,
-    Referral,
+    Clearance,
+    Condition,
     DopTrigger,
+    Location,
+    Note,
+    Organisation,
+    Record,
+    Referral,
+    ReferralType,
+    Region,
+    Task,
+    TaskType,
 )
 from referral.test_models import PrsTestCase
+from taggit.models import Tag
 
 User = get_user_model()
 
@@ -54,16 +54,16 @@ class SiteAuthViewsTest(PrsViewsTestCase):
     """Test the site login/login views."""
 
     def test_login(self):
-        """Test login view renders"""
+        """Test login view responds to GET"""
         url = reverse("login")
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, 200)
         self.assertTemplateUsed(resp, "login.html")
 
     def test_logout(self):
-        """Test logout view renders"""
+        """Test logout view responds to POST"""
         url = reverse("logout")
-        resp = self.client.get(url)
+        resp = self.client.post(url)
         self.assertEqual(resp.status_code, 200)
         self.assertTemplateUsed(resp, "logged_out.html")
 
@@ -81,12 +81,8 @@ class BaseViewTest(PrsViewsTestCase):
             referring_org=mixer.SELECT,
             referral_date=date.today(),
         )
-        mixer.cycle(25).blend(
-            Task, type=mixer.SELECT, referral=mixer.SELECT, state=mixer.SELECT
-        )
-        mixer.cycle(25).blend(
-            Note, referral=mixer.SELECT, type=mixer.SELECT, note=mixer.RANDOM
-        )
+        mixer.cycle(25).blend(Task, type=mixer.SELECT, referral=mixer.SELECT, state=mixer.SELECT)
+        mixer.cycle(25).blend(Note, referral=mixer.SELECT, type=mixer.SELECT, note=mixer.RANDOM)
         mixer.cycle(25).blend(Record, referral=mixer.SELECT)
         mixer.cycle(25).blend(
             Condition,
@@ -102,9 +98,7 @@ class BaseViewTest(PrsViewsTestCase):
     def test_get(self):
         """Test prs_object_list view for each model type"""
         for i in self.models:
-            url = reverse(
-                "prs_object_list", kwargs={"model": i._meta.object_name.lower()}
-            )
+            url = reverse("prs_object_list", kwargs={"model": i._meta.object_name.lower()})
             resp = self.client.get(url)
             self.assertEqual(resp.status_code, 200)
             self.assertTemplateUsed(resp, "referral/prs_object_list.html")
@@ -140,7 +134,7 @@ class SiteHomeTest(PrsViewsTestCase):
         """Test that the navbar only renders the admin link for superusers"""
         url = reverse("site_home")
         resp = self.client.get(url)
-        link = b'<a class="dropdown-item" href="/admin/" title="Administration">Administration</a>'
+        link = b'href="/admin/"'
         self.assertIs(resp.content.find(link), -1)
         # Log in as admin user
         self.client.logout()
@@ -200,9 +194,7 @@ class ReferralDetailTest(PrsViewsTestCase):
     def test_related(self):
         """Test that each of the referral related object types render"""
         for m in ["tasks", "notes", "records", "locations", "conditions"]:
-            url = reverse(
-                "referral_detail", kwargs={"pk": self.ref.pk, "related_model": m}
-            )
+            url = reverse("referral_detail", kwargs={"pk": self.ref.pk, "related_model": m})
             resp = self.client.get(url)
             self.assertEqual(resp.status_code, 200)
 
@@ -216,9 +208,7 @@ class ReferralDetailTest(PrsViewsTestCase):
 
     def test_referral_history(self):
         """Test that the referral history view renders"""
-        url = reverse(
-            "prs_object_history", kwargs={"model": "referral", "pk": self.ref.pk}
-        )
+        url = reverse("prs_object_history", kwargs={"model": "referral", "pk": self.ref.pk})
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, 200)
         self.assertTemplateUsed(resp, "referral/prs_object_history.html")
@@ -227,9 +217,7 @@ class ReferralDetailTest(PrsViewsTestCase):
         """Test that the referral with locations can return a QGIS layer definition"""
         loc = Location.objects.first()
         loc.referral = self.ref
-        loc.poly = Polygon(
-            ((0.0, 0.0), (0.0, 50.0), (50.0, 50.0), (50.0, 0.0), (0.0, 0.0))
-        )
+        loc.poly = Polygon(((0.0, 0.0), (0.0, 50.0), (50.0, 50.0), (50.0, 0.0), (0.0, 0.0)))
         loc.save()
         url = self.ref.get_absolute_url()
         r = self.client.get(url, {"generate_qgis": "true"})
@@ -326,9 +314,7 @@ class ReferralUpdateTest(PrsViewsTestCase):
     def setUp(self):
         super(ReferralUpdateTest, self).setUp()
         self.ref = Referral.objects.first()
-        self.url = reverse(
-            "prs_object_update", kwargs={"model": "referral", "pk": self.ref.pk}
-        )
+        self.url = reverse("prs_object_update", kwargs={"model": "referral", "pk": self.ref.pk})
 
     def test_get(self):
         """Test the referral update view"""
@@ -357,9 +343,7 @@ class ReferralUpdateTest(PrsViewsTestCase):
             },
         )
         self.assertRedirects(resp, self.ref.get_absolute_url())
-        self.assertTrue(
-            Referral.objects.filter(reference="New reference value").exists()
-        )
+        self.assertTrue(Referral.objects.filter(reference="New reference value").exists())
 
 
 class ReferralCreateChildTest(PrsViewsTestCase):
@@ -385,18 +369,14 @@ class ReferralCreateChildTest(PrsViewsTestCase):
     def test_create_get(self):
         """Test GET request for each of: task, record, note, condition"""
         for i in ["task", "record", "note", "condition"]:
-            url = reverse(
-                "referral_create_child", kwargs={"pk": self.ref.pk, "model": i}
-            )
+            url = reverse("referral_create_child", kwargs={"pk": self.ref.pk, "model": i})
             r = self.client.get(url)
             self.assertEqual(r.status_code, 200)
 
     def test_cancel(self):
         """Test that cancelling the create view redirects correctly"""
         for i in ["task", "record", "note", "condition"]:
-            url = reverse(
-                "referral_create_child", kwargs={"pk": self.ref.pk, "model": i}
-            )
+            url = reverse("referral_create_child", kwargs={"pk": self.ref.pk, "model": i})
             resp = self.client.post(url, {"cancel": "Cancel"})
             self.assertRedirects(resp, self.ref.get_absolute_url())
 
@@ -500,9 +480,7 @@ class ReferralCreateChildTest(PrsViewsTestCase):
 
     def test_create_task(self):
         """Test POST request to create a new task on a referral"""
-        url = reverse(
-            "referral_create_child", kwargs={"pk": self.ref.pk, "model": "task"}
-        )
+        url = reverse("referral_create_child", kwargs={"pk": self.ref.pk, "model": "task"})
         init_tasks = self.ref.task_set.count()
         resp = self.client.post(
             url,
@@ -510,9 +488,7 @@ class ReferralCreateChildTest(PrsViewsTestCase):
                 "assigned_user": self.n_user.pk,
                 "type": TaskType.objects.first().pk,
                 "start_date": date.strftime(date.today(), "%d/%m/%Y"),
-                "due_date": date.strftime(
-                    date.today() + timedelta(days=30), "%d/%m/%Y"
-                ),
+                "due_date": date.strftime(date.today() + timedelta(days=30), "%d/%m/%Y"),
                 "description": "Test clearance",
                 "email_user": True,
             },
@@ -524,9 +500,7 @@ class ReferralCreateChildTest(PrsViewsTestCase):
 
     def test_create_record(self):
         """Test POST request to create a new record on a referral"""
-        url = reverse(
-            "referral_create_child", kwargs={"pk": self.ref.pk, "model": "record"}
-        )
+        url = reverse("referral_create_child", kwargs={"pk": self.ref.pk, "model": "record"})
         init_records = self.ref.record_set.count()
         resp = self.client.post(
             url,
@@ -566,9 +540,7 @@ class ReferralCreateChildTest(PrsViewsTestCase):
         conditions.  Did the additional information supplied recently meet the
         Department\u2019s requirements?</p>\r\n<p>Regards</p>\r\n<p>John</p>\r\n
         </div>"""
-        url = reverse(
-            "referral_create_child", kwargs={"pk": self.ref.pk, "model": "note"}
-        )
+        url = reverse("referral_create_child", kwargs={"pk": self.ref.pk, "model": "note"})
         initial_count = self.ref.note_set.count()
         resp = self.client.post(url, {"note_html": note_html})
         # Response should be a redirect.
@@ -578,13 +550,9 @@ class ReferralCreateChildTest(PrsViewsTestCase):
 
     def test_create_condition(self):
         """Test POST request to create a new condition on a referral"""
-        url = reverse(
-            "referral_create_child", kwargs={"pk": self.ref.pk, "model": "condition"}
-        )
+        url = reverse("referral_create_child", kwargs={"pk": self.ref.pk, "model": "condition"})
         initial_count = self.ref.condition_set.count()
-        resp = self.client.post(
-            url, {"proposed_condition_html": "<p>Test condition</p>"}
-        )
+        resp = self.client.post(url, {"proposed_condition_html": "<p>Test condition</p>"})
         # Response should be a redirect.
         self.assertEqual(resp.status_code, 302)
         # Test that a new record now exists on the referral.
@@ -681,9 +649,7 @@ class LocationCreateTest(PrsViewsTestCase):
         ref = Referral.objects.first()
         url = reverse("referral_location_create", kwargs={"pk": ref.pk})
         resp = self.client.get(url)
-        self.assertEqual(
-            resp.status_code, 200, "Location create view failed: {0}".format(url)
-        )
+        self.assertEqual(resp.status_code, 200, f"Location create view failed: {url}")
         self.assertTemplateUsed(resp, "referral/location_create.html")
 
     def test_cancel(self):
@@ -747,9 +713,7 @@ class PrsObjectDeleteTest(PrsViewsTestCase):
                     "prs_object_delete",
                     kwargs={"model": obj._meta.object_name.lower(), "pk": obj.pk},
                 )
-                self.client.post(
-                    url, {"delete": "Delete", "next": next_url}, follow=True
-                )
+                self.client.post(url, {"delete": "Delete", "next": next_url}, follow=True)
                 # Test that the current() queryset does not contain this object.
                 self.assertNotIn(obj.pk, [i.pk for i in model.objects.current()])
 
@@ -898,9 +862,7 @@ class TaskActionTest(PrsViewsTestCase):
         # Test that the redirected response contains an error message.
         resp = self.client.get(url, follow=True)
         messages = resp.context["messages"]._get()[0]
-        self.assertIsNot(
-            messages[0].message.find("You can't stop a completed task"), -1
-        )
+        self.assertIsNot(messages[0].message.find("You can't stop a completed task"), -1)
 
     def test_cant_restart_unstopped_task(self):
         """Test that a non-stopped task can't be started"""
@@ -911,9 +873,7 @@ class TaskActionTest(PrsViewsTestCase):
         # Test that the redirected response contains an error message.
         resp = self.client.get(url, follow=True)
         messages = resp.context["messages"]._get()[0]
-        self.assertIsNot(
-            messages[0].message.find("You can't restart a non-stopped task"), -1
-        )
+        self.assertIsNot(messages[0].message.find("You can't restart a non-stopped task"), -1)
 
     def test_cant_inherit_owned_task_task(self):
         """Test that you can't inherit a task assigned to you"""
@@ -926,9 +886,7 @@ class TaskActionTest(PrsViewsTestCase):
         # Test that the redirected response contains an error message.
         resp = self.client.get(url, follow=True)
         messages = resp.context["messages"]._get()[0]
-        self.assertIsNot(
-            messages[0].message.find("That task is already assigned to you"), -1
-        )
+        self.assertIsNot(messages[0].message.find("That task is already assigned to you"), -1)
 
     def test_cant_alter_completed_task(self):
         """Test that a completed task can't be cancelled, reassigned or completed"""
@@ -942,9 +900,7 @@ class TaskActionTest(PrsViewsTestCase):
             # Test that the redirected response contains an error message.
             resp = self.client.get(url, follow=True)
             messages = resp.context["messages"]._get()[0]
-            self.assertIsNot(
-                messages[0].message.find("That task is already completed"), -1
-            )
+            self.assertIsNot(messages[0].message.find("That task is already completed"), -1)
 
     def test_cant_add_task_to_task(self):
         """Test that a task can't be added to another task"""
@@ -966,9 +922,7 @@ class TaskActionTest(PrsViewsTestCase):
             # Ensure that no locations exist on the parent referral.
             for loc in self.task.referral.location_set.all():
                 loc.delete()
-            url = reverse(
-                "task_action", kwargs={"pk": self.task.pk, "action": "complete"}
-            )
+            url = reverse("task_action", kwargs={"pk": self.task.pk, "action": "complete"})
             resp = self.client.get(url)
             # Response should be a redirect to the task URL.
             self.assertRedirects(resp, self.task.get_absolute_url())
@@ -995,7 +949,7 @@ class ReferralRelateTest(PrsViewsTestCase):
         url = reverse("referral_relate", kwargs={"pk": self.ref1.pk})
         # NOTE: setting the ``data`` dict in the post below form-encodes the parameters.
         # We need them as query params instead, so manually build the query.
-        url += "?ref_pk={}&create=true".format(self.ref2.pk)
+        url += f"?ref_pk={self.ref2.pk}&create=true"
         resp = self.client.post(url, follow=True)
         self.assertEqual(resp.status_code, 200)
         self.assertTrue(self.ref2 in self.ref1.related_refs.all())
@@ -1008,7 +962,7 @@ class ReferralRelateTest(PrsViewsTestCase):
         url = reverse("referral_relate", kwargs={"pk": self.ref1.pk})
         # NOTE: setting the ``data`` dict in the post below form-encodes the parameters.
         # We need them as query params instead, so manually build the query.
-        url += "?ref_pk={}&delete=true".format(self.ref2.pk)
+        url += f"?ref_pk={self.ref2.pk}&delete=true"
         resp = self.client.post(url, follow=True)
         self.assertEqual(resp.status_code, 200)
         self.assertTrue(self.ref2 not in self.ref1.related_refs.all())
@@ -1042,9 +996,7 @@ class InfobaseShortcutTest(PrsViewsTestCase):
 class RecordUploadViewTest(PrsViewsTestCase):
     def test_post(self):
         """Test POST response for an authorised user"""
-        url = reverse(
-            "referral_record_upload", kwargs={"pk": Referral.objects.first().pk}
-        )
+        url = reverse("referral_record_upload", kwargs={"pk": Referral.objects.first().pk})
         f = SimpleUploadedFile("file.txt", b"file_content")
         resp = self.client.post(url, {"file": f})
         self.assertEqual(resp.status_code, 200)
@@ -1053,9 +1005,7 @@ class RecordUploadViewTest(PrsViewsTestCase):
 
     def test_post_forbidden(self):
         """Test POST response for an unauthorised user"""
-        url = reverse(
-            "referral_record_upload", kwargs={"pk": Referral.objects.first().pk}
-        )
+        url = reverse("referral_record_upload", kwargs={"pk": Referral.objects.first().pk})
         f = SimpleUploadedFile("file.txt", b"file_content")
         # Log in as read-only user
         self.client.logout()
