@@ -14,7 +14,7 @@ def template_context(request):
             "geoserver_url": settings.GEOSERVER_URL,
             "kmi_geoserver_url": settings.KMI_GEOSERVER_URL,
             "prs_layer_name": settings.PRS_LAYER_NAME,
-            "geocoder_url": settings.GEOCODER_URL,
+            "geocoder_url": reverse("geocode_query"),
             "cadastre_query_url": reverse("cadastre_query"),
         },
     }
