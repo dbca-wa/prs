@@ -104,7 +104,7 @@ wheels = [
 
 [[package]]
 name = "celery"
-version = "5.5.2"
+version = "5.5.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "billiard" },
@@ -116,9 +116,9 @@ dependencies = [
     { name = "python-dateutil" },
     { name = "vine" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/bf/03/5d9c6c449248958f1a5870e633a29d7419ff3724c452a98ffd22688a1a6a/celery-5.5.2.tar.gz", hash = "sha256:4d6930f354f9d29295425d7a37261245c74a32807c45d764bedc286afd0e724e", size = 1666892 }
+sdist = { url = "https://files.pythonhosted.org/packages/bb/7d/6c289f407d219ba36d8b384b42489ebdd0c84ce9c413875a8aae0c85f35b/celery-5.5.3.tar.gz", hash = "sha256:6c972ae7968c2b5281227f01c3a3f984037d21c5129d07bf3550cc2afc6b10a5", size = 1667144 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/04/94/8e825ac1cf59d45d20c4345d4461e6b5263ae475f708d047c3dad0ac6401/celery-5.5.2-py3-none-any.whl", hash = "sha256:54425a067afdc88b57cd8d94ed4af2ffaf13ab8c7680041ac2c4ac44357bdf4c", size = 438626 },
+    { url = "https://files.pythonhosted.org/packages/c9/af/0dcccc7fdcdf170f9a1585e5e96b6fb0ba1749ef6be8c89a6202284759bd/celery-5.5.3-py3-none-any.whl", hash = "sha256:0b5761a07057acee94694464ca482416b959568904c9dfa41ce8413a7d65d525", size = 438775 },
 ]
 
 [[package]]
@@ -361,15 +361,15 @@ wheels = [
 
 [[package]]
 name = "dj-database-url"
-version = "2.3.0"
+version = "3.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/98/9f/fc9905758256af4f68a55da94ab78a13e7775074edfdcaddd757d4921686/dj_database_url-2.3.0.tar.gz", hash = "sha256:ae52e8e634186b57e5a45e445da5dc407a819c2ceed8a53d1fac004cc5288787", size = 10980 }
+sdist = { url = "https://files.pythonhosted.org/packages/81/c0/5d660bbe707c8bce8c9217c9af92345170c204e29005628dc57528b648d7/dj_database_url-3.0.0.tar.gz", hash = "sha256:749a7a42d88d6c741c1d2f4ab24c2ae0d5cd12f00f2d1d55ff9f5fadabe8a2c3", size = 12594 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e5/91/641a4e5c8903ed59f6cbcce571003bba9c5d2f731759c31db0ba83bb0bdb/dj_database_url-2.3.0-py3-none-any.whl", hash = "sha256:bb0d414ba0ac5cd62773ec7f86f8cc378a9dbb00a80884c2fc08cc570452521e", size = 7793 },
+    { url = "https://files.pythonhosted.org/packages/e8/7b/d68df6365e442ae6370d6d970915329eae85bce5afb3602058d9ccc71700/dj_database_url-3.0.0-py3-none-any.whl", hash = "sha256:cbb84b2e3f372460b1e43692bf9fdc0c32e78930ee101db470cba56105fca1e5", size = 8835 },
 ]
 
 [[package]]
@@ -425,14 +425,14 @@ wheels = [
 
 [[package]]
 name = "django-extensions"
-version = "3.2.3"
+version = "4.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8a/f1/318684c9466968bf9a9c221663128206e460c1a67f595055be4b284cde8a/django-extensions-3.2.3.tar.gz", hash = "sha256:44d27919d04e23b3f40231c4ab7af4e61ce832ef46d610cc650d53e68328410a", size = 277216 }
+sdist = { url = "https://files.pythonhosted.org/packages/6d/b3/ed0f54ed706ec0b54fd251cc0364a249c6cd6c6ec97f04dc34be5e929eac/django_extensions-4.1.tar.gz", hash = "sha256:7b70a4d28e9b840f44694e3f7feb54f55d495f8b3fa6c5c0e5e12bcb2aa3cdeb", size = 283078 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a7/7e/ba12b9660642663f5273141018d2bec0a1cae1711f4f6d1093920e157946/django_extensions-3.2.3-py3-none-any.whl", hash = "sha256:9600b7562f79a92cbf1fde6403c04fee314608fefbb595502e34383ae8203401", size = 229868 },
+    { url = "https://files.pythonhosted.org/packages/64/96/d967ca440d6a8e3861120f51985d8e5aec79b9a8bdda16041206adfe7adc/django_extensions-4.1-py3-none-any.whl", hash = "sha256:0699a7af28f2523bf8db309a80278519362cd4b6e1fd0a8cd4bf063e1e023336", size = 232980 },
 ]
 
 [[package]]
@@ -981,15 +981,15 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "celery", specifier = "==5.5.2" },
+    { name = "celery", specifier = "==5.5.3" },
     { name = "crispy-bootstrap5", specifier = "==2025.4" },
     { name = "dbca-utils", specifier = "==2.1.3" },
-    { name = "dj-database-url", specifier = "==2.3.0" },
+    { name = "dj-database-url", specifier = "==3.0.0" },
     { name = "django", specifier = "==5.2.1" },
     { name = "django-celery-results", specifier = "==2.6.0" },
     { name = "django-crispy-forms", specifier = "==2.4" },
     { name = "django-crum", specifier = "==0.7.9" },
-    { name = "django-extensions", specifier = "==3.2.3" },
+    { name = "django-extensions", specifier = "==4.1" },
     { name = "django-reversion", specifier = "==5.1.0" },
     { name = "django-storages", extras = ["azure"], specifier = "==1.14.6" },
     { name = "django-taggit", specifier = "==6.1.0" },
@@ -1004,9 +1004,9 @@ requires-dist = [
     { name = "pygeopkg", specifier = "==0.1.3" },
     { name = "python-dotenv", specifier = "==1.1.0" },
     { name = "python-magic", specifier = "==0.4.27" },
-    { name = "redis", specifier = "==6.1.0" },
+    { name = "redis", specifier = "==6.2.0" },
     { name = "sentry-sdk", extras = ["django"], specifier = "==2.29.1" },
-    { name = "typesense", specifier = "==1.0.3" },
+    { name = "typesense", specifier = "==1.1.1" },
     { name = "unidecode", specifier = "==1.4.0" },
     { name = "webtemplate-dbca", specifier = "==1.8.2" },
     { name = "whitenoise", extras = ["brotli"], specifier = "==6.9.0" },
@@ -1181,11 +1181,11 @@ sdist = { url = "https://files.pythonhosted.org/packages/34/12/944f61bc67a1e9189
 
 [[package]]
 name = "redis"
-version = "6.1.0"
+version = "6.2.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/a6/af/e875d57383653e5d9065df8552de1deb7576b4d3cf3af90cde2e79ff7f65/redis-6.1.0.tar.gz", hash = "sha256:c928e267ad69d3069af28a9823a07726edf72c7e37764f43dc0123f37928c075", size = 4629300 }
+sdist = { url = "https://files.pythonhosted.org/packages/ea/9a/0551e01ba52b944f97480721656578c8a7c46b51b99d66814f85fe3a4f3e/redis-6.2.0.tar.gz", hash = "sha256:e821f129b75dde6cb99dd35e5c76e8c49512a5a0d8dfdc560b2fbd44b85ca977", size = 4639129 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/28/5f/cf36360f80ae233bd1836442f5127818cfcfc7b1846179b60b2e9a4c45c9/redis-6.1.0-py3-none-any.whl", hash = "sha256:3b72622f3d3a89df2a6041e82acd896b0e67d9f54e9bcd906d091d23ba5219f6", size = 273750 },
+    { url = "https://files.pythonhosted.org/packages/13/67/e60968d3b0e077495a8fee89cf3f2373db98e528288a48f1ee44967f6e8c/redis-6.2.0-py3-none-any.whl", hash = "sha256:c8ddf316ee0aab65f04a11229e94a64b2618451dab7a67cb2f77eb799d872d5e", size = 278659 },
 ]
 
 [[package]]
@@ -1285,14 +1285,14 @@ wheels = [
 
 [[package]]
 name = "typesense"
-version = "1.0.3"
+version = "1.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "requests" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/67/bf/3bfa71ccd801d0a4b06206b5d0bcf4f399204901865924e36fe7cbf459a6/typesense-1.0.3.tar.gz", hash = "sha256:5e80e0fc71fd8a4eff9d3b8d25e7c312db5e4d542b635d3eea96d87ed129cf33", size = 43136 }
+sdist = { url = "https://files.pythonhosted.org/packages/9b/2c/6f012a17934d50f73d20f1138b3bc42cfb7ec465052bd8e56c0dcf8ce92d/typesense-1.1.1.tar.gz", hash = "sha256:876280e5f2bb8a4a24ae427863ee8216d2e9e76cfe96e0a87a379e66078dc591", size = 45214 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/51/42/9823c42f2b383deae16c1ecb27566d0b1054a28e31fad145bab62ff17897/typesense-1.0.3-py3-none-any.whl", hash = "sha256:b5976a8f6b9afb451ebbd4763778198ac8d62ecf401bc7cd702490171b36d2c9", size = 68283 },
+    { url = "https://files.pythonhosted.org/packages/1b/8f/6306446e5ce28ddddd8babf407597b9afa3fff521794fe2dcfb16f12e16a/typesense-1.1.1-py3-none-any.whl", hash = "sha256:633aeb26c24e17be654ea22f20d3f76f87c804f259d0a560b7e0ae817f24077a", size = 70604 },
 ]
 
 [[package]]
