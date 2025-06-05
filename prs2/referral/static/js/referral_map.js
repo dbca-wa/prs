@@ -1,22 +1,14 @@
 'use strict';
 
 // NOTE: some global constants are set in the base template (context object).
-const kmi_geoserver_wmts_url = `${context.kmi_geoserver_url}/gwc/service/wmts?service=WMTS&request=GetTile&version=1.0.0&tilematrixset=gda94&tilematrix=gda94:{z}&tilecol={x}&tilerow={y}`;
-const kmi_geoserver_wmts_url_base = `${kmi_geoserver_wmts_url}&format=image/jpeg`;
-const kmi_geoserver_wmts_url_overlay = `${kmi_geoserver_wmts_url}&format=image/png`;
-
 const geoserver_wms_url = `${context.geoserver_url}/ows`;
 
 // Base layers
-const landgateOrthomosaic = L.tileLayer(kmi_geoserver_wmts_url_base + '&layer=landgate:virtual_mosaic', {
-  // TODO: replace with KB layer.
-  tileSize: 1024,
-  zoomOffset: -2,
+const virtualMosaic = L.tileLayer.wms(geoserver_wms_url, {
+  layers: 'kaartdijin-boodja-private:virtual_mosaic',
 });
-const mapboxStreets = L.tileLayer(kmi_geoserver_wmts_url_base + '&layer=public:mapbox-streets', {
-  // TODO: replace with KB layer.
-  tileSize: 1024,
-  zoomOffset: -2,
+const mapboxStreets = L.tileLayer.wms(geoserver_wms_url, {
+  layers: 'kaartdijin-boodja-public:mapbox-streets-public',
 });
 const waCoast = L.tileLayer.wms(geoserver_wms_url, {
   layers: 'kaartdijin-boodja-private:WA_COAST_SMOOTHED',
@@ -55,10 +47,11 @@ const regionalParks = L.tileLayer.wms(geoserver_wms_url, {
   transparent: true,
   opacity: 0.75,
 });
-const swanCannDevContArea = L.tileLayer(`${kmi_geoserver_wmts_url_overlay}&layer=cddp:cpt_swan_cann_dev_cont_area`, {
-  // TODO: replace with KB layer.
-  tileSize: 1024,
-  zoomOffset: -2,
+const swanCannDevContArea = L.tileLayer.wms(geoserver_wms_url, {
+  layers: 'kaartdijin-boodja-private:CPT_SWAN_CANN_DEV_CONT_AREA',
+  format: 'image/png',
+  transparent: true,
+  opacity: 0.75,
 });
 const ucl = L.tileLayer.wms(geoserver_wms_url, {
   layers: 'kaartdijin-boodja-private:CPT_CADASTRE_UCL_1PL',
@@ -86,13 +79,13 @@ const map = L.map('map', {
   zoom: 16,
   minZoom: 6,
   maxZoom: 18,
-  layers: [landgateOrthomosaic, cadastre], // Sets default selections.
+  layers: [virtualMosaic, cadastre], // Sets default selections.
   attributionControl: false,
 });
 
 // Define layer groups.
 const baseMaps = {
-  'Landgate orthomosaic': landgateOrthomosaic,
+  'Virtual mosaic': virtualMosaic,
   'Mapbox streets': mapboxStreets,
   'WA coast': waCoast,
 };
