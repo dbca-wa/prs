@@ -22,9 +22,8 @@ const cadastre = L.tileLayer.wms(geoserver_wms_url, {
   opacity: 0.75,
   minZoom: 13,
 });
-const prsLocations = L.tileLayer.wms(`${context.kmi_geoserver_url}/ows`, {
-  // TODO: replace with KB layer.
-  layers: context.prs_layer_name,
+const prsLocations = L.tileLayer.wms(geoserver_wms_url, {
+  layers: 'kaartdijin-boodja-private:prs_locations',
   format: 'image/png',
   transparent: true,
   opacity: 0.75,
