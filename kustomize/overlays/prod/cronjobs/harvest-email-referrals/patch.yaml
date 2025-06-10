@@ -20,21 +20,16 @@ spec:
                     secretKeyRef:
                       name: prs-env-prod
                       key: DATABASE_URL
-                - name: KMI_GEOSERVER_URL
-                  valueFrom:
-                    secretKeyRef:
-                      name: prs-env-prod
-                      key: KMI_GEOSERVER_URL
-                - name: MAPPROXY_URL
-                  valueFrom:
-                    secretKeyRef:
-                      name: prs-env-prod
-                      key: MAPPROXY_URL
                 - name: GEOSERVER_URL
                   valueFrom:
                     secretKeyRef:
                       name: prs-env-prod
                       key: GEOSERVER_URL
+                - name: PRS_LAYER_NAME
+                  valueFrom:
+                    secretKeyRef:
+                      name: prs-env-prod
+                      key: PRS_LAYER_NAME
                 - name: CADASTRE_LAYER_NAME
                   valueFrom:
                     secretKeyRef:

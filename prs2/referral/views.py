@@ -113,6 +113,7 @@ class HelpPage(LoginRequiredMixin, TemplateView):
         context["breadcrumb_trail"] = breadcrumbs_li(links)
         pu_group = Group.objects.get(name=settings.PRS_POWER_USER_GROUP)
         context["power_users"] = pu_group.user_set.filter(is_active=True)
+        context["geoserver_url"] = settings.GEOSERVER_URL
         return context
 
 
@@ -512,6 +513,8 @@ class ReferralDetail(PrsObjectDetail):
         if "generate_qgis" in request.GET and ref.location_set.current().exists():
             if "qgis_ver" in request.GET and request.GET["qgis_ver"] == "2_16":
                 content = ref.generate_qgis_layer("qgis_layer_v2-16")
+            if "qgis_ver" in request.GET and request.GET["qgis_ver"] == "2_8":
+                content = ref.generate_qgis_layer("qgis_layer_v2-8")
             else:
                 content = ref.generate_qgis_layer()
             fn = f"prs_referral_{ref.pk}.qlr"
@@ -519,13 +522,13 @@ class ReferralDetail(PrsObjectDetail):
             resp["Content-Disposition"] = f'attachment; filename="{fn}"'
             return resp
         elif "generate_gpkg" in request.GET and ref.location_set.current().exists():
-            content = ref.generate_gpkg()
+            content = ref.generate_gpkg(source_url=request.build_absolute_uri(location=ref.get_absolute_url()))
             fn = f"prs_referral_{ref.pk}.gpkg"
             resp = HttpResponse(content, content_type="application/x-sqlite3")
             resp["Content-Disposition"] = f'attachment; filename="{fn}"'
             return resp
         elif "generate_geojson" in request.GET and ref.location_set.current().exists():
-            content = ref.generate_geojson()
+            content = ref.generate_geojson(source_url=request.build_absolute_uri(location=ref.get_absolute_url()))
             fn = f"prs_referral_{ref.pk}.geojson"
             resp = HttpResponse(content, content_type="application/geo+json")
             resp["Content-Disposition"] = f'attachment; filename="{fn}"'

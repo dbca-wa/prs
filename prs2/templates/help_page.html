@@ -1,22 +1,56 @@
 {% extends "base_prs.html" %}
-
 {% block page_content_inner %}
-<h1>HELP</h1>
-<p>Welcome to the Planning Referral Sysyem, the Department's system for recording and managing land use planning referrals and related work.</p>
-<h3>New to PRS?</h3>
-<ul>
-    <li>"Read-only" access to PRS requires only that you be logged into the Department's single-sign-on service (Office 365).</li>
-    <li>If you require "edit" rights or more information, please contact:</li>
+    <h1>HELP</h1>
+    <p>
+        Welcome to the Planning Referral Sysyem, the Department's system for recording and managing land use planning referrals and related work.
+    </p>
+    <h3>New to PRS?</h3>
+    <ul>
+        <li>
+            "Read-only" access to PRS requires only that you be logged into the Department's single-sign-on service (Office 365).
+        </li>
+        <li>If you require "edit" rights or more information, please contact:</li>
         <ul>
-        {% for user in power_users %}
-            <li><a href="mailto:{{ user.email }}">{{ user.get_full_name }}</a></li>
-        {% endfor %}
+            {% for user in power_users %}
+                <li>
+                    <a href="mailto:{{ user.email }}">{{ user.get_full_name }}</a>
+                </li>
+            {% endfor %}
         </ul>
-    <li>To search for a referral, click <strong>Referrals</strong> under <strong>Search</strong> in the top menu,
-        and type in known information e.g. address, description, WAPC reference, PRS reference (place inverted
-        commas around phrases).</li>
-    <li>Click hyperlinks on any screen to access more data on referrals or PRS functions.</li>
-</ul>
-<h3>User documentation</h3>
-<p><a href="https://dpaw.sharepoint.com/resources/land-use-planning/Documents/Planning_Referral_System_User_Guide.pdf?csf=1&web=1&e=C1VWTf" target="_blank">PRS user documentation</a> is located on SharePoint.</p>
+        <li>
+            To search for a referral, click <strong>Referrals</strong> under <strong>Search</strong> in the top menu,
+            and type in known information e.g. address, description, WAPC reference, PRS reference (place inverted
+            commas around phrases).
+        </li>
+        <li>Click hyperlinks on any screen to access more data on referrals or PRS functions.</li>
+    </ul>
+    <h3>PRS locations in QGIS</h3>
+    <p>PRS locations are available as a GIS data source via the Kaartdijin Boodja system.</p>
+    <ol>
+        <li>In QGIS, create a new WMS connection.</li>
+        <li>
+            Name the connection <strong>KB</strong> and use <strong>{{ geoserver_url }}/ows</strong> as the connection URL.
+        </li>
+        <li>
+            Visit <a href="https://auth2.dbca.wa.gov.au" target="_blank">https://auth2.dbca.wa.gov.au</a> and generate an access token to authenticate yourself with KB.
+        </li>
+        <li>
+            In QGIS, configure the new WMS connection to create an authentication configuration:
+            <br>
+            <ul>
+                <li>Name: KB auth</li>
+                <li>Type: Basic authentication</li>
+                <li>Username: your email address</li>
+                <li>Password: the access token value created earlier</li>
+            </ul>
+        </li>
+        <li>
+            In the new WMS connection, add the <strong>prs_locations</strong> layer to your QGIS project.
+        </li>
+    </ol>
+    <h3>User documentation</h3>
+    <p>
+        <a href="https://dpaw.sharepoint.com/resources/land-use-planning/Documents/Planning_Referral_System_User_Guide.pdf?csf=1&web=1&e=C1VWTf"
+           target="_blank">PRS user documentation</a> is located on SharePoint.
+    </p>
 {% endblock %}

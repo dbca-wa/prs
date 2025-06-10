@@ -577,9 +577,9 @@ class Referral(ReferralBaseModel):
             return True
         return False
 
-    def generate_qgis_layer(self, template="qgis_layer_v2-8"):
+    def generate_qgis_layer(self, template="qgis_layer_v3-40"):
         """Generates and returns the content for a QGIS layer definition.
-        Optionally specify the name of the template (defaults to the v2.8
+        Optionally specify the name of the template (defaults to the v3.40
         compatible template).
         """
         # Only return a value for a referral with child locations.
@@ -590,22 +590,23 @@ class Referral(ReferralBaseModel):
             xml,
             {
                 "REFERRAL_PK": self.pk,
-                "KMI_GEOSERVER_URL": f"{settings.KMI_GEOSERVER_URL}/ows",
+                "GEOSERVER_URL": f"{settings.GEOSERVER_URL}/ows",
+                "PRS_LAYER_NAME": f"{settings.PRS_LAYER_NAME}",
             },
         )
 
-    def generate_gpkg(self):
+    def generate_gpkg(self, source_url=""):
         """Generates and returns a Geopackage file-like object."""
-        path = NamedTemporaryFile()
-        gpkg = GeoPackage.create(path.name, flavor="EPSG")
+        tmp = NamedTemporaryFile()
+        gpkg = GeoPackage.create(tmp.name, flavor="EPSG")
         srs_wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]'
         srs = SRS("WGS 84", "EPSG", 4326, srs_wkt)
         fields = (
-            # Field('modified', SQLFieldTypes.datetime),  # datetime caused the create_feature_class step to throw an exception.
             Field("referral", SQLFieldTypes.integer),
             Field("referral_type", SQLFieldTypes.text),
             Field("referral_reference", SQLFieldTypes.text),
             Field("referring_org", SQLFieldTypes.text),
+            Field("source_url", SQLFieldTypes.text),
         )
         fc = gpkg.create_feature_class("prs_referrals", srs, fields=fields, shape_type=GeometryType.polygon)
         field_names = [
@@ -614,6 +615,7 @@ class Referral(ReferralBaseModel):
             "referral_type",
             "referral_reference",
             "referring_org",
+            "source_url",
         ]
         rows = []
         # We have to use the point_lists_to_gpkg_polygon function to insert WKB into the geopkg.
@@ -627,12 +629,15 @@ class Referral(ReferralBaseModel):
                     loc.referral.type.name,
                     loc.referral.reference,
                     loc.referral.referring_org.name,
+                    source_url,
                 )
             )
         fc.insert_rows(field_names, rows)
-        return open(path, "rb")  # Return the gpkg file object.
+        resp = open(tmp.name, "rb").read()
+        tmp.close()
+        return resp  # Return the gpkg content.
 
-    def generate_geojson(self):
+    def generate_geojson(self, source_url=""):
         """Generates and returns GeoJSON."""
         features = []
         for loc in self.location_set.current().filter(poly__isnull=False):
@@ -644,6 +649,7 @@ class Referral(ReferralBaseModel):
                         "referral_type": loc.referral.type.name,
                         "referral_reference": loc.referral.reference,
                         "referring_org": loc.referral.referring_org.name,
+                        "source_url": source_url,
                     },
                 )
             )

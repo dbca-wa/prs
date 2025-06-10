@@ -23,7 +23,7 @@ const cadastre = L.tileLayer.wms(geoserver_wms_url, {
   minZoom: 13,
 });
 const prsLocations = L.tileLayer.wms(geoserver_wms_url, {
-  layers: 'kaartdijin-boodja-private:prs_locations',
+  layers: context.prs_layer_name,
   format: 'image/png',
   transparent: true,
   opacity: 0.75,

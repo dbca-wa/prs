@@ -61,7 +61,6 @@ else:
     AZURE_URL_EXPIRATION_SECS = env("AZURE_URL_EXPIRATION_SECS", 3600)  # Default one hour.
 
 # PRS may deploy its own instance of Geoserver.
-KMI_GEOSERVER_URL = env("KMI_GEOSERVER_URL", "")
 PRS_LAYER_NAME = env("PRS_LAYER_NAME", "")
 GEOCODER_URL = env("GEOCODER_URL", "")
 GEOSERVER_URL = env("GEOSERVER_URL", "")

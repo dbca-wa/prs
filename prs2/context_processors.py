@@ -12,7 +12,6 @@ def template_context(request):
         # Define a dictionary of context variables to supply to JavaScript in view templates.
         "javascript_context": {
             "geoserver_url": settings.GEOSERVER_URL,
-            "kmi_geoserver_url": settings.KMI_GEOSERVER_URL,
             "prs_layer_name": settings.PRS_LAYER_NAME,
             "geocoder_url": reverse("geocode_query"),
             "cadastre_query_url": reverse("cadastre_query"),
