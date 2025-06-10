@@ -546,7 +546,7 @@ class ReferralDetail(PrsObjectDetail):
         context["page_title"] = f"PRS | Referrals | {ref.pk}"
         context["rel_model"] = self.related_model
         # Test if the user has bookmarked this referral.
-        if Bookmark.objects.filter(referral=ref, user=self.request.user).exists():
+        if Bookmark.objects.current().filter(referral=ref, user=self.request.user).exists():
             context["bookmark"] = Bookmark.objects.filter(referral=ref, user=self.request.user)[0]
 
         # Generate a table for each child model type: task_list, note_list, etc. and add to the context.
