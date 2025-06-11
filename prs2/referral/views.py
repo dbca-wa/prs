@@ -509,30 +509,6 @@ class ReferralDetail(PrsObjectDetail):
         if ref.is_deleted():
             messages.warning(self.request, f"Referral {ref.pk} not found.")
             return HttpResponseRedirect(reverse("site_home"))
-        # Override the get() to optionally return a QGIS layer definition.
-        if "generate_qgis" in request.GET and ref.location_set.current().exists():
-            if "qgis_ver" in request.GET and request.GET["qgis_ver"] == "2_16":
-                content = ref.generate_qgis_layer("qgis_layer_v2-16")
-            if "qgis_ver" in request.GET and request.GET["qgis_ver"] == "2_8":
-                content = ref.generate_qgis_layer("qgis_layer_v2-8")
-            else:
-                content = ref.generate_qgis_layer()
-            fn = f"prs_referral_{ref.pk}.qlr"
-            resp = HttpResponse(content, content_type="application/x-qgis-project")
-            resp["Content-Disposition"] = f'attachment; filename="{fn}"'
-            return resp
-        elif "generate_gpkg" in request.GET and ref.location_set.current().exists():
-            content = ref.generate_gpkg(source_url=request.build_absolute_uri(location=ref.get_absolute_url()))
-            fn = f"prs_referral_{ref.pk}.gpkg"
-            resp = HttpResponse(content, content_type="application/x-sqlite3")
-            resp["Content-Disposition"] = f'attachment; filename="{fn}"'
-            return resp
-        elif "generate_geojson" in request.GET and ref.location_set.current().exists():
-            content = ref.generate_geojson(source_url=request.build_absolute_uri(location=ref.get_absolute_url()))
-            fn = f"prs_referral_{ref.pk}.geojson"
-            resp = HttpResponse(content, content_type="application/geo+json")
-            resp["Content-Disposition"] = f'attachment; filename="{fn}"'
-            return resp
 
         # Call user_referral_history with the current referral.
         user_referral_history(request.user, ref)
@@ -1610,6 +1586,45 @@ class ReferralRelate(PrsObjectList):
                 messages.success(request, "Referral relation removed")
 
         return redirect(ref1.get_absolute_url())
+
+
+class ReferralLocationDownload(View):
+    """Basic view to generate spatial data for a given referral's location, and return it as a download.
+    Several formats are available via the `format` request parameter, otherwise defaults to GeoJSON.
+    """
+
+    http_method_names = ["get"]
+
+    def get(self, request, *args, **kwargs):
+        referral = get_object_or_404(Referral, pk=self.kwargs["pk"])
+
+        # Deleted? Redirect home.
+        if referral.is_deleted():
+            messages.warning(self.request, f"Referral {referral.pk} not found.")
+            return HttpResponseRedirect(reverse("site_home"))
+
+        # No locations? Redirect to the referral detail view.
+        if not referral.location_set.current().exists():
+            return HttpResponseRedirect(referral.get_absolute_url())
+
+        if "format" in request.GET and request.GET["format"] == "qgis":
+            content = referral.generate_qgis_layer()
+            filename = f"prs_referral_{referral.pk}.qlr"
+            resp = HttpResponse(content, content_type="application/x-qgis-project")
+            resp["Content-Disposition"] = f'attachment; filename="{filename}"'
+            return resp
+        elif "format" in request.GET and request.GET["format"] == "gpkg":
+            content = referral.generate_gpkg(source_url=request.build_absolute_uri(location=referral.get_absolute_url()))
+            filename = f"prs_referral_{referral.pk}.gpkg"
+            resp = HttpResponse(content, content_type="application/x-sqlite3")
+            resp["Content-Disposition"] = f'attachment; filename="{filename}"'
+            return resp
+        else:
+            content = referral.generate_geojson(source_url=request.build_absolute_uri(location=referral.get_absolute_url()))
+            filename = f"prs_referral_{referral.pk}.geojson"
+            resp = HttpResponse(content, content_type="application/geo+json")
+            resp["Content-Disposition"] = f'attachment; filename="{filename}"'
+            return resp
 
 
 class ConditionClearanceCreate(PrsObjectCreate):

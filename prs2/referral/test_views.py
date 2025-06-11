@@ -7,7 +7,6 @@ from django.contrib.gis.geos import Polygon
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client
 from django.urls import reverse
-from django.utils.http import urlencode
 from mixer.backend.django import mixer
 from referral.models import (
     Bookmark,
@@ -103,8 +102,7 @@ class BaseViewTest(PrsViewsTestCase):
             self.assertEqual(resp.status_code, 200)
             self.assertTemplateUsed(resp, "referral/prs_object_list.html")
             # Also test with a view with a query string.
-            url += "?q=foo+bar"
-            resp = self.client.get(url)
+            resp = self.client.get(f"{url}?q=foo+bar")
             self.assertEqual(resp.status_code, 200)
 
     def test_nonsense_model(self):
@@ -201,8 +199,7 @@ class ReferralDetailTest(PrsViewsTestCase):
     def test_print_notes(self):
         """Test that the referral notes printable view renders"""
         url = reverse("referral_detail", kwargs={"pk": self.ref.pk})
-        url += "?" + urlencode({"print": "notes"})
-        resp = self.client.get(url)
+        resp = self.client.get(f"{url}?print=notes")
         self.assertEqual(resp.status_code, 200)
         self.assertTemplateUsed(resp, "referral/referral_notes_print.html")
 
@@ -213,16 +210,20 @@ class ReferralDetailTest(PrsViewsTestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertTemplateUsed(resp, "referral/prs_object_history.html")
 
-    def test_referral_generate_qgis(self):
-        """Test that the referral with locations can return a QGIS layer definition"""
+    def test_referral_location_download(self):
+        """Test that the referral with locations can return spatial data"""
         loc = Location.objects.first()
         loc.referral = self.ref
         loc.poly = Polygon(((0.0, 0.0), (0.0, 50.0), (50.0, 50.0), (50.0, 0.0), (0.0, 0.0)))
         loc.save()
-        url = self.ref.get_absolute_url()
-        r = self.client.get(url, {"generate_qgis": "true"})
+        url = reverse("referral_location_download", kwargs={"pk": self.ref.pk})
+        r = self.client.get(url)
         self.assertEqual(r.status_code, 200)
-        self.assertEqual(r["content-type"], "application/x-qgis-project")
+        self.assertEqual(r["content-type"], "application/geo+json")
+        url = reverse("referral_location_download", kwargs={"pk": self.ref.pk})
+        r = self.client.get(f"{url}?format=gpkg")
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r["content-type"], "application/x-sqlite3")
 
     def test_referral_deleted_redirect(self):
         """Test that the detail page for a deleted referral redirects to home"""
@@ -949,8 +950,7 @@ class ReferralRelateTest(PrsViewsTestCase):
         url = reverse("referral_relate", kwargs={"pk": self.ref1.pk})
         # NOTE: setting the ``data`` dict in the post below form-encodes the parameters.
         # We need them as query params instead, so manually build the query.
-        url += f"?ref_pk={self.ref2.pk}&create=true"
-        resp = self.client.post(url, follow=True)
+        resp = self.client.post(f"{url}?ref_pk={self.ref2.pk}&create=true", follow=True)
         self.assertEqual(resp.status_code, 200)
         self.assertTrue(self.ref2 in self.ref1.related_refs.all())
 
@@ -962,8 +962,7 @@ class ReferralRelateTest(PrsViewsTestCase):
         url = reverse("referral_relate", kwargs={"pk": self.ref1.pk})
         # NOTE: setting the ``data`` dict in the post below form-encodes the parameters.
         # We need them as query params instead, so manually build the query.
-        url += f"?ref_pk={self.ref2.pk}&delete=true"
-        resp = self.client.post(url, follow=True)
+        resp = self.client.post(f"{url}?ref_pk={self.ref2.pk}&delete=true", follow=True)
         self.assertEqual(resp.status_code, 200)
         self.assertTrue(self.ref2 not in self.ref1.related_refs.all())
 

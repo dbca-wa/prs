@@ -15,6 +15,7 @@ urlpatterns = [
     path("referrals/<int:pk>/delete/", views.ReferralDelete.as_view(), name="referral_delete"),
     path("referrals/<int:pk>/upload/", views.RecordUpload.as_view(parent_referral=True), name="referral_record_upload"),
     path("referrals/<int:pk>/locations/create/", views.LocationCreate.as_view(), name="referral_location_create"),
+    path("referrals/<int:pk>/locations/download/", views.ReferralLocationDownload.as_view(), name="referral_location_download"),
     path("referrals/<int:pk>/tag/", PrsObjectTag.as_view(model=Referral), name="referral_tag"),
     path("referrals/<int:pk>/<str:related_model>/", views.ReferralDetail.as_view(), name="referral_detail"),
     path("referrals/<int:pk>/<str:model>/create/", views.ReferralCreateChild.as_view(), name="referral_create_child"),

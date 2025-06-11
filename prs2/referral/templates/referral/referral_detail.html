@@ -70,13 +70,10 @@
                 {% endif %}
                 {% if geojson_locations %}
                     <a class="dropdown-item"
-                       href="{% url 'referral_detail' pk=referral.pk %}?generate_qgis=true"
-                       title="Generate QGIS layer (v3.40+)">Generate QGIS layer (v3.40+)</a>
-                    <a class="dropdown-item"
-                       href="{% url 'referral_detail' pk=referral.pk %}?generate_gpkg=true"
+                       href="{% url 'referral_location_download' pk=referral.pk %}?format=gpkg"
                        title="Generate Geopackage">Generate Geopackage</a>
                     <a class="dropdown-item"
-                       href="{% url 'referral_detail' pk=referral.pk %}?generate_geojson=true"
+                       href="{% url 'referral_location_download' pk=referral.pk %}?format=json"
                        title="Generate GeoJSON">Generate GeoJSON</a>
                 {% endif %}
                 {% if prs_power_user %}
