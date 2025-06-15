@@ -1,6 +1,7 @@
 from datetime import date
+
+from referral.models import Organisation, Referral, ReferralType
 from referral.test_models import PrsTestCase
-from referral.models import Referral, ReferralType, Organisation
 
 
 class AuditTestCase(PrsTestCase):

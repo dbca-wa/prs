@@ -1,16 +1,15 @@
+import magic
 from crum import get_current_user
 from django.conf import settings
-from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 from django.contrib.gis.db import models
-from django.urls import reverse
+from django.core.exceptions import ValidationError
 from django.db.models import FileField
+from django.urls import reverse
 from django.utils import timezone
-import magic
 
 
 class ActiveModelManager(models.Manager):
-
     def current(self):
         return self.filter(effective_to=None)
 
@@ -19,16 +18,15 @@ class ActiveModelManager(models.Manager):
 
 
 class Audit(models.Model):
-
     class Meta:
         abstract = True
 
     creator = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.PROTECT,
-        related_name='%(app_label)s_%(class)s_created', editable=False)
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="%(app_label)s_%(class)s_created", editable=False
+    )
     modifier = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.PROTECT,
-        related_name='%(app_label)s_%(class)s_modified', editable=False)
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="%(app_label)s_%(class)s_modified", editable=False
+    )
     created = models.DateTimeField(default=timezone.now, editable=False)
     modified = models.DateTimeField(auto_now=True, editable=False)
 
@@ -52,17 +50,18 @@ class Audit(models.Model):
 
     def get_absolute_url(self):
         opts = self._meta.app_label, self._meta.module_name
-        return reverse("admin:%s_%s_change" % opts, args=(self.pk, ))
+        return reverse("admin:%s_%s_change" % opts, args=(self.pk,))
 
 
 class ActiveModel(models.Model):
-    '''
+    """
     Model mixin to allow objects to be saved as 'non-current' or 'inactive',
     instead of deleting those objects.
     The standard model delete() method is overridden.
 
     "effective_to" is used to 'delete' objects (null==not deleted).
-    '''
+    """
+
     effective_to = models.DateTimeField(null=True, blank=True)
     objects = ActiveModelManager()
 
@@ -76,10 +75,10 @@ class ActiveModel(models.Model):
         return not self.is_active()
 
     def delete(self, *args, **kwargs):
-        '''
+        """
         Overide the standard delete method; sets effective_to the current date
         and time.
-        '''
+        """
         self.effective_to = timezone.now()
         super(ActiveModel, self).save(*args, **kwargs)
 
@@ -90,8 +89,9 @@ class ContentTypeRestrictedFileField(FileField):
     * content_types - a list containing allowed MIME types.
         Example: ['application/pdf', 'image/jpeg']
     """
+
     default_error_messages = {
-        'filetype': 'That file type is not permitted.',
+        "filetype": "That file type is not permitted.",
     }
 
     def __init__(self, content_types=None, *args, **kwargs):
@@ -100,10 +100,10 @@ class ContentTypeRestrictedFileField(FileField):
 
     def to_python(self, data):
         f = super(ContentTypeRestrictedFileField, self).to_python(data)
-        if f is None or f == '':
+        if f is None or f == "":
             return None
         content_type = magic.from_file(f.path, mime=True)
         if content_type not in self.content_types:
-            raise ValidationError(self.error_messages['filetype'])
+            raise ValidationError(self.error_messages["filetype"])
 
         return f
