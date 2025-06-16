@@ -2,6 +2,7 @@
 
 // NOTE: some global constants are set in the base template (context object).
 const geoserver_wms_url = `${context.geoserver_url}/ows`;
+const geoserver_wmts_url = `${context.geoserver_url}/gwc/service/wmts?service=WMTS&request=GetTile&version=1.0.0&format=image/png&tilematrixset=mercator&tilematrix=mercator:{z}&tilecol={x}&tilerow={y}`;
 
 // Base layers
 const virtualMosaic = L.tileLayer.wms(geoserver_wms_url, {
@@ -64,16 +65,13 @@ const lgaBoundaries = L.tileLayer.wms(geoserver_wms_url, {
   transparent: true,
   opacity: 0.75,
 });
-const miningTenements = L.tileLayer.wms(geoserver_wms_url, {
-  layers: '	kaartdijin-boodja-public:Mining_Tenements_DMIRS_003',
-  format: 'image/png',
+const miningTenements = L.tileLayer(`${geoserver_wmts_url}&layer=kaartdijin-boodja-public:Mining_Tenements_DMIRS_003`, {
   transparent: true,
   opacity: 0.75,
 });
 
 // Define map.
 const map = L.map('map', {
-  crs: L.CRS.EPSG4326, // WGS 84
   center: [-31.96, 115.87],
   zoom: 16,
   minZoom: 6,
