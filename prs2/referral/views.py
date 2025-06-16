@@ -52,17 +52,7 @@ from referral.models import (
     TaskState,
     TaskType,
 )
-from referral.utils import (
-    breadcrumbs_li,
-    is_model_or_string,
-    is_prs_power_user,
-    prs_user,
-    query_caddy,
-    smart_truncate,
-    user_referral_history,
-    user_task_history,
-    wfs_getfeature,
-)
+from referral.utils import breadcrumbs_li, is_model_or_string, is_prs_power_user, prs_user, query_caddy, smart_truncate, wfs_getfeature
 from referral.views_base import PrsObjectCreate, PrsObjectDelete, PrsObjectDetail, PrsObjectList, PrsObjectUpdate
 from taggit.models import Tag
 
@@ -510,8 +500,8 @@ class ReferralDetail(PrsObjectDetail):
             messages.warning(self.request, f"Referral {ref.pk} not found.")
             return HttpResponseRedirect(reverse("site_home"))
 
-        # Call user_referral_history with the current referral.
-        user_referral_history(request.user, ref)
+        # Update the user's referral history.
+        request.user.userprofile.update_referral_history(ref)
 
         return super().get(request, *args, **kwargs)
 
@@ -1248,19 +1238,11 @@ class TaskAction(PrsObjectUpdate):
             obj.state = obj.type.initial_state
             obj.stop_time = obj.stop_time + (obj.restart_date - obj.stop_date).days
         elif action == "inherit":
-            user_task_history(
-                self.request.user, obj, f"Inherited from {obj.assigned_user.get_full_name()} by {self.request.user.get_full_name()}"
-            )
             obj.assigned_user = self.request.user
         elif action == "cancel":
             obj.state = TaskState.objects.all().get(name="Cancelled")
             obj.complete_date = datetime.now()
         elif action == "reassign":
-            # Don't capture "self reassignment" in task history.
-            if obj.assigned_user != self.request.user:
-                user_task_history(
-                    self.request.user, obj, f"Reassigned to {obj.assigned_user.get_full_name()} by {self.request.user.get_full_name()}"
-                )
             if self.request.POST.get("email_user"):
                 obj.email_user(self.request.user.email)
         elif action == "update":
@@ -1321,12 +1303,10 @@ class ReferralRecent(PrsObjectList):
     template_name = "referral/referral_recent.html"
 
     def get_queryset(self):
-        # UserProfile referral_history is a list of lists ([pk, date]).
-        try:  # Empty history fails.
-            history_list = json.loads(self.request.user.userprofile.referral_history)
-            return Referral.objects.current().filter(pk__in=[i[0] for i in history_list])
-        except Exception:
+        if not self.request.user.userprofile.referral_history_array:
             return Referral.objects.none()
+
+        return Referral.objects.current().filter(pk__in=self.request.user.userprofile.referral_history_array)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 from copy import copy
@@ -10,6 +9,7 @@ from django.conf import settings
 from django.contrib.auth.signals import user_logged_in
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import GeometryCollection
+from django.contrib.postgres.fields import ArrayField
 from django.core.mail import EmailMultiAlternatives
 from django.core.validators import MaxLengthValidator
 from django.db.models import Q
@@ -1852,28 +1852,35 @@ class UserProfile(models.Model):
 
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     agency = models.ForeignKey(Agency, on_delete=models.PROTECT, blank=True, null=True)
-    # Referral history is a list of 2-tuples: (referral pk, datetime)
-    referral_history = models.TextField(blank=True, null=True)
-    task_history = models.TextField(blank=True, null=True)
+    referral_history_array = ArrayField(models.IntegerField(), size=20, default=list, blank=True)
+    referral_history = models.TextField(blank=True, null=True)  # TODO: deprecate field.
+    task_history = models.TextField(blank=True, null=True)  # TODO: deprecate field.
 
     def __str__(self):
         return self.user.username
 
     def last_referral(self):
+        """Return the referral that the user most-recently opened, or None.
+        The last referral opened is the final item on the referral_history_array list in the user's profile.
         """
-        Return the last referral that the user opened, or None.
-        The last referral opened is the last item on the referral_history list in the user's profile.
-        """
-        if not self.referral_history:
+        if not self.referral_history_array:
             return None
-        ref_history = json.loads(self.referral_history)
-        # Reverse the list, then iterate through it until we open a non-deleted referral.
-        ref_history.reverse()
-        for i in ref_history:
-            if Referral.objects.current().filter(pk=i[0]).exists():
-                return Referral.objects.get(pk=i[0])
-        # Edge case: user history contains nothing but deleted referrals.
+
+        for pk in reversed(self.referral_history_array):
+            if Referral.objects.current().filter(pk=pk).exists():
+                return Referral.objects.get(pk=pk)
+
         return None
+
+    def update_referral_history(self, referral):
+        history = [pk for pk in self.referral_history_array if pk != referral.pk]
+        history.append(referral.pk)
+        if len(history) > 20:
+            self.referral_history_array = history[-20:]
+        else:
+            self.referral_history_array = history
+
+        self.save()
 
     def is_prs_user(self):
         """Returns group membership of the PRS user group."""

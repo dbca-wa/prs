@@ -16,7 +16,6 @@ from referral.utils import (
     overdue_task_email,
     smart_truncate,
     update_revision_history,
-    user_task_history,
 )
 
 WORD_HTML_SAMPLE = """<div class=Section1>
@@ -124,18 +123,6 @@ class UtilsTest(PrsTestCase):
         ret = filter_queryset(get, Referral, Referral.objects.all())
         self.assertTrue(isinstance(ret[0], QuerySet))
         self.assertTrue(isinstance(ret[1], str))
-
-    def test_user_task_history(self):
-        """Test the user_task_history inserts correct data to a user profile"""
-        # Ensure that normaluser has a task assigned.
-        task = Task.objects.first()
-        task.assigned_user = self.n_user
-        task.save()
-        user_task_history(self.n_user, task, "Test task history")
-        self.assertTrue("Test task history" in self.n_user.userprofile.task_history)
-        self.assertTrue(str(task.pk) in self.n_user.userprofile.task_history)
-        user_task_history(self.n_user, task, "More task history")
-        self.assertTrue("More task history" in self.n_user.userprofile.task_history)
 
     def test_dewordify_text(self):
         """Test the dewordify_text utility function"""

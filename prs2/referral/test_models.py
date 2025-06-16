@@ -33,7 +33,6 @@ from referral.models import (
     TaskType,
     UserProfile,
 )
-from referral.utils import user_referral_history
 from taggit.models import Tag
 
 User = get_user_model()
@@ -783,7 +782,7 @@ class UserProfileTest(PrsTestCase):
         self.assertFalse(self.n_user.userprofile.last_referral())
         # Give the user a referral history.
         ref = Referral.objects.first()
-        user_referral_history(self.n_user, ref)
+        self.n_user.userprofile.update_referral_history(ref)
         self.assertEqual(self.n_user.userprofile.last_referral(), ref)
         # Deleted referrals should not be returned for history.
         ref.delete()
