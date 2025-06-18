@@ -1,7 +1,7 @@
 import json
 import logging
 import re
-from datetime import date, datetime
+from datetime import date
 
 import requests
 from dbca_utils.utils import env
@@ -98,14 +98,12 @@ def breadcrumbs_li(links):
     Reference: https://getbootstrap.com/docs/4.1/components/breadcrumb/
     """
     crumbs = ""
-    li_str = '<li class="breadcrumb-item"><a href="{}">{}</a></li>'
-    li_str_active = '<li class="breadcrumb-item active"><span>{}</span></li>'
     # Iterate over the list, except for the last item.
     if len(links) > 1:
         for i in links[:-1]:
-            crumbs += li_str.format(i[0], i[1])
+            crumbs += f"<li class='breadcrumb-item'><a href='{i[0]}'>{i[1]}</a></li>"
     # Add the final "active" item.
-    crumbs += li_str_active.format(links[-1][1])
+    crumbs += f"<li class='breadcrumb-item active'><span>{links[-1][1]}</span></li>"
     return crumbs
 
 
@@ -142,62 +140,6 @@ def as_row_subtract_referral_cell(html_row):
     # Use regex to remove the <TD> tag of class "referral-id-cell".
     html_row = re.sub(r'<td class="referral-id-cell">.+</td>', r"", html_row)
     return mark_safe(html_row)
-
-
-def user_referral_history(user, referral):
-    # Retrieve user profile (create it if it doesn't exist)
-    try:
-        profile = user.get_profile()
-    except Exception:
-        profile = user.userprofile
-    # If the user has no history, create an empty list
-    if not profile.referral_history:
-        ref_history = []
-    else:
-        try:
-            # Deserialise the list of lists from the user profile
-            ref_history = json.loads(profile.referral_history)
-        except Exception:
-            # If that failed, assume that the user still has "old style" history in their profile.
-            ref_history = profile.referral_history.split(",")
-    # Edge-case: single-ref history profiles only.
-    if isinstance(ref_history, int):
-        ref = ref_history
-        ref_history = []
-        ref_history.append([ref, datetime.strftime(datetime.today(), "%d-%m-%Y")])
-    # We're going to replace the existing list with a new one.
-    new_ref_history = []
-    # Iterate through the list; it's either a list of unicode strings (old-style)
-    # or a list of lists (new-style).
-    for i in ref_history:
-        # Firstly if the item is a string, convert that to a list ([val, DATE]).
-        if isinstance(i, str):
-            i = [int(i), datetime.strftime(datetime.today(), "%d-%m-%Y")]
-        # If the referral that was passed in exists in the current list, pass (don't append it).
-        if referral.id == i[0]:
-            pass
-        else:
-            new_ref_history.append(i)
-    # Add the passed-in referral to the end of the new list.
-    new_ref_history.append([referral.id, datetime.strftime(datetime.today(), "%d-%m-%Y")])
-    # History can be a maximum of 20 referrals; slice the new list accordingly.
-    if len(new_ref_history) > 20:
-        new_ref_history = new_ref_history[-20:]
-    # Save the updated user profile; serialise the new list of lists.
-    profile.referral_history = json.dumps(new_ref_history)
-    profile.save()
-
-
-def user_task_history(user, task, comment=None):
-    """Utility function to update the task history in a user's profile."""
-    profile = user.userprofile
-    if not profile.task_history:
-        task_history = []
-    else:
-        task_history = json.loads(profile.task_history)
-    task_history.append([task.pk, datetime.strftime(datetime.today(), "%d-%m-%Y"), comment])
-    profile.task_history = json.dumps(task_history)
-    profile.save()
 
 
 def filter_queryset(request, model, queryset):
@@ -310,7 +252,8 @@ def wfs_getfeature(type_name, cql_filter=None, crs="EPSG:4326", max_features=50)
     """A utility function to perform a GetFeature request on a WFS endpoint
     and return results as GeoJSON.
     """
-    url = env("GEOSERVER_URL", None)
+    geoserver_url = env("GEOSERVER_URL", "")
+    url = f"{geoserver_url}/ows"
     auth = (env("GEOSERVER_SSO_USER", None), env("GEOSERVER_SSO_PASS", None))
     params = {
         "service": "WFS",

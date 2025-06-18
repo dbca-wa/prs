@@ -4,27 +4,22 @@ metadata:
   name: prs-cronjob
 spec:
   # Every hour between 09:00-17:00, Mon-Fri (AWST -> UTC)
-  schedule: "0 1-9 * * 1-5"
+  schedule: '0 1-9 * * 1-5'
   jobTemplate:
     spec:
       template:
         spec:
           containers:
             - name: prs-cronjob
-              args: ["manage.py", "harvest_email_referrals", "--email"]
+              args: ['manage.py', 'harvest_email_referrals', '--email']
               env:
                 - name: SITE_URL
-                  value: "prs-uat.dbca.wa.gov.au"
+                  value: 'prs-uat.dbca.wa.gov.au'
                 - name: DATABASE_URL
                   valueFrom:
                     secretKeyRef:
                       name: prs-env-uat
                       key: DATABASE_URL
-                - name: KMI_GEOSERVER_URL
-                  valueFrom:
-                    secretKeyRef:
-                      name: prs-env-uat
-                      key: KMI_GEOSERVER_URL
                 - name: GEOSERVER_URL
                   valueFrom:
                     secretKeyRef:
@@ -131,4 +126,4 @@ spec:
                       name: prs-env-uat
                       key: SENTRY_DSN
                 - name: SENTRY_ENVIRONMENT
-                  value: "uat"
+                  value: 'uat'

@@ -1,8 +1,7 @@
 from django.urls import path
-from referral.models import Referral, Task
 from referral import views
+from referral.models import Referral, Task
 from referral.views_base import PrsObjectHistory, PrsObjectTag
-
 
 # URL patterns for Referral objects
 urlpatterns = [
@@ -16,13 +15,18 @@ urlpatterns = [
     path("referrals/<int:pk>/delete/", views.ReferralDelete.as_view(), name="referral_delete"),
     path("referrals/<int:pk>/upload/", views.RecordUpload.as_view(parent_referral=True), name="referral_record_upload"),
     path("referrals/<int:pk>/locations/create/", views.LocationCreate.as_view(), name="referral_location_create"),
+    path("referrals/<int:pk>/locations/download/", views.ReferralLocationDownload.as_view(), name="referral_location_download"),
     path("referrals/<int:pk>/tag/", PrsObjectTag.as_view(model=Referral), name="referral_tag"),
     path("referrals/<int:pk>/<str:related_model>/", views.ReferralDetail.as_view(), name="referral_detail"),
     path("referrals/<int:pk>/<str:model>/create/", views.ReferralCreateChild.as_view(), name="referral_create_child"),
     # The following URL allows us to specify the 'type' of child object created (e.g. a clearance request Task)
     path("referrals/<int:pk>/<str:model>/create/<str:type>/", views.ReferralCreateChild.as_view(), name="referral_create_child_type"),
     path("referrals/<int:pk>/<str:model>/<int:id>/<str:type>/", views.ReferralCreateChild.as_view(), name="referral_create_child_related"),
-    path("referrals/<int:pk>/locations/intersecting/<str:loc_ids>)/", views.LocationIntersects.as_view(), name="referral_intersecting_locations"),
+    path(
+        "referrals/<int:pk>/locations/intersecting/<str:loc_ids>)/",
+        views.LocationIntersects.as_view(),
+        name="referral_intersecting_locations",
+    ),
 ]
 
 # URL patterns for other model types requiring specific views

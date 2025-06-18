@@ -1,5 +1,4 @@
 import json
-import logging
 
 from django.conf import settings
 from django.contrib import messages
@@ -19,8 +18,6 @@ from referral.utils import breadcrumbs_li, get_next_pages, get_previous_pages, g
 from reversion.models import Version
 from taggit.models import Tag
 
-logger = logging.getLogger("prs")
-
 
 class PrsObjectList(LoginRequiredMixin, ListView):
     """A general-purpose view class to use for listing and searching PRS
@@ -29,6 +26,7 @@ class PrsObjectList(LoginRequiredMixin, ListView):
 
     paginate_by = 20
     template_name = "referral/prs_object_list.html"
+    http_method_names = ["get", "head", "options"]
 
     def dispatch(self, request, *args, **kwargs):
         # kwargs must include a Model class, or a string.
@@ -86,13 +84,14 @@ class PrsObjectCreate(LoginRequiredMixin, CreateView):
     """
 
     template_name = "referral/change_form.html"
+    http_method_names = ["get", "post", "head", "options"]
 
     def dispatch(self, request, *args, **kwargs):
         if not prs_user(request):
+            managers = ", ".join([i[0] for i in settings.MANAGERS])
             messages.warning(
                 request,
-                """You do not have permission to edit data.
-            Please contact the application owner(s): {}""".format(", ".join([i[0] for i in settings.MANAGERS])),
+                f"You do not have permission to edit data. Please contact the application owner(s): {managers}",
             )
             return HttpResponseRedirect(reverse("site_home"))
 
@@ -107,7 +106,7 @@ class PrsObjectCreate(LoginRequiredMixin, CreateView):
         m = self.model._meta
         model_type = m.verbose_name.capitalize()
         context["model_type"] = model_type
-        context["title"] = "CREATE {}".format(self.model._meta.object_name.upper())
+        context["title"] = f"CREATE {self.model._meta.object_name.upper()}"
         context["page_title"] = " | ".join([settings.APPLICATION_ACRONYM, "Create " + model_type])
         context["page_heading"] = "CREATE " + model_type.upper()
         model_list_url = reverse(
@@ -154,7 +153,7 @@ class PrsObjectCreate(LoginRequiredMixin, CreateView):
         if "slug" in f and "slug" not in form.cleaned_data:
             self.object.slug = slugify(self.object.name)
         self.object.save()
-        messages.success(self.request, "{0} has been created.".format(self.object))
+        messages.success(self.request, f"{self.object} has been created.")
 
         return HttpResponseRedirect(self.get_success_url())
 
@@ -172,6 +171,7 @@ class PrsObjectDetail(LoginRequiredMixin, DetailView):
     """A general-purpose view class to use for displaying a single PRS object."""
 
     template_name = "referral/prs_object_detail.html"
+    http_method_names = ["get", "head", "options"]
 
     def dispatch(self, request, *args, **kwargs):
         # kwargs must include a Model class, or a string.
@@ -261,13 +261,14 @@ class PrsObjectUpdate(LoginRequiredMixin, UpdateView):
     """
 
     template_name = "referral/change_form.html"
+    http_method_names = ["get", "post", "put", "patch", "head", "options"]
 
     def dispatch(self, request, *args, **kwargs):
         if not prs_user(request):
+            managers = ", ".join([i[0] for i in settings.MANAGERS])
             messages.warning(
                 request,
-                """You do not have permission to edit data.
-            Please contact the application owner(s): {}""".format(", ".join([i[0] for i in settings.MANAGERS])),
+                f"You do not have permission to edit data. Please contact the application owner(s): {managers}",
             )
             return HttpResponseRedirect(reverse("site_home"))
 
@@ -285,8 +286,8 @@ class PrsObjectUpdate(LoginRequiredMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         obj = self.get_object()
-        context["title"] = "UPDATE {}".format(obj._meta.object_name).upper()
-        context["page_title"] = "PRS | {} | {} | Update".format(obj._meta.verbose_name_plural.capitalize(), obj.pk)
+        context["title"] = f"UPDATE {obj._meta.object_name}".upper()
+        context["page_title"] = f"PRS | {obj._meta.verbose_name_plural.capitalize()} | {obj.pk} | Update"
         context["page_heading"] = "UPDATE " + obj._meta.verbose_name.upper()
         # Create a breadcrumb trail: Home[URL] > Model[URL] > ID > History
         context["breadcrumb_trail"] = breadcrumbs_li(
@@ -316,7 +317,7 @@ class PrsObjectUpdate(LoginRequiredMixin, UpdateView):
 
     def form_valid(self, form):
         self.object = form.save()
-        messages.success(self.request, "{0} has been updated.".format(self.get_object()))
+        messages.success(self.request, f"{self.get_object()} has been updated.")
         return HttpResponseRedirect(self.get_success_url())
 
 
@@ -327,6 +328,7 @@ class PrsObjectHistory(PrsObjectDetail):
     """
 
     template_name = "referral/prs_object_history.html"
+    http_method_names = ["get", "head", "options"]
 
     def dispatch(self, request, *args, **kwargs):
         # kwargs must include a Model class, or a string.
@@ -337,7 +339,7 @@ class PrsObjectHistory(PrsObjectDetail):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         obj = self.get_object()
-        context["title"] = "CHANGE HISTORY: {}".format(obj)
+        context["title"] = f"CHANGE HISTORY: {obj}"
         context["page_title"] = " | ".join([settings.APPLICATION_ACRONYM, self.get_object().__str__(), "History"])
         context["page_heading"] = self.model._meta.verbose_name.upper() + " CHANGE HISTORY"
         # Create a breadcrumb trail: Home[URL] > Model[URL] > ID > History
@@ -368,13 +370,14 @@ class PrsObjectDelete(LoginRequiredMixin, DeleteView):
     """
 
     template_name = "referral/prs_object_delete.html"
+    http_method_names = ["get", "post", "put", "patch", "head", "options"]
 
     def dispatch(self, request, *args, **kwargs):
         if not prs_user(request):
+            managers = ", ".join([i[0] for i in settings.MANAGERS])
             messages.warning(
                 request,
-                """You do not have permission to edit data.
-            Please contact the application owner(s): {}""".format(", ".join([i[0] for i in settings.MANAGERS])),
+                f"You do not have permission to edit data. Please contact the application owner(s): {managers}",
             )
             return HttpResponseRedirect(reverse("site_home"))
 
@@ -387,11 +390,11 @@ class PrsObjectDelete(LoginRequiredMixin, DeleteView):
         context = super().get_context_data(**kwargs)
         context["object_type"] = self.model._meta.verbose_name
         obj = self.get_object()
-        context["title"] = "DELETE {}".format(obj._meta.object_name.upper())
+        context["title"] = f"DELETE {obj._meta.object_name.upper()}"
         context["page_title"] = " | ".join(
             [
                 settings.APPLICATION_ACRONYM,
-                "Delete {}".format(self.get_object().__str__()),
+                f"Delete {self.get_object().__str__()}",
             ]
         )
         context["page_heading"] = "DELETE " + self.model._meta.verbose_name.upper()
@@ -451,7 +454,7 @@ class PrsObjectTag(LoginRequiredMixin, View):
     passed in.
     """
 
-    http_method_names = ["post"]
+    http_method_names = ["post", "put", "patch", "head", "options"]
     model = None
     pk_url_kwarg = "pk"
 
@@ -462,7 +465,7 @@ class PrsObjectTag(LoginRequiredMixin, View):
             self.model = is_model_or_string(kwargs["model"])
         # is_model_or_string() returns None if the model doesn't exist.
         if not self.model:
-            raise AttributeError("Object tag view {} must be called with an " "model.".format(self.__class__.__name__))
+            raise AttributeError(f"Object tag view {self.__class__.__name__} must be called with a model.")
         return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -476,13 +479,11 @@ class PrsObjectTag(LoginRequiredMixin, View):
         if pk is not None:
             queryset = queryset.filter(pk=pk)
         else:
-            raise AttributeError(
-                "Object tag view {} must be called with an " "object pk.".format(self.__class__.__name__)
-            )
+            raise AttributeError(f"Object tag view {self.__class__.__name__} must be called with an object pk.")
         try:
             obj = queryset.get()
         except queryset.model.DoesNotExist:
-            raise Http404("No {} found matching the query".format(queryset.model._meta.verbose_name_plural))
+            raise Http404(f"No {queryset.model._meta.verbose_name_plural} found matching the query")
         return obj
 
     def post(self, request, *args, **kwargs):

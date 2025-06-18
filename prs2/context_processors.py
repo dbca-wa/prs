@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.urls import reverse
 
 
 def template_context(request):
@@ -7,13 +8,14 @@ def template_context(request):
         "site_title": settings.APPLICATION_TITLE,
         "site_acronym": settings.APPLICATION_ACRONYM,
         "version_no": settings.APPLICATION_VERSION_NO,
-        "kmi_geoserver_url": settings.KMI_GEOSERVER_URL,
-        "prs_layer_name": settings.PRS_LAYER_NAME,
-        "mapproxy_url": settings.MAPPROXY_URL,
-        "geocoder_url": settings.GEOCODER_URL,
-        "geoserver_url": settings.GEOSERVER_URL,
-        "cadastre_layer_name": settings.CADASTRE_LAYER_NAME,
         "prs_user_group": settings.PRS_USER_GROUP,
+        # Define a dictionary of context variables to supply to JavaScript in view templates.
+        "javascript_context": {
+            "geoserver_url": settings.GEOSERVER_URL,
+            "prs_layer_name": settings.PRS_LAYER_NAME,
+            "geocoder_url": reverse("geocode_query"),
+            "cadastre_query_url": reverse("cadastre_query"),
+        },
     }
     if request.user.is_authenticated:
         context["prs_user"] = request.user.userprofile.is_prs_user()

@@ -2,5 +2,5 @@ from django.apps import AppConfig
 
 
 class HarvesterConfig(AppConfig):
-    default_auto_field = 'django.db.models.AutoField'
-    name = 'harvester'
+    default_auto_field = "django.db.models.AutoField"
+    name = "harvester"

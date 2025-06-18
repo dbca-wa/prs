@@ -1,66 +1,57 @@
+import os
+
 from django.contrib.auth import get_user_model
 from django.core.files import File
 from django.utils import timezone
+from harvester.models import EmailAttachment, EmailedReferral, RegionAssignee
 from mixer.backend.django import mixer
-import os
-from referral.models import Agency, Region, DopTrigger, Referral, Task, Record, LocalGovernment
+from referral.models import Agency, DopTrigger, LocalGovernment, Record, Referral, Region, Task
 from referral.test_models import PrsTestCase
-import sys
 
-from harvester.models import EmailedReferral, EmailAttachment, RegionAssignee
 User = get_user_model()
 
 
 class HarvesterModelTestCase(PrsTestCase):
-
     def setUp(self):
         super(HarvesterModelTestCase, self).setUp()
         mixer.cycle(2).blend(RegionAssignee)
-        mixer.blend(LocalGovernment, name='BUNBURY', slug='bunbury')
-        self.admin = User.objects.get_or_create(username='admin')
+        mixer.blend(LocalGovernment, name="BUNBURY", slug="bunbury")
+        self.admin = User.objects.get_or_create(username="admin")
 
 
 class RegionAssigneeModelTest(HarvesterModelTestCase):
-
     def test_unicode(self):
-        """Test the RegionAssignee __str__() method
-        """
+        """Test the RegionAssignee __str__() method"""
         for obj in RegionAssignee.objects.all():
             self.assertTrue(str(obj))
 
 
 class EmailedReferralModelTest(HarvesterModelTestCase):
-
     def setUp(self):
         super(EmailedReferralModelTest, self).setUp()
         # Instantiate some objects from real data.
         curr = os.path.dirname(os.path.abspath(__file__))
-        email_body = open(os.path.join(curr, 'test_files', 'test_referral_email.txt')).read()
-        self.e_ref = mixer.blend(
-            EmailedReferral, received=timezone.now(), body=email_body, processed=False)
-        xml = File(open(os.path.join(curr, 'test_files', 'application.xml')))
-        self.app_xml = EmailAttachment(
-            emailed_referral=self.e_ref, name='application.xml')
-        self.app_xml.attachment.save('application.xml', xml, save=False)
+        email = open(os.path.join(curr, "test_files", "test_referral_email.txt"))
+        email_body = email.read()
+        email.close()
+        self.e_ref = mixer.blend(EmailedReferral, received=timezone.now(), body=email_body, processed=False)
+        xml = File(open(os.path.join(curr, "test_files", "application.xml")))
+        self.app_xml = EmailAttachment(emailed_referral=self.e_ref, name="application.xml")
+        self.app_xml.attachment.save("application.xml", xml, save=False)
         self.app_xml.save()
-        if sys.version_info > (3, 0):
-            letter = File(open(os.path.join(curr, 'test_files', 'test_referral_letter.pdf'), encoding='latin1'))
-        else:
-            letter = File(open(os.path.join(curr, 'test_files', 'test_referral_letter.pdf')))
-        self.app_letter = EmailAttachment(
-            emailed_referral=self.e_ref, name='referral_letter.pdf')
-        self.app_letter.attachment.save('referral_letter.pdf', letter, save=False)
+        xml.close()
+        self.app_letter = EmailAttachment(emailed_referral=self.e_ref, name="referral_letter.pdf")
+        letter = File(open(os.path.join(curr, "test_files", "test_referral_letter.pdf"), encoding="latin1"))
+        self.app_letter.attachment.save("referral_letter.pdf", letter, save=False)
         self.app_letter.save()
+        letter.close()
         # Generate some required related objects.
-        mixer.blend(
-            Agency, name='Department of Biodiversity, Conservation and Attractions',
-            slug='dbca')
-        mixer.blend(Region, name='Swan')
-        mixer.blend(DopTrigger, name='No Parks and Wildlife trigger')
+        mixer.blend(Agency, name="Department of Biodiversity, Conservation and Attractions", slug="dbca")
+        mixer.blend(Region, name="Swan")
+        mixer.blend(DopTrigger, name="No Parks and Wildlife trigger")
 
     def test_harvest(self):
-        """Test the harvest() method
-        """
+        """Test the harvest() method"""
         ref_count = Referral.objects.count()
         task_count = Task.objects.count()
         record_count = Record.objects.count()
@@ -78,8 +69,7 @@ class EmailedReferralModelTest(HarvesterModelTestCase):
         self.assertTrue(Task.objects.filter(assigned_user=self.admin_user))
 
     def test_harvest_with_assignee(self):
-        """Test the harvest() method with an assignee set
-        """
+        """Test the harvest() method with an assignee set"""
         task_count = Task.objects.filter(assigned_user=self.n_user).count()
         self.e_ref.harvest(create_locations=False, assignee=self.n_user)
         # Normal user should now have a new task.

@@ -70,16 +70,10 @@
                 {% endif %}
                 {% if geojson_locations %}
                     <a class="dropdown-item"
-                       href="{% url 'referral_detail' pk=referral.pk %}?generate_qgis=true"
-                       title="Generate QGIS layer (v2.8)">Generate QGIS layer (v2.8)</a>
-                    <a class="dropdown-item"
-                       href="{% url 'referral_detail' pk=referral.pk %}?generate_qgis=true&qgis_ver=2_16"
-                       title="Generate QGIS layer (v2.16+)">Generate QGIS layer (v2.16+)</a>
-                    <a class="dropdown-item"
-                       href="{% url 'referral_detail' pk=referral.pk %}?generate_gpkg=true"
+                       href="{% url 'referral_location_download' pk=referral.pk %}?format=gpkg"
                        title="Generate Geopackage">Generate Geopackage</a>
                     <a class="dropdown-item"
-                       href="{% url 'referral_detail' pk=referral.pk %}?generate_geojson=true"
+                       href="{% url 'referral_location_download' pk=referral.pk %}?format=json"
                        title="Generate GeoJSON">Generate GeoJSON</a>
                 {% endif %}
                 {% if prs_power_user %}
@@ -313,14 +307,14 @@
                 referrerpolicy="no-referrer"></script>
         <script src="{% static 'js/referral_map.js' %}"></script>
         <script>
-    // Add Location polygons to the map display and zoom to their bounds.
-    var geojsonFeatures = JSON.parse('{{ geojson_locations|escapejs }}');
-    var locationsLayer = L.geoJson(null, {
-        style: {"color": "#ff0000", "weight": 5}
-    }).addTo(map);
-    locationsLayer.addData(geojsonFeatures);
-    map.fitBounds(locationsLayer.getBounds());
-    locationsLayer.addTo(map);
+          // Add Location polygons to the map display and zoom to their bounds.
+          const geojsonFeatures = JSON.parse('{{ geojson_locations|escapejs }}');
+          const locationsLayer = L.geoJson(null, {
+            style: {"color": "#ff0000", "weight": 5}
+          }).addTo(map);
+          locationsLayer.addData(geojsonFeatures);
+          map.fitBounds(locationsLayer.getBounds());
+          locationsLayer.addTo(map);
         </script>
     {% endif %}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.1/dropzone.min.js"
@@ -328,36 +322,36 @@
             crossorigin="anonymous"></script>
     <script src="https://cdn.datatables.net/v/bs5/dt-1.13.8/date-1.5.1/datatables.min.js"></script>
     <script type="text/javascript">
-    // Configure file upload Dropzone element - needs to happen outside of $(function(){}).
-    Dropzone.options.idReferralDropzone = {
+      // Configure file upload Dropzone element - needs to happen outside of $(function(){}).
+      Dropzone.options.idReferralDropzone = {
         paramName: "file",
         acceptedFiles: ".tif,.jpg,.jpeg,.gif,.png,.doc,.docx,.xls,.xlsx,.csv,.pdf,.txt,.zip,.msg,.qgs",
         timeout: 600000,  // 10 minutes in ms.
         maxFilesize: 2048,  // 2 GB file size limit.
         init: function() {
-            this.on("uploadprogress", function(file, progress) {
-                console.log("File progress", progress);
-            });
-            this.on("queuecomplete", function(file) {
-                // Reload the current page on completed upload(s).
-                location.assign("{% url 'referral_detail' pk=referral.pk related_model='records' %}");
-            });
+          this.on("uploadprogress", function(file, progress) {
+            console.log("File progress", progress);
+          });
+          this.on("queuecomplete", function(file) {
+            // Reload the current page on completed upload(s).
+            location.assign("{% url 'referral_detail' pk=referral.pk related_model='records' %}");
+          });
         },
-    };
-    // Document ready events
-    $(function() {
+      };
+      // Document ready events
+      $(function() {
         // Initialise all DataTables.
         $(".prs-object-table").each(function(idx) {
-            $(this).DataTable({
-                "autoWidth": false,
-                "info": false,
-                "ordering": true,
-                "order": [],
-                "paging": false,
-                "responsive": true,
-                "searching": false
-            });
+          $(this).DataTable({
+            "autoWidth": false,
+            "info": false,
+            "ordering": true,
+            "order": [],
+            "paging": false,
+            "responsive": true,
+            "searching": false
+          });
         });
-    });
+      });
     </script>
 {% endblock extra_js %}

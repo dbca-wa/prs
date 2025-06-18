@@ -1,125 +1,101 @@
-"use strict";
-// NOTE: some global constants are set in the base template.
-const geoserver_wmts_url = kmi_geoserver_url + "/gwc/service/wmts?service=WMTS&request=GetTile&version=1.0.0&tilematrixset=gda94&tilematrix=gda94:{z}&tilecol={x}&tilerow={y}";
-const geoserver_wmts_url_base = geoserver_wmts_url + "&format=image/jpeg";
-const geoserver_wmts_url_overlay = geoserver_wmts_url + "&format=image/png";
+'use strict';
 
-// Define baselayer tile layers.
-const landgateOrthomosaic = L.tileLayer(
-  geoserver_wmts_url_base + "&layer=landgate:virtual_mosaic",
-  {
-    tileSize: 1024,
-    zoomOffset: -2,
-  },
-);
-const mapboxStreets = L.tileLayer(
-  geoserver_wmts_url_base + "&layer=public:mapbox-streets",
-  {
-    tileSize: 1024,
-    zoomOffset: -2,
-  },
-);
-const waCoast = L.tileLayer(
-  geoserver_wmts_url_base + "&layer=public:wa_coast_pub",
-  {
-    tileSize: 1024,
-    zoomOffset: -2,
-  },
-);
+// NOTE: some global constants are set in the base template (context object).
+const geoserver_wms_url = `${context.geoserver_url}/ows`;
+const geoserver_wmts_url = `${context.geoserver_url}/gwc/service/wmts?service=WMTS&request=GetTile&version=1.0.0&format=image/png&tilematrixset=mercator&tilematrix=mercator:{z}&tilecol={x}&tilerow={y}`;
 
-// Define overlay tile layers.
-// Cadastre uses KB as the source, not KMI.
-const cadastre = L.tileLayer.wms(
-  mapproxy_url,
-  {
-    layers: 'dbca-cadastre',
-    format: 'image/png',
-    transparent: true,
-    opacity: 0.75,
-    minZoom: 13,
-  }
-);
-// PRS uses WMS, being a "live" layer.
-const prsLocations = L.tileLayer.wms(
-  kmi_geoserver_url + "/ows",
-  {
-    layers: prs_layer_name,
-    format: 'image/png',
-    transparent: true,
-    opacity: 0.75,
-  }
-);
-const dbcaRegions = L.tileLayer(
-  geoserver_wmts_url_overlay + "&layer=cddp:kaartdijin-boodja-public_CPT_DBCA_REGIONS",
-  {
-    tileSize: 1024,
-    zoomOffset: -2,
-  },
-);
-const dbcaTenure = L.tileLayer(
-  geoserver_wmts_url_overlay + "&layer=cddp:dbca_managed_tenure",
-  {
-    tileSize: 1024,
-    zoomOffset: -2,
-    opacity: 0.75,
-  },
-);
-const regionalParks = L.tileLayer(
-  geoserver_wmts_url_overlay + "&layer=cddp:regional_parks",
-  {
-    tileSize: 1024,
-    zoomOffset: -2,
-  },
-);
-const swanCannDevContArea = L.tileLayer(
-  geoserver_wmts_url_overlay + "&layer=cddp:cpt_swan_cann_dev_cont_area",
-  {
-    tileSize: 1024,
-    zoomOffset: -2,
-  },
-);
-const ucl = L.tileLayer(
-  geoserver_wmts_url_overlay + "&layer=cddp:unallocated_crown_land",
-  {
-    tileSize: 1024,
-    zoomOffset: -2,
-    opacity: 0.75,
-  },
-);
-const lgaBoundaries = L.tileLayer(
-  geoserver_wmts_url_overlay + "&layer=cddp:local_gov_authority",
-  {
-    tileSize: 1024,
-    zoomOffset: -2,
-  },
-);
+// Base layers
+const virtualMosaic = L.tileLayer.wms(geoserver_wms_url, {
+  layers: 'kaartdijin-boodja-private:virtual_mosaic',
+});
+const mapboxStreets = L.tileLayer.wms(geoserver_wms_url, {
+  layers: 'kaartdijin-boodja-public:mapbox-streets-public',
+});
+const waCoast = L.tileLayer.wms(geoserver_wms_url, {
+  layers: 'kaartdijin-boodja-private:WA_COAST_SMOOTHED',
+});
+
+// Overlay layers
+const cadastre = L.tileLayer.wms(geoserver_wms_url, {
+  layers: 'kaartdijin-boodja-private:CPT_CADASTRE_SCDB',
+  format: 'image/png',
+  transparent: true,
+  opacity: 0.75,
+  minZoom: 13,
+});
+const prsLocations = L.tileLayer.wms(geoserver_wms_url, {
+  layers: context.prs_layer_name,
+  format: 'image/png',
+  transparent: true,
+  opacity: 0.75,
+});
+const dbcaRegions = L.tileLayer.wms(geoserver_wms_url, {
+  layers: 'kaartdijin-boodja-public:CPT_DBCA_REGIONS',
+  format: 'image/png',
+  transparent: true,
+  opacity: 0.75,
+});
+const dbcaTenure = L.tileLayer.wms(geoserver_wms_url, {
+  layers: 'kaartdijin-boodja-public:CPT_DBCA_LEGISLATED_TENURE',
+  format: 'image/png',
+  transparent: true,
+  opacity: 0.75,
+});
+const regionalParks = L.tileLayer.wms(geoserver_wms_url, {
+  layers: 'kaartdijin-boodja-private:CPT_REGIONAL_PARKS',
+  format: 'image/png',
+  transparent: true,
+  opacity: 0.75,
+});
+const swanCannDevContArea = L.tileLayer.wms(geoserver_wms_url, {
+  layers: 'kaartdijin-boodja-private:CPT_SWAN_CANN_DEV_CONT_AREA',
+  format: 'image/png',
+  transparent: true,
+  opacity: 0.75,
+});
+const ucl = L.tileLayer.wms(geoserver_wms_url, {
+  layers: 'kaartdijin-boodja-private:CPT_CADASTRE_UCL_1PL',
+  format: 'image/png',
+  transparent: true,
+  opacity: 0.75,
+});
+const lgaBoundaries = L.tileLayer.wms(geoserver_wms_url, {
+  layers: 'kaartdijin-boodja-public:CPT_LOCAL_GOVT_AREAS',
+  format: 'image/png',
+  transparent: true,
+  opacity: 0.75,
+});
+const miningTenements = L.tileLayer(`${geoserver_wmts_url}&layer=kaartdijin-boodja-public:Mining_Tenements_DMIRS_003`, {
+  transparent: true,
+  opacity: 0.75,
+});
 
 // Define map.
-var map = L.map('map', {
-  crs: L.CRS.EPSG4326,  // WGS 84
+const map = L.map('map', {
   center: [-31.96, 115.87],
   zoom: 16,
   minZoom: 6,
   maxZoom: 18,
-  layers: [landgateOrthomosaic, cadastre],  // Sets default selections.
+  layers: [virtualMosaic, cadastre], // Sets default selections.
   attributionControl: false,
 });
 
 // Define layer groups.
-var baseMaps = {
-  "Landgate orthomosaic": landgateOrthomosaic,
-  "Mapbox streets": mapboxStreets,
-  "WA coast": waCoast,
+const baseMaps = {
+  'Virtual mosaic': virtualMosaic,
+  'Mapbox streets': mapboxStreets,
+  'WA coast': waCoast,
 };
-var overlayMaps = {
-  "Cadastre": cadastre,
-  "PRS locations": prsLocations,
-  "DBCA regions": dbcaRegions,
-  "DBCA tenure": dbcaTenure,
-  "Regional Parks": regionalParks,
-  "Swan Canning Dev Ctrl Area": swanCannDevContArea,
-  "Unallocated Crown Land": ucl,
-  "LGA boundaries": lgaBoundaries,
+const overlayMaps = {
+  Cadastre: cadastre,
+  'PRS locations': prsLocations,
+  'DBCA regions': dbcaRegions,
+  'DBCA tenure': dbcaTenure,
+  'Regional Parks': regionalParks,
+  'Swan Canning Dev Ctrl Area': swanCannDevContArea,
+  'Unallocated Crown Land': ucl,
+  'LGA boundaries': lgaBoundaries,
+  'Mining tenements': miningTenements,
 };
 
 // Define layer control.
@@ -131,39 +107,41 @@ L.control.scale({ maxWidth: 500, imperial: false }).addTo(map);
 function searchGeocoder(text, response) {
   // Use jQuery to query the Geocoder service API.
   return $.ajax({
-    url: geocoder_url,
+    url: context.geocoder_url,
     data: { q: text },
     dataType: 'json',
     success: function (data) {
       response(data);
-    }
+    },
   });
-};
+}
 
 function filterGeocoderRecords(text, records) {
   // The stock leaflet-search function seemed to filter out all records from the response, so we override it.
   return records;
-};
+}
 
 // Define geocoder search input.
-map.addControl(new L.Control.Search({
-  sourceData: searchGeocoder,
-  filterData: filterGeocoderRecords,
-  propertyName: 'address',
-  propertyLoc: ['lat', 'lon'],
-  // Other variables.
-  delayType: 1000,
-  textErr: '',
-  zoom: 17,
-  circleLocation: true,
-  autoCollapse: true
-}));
+map.addControl(
+  new L.Control.Search({
+    sourceData: searchGeocoder,
+    filterData: filterGeocoderRecords,
+    propertyName: 'address',
+    propertyLoc: ['lat', 'lon'],
+    // Other variables.
+    delayType: 1000,
+    textErr: '',
+    zoom: 17,
+    circleLocation: true,
+    autoCollapse: true,
+  })
+);
 
 // Define a custom lot filtering form Control
 L.Control.LotFilter = L.Control.extend({
   options: {
-    position: "topleft",
-    placeholder: "Highlight Lots in view"
+    position: 'topleft',
+    placeholder: 'Highlight Lots in view',
   },
   initialize: function (options) {
     L.Util.setOptions(this, options);
@@ -175,24 +153,24 @@ L.Control.LotFilter = L.Control.extend({
     return this._container;
   },
   _createInput: function (text, className) {
-    var input = L.DomUtil.create('input', className, this._container);
+    const input = L.DomUtil.create('input', className, this._container);
     input.type = 'text';
     input.value = '';
     input.placeholder = text;
     input.role = 'search';
     input.id = 'id_input_lotSearch';
     // Prevent click progration (handled differently in IE11)
-    if (!(window.ActiveXObject) && "ActiveXObject" in window) {
+    if (!window.ActiveXObject && 'ActiveXObject' in window) {
       input.MSPointerDown = input.onmousedown = input.ondblclick = input.onpointerdown = L.DomEvent.stopPropagation;
     } else {
-      L.DomEvent.disableClickPropagation(input);  // Prevents input selection in IE11.
-    };
+      L.DomEvent.disableClickPropagation(input); // Prevents input selection in IE11.
+    }
 
     return input;
   },
   submit: function (e) {
     L.DomEvent.preventDefault(e);
-  }
+  },
 });
 L.control.lotfilter = function (id, options) {
   return new L.Control.LotFilter(id, options);
@@ -200,38 +178,44 @@ L.control.lotfilter = function (id, options) {
 // Add the custom control to the map, then set a change() event listener on it
 const lotFilter = new L.Control.LotFilter({});
 map.addControl(lotFilter);
-$("input#id_input_lotSearch").change(function () {
-  var lotname = $(this).val().toUpperCase();
+$('input#id_input_lotSearch').change(function () {
+  const lotname = $(this).val().toUpperCase();
   if (lotname) {
     findLot(lotname);
   }
 });
 
 // Add a feature group to the map to contain filtered Lot boundaries.
-var lotsearchresults = new L.featureGroup();
+const lotsearchresults = new L.featureGroup();
 map.addLayer(lotsearchresults);
 
-var findLot = function (lotname) {
+const findLot = function (lotname) {
   // Generate our CQL filter.
-  var filter = "CAD_LOT_NUMBER like '%" + lotname + "%' AND BBOX(SHAPE," + map.getBounds().toBBoxString() + ",'EPSG:4326')";
+  const filter = `CAD_LOT_NUMBER like '%${lotname}%' AND BBOX(SHAPE,${map.getBounds().toBBoxString()},'EPSG:4326')`;
   $.ajax({
-    url: cadastre_query_url,
-    data: { 'cql_filter': filter },
+    url: context.cadastre_query_url,
+    data: { cql_filter: filter },
     dataType: 'json',
     success: function (data) {
-      if (data.totalFeatures === 0 && map.getMinZoom() < map.getZoom() && confirm("Couldn't find Survey Lot containing '" + lotname + "' in viewport, zoom out and try again?")) {
+      if (
+        data.totalFeatures === 0 &&
+        map.getMinZoom() < map.getZoom() &&
+        confirm(`Couldn't find Survey Lot containing '${lotname}' in viewport, zoom out and try again?`)
+      ) {
         map.zoomOut();
         findLot(lotname);
       }
       if (data.totalFeatures > 0) {
         lotsearchresults.clearLayers();
-        lotsearchresults.addLayer(L.geoJson(data, {
-          color: '#fa00ff',
-          clickable: false
-        }));
+        lotsearchresults.addLayer(
+          L.geoJson(data, {
+            color: '#fa00ff',
+            clickable: false,
+          })
+        );
         map.fitBounds(lotsearchresults.getBounds());
       }
-    }
+    },
   });
 };
 // Log zoom level to console.

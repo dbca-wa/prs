@@ -9,7 +9,7 @@ spec:
         - name: prs
           env:
             - name: SITE_URL
-              value: "prs-uat.dbca.wa.gov.au"
+              value: 'prs-uat.dbca.wa.gov.au'
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
@@ -20,21 +20,6 @@ spec:
                 secretKeyRef:
                   name: prs-env-uat
                   key: SECRET_KEY
-            - name: KMI_GEOSERVER_URL
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-uat
-                  key: KMI_GEOSERVER_URL
-            - name: PRS_LAYER_NAME
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-uat
-                  key: PRS_LAYER_NAME
-            - name: MAPPROXY_URL
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-uat
-                  key: MAPPROXY_URL
             - name: GEOCODER_URL
               valueFrom:
                 secretKeyRef:
@@ -45,6 +30,11 @@ spec:
                 secretKeyRef:
                   name: prs-env-uat
                   key: GEOSERVER_URL
+            - name: PRS_LAYER_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: prs-env-uat
+                  key: PRS_LAYER_NAME
             - name: CADASTRE_LAYER_NAME
               valueFrom:
                 secretKeyRef:
@@ -161,7 +151,7 @@ spec:
                   name: prs-env-uat
                   key: SENTRY_PROFILES_SAMPLE_RATE
             - name: SENTRY_ENVIRONMENT
-              value: "uat"
+              value: 'uat'
             - name: REDIS_CACHE_HOST
               valueFrom:
                 secretKeyRef:

@@ -4,33 +4,33 @@ from django.contrib.gis.admin import ModelAdmin
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 
-# Third-party app imports
-from reversion.admin import VersionAdmin
-
 # PRS project imports
 from referral.models import (
-    DopTrigger,
-    Region,
-    OrganisationType,
-    Organisation,
-    TaskType,
-    TaskState,
-    NoteType,
-    ReferralType,
-    Referral,
-    Task,
-    Record,
-    Note,
-    Condition,
-    Location,
+    Agency,
     Bookmark,
     Clearance,
-    Agency,
+    Condition,
     ConditionCategory,
-    ModelCondition,
-    UserProfile,
+    DopTrigger,
     LocalGovernment,
+    Location,
+    ModelCondition,
+    Note,
+    NoteType,
+    Organisation,
+    OrganisationType,
+    Record,
+    Referral,
+    ReferralType,
+    Region,
+    Task,
+    TaskState,
+    TaskType,
+    UserProfile,
 )
+
+# Third-party app imports
+from reversion.admin import VersionAdmin
 
 
 class AuditAdmin(VersionAdmin, ModelAdmin):
@@ -119,7 +119,7 @@ class ReferralAdmin(ReferralBaseModelAdmin):
     )
     list_filter = ("regions",)
     date_hierarchy = "referral_date"
-    filter_horizontal = ("regions", "dop_triggers", "related_refs")
+    filter_horizontal = ("regions", "dop_triggers")
     raw_id_fields = ReferralBaseModelAdmin.raw_id_fields + ["referring_org"]
     search_fields = (
         "id",
@@ -188,6 +188,7 @@ class RecordAdmin(ReferralBaseModelAdmin):
             return ""
         url = reverse("admin:referral_referral_change", args=[instance.referral.pk])
         return mark_safe(f"<a href='{url}'>{instance.referral.pk}</a>")
+
     referral_url.short_description = "Referral"
 
 
