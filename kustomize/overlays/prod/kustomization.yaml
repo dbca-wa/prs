@@ -28,4 +28,4 @@ patches:
   - path: typesense_service_patch.yaml
 images:
   - name: ghcr.io/dbca-wa/prs
-    newTag: 2.5.63
+    newTag: 2.5.64
