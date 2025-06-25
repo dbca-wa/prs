@@ -5,16 +5,9 @@ This project is the Department of Biodiversity, Conservation and Attractions
 
 ## Installation
 
-The recommended way to set up this project for development is using
-[uv](https://docs.astral.sh/uv/)
-to install and manage a Python virtual environment.
-With uv installed, install the required Python version (see `pyproject.toml`). Example:
+Dependencies for this project are managed using [uv](https://docs.astral.sh/uv/).
+With uv installed, change into the project directory and run:
 
-    uv python install 3.12
-
-Change into the project directory and run:
-
-    uv python pin 3.12
     uv sync
 
 Activate the virtualenv like so:
