@@ -79,10 +79,11 @@ class BaseViewTest(PrsViewsTestCase):
             agency=mixer.SELECT,
             referring_org=mixer.SELECT,
             referral_date=date.today(),
+            search_vector=None,
         )
-        mixer.cycle(25).blend(Task, type=mixer.SELECT, referral=mixer.SELECT, state=mixer.SELECT)
-        mixer.cycle(25).blend(Note, referral=mixer.SELECT, type=mixer.SELECT, note=mixer.RANDOM)
-        mixer.cycle(25).blend(Record, referral=mixer.SELECT)
+        mixer.cycle(25).blend(Task, type=mixer.SELECT, referral=mixer.SELECT, state=mixer.SELECT, search_vector=None)
+        mixer.cycle(25).blend(Note, referral=mixer.SELECT, type=mixer.SELECT, note=mixer.RANDOM, search_vector=None)
+        mixer.cycle(25).blend(Record, referral=mixer.SELECT, search_vector=None)
         mixer.cycle(25).blend(
             Condition,
             referral=mixer.SELECT,
@@ -90,6 +91,7 @@ class BaseViewTest(PrsViewsTestCase):
             condition=mixer.RANDOM,
             model_condition=mixer.SELECT,
             proposed_condition=mixer.RANDOM,
+            search_vector=None,
         )
         mixer.cycle(25).blend(Clearance, condition=mixer.SELECT, task=mixer.SELECT)
         mixer.cycle(25).blend(Location, referral=mixer.SELECT)
@@ -361,6 +363,7 @@ class ReferralCreateChildTest(PrsViewsTestCase):
             condition=mixer.RANDOM,
             model_condition=mixer.SELECT,
             proposed_condition=mixer.RANDOM,
+            search_vector=None,
         )
         for i in Condition.objects.filter(referral=self.ref):
             i.proposed_condition_html = "<p>Proposed condition</p>"
@@ -562,9 +565,9 @@ class ReferralCreateChildTest(PrsViewsTestCase):
     def test_relate_existing_object_to_task(self):
         """Test POST to relate existing note/record to a task"""
         # First, ensure that a task, record and note all exist.
-        task = mixer.blend(Task, referral=self.ref)
-        note = mixer.blend(Note, referral=self.ref)
-        record = mixer.blend(Record, referral=self.ref)
+        task = mixer.blend(Task, referral=self.ref, search_vector=None)
+        note = mixer.blend(Note, referral=self.ref, search_vector=None)
+        record = mixer.blend(Record, referral=self.ref, search_vector=None)
         init_records = task.records.count()
         init_notes = task.notes.count()
         url = reverse(
@@ -594,7 +597,7 @@ class ReferralCreateChildTest(PrsViewsTestCase):
 
     def test_relate_new_object_to_task(self):
         """Test POST to relate new note/record to a task"""
-        task = mixer.blend(Task, referral=self.ref)
+        task = mixer.blend(Task, referral=self.ref, search_vector=None)
         init_records = task.records.count()
         init_notes = task.notes.count()
         url = reverse(
@@ -780,7 +783,7 @@ class TagListTest(PrsViewsTestCase):
         super(TagListTest, self).setUp()
         # Create a bunch of additional Tags.
         tags = (tag for tag in ["tag1", "tag2", "tag3", "tag4", "tag5"])
-        for _count in range(5):
+        for _ in range(5):
             mixer.blend(Tag, name=tags)
 
     def test_get(self):

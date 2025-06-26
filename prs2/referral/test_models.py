@@ -89,10 +89,14 @@ class PrsTestCase(TestCase):
 
         if not Referral.objects.exists():
             # Create some referral data
-            mixer.cycle(2).blend(Referral, type=mixer.SELECT, agency=mixer.SELECT, referring_org=mixer.SELECT, referral_date=date.today())
-            mixer.cycle(2).blend(Task, type=mixer.SELECT, referral=mixer.SELECT, state=mixer.SELECT, assigned_user=self.n_user)
-            mixer.cycle(2).blend(Note, referral=mixer.SELECT, type=mixer.SELECT, note=mixer.RANDOM)
-            mixer.cycle(2).blend(Record, referral=mixer.SELECT)
+            mixer.cycle(2).blend(
+                Referral, type=mixer.SELECT, agency=mixer.SELECT, referring_org=mixer.SELECT, referral_date=date.today(), search_vector=None
+            )
+            mixer.cycle(2).blend(
+                Task, type=mixer.SELECT, referral=mixer.SELECT, state=mixer.SELECT, assigned_user=self.n_user, search_vector=None
+            )
+            mixer.cycle(2).blend(Note, referral=mixer.SELECT, type=mixer.SELECT, note=mixer.RANDOM, search_vector=None)
+            mixer.cycle(2).blend(Record, referral=mixer.SELECT, search_vector=None)
             mixer.cycle(2).blend(ModelCondition, category=mixer.SELECT)
             mixer.cycle(2).blend(
                 Condition,
@@ -101,6 +105,7 @@ class PrsTestCase(TestCase):
                 condition=mixer.RANDOM,
                 model_condition=mixer.SELECT,
                 proposed_condition=mixer.RANDOM,
+                search_vector=None,
             )
             mixer.cycle(2).blend(Clearance, condition=mixer.SELECT, task=mixer.SELECT)
             mixer.cycle(2).blend(Location, referral=mixer.SELECT)
@@ -661,7 +666,7 @@ class ConditionTest(PrsTestCase):
     def test_add_clearance(self):
         """ """
         c = Condition.objects.first()
-        t = mixer.blend(Task, type=mixer.SELECT, referral=mixer.SELECT, state=mixer.SELECT)
+        t = mixer.blend(Task, type=mixer.SELECT, referral=mixer.SELECT, state=mixer.SELECT, search_vector=None)
         clear = c.add_clearance(t)
         self.assertIsInstance(clear, Clearance)
 
