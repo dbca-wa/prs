@@ -439,7 +439,7 @@ class Referral(ReferralBaseModel):
 
     class Meta:
         ordering = ["-created"]
-        indexes = [GinIndex(fields=["search_vector"], name="referral_search_idx")]
+        indexes = [GinIndex(fields=["search_vector"], name="idx_referral_search_vector")]
 
     def save(self, *args, **kwargs):
         """Overide save to cleanse text input to the description, address fields.
@@ -752,7 +752,7 @@ class Task(ReferralBaseModel):
 
     class Meta:
         ordering = ["-pk", "due_date"]
-        indexes = [GinIndex(fields=["search_vector"], name="task_search_idx")]
+        indexes = [GinIndex(fields=["search_vector"], name="idx_task_search_vector")]
 
     def save(self, *args, **kwargs):
         """Overide save() to cleanse text input to the description field and populate the search_document field."""
@@ -1070,7 +1070,7 @@ class Record(ReferralBaseModel):
 
     class Meta:
         ordering = ["-created"]
-        indexes = [GinIndex(fields=["search_vector"], name="record_search_idx")]
+        indexes = [GinIndex(fields=["search_vector"], name="idx_record_search_vector")]
 
     def __str__(self):
         return f"Record {self.pk} ({smart_truncate(self.name, length=256)})"
@@ -1279,7 +1279,7 @@ class Note(ReferralBaseModel):
 
     class Meta:
         ordering = ["order_date"]
-        indexes = [GinIndex(fields=["search_vector"], name="note_search_idx")]
+        indexes = [GinIndex(fields=["search_vector"], name="idx_note_search_vector")]
 
     def __str__(self):
         return self.short_note
@@ -1464,7 +1464,7 @@ class Condition(ReferralBaseModel):
 
     class Meta:
         ordering = ["-created"]
-        indexes = [GinIndex(fields=["search_vector"], name="condition_search_idx")]
+        indexes = [GinIndex(fields=["search_vector"], name="idx_condition_search_vector")]
 
     def save(self, *args, **kwargs):
         """Overide the Condition models's save() to cleanse the HTML input and populate the search_document field."""
@@ -1894,8 +1894,6 @@ class UserProfile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     agency = models.ForeignKey(Agency, on_delete=models.PROTECT, blank=True, null=True)
     referral_history_array = ArrayField(models.IntegerField(), size=20, default=list, blank=True)
-    referral_history = models.TextField(blank=True, null=True)  # TODO: deprecate field.
-    task_history = models.TextField(blank=True, null=True)  # TODO: deprecate field.
 
     def __str__(self):
         return self.user.username
