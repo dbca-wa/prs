@@ -67,12 +67,12 @@ class ReferralLookup(ActiveModel, Audit):
     def __str__(self):
         return self.name
 
-    def save(self, *args):
+    def save(self, *args, **kwargs):
         """Overide save() to cleanse text input fields."""
         self.name = unidecode(self.name)
         if self.description:
             self.description = unidecode(self.description)
-        super().save(*args)
+        super().save(*args, **kwargs)
 
     def get_absolute_url(self):
         return reverse(
@@ -441,7 +441,7 @@ class Referral(ReferralBaseModel):
         ordering = ["-created"]
         indexes = [GinIndex(fields=["search_vector"], name="referral_search_idx")]
 
-    def save(self, *args):
+    def save(self, *args, **kwargs):
         """Overide save to cleanse text input to the description, address fields.
         Set the point field value based on any assocated Location objects to the centroid.
         Update the search_document field value for search purposes.
@@ -456,10 +456,10 @@ class Referral(ReferralBaseModel):
             self.point = collection.centroid
         # Update the search_document field.
         self.search_document = (
-            f"{self.reference} {self.type.name} {self.referring_org.name} {self.description} {self.address} {self.lga.name} {self.file_no}"
+            f"{self.reference} {self.type.name} {self.referring_org.name} {self.description} {self.address} {self.file_no}"
         )
 
-        super().save(*args)
+        super().save(*args, **kwargs)
 
         # Index the referral.
         try:
@@ -476,7 +476,7 @@ class Referral(ReferralBaseModel):
         """
         Return a unicode string of all the regions that this referral belongs to (or None).
         """
-        if not self.regions.all():
+        if not self.regions.current().exists():
             return None
         return ", ".join([r.name for r in self.regions.all()])
 
@@ -754,13 +754,13 @@ class Task(ReferralBaseModel):
         ordering = ["-pk", "due_date"]
         indexes = [GinIndex(fields=["search_vector"], name="task_search_idx")]
 
-    def save(self, *args):
+    def save(self, *args, **kwargs):
         """Overide save() to cleanse text input to the description field and populate the search_document field."""
         if self.description:
             self.description = unidecode(self.description)
         # Update the search_document field.
         self.search_document = f"{self.type.name} {self.description}"
-        super().save(*args)
+        super().save(*args, **kwargs)
 
         # Index the task.
         try:
@@ -1075,7 +1075,7 @@ class Record(ReferralBaseModel):
     def __str__(self):
         return f"Record {self.pk} ({smart_truncate(self.name, length=256)})"
 
-    def save(self, *args):
+    def save(self, *args, **kwargs):
         """Overide save() to cleanse text input fields and populate the search_document field."""
         self.name = unidecode(self.name).replace("\r\n", "").strip()
         if self.description:
@@ -1090,7 +1090,7 @@ class Record(ReferralBaseModel):
         # Update the search_document field.
         self.search_document = f"{self.name} {self.infobase_id} {self.description}"
 
-        super().save(*args)
+        super().save(*args, **kwargs)
 
         # Index the record.
         try:
@@ -1284,7 +1284,7 @@ class Note(ReferralBaseModel):
     def __str__(self):
         return self.short_note
 
-    def save(self, *args):
+    def save(self, *args, **kwargs):
         """Overide the Note model save() to cleanse the HTML used and populate the search_document field."""
         self.note_html = dewordify_text(self.note_html)
         if self.note_html:
@@ -1297,7 +1297,7 @@ class Note(ReferralBaseModel):
         # Update the search_document field.
         self.search_document = f"{self.note}"
 
-        super().save(*args)
+        super().save(*args, **kwargs)
 
         # Index the note.
         try:
@@ -1466,7 +1466,7 @@ class Condition(ReferralBaseModel):
         ordering = ["-created"]
         indexes = [GinIndex(fields=["search_vector"], name="condition_search_idx")]
 
-    def save(self, *args):
+    def save(self, *args, **kwargs):
         """Overide the Condition models's save() to cleanse the HTML input and populate the search_document field."""
         if self.condition_html:
             self.condition_html = dewordify_text(self.condition_html)
@@ -1488,9 +1488,9 @@ class Condition(ReferralBaseModel):
             self.proposed_condition = ""
 
         # Update the search_document field.
-        self.search_document = f"{self.condition} {self.proposed_condition} {self.identifier} {self.category.name}"
+        self.search_document = f"{self.condition} {self.proposed_condition} {self.identifier}"
 
-        super().save(*args)
+        super().save(*args, **kwargs)
 
         # Index the condition.
         if self.referral:
@@ -1753,12 +1753,12 @@ class Location(ReferralBaseModel):
             address += " " + self.postcode
         return escape(address)
 
-    def save(self, *args):
+    def save(self, *args, **kwargs):
         """
         Overide the standard save method; inserts nice_address into address_string field.
         """
         self.address_string = self.nice_address.lower()
-        super().save(*args)
+        super().save(*args, **kwargs)
 
     def as_row(self):
         """
@@ -1848,11 +1848,11 @@ class Bookmark(ReferralBaseModel):
     )
     headers = ["Referral ID", "Bookmark description", "Actions"]
 
-    def save(self, *args):
+    def save(self, *args, **kwargs):
         """Overide save() to cleanse text input to the description field."""
         if self.description:
             self.description = unidecode(self.description)
-        super().save(*args)
+        super().save(*args, **kwargs)
 
     def as_row(self):
         """

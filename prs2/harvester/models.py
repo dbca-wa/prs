@@ -50,7 +50,7 @@ class EmailedReferral(models.Model):
     def __str__(self):
         return self.subject
 
-    def save(self, force_insert=False, force_update=False, *args, **kwargs):
+    def save(self, *args, **kwargs):
         self.subject = self.subject.replace("\r\n", "").strip()
         # Fix rare strange subject line text encoding issue.
         pattern = r"(\=\?Windows-1252\?Q\?)"
@@ -66,7 +66,7 @@ class EmailedReferral(models.Model):
         pattern = r"(<.+>)"
         self.body = re.sub(pattern, "", self.body)
         self.body = self.body.replace("=96", "").strip()
-        super().save(force_insert, force_update)
+        super().save(*args, **kwargs)
 
     def harvest(self, create_tasks=True, create_locations=True, create_records=True, assignee=False):
         """Undertake the harvest process for this emailed referral.
@@ -594,9 +594,7 @@ class EmailAttachment(models.Model):
         return self.name
 
     def get_xml_data(self):
-        """Convenience function to conditionally return XML data from the
-        attachment.xml (returns None otherwise).
-        """
+        """Convenience function to conditionally return XML data from the attachment.xml (returns None otherwise)."""
         d = None
         if self.name.lower() == "application.xml":
             self.attachment.seek(0)

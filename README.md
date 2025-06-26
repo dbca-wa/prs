@@ -88,7 +88,7 @@ should contain the broker URL value. Reference:
 
 Run unit tests as follows:
 
-    python manage.py test --keepdb -v2 --settings prs2.test-settings
+    python manage.py test --keepdb -v2 --settings prs2.test-settings --failfast
 
 To run tests for e.g. models only:
 

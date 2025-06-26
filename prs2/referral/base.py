@@ -30,7 +30,7 @@ class Audit(models.Model):
     created = models.DateTimeField(default=timezone.now, editable=False)
     modified = models.DateTimeField(auto_now=True, editable=False)
 
-    def save(self, *args):
+    def save(self, *args, **kwargs):
         """This falls back on using an admin user if a request user object is absent (i.e. the
         object was saved outside the web application).
         """
@@ -43,7 +43,7 @@ class Audit(models.Model):
         if not self.pk:
             self.creator = user
 
-        super().save(*args)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return str(self.pk)
