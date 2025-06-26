@@ -368,6 +368,7 @@ class Referral(ReferralBaseModel):
         blank=True,
         help_text="[Searchable] The region(s) in which this referral belongs.",
     )
+    regions_str = models.CharField(max_length=256, blank=True, null=True, editable=False)
     referring_org = models.ForeignKey(
         Organisation,
         on_delete=models.PROTECT,
@@ -454,6 +455,9 @@ class Referral(ReferralBaseModel):
         if self.pk and self.location_set.current().exists():
             collection = GeometryCollection([l.poly for l in self.location_set.current() if l.poly])
             self.point = collection.centroid
+        # Update the regions_str field (only if the object already has a PK).
+        if self.pk:
+            self.regions_str = self.get_regions_str()
         # Update the search_document field.
         self.search_document = (
             f"{self.reference} {self.type.name} {self.referring_org.name} {self.description} {self.address} {self.file_no}"
@@ -471,14 +475,13 @@ class Referral(ReferralBaseModel):
     def get_absolute_url(self):
         return reverse("referral_detail", kwargs={"pk": self.pk})
 
-    @property
-    def regions_str(self):
+    def get_regions_str(self):
         """
         Return a unicode string of all the regions that this referral belongs to (or None).
         """
         if not self.regions.current().exists():
             return None
-        return ", ".join([r.name for r in self.regions.all()])
+        return ", ".join([r.name for r in self.regions.current()])
 
     @property
     def dop_triggers_str(self):
@@ -520,7 +523,7 @@ class Referral(ReferralBaseModel):
         d = copy(self.__dict__)
         d["url"] = self.get_absolute_url()
         d["type"] = self.type.name
-        d["regions"] = self.regions_str
+        d["regions"] = self.regions_str or self.get_regions_str()
         d["referring_org"] = self.referring_org
         if self.referral_date:
             d["referral_date"] = self.referral_date.strftime("%d %b %Y")
@@ -556,7 +559,7 @@ class Referral(ReferralBaseModel):
         d = copy(self.__dict__)
         d["url"] = self.get_absolute_url()
         d["type"] = self.type.name
-        d["regions"] = self.regions_str
+        d["regions"] = self.regions_str or self.get_regions_str()
         d["dop_triggers"] = self.dop_triggers_str
         d["referring_org"] = self.referring_org
         d["file_no"] = self.file_no or ""

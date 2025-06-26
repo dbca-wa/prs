@@ -187,15 +187,13 @@ class OrganisationTest(PrsTestCase):
 class ReferralTest(PrsTestCase):
     """Unit tests specific to the Referral model class."""
 
-    def test_regions_str(self):
-        """Test the Referral model regions_str property."""
+    def test_get_regions_str(self):
+        """Test the Referral model get_regions_str() function"""
         for r in Referral.objects.all():
             # Get a random Region and add it to the Referral
             region = Region.objects.order_by("?")[0]
             r.regions.add(region)
-            s = r.regions_str
-            # String contains the region name.
-            self.assertIsNot(s.find(region.name), -1)
+            self.assertTrue(region.name in r.get_regions_str())
 
     def test_dop_triggers_str(self):
         """Test the Referral model dop_triggers_str property."""
