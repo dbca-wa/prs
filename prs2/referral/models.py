@@ -10,6 +10,8 @@ from django.contrib.auth.signals import user_logged_in
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import GeometryCollection
 from django.contrib.postgres.fields import ArrayField
+from django.contrib.postgres.indexes import GinIndex
+from django.contrib.postgres.search import SearchVectorField
 from django.core.mail import EmailMultiAlternatives
 from django.core.validators import MaxLengthValidator
 from django.db.models import Q
@@ -65,12 +67,12 @@ class ReferralLookup(ActiveModel, Audit):
     def __str__(self):
         return self.name
 
-    def save(self, force_insert=False, force_update=False, *args, **kwargs):
+    def save(self, *args):
         """Overide save() to cleanse text input fields."""
         self.name = unidecode(self.name)
         if self.description:
             self.description = unidecode(self.description)
-        super().save(force_insert, force_update)
+        super().save(*args)
 
     def get_absolute_url(self):
         return reverse(
@@ -432,10 +434,17 @@ class Referral(ReferralBaseModel):
         "Type",
     ]
     tools_template = "referral/referral_tools.html"
+    search_document = models.TextField(blank=True, null=True, editable=False)
+    search_vector = SearchVectorField(null=True, editable=False)
 
-    def save(self, force_insert=False, force_update=False, *args, **kwargs):
+    class Meta:
+        ordering = ["-created"]
+        indexes = [GinIndex(fields=["search_vector"], name="referral_search_idx")]
+
+    def save(self, *args):
         """Overide save to cleanse text input to the description, address fields.
-        Also set the point field value based on any assocated Location objects.
+        Set the point field value based on any assocated Location objects to the centroid.
+        Update the search_document field value for search purposes.
         """
         if self.description:
             self.description = unidecode(self.description)
@@ -445,7 +454,12 @@ class Referral(ReferralBaseModel):
         if self.pk and self.location_set.current().exists():
             collection = GeometryCollection([l.poly for l in self.location_set.current() if l.poly])
             self.point = collection.centroid
-        super().save(force_insert, force_update)
+        # Update the search_document field.
+        self.search_document = (
+            f"{self.reference} {self.type.name} {self.referring_org.name} {self.description} {self.address} {self.lga.name} {self.file_no}"
+        )
+
+        super().save(*args)
 
         # Index the referral.
         try:
@@ -733,15 +747,20 @@ class Task(ReferralBaseModel):
     tools_template = "referral/task_tools.html"
     records = models.ManyToManyField("Record", blank=True)
     notes = models.ManyToManyField("Note", blank=True)
+    search_document = models.TextField(blank=True, null=True, editable=False)
+    search_vector = SearchVectorField(null=True, editable=False)
 
     class Meta:
         ordering = ["-pk", "due_date"]
+        indexes = [GinIndex(fields=["search_vector"], name="task_search_idx")]
 
-    def save(self, force_insert=False, force_update=False, *args, **kwargs):
-        """Overide save() to cleanse text input to the description field."""
+    def save(self, *args):
+        """Overide save() to cleanse text input to the description field and populate the search_document field."""
         if self.description:
             self.description = unidecode(self.description)
-        super().save(force_insert, force_update)
+        # Update the search_document field.
+        self.search_document = f"{self.type.name} {self.description}"
+        super().save(*args)
 
         # Index the task.
         try:
@@ -1046,12 +1065,18 @@ class Record(ReferralBaseModel):
     notes = models.ManyToManyField("Note", blank=True)
     headers = ["Record", "Date", "Name", "Infobase ID", "Referral ID", "Type", "Size"]
     tools_template = "referral/record_tools.html"
+    search_document = models.TextField(blank=True, null=True, editable=False)
+    search_vector = SearchVectorField(null=True, editable=False)
+
+    class Meta:
+        ordering = ["-created"]
+        indexes = [GinIndex(fields=["search_vector"], name="record_search_idx")]
 
     def __str__(self):
         return f"Record {self.pk} ({smart_truncate(self.name, length=256)})"
 
-    def save(self, force_insert=False, force_update=False, *args, **kwargs):
-        """Overide save() to cleanse text input fields."""
+    def save(self, *args):
+        """Overide save() to cleanse text input fields and populate the search_document field."""
         self.name = unidecode(self.name).replace("\r\n", "").strip()
         if self.description:
             self.description = unidecode(self.description)
@@ -1062,7 +1087,10 @@ class Record(ReferralBaseModel):
             if msg.date and not self.order_date:  # Don't override any existing order_date.
                 self.order_date = msg.date
 
-        super().save(force_insert, force_update)
+        # Update the search_document field.
+        self.search_document = f"{self.name} {self.infobase_id} {self.description}"
+
+        super().save(*args)
 
         # Index the record.
         try:
@@ -1246,17 +1274,18 @@ class Note(ReferralBaseModel):
     headers = ["Note", "Type", "Creator", "Date", "Note", "Referral ID"]
     tools_template = "referral/note_tools.html"
     records = models.ManyToManyField("Record", blank=True)
+    search_document = models.TextField(blank=True, null=True, editable=False)
+    search_vector = SearchVectorField(null=True, editable=False)
 
     class Meta:
         ordering = ["order_date"]
+        indexes = [GinIndex(fields=["search_vector"], name="note_search_idx")]
 
     def __str__(self):
         return self.short_note
 
-    def save(self, force_insert=False, force_update=False, *args, **kwargs):
-        """
-        Overide the Note model save() to cleanse the HTML used.
-        """
+    def save(self, *args):
+        """Overide the Note model save() to cleanse the HTML used and populate the search_document field."""
         self.note_html = dewordify_text(self.note_html)
         if self.note_html:
             self.note_html = clean_html(self.note_html)
@@ -1264,7 +1293,11 @@ class Note(ReferralBaseModel):
         if self.note_html:
             t = fromstring(self.note_html)
             self.note = t.text_content().strip()
-        super().save(force_insert, force_update)
+
+        # Update the search_document field.
+        self.search_document = f"{self.note}"
+
+        super().save(*args)
 
         # Index the note.
         try:
@@ -1426,11 +1459,15 @@ class Condition(ReferralBaseModel):
         "Referral ID",
     ]
     tools_template = "referral/condition_tools.html"
+    search_document = models.TextField(blank=True, null=True, editable=False)
+    search_vector = SearchVectorField(null=True, editable=False)
 
-    def save(self, force_insert=False, force_update=False, *args, **kwargs):
-        """
-        Overide the Condition models's save() to cleanse the HTML input.
-        """
+    class Meta:
+        ordering = ["-created"]
+        indexes = [GinIndex(fields=["search_vector"], name="condition_search_idx")]
+
+    def save(self, *args):
+        """Overide the Condition models's save() to cleanse the HTML input and populate the search_document field."""
         if self.condition_html:
             self.condition_html = dewordify_text(self.condition_html)
             if self.condition_html:
@@ -1449,7 +1486,11 @@ class Condition(ReferralBaseModel):
         else:
             self.proposed_condition_html = ""
             self.proposed_condition = ""
-        super().save(force_insert, force_update)
+
+        # Update the search_document field.
+        self.search_document = f"{self.condition} {self.proposed_condition} {self.identifier} {self.category.name}"
+
+        super().save(*args)
 
         # Index the condition.
         if self.referral:
@@ -1712,12 +1753,12 @@ class Location(ReferralBaseModel):
             address += " " + self.postcode
         return escape(address)
 
-    def save(self, *args, **kwargs):
+    def save(self, *args):
         """
         Overide the standard save method; inserts nice_address into address_string field.
         """
         self.address_string = self.nice_address.lower()
-        super().save(*args, **kwargs)
+        super().save(*args)
 
     def as_row(self):
         """
@@ -1807,11 +1848,11 @@ class Bookmark(ReferralBaseModel):
     )
     headers = ["Referral ID", "Bookmark description", "Actions"]
 
-    def save(self, force_insert=False, force_update=False, *args, **kwargs):
+    def save(self, *args):
         """Overide save() to cleanse text input to the description field."""
         if self.description:
             self.description = unidecode(self.description)
-        super().save(force_insert, force_update)
+        super().save(*args)
 
     def as_row(self):
         """

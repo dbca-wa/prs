@@ -30,7 +30,7 @@ class Audit(models.Model):
     created = models.DateTimeField(default=timezone.now, editable=False)
     modified = models.DateTimeField(auto_now=True, editable=False)
 
-    def save(self, *args, **kwargs):
+    def save(self, *args):
         """This falls back on using an admin user if a request user object is absent (i.e. the
         object was saved outside the web application).
         """
@@ -43,7 +43,7 @@ class Audit(models.Model):
         if not self.pk:
             self.creator = user
 
-        super(Audit, self).save(*args, **kwargs)
+        super().save(*args)
 
     def __str__(self):
         return str(self.pk)
@@ -80,7 +80,7 @@ class ActiveModel(models.Model):
         and time.
         """
         self.effective_to = timezone.now()
-        super(ActiveModel, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
 
 class ContentTypeRestrictedFileField(FileField):
@@ -96,10 +96,10 @@ class ContentTypeRestrictedFileField(FileField):
 
     def __init__(self, content_types=None, *args, **kwargs):
         self.content_types = content_types
-        super(ContentTypeRestrictedFileField, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def to_python(self, data):
-        f = super(ContentTypeRestrictedFileField, self).to_python(data)
+        f = super().to_python(data)
         if f is None or f == "":
             return None
         content_type = magic.from_file(f.path, mime=True)
