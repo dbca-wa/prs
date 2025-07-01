@@ -80,7 +80,7 @@ class SiteHome(LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["stopped_tasks"] = self.stopped_tasks
-        context["headers"] = copy(Task.headers_site_home)
+        context["headers"] = copy(Task.get_headers_site_home())
         if not self.stopped_tasks:
             context["stopped_tasks_exist"] = Task.objects.current().filter(assigned_user=self.request.user, state__name="Stopped").exists()
         # Printable view only: pop the last element from 'headers'
@@ -138,19 +138,19 @@ class IndexSearch(LoginRequiredMixin, TemplateView):
             }
 
             if collection == "referrals":
-                context["result_headers"] = Referral.headers
+                context["result_headers"] = Referral.get_headers()
                 search_q["query_by"] = "reference,description,address,type,referring_org,lga"
             elif collection == "records":
-                context["result_headers"] = Record.headers
+                context["result_headers"] = Record.get_headers()
                 search_q["query_by"] = "name,description,file_name,file_content"
             elif collection == "notes":
-                context["result_headers"] = Note.headers
+                context["result_headers"] = Note.get_headers()
                 search_q["query_by"] = "note"
             elif collection == "tasks":
-                context["result_headers"] = Task.headers
+                context["result_headers"] = Task.get_headers()
                 search_q["query_by"] = "description,assigned_user"
             elif collection == "conditions":
-                context["result_headers"] = Condition.headers
+                context["result_headers"] = Condition.get_headers()
                 search_q["query_by"] = "proposed_condition,approved_condition"
 
             search_result = client.collections[collection].documents.search(search_q)
@@ -240,7 +240,7 @@ class IndexSearchCombined(LoginRequiredMixin, TemplateView):
         if "q" in self.request.GET and self.request.GET["q"]:
             context["query_string"] = self.request.GET["q"]
             context["search_result"] = []
-            context["referral_headers"] = Referral.headers
+            context["referral_headers"] = Referral.get_headers()
             client = typesense_client()
             search_q = {
                 "q": self.request.GET["q"],
@@ -525,7 +525,7 @@ class ReferralDetail(PrsObjectDetail):
                 obj_qs = m.objects.current().filter(referral=ref)
                 if m is Record:  # Sort records newest > oldest (nulls last).
                     obj_qs = obj_qs.order_by(F("order_date").desc(nulls_last=True))
-                headers = copy(m.headers)
+                headers = copy(m.get_headers())
                 headers.remove("Referral ID")
                 headers.append("Actions")
                 # Construct the <thead> element.

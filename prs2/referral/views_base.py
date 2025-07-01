@@ -59,8 +59,10 @@ class PrsObjectList(LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # Pass model headers.
-        if hasattr(self.model, "headers"):
-            context["object_list_headers"] = self.model.headers
+        if hasattr(self.model, "get_headers"):
+            context["object_list_headers"] = self.model.get_headers()
+        else:
+            context["object_list_headers"] = []
         # Pass in any query string
         if "q" in self.request.GET:
             context["query_string"] = self.request.GET["q"]
@@ -185,9 +187,10 @@ class PrsObjectDetail(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         context["object_type"] = self.model._meta.verbose_name
         context["object_type_plural"] = self.model._meta.verbose_name_plural
-        # Does this model type have a tools template?
-        if hasattr(self.model, "tools_template"):
-            context["object_tools_template"] = self.model.tools_template
+        if hasattr(self.model, "get_tools_template"):
+            context["object_tools_template"] = self.model.get_tools_template()
+        else:
+            context["object_tools_template"] = None
         # Does this model type use tags?
         if hasattr(self.model, "tags"):
             context["object_has_tags"] = True
@@ -215,9 +218,9 @@ class PrsObjectDetail(LoginRequiredMixin, DetailView):
             ]
         )
         # Related model table headers.
-        context["note_headers"] = Note.headers
-        context["record_headers"] = Record.headers
-        context["task_headers"] = Task.headers
+        context["note_headers"] = Note.get_headers()
+        context["record_headers"] = Record.get_headers()
+        context["task_headers"] = Task.get_headers()
         # Additional context for specific model types.
         if self.model == Task:
             if obj.records.current():  # Related records.

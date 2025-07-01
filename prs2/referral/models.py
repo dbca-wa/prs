@@ -58,7 +58,6 @@ class ReferralLookup(ActiveModel, Audit):
     description = models.CharField(max_length=200, null=True, blank=True, validators=[MaxLengthValidator(200)])
     slug = models.SlugField(unique=True, help_text="Must be unique. Automatically generated from name.")
     public = models.BooleanField(default=True, help_text="Is this lookup selection available to all users?")
-    headers = ["Name", "Description", "Last modified"]
 
     class Meta:
         abstract = True
@@ -73,6 +72,11 @@ class ReferralLookup(ActiveModel, Audit):
         if self.description:
             self.description = unidecode(self.description)
         super().save(*args, **kwargs)
+
+    @classmethod
+    def get_headers(cls):
+        """Return a list of string values as headers for any list view."""
+        return ["Name", "Description", "Last modified"]
 
     def get_absolute_url(self):
         return reverse(
@@ -322,9 +326,6 @@ class ReferralBaseModel(ActiveModel, Audit):
     Base abstract model class for object types that are not lookups.
     """
 
-    headers = None
-    tools_template = None
-
     class Meta:
         abstract = True
         ordering = ["-created"]
@@ -340,6 +341,11 @@ class ReferralBaseModel(ActiveModel, Audit):
                 "pk": self.pk,
             },
         )
+
+    @classmethod
+    def get_tools_template(cls):
+        """Return the path to a model class template include."""
+        return f"referral/{cls._meta.model_name}_tools.html"
 
 
 @reversion.register()
@@ -424,23 +430,26 @@ class Referral(ReferralBaseModel):
         verbose_name="local government",
         help_text="[Searchable] The LGA in which this referral resides.",
     )
-    headers = [
-        "Referral ID",
-        "Received date",
-        "Description",
-        "Address",
-        "Referrer's reference",
-        "Referred by",
-        "Region(s)",
-        "Type",
-    ]
-    tools_template = "referral/referral_tools.html"
     search_document = models.TextField(blank=True, null=True, editable=False)
     search_vector = SearchVectorField(null=True, editable=False)
 
     class Meta:
         ordering = ["-created"]
         indexes = [GinIndex(fields=["search_vector"], name="idx_referral_search_vector")]
+
+    @classmethod
+    def get_headers(cls):
+        """Return a list of string values as headers for any list view."""
+        return [
+            "Referral ID",
+            "Received date",
+            "Description",
+            "Address",
+            "Referrer's reference",
+            "Referred by",
+            "Region(s)",
+            "Type",
+        ]
 
     def save(self, *args, **kwargs):
         """Overide save to cleanse text input to the description, address fields.
@@ -725,29 +734,6 @@ class Task(ReferralBaseModel):
         verbose_name="status",
         help_text="The status of the task.",
     )
-    headers = [
-        "Task",
-        "Type",
-        "Task description",
-        "Address",
-        "Referral ID",
-        "Assigned",
-        "Start",
-        "Due",
-        "Completed",
-        "Status",
-    ]
-    headers_site_home = [
-        "Type",
-        "Task description",
-        "Referral ID",
-        "Referral type",
-        "Referrer",
-        "Referrers reference",
-        "Due",
-        "Actions",
-    ]
-    tools_template = "referral/task_tools.html"
     records = models.ManyToManyField("Record", blank=True)
     notes = models.ManyToManyField("Note", blank=True)
     search_document = models.TextField(blank=True, null=True, editable=False)
@@ -756,6 +742,35 @@ class Task(ReferralBaseModel):
     class Meta:
         ordering = ["-pk", "due_date"]
         indexes = [GinIndex(fields=["search_vector"], name="idx_task_search_vector")]
+
+    @classmethod
+    def get_headers(cls):
+        """Return a list of string values as headers for any list view."""
+        return [
+            "Task",
+            "Type",
+            "Task description",
+            "Address",
+            "Referral ID",
+            "Assigned",
+            "Start",
+            "Due",
+            "Completed",
+            "Status",
+        ]
+
+    @classmethod
+    def get_headers_site_home(cls):
+        return [
+            "Type",
+            "Task description",
+            "Referral ID",
+            "Referral type",
+            "Referrer",
+            "Referrers reference",
+            "Due",
+            "Actions",
+        ]
 
     def save(self, *args, **kwargs):
         """Overide save() to cleanse text input to the description field and populate the search_document field."""
@@ -1066,8 +1081,6 @@ class Record(ReferralBaseModel):
         help_text="Optional date (for sorting purposes).",
     )
     notes = models.ManyToManyField("Note", blank=True)
-    headers = ["Record", "Date", "Name", "Infobase ID", "Referral ID", "Type", "Size"]
-    tools_template = "referral/record_tools.html"
     search_document = models.TextField(blank=True, null=True, editable=False)
     search_vector = SearchVectorField(null=True, editable=False)
 
@@ -1077,6 +1090,11 @@ class Record(ReferralBaseModel):
 
     def __str__(self):
         return f"Record {self.pk} ({smart_truncate(self.name, length=256)})"
+
+    @classmethod
+    def get_headers(cls):
+        """Return a list of string values as headers for any list view."""
+        return ["Record", "Date", "Name", "Infobase ID", "Referral ID", "Type", "Size"]
 
     def save(self, *args, **kwargs):
         """Overide save() to cleanse text input fields and populate the search_document field."""
@@ -1274,8 +1292,6 @@ class Note(ReferralBaseModel):
         verbose_name="date",
         help_text="Optional date (for sorting purposes).",
     )
-    headers = ["Note", "Type", "Creator", "Date", "Note", "Referral ID"]
-    tools_template = "referral/note_tools.html"
     records = models.ManyToManyField("Record", blank=True)
     search_document = models.TextField(blank=True, null=True, editable=False)
     search_vector = SearchVectorField(null=True, editable=False)
@@ -1286,6 +1302,11 @@ class Note(ReferralBaseModel):
 
     def __str__(self):
         return self.short_note
+
+    @classmethod
+    def get_headers(cls):
+        """Return a list of string values as headers for any list view."""
+        return ["Note", "Type", "Creator", "Date", "Note", "Referral ID"]
 
     def save(self, *args, **kwargs):
         """Overide the Note model save() to cleanse the HTML used and populate the search_document field."""
@@ -1453,21 +1474,24 @@ class Condition(ReferralBaseModel):
         related_name="model_condition",
         help_text="Model text on which this condition is based",
     )
-    headers = [
-        "Condition",
-        "No.",
-        "Proposed condition",
-        "Approved condition",
-        "Category",
-        "Referral ID",
-    ]
-    tools_template = "referral/condition_tools.html"
     search_document = models.TextField(blank=True, null=True, editable=False)
     search_vector = SearchVectorField(null=True, editable=False)
 
     class Meta:
         ordering = ["-created"]
         indexes = [GinIndex(fields=["search_vector"], name="idx_condition_search_vector")]
+
+    @classmethod
+    def get_headers(cls):
+        """Return a list of string values as headers for any list view."""
+        return [
+            "Condition",
+            "No.",
+            "Proposed condition",
+            "Approved condition",
+            "Category",
+            "Referral ID",
+        ]
 
     def save(self, *args, **kwargs):
         """Overide the Condition models's save() to cleanse the HTML input and populate the search_document field."""
@@ -1621,22 +1645,26 @@ class Clearance(models.Model):
     task = models.ForeignKey(Task, on_delete=models.PROTECT)
     date_created = models.DateField(auto_now_add=True)
     deposited_plan = models.CharField(max_length=200, null=True, blank=True, validators=[MaxLengthValidator(200)])
-    headers = [
-        "Clearance",
-        "Condition no.",
-        "Condition",
-        "Category",
-        "Task",
-        "Deposited plan",
-        "Referral ID",
-    ]
     objects = ClearanceManager()
+
+    class Meta:
+        ordering = ["-pk"]
 
     def __str__(self):
         return f"{self.pk} condition {self.condition.pk} has task {self.task.pk}"
 
-    class Meta:
-        ordering = ["-pk"]
+    @classmethod
+    def get_headers(cls):
+        """Return a list of string values as headers for any list view."""
+        return [
+            "Clearance",
+            "Condition no.",
+            "Condition",
+            "Category",
+            "Task",
+            "Deposited plan",
+            "Referral ID",
+        ]
 
     def get_absolute_url(self):
         return reverse("prs_object_detail", kwargs={"model": "clearance", "pk": self.pk})
@@ -1732,8 +1760,18 @@ class Location(ReferralBaseModel):
     referral = models.ForeignKey(Referral, on_delete=models.PROTECT)
     poly = models.PolygonField(srid=4283, null=True, blank=True, help_text="Optional.")
     address_string = models.TextField(null=True, blank=True, editable=True)
-    headers = ["Location", "Address", "Polygon", "Referral ID"]
-    tools_template = "referral/location_tools.html"
+
+    @classmethod
+    def get_headers(cls):
+        """Return a list of string values as headers for any list view."""
+        return ["Location", "Address", "Polygon", "Referral ID"]
+
+    def save(self, *args, **kwargs):
+        """
+        Overide the standard save method; inserts nice_address into address_string field.
+        """
+        self.address_string = self.nice_address.lower()
+        super().save(*args, **kwargs)
 
     @property
     def nice_address(self):
@@ -1755,13 +1793,6 @@ class Location(ReferralBaseModel):
         if self.postcode:
             address += " " + self.postcode
         return escape(address)
-
-    def save(self, *args, **kwargs):
-        """
-        Overide the standard save method; inserts nice_address into address_string field.
-        """
-        self.address_string = self.nice_address.lower()
-        super().save(*args, **kwargs)
 
     def as_row(self):
         """
@@ -1849,7 +1880,11 @@ class Bookmark(ReferralBaseModel):
         help_text="Maximum 200 characters.",
         validators=[MaxLengthValidator(200)],
     )
-    headers = ["Referral ID", "Bookmark description", "Actions"]
+
+    @classmethod
+    def get_headers(cls):
+        """Return a list of string values as headers for any list view."""
+        return ["Referral ID", "Bookmark description", "Actions"]
 
     def save(self, *args, **kwargs):
         """Overide save() to cleanse text input to the description field."""
