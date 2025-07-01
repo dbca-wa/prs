@@ -250,7 +250,10 @@ LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
-        "verbose": {"format": "%(asctime)s %(levelname)-12s %(name)-12s %(message)s"},
+        "verbose": {
+            "format": "{asctime} {levelname} {name} {message}",
+            "style": "{",
+        },
     },
     "handlers": {
         "console": {
