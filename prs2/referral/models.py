@@ -1081,6 +1081,7 @@ class Record(ReferralBaseModel):
         help_text="Optional date (for sorting purposes).",
     )
     notes = models.ManyToManyField("Note", blank=True)
+    uploaded_file_content = models.TextField(blank=True, null=True, editable=False)
     search_document = models.TextField(blank=True, null=True, editable=False)
     search_vector = SearchVectorField(null=True, editable=False)
 
@@ -1109,7 +1110,7 @@ class Record(ReferralBaseModel):
                 self.order_date = msg.date
 
         # Update the search_document field.
-        self.search_document = f"{self.name} {self.infobase_id} {self.description}"
+        self.search_document = f"{self.name} {self.infobase_id} {self.description} {self.uploaded_file_content}"
 
         super().save(*args, **kwargs)
 
