@@ -2,7 +2,9 @@ import json
 import logging
 import re
 from datetime import date
+from io import BytesIO
 
+import docx2txt
 import requests
 from dbca_utils.utils import env
 from django.apps import apps
@@ -13,6 +15,8 @@ from django.db.models import Q
 from django.db.models.base import ModelBase
 from django.utils.encoding import smart_str
 from django.utils.safestring import mark_safe
+from extract_msg import Message
+from pdfminer import high_level
 from reversion.models import Version
 from unidecode import unidecode
 
@@ -326,3 +330,76 @@ def get_next_pages(page_num, count=5):
                 next_page_numbers.append(i)
 
     return next_page_numbers
+
+
+def get_uploaded_file_content(record):
+    """Convience function that takes in a Record object and returns the uploaded file's text content (for a given set of file types)."""
+    if not record.pk or not record.extension or record.extension not in ["PDF", "MSG", "DOCX", "TXT"]:
+        return None
+
+    file_content = ""
+
+    # PDF document content.
+    if record.extension == "PDF":
+        try:
+            # PDF text extraction can be a little error-prone.
+            # In the event of an exception here, we'll just accept it and pass.
+            if settings.LOCAL_MEDIA_STORAGE:
+                f = open(record.uploaded_file.path, "rb")
+                file_content = high_level.extract_text(f)
+                f.close()
+            else:
+                # Read the upload blob content into an in-memory file.
+                tmp = BytesIO()
+                tmp.write(record.uploaded_file.read())
+                file_content = high_level.extract_text(tmp)
+        except:
+            pass
+
+    # MSG document content.
+    if record.extension == "MSG":
+        if settings.LOCAL_MEDIA_STORAGE:
+            message = Message(record.uploaded_file.path)
+        else:
+            # Read the upload blob content into an in-memory file.
+            tmp = BytesIO()
+            tmp.write(record.uploaded_file.read())
+            message = Message(tmp)
+        file_content = f"{message.subject} {message.body}"
+
+    # DOCX document content.
+    if record.extension == "DOCX":
+        if settings.LOCAL_MEDIA_STORAGE:
+            file_content = docx2txt.process(record.uploaded_file.path)
+        else:
+            # Read the upload blob content into an in-memory file.
+            tmp = BytesIO()
+            tmp.write(record.uploaded_file.read())
+            file_content = docx2txt.process(tmp)
+
+    # TXT document content.
+    if record.extension == "TXT":
+        if settings.LOCAL_MEDIA_STORAGE:
+            f = open(record.uploaded_file.path, "r")
+            file_content = f.read()
+            f.close()
+        else:
+            # Read the upload blob content directly.
+            file_content = record.uploaded_file.read()
+
+    # Trim down the file content a little to aid indexing.
+    if file_content:
+        # Decode a bytes object to a string.
+        if isinstance(file_content, bytes):
+            file_content = file_content.decode("utf-8")
+        # Replace punctuation with a space.
+        file_content = re.sub(r"[^\w\s]", " ", file_content)
+        # Replace newlines with a space.
+        file_content = file_content.replace("\r", "").replace("\n", " ")
+        # Replace multiple spaces with a single one.
+        file_content = re.sub(r"\s+", " ", file_content)
+        file_content = file_content.strip()
+        # Transliterate some unicode characters to ASCII.
+        file_content = unidecode(file_content)
+
+    return file_content
