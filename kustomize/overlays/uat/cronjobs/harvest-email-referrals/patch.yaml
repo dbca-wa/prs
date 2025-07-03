@@ -60,6 +60,11 @@ spec:
                     secretKeyRef:
                       name: prs-env-uat
                       key: EMAIL_HOST
+                - name: EMAIL_PORT
+                  valueFrom:
+                    secretKeyRef:
+                      name: prs-env-uat
+                      key: EMAIL_PORT
                 - name: REFERRAL_EMAIL_HOST
                   valueFrom:
                     secretKeyRef:
