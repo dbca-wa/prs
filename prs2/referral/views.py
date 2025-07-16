@@ -877,7 +877,7 @@ class ReferralCreateChild(PrsObjectCreate):
 
         # If "email user" was checked, do so now.
         if self.request.POST.get("email_user"):
-            obj.email_user(from_email=self.request.user.email)
+            obj.email_user()
 
 
 class LocationCreate(ReferralCreateChild):
@@ -1244,7 +1244,7 @@ class TaskAction(PrsObjectUpdate):
             obj.complete_date = datetime.now()
         elif action == "reassign":
             if self.request.POST.get("email_user"):
-                obj.email_user(self.request.user.email)
+                obj.email_user()
         elif action == "update":
             if obj.restart_date and obj.stop_date:
                 obj.stop_time = (obj.restart_date - obj.stop_date).days
