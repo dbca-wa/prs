@@ -5,63 +5,44 @@ const geoserver_wms_url = `${context.geoserver_url}/ows`;
 const geoserver_wmts_url = `${context.geoserver_url}/gwc/service/wmts?service=WMTS&request=GetTile&version=1.0.0&format=image/png&tilematrixset=mercator&tilematrix=mercator:{z}&tilecol={x}&tilerow={y}`;
 
 // Base layers
-const virtualMosaic = L.tileLayer.wms(geoserver_wms_url, {
-  layers: 'kaartdijin-boodja-private:virtual_mosaic',
-});
-const mapboxStreets = L.tileLayer.wms(geoserver_wms_url, {
-  layers: 'kaartdijin-boodja-public:mapbox-streets-public',
-});
-const waCoast = L.tileLayer.wms(geoserver_wms_url, {
-  layers: 'kaartdijin-boodja-private:WA_COAST_SMOOTHED',
-});
+const virtualMosaic = L.tileLayer(`${geoserver_wmts_url}&layer=kaartdijin-boodja-private:virtual_mosaic`);
+const mapboxStreets = L.tileLayer(`${geoserver_wmts_url}&layer=kaartdijin-boodja-public:mapbox-streets-public`);
+const waCoast = L.tileLayer(`${geoserver_wmts_url}&layer=kaartdijin-boodja-private:WA_COAST_SMOOTHED`);
 
 // Overlay layers
-const cadastre = L.tileLayer.wms(geoserver_wms_url, {
-  layers: 'kaartdijin-boodja-private:CPT_CADASTRE_SCDB',
-  format: 'image/png',
+const cadastre = L.tileLayer(`${geoserver_wmts_url}&layer=kaartdijin-boodja-private:CPT_CADASTRE_SCDB`, {
   transparent: true,
   opacity: 0.75,
-  minZoom: 13,
+  minZoom: 13, // Limit the zoom at which this layer can be visible.
 });
+// Do not use WMTS for the PRS locations layer (live layer, avoid caching).
 const prsLocations = L.tileLayer.wms(geoserver_wms_url, {
   layers: context.prs_layer_name,
   format: 'image/png',
   transparent: true,
   opacity: 0.75,
 });
-const dbcaRegions = L.tileLayer.wms(geoserver_wms_url, {
-  layers: 'kaartdijin-boodja-public:CPT_DBCA_REGIONS',
-  format: 'image/png',
+const dbcaRegions = L.tileLayer(`${geoserver_wmts_url}&layer=kaartdijin-boodja-public:CPT_DBCA_REGIONS`, {
   transparent: true,
   opacity: 0.75,
 });
-const dbcaTenure = L.tileLayer.wms(geoserver_wms_url, {
-  layers: 'kaartdijin-boodja-public:CPT_DBCA_LEGISLATED_TENURE',
-  format: 'image/png',
+const dbcaTenure = L.tileLayer(`${geoserver_wmts_url}&layer=kaartdijin-boodja-public:CPT_DBCA_LEGISLATED_TENURE`, {
   transparent: true,
   opacity: 0.75,
 });
-const regionalParks = L.tileLayer.wms(geoserver_wms_url, {
-  layers: 'kaartdijin-boodja-private:CPT_REGIONAL_PARKS',
-  format: 'image/png',
+const regionalParks = L.tileLayer(`${geoserver_wmts_url}&layer=kaartdijin-boodja-private:CPT_REGIONAL_PARKS`, {
   transparent: true,
   opacity: 0.75,
 });
-const swanCannDevContArea = L.tileLayer.wms(geoserver_wms_url, {
-  layers: 'kaartdijin-boodja-private:CPT_SWAN_CANN_DEV_CONT_AREA',
-  format: 'image/png',
+const swanCannDevContArea = L.tileLayer(`${geoserver_wmts_url}&layer=kaartdijin-boodja-private:CPT_SWAN_CANN_DEV_CONT_AREA`, {
   transparent: true,
   opacity: 0.75,
 });
-const ucl = L.tileLayer.wms(geoserver_wms_url, {
-  layers: 'kaartdijin-boodja-private:CPT_CADASTRE_UCL_1PL',
-  format: 'image/png',
+const ucl = L.tileLayer(`${geoserver_wmts_url}&layer=kaartdijin-boodja-private:CPT_CADASTRE_UCL_1PL`, {
   transparent: true,
   opacity: 0.75,
 });
-const lgaBoundaries = L.tileLayer.wms(geoserver_wms_url, {
-  layers: 'kaartdijin-boodja-public:CPT_LOCAL_GOVT_AREAS',
-  format: 'image/png',
+const lgaBoundaries = L.tileLayer(`${geoserver_wmts_url}&layer=kaartdijin-boodja-public:CPT_LOCAL_GOVT_AREAS`, {
   transparent: true,
   opacity: 0.75,
 });
