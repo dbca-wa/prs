@@ -19,7 +19,7 @@ spec:
           command:
             - /bin/chown
             - -R
-            - "10001:10001"
+            - '10001:10001'
             - /data
           volumeMounts:
             - mountPath: /data
@@ -39,3 +39,8 @@ spec:
         - name: prs-typesense-data
           persistentVolumeClaim:
             claimName: prs-typesense-data-uat
+      tolerations:
+        - effect: NoSchedule
+          key: kubernetes.azure.com/scalesetpriority
+          operator: Equal
+          value: spot
