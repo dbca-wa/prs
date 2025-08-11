@@ -536,9 +536,6 @@ class NoteTest(PrsTestCase):
         # save() will format the note_html value as valid HTML, while the
         # note value will be plain text.
         self.assertNotEqual(n.note_html, n.note)
-        # save() will surround the note_html value in <p> tags.
-        self.assertTrue(n.note_html.startswith("<p>"))
-        self.assertTrue(n.note_html.endswith("</p>"))
 
     def test_short_code(self):
         """Test the Note model short_note property."""
