@@ -1,19 +1,41 @@
 from celery import shared_task
-from indexer import utils
+from indexer.utils import (
+    get_typesense_client,
+    typesense_index_condition,
+    typesense_index_note,
+    typesense_index_record,
+    typesense_index_referral,
+    typesense_index_task,
+)
+from referral.utils import get_uploaded_file_content
+
+
+@shared_task(default_retry_delay=10, max_retries=3)
+def index_record(pk):
+    from referral.models import Record
+
+    try:
+        record = Record.objects.get(pk=pk)
+        if not record.uploaded_file_content:
+            record.uploaded_file_content = get_uploaded_file_content(record)
+            record.save()
+            return f"Indexed record {pk} file content"
+    except Record.DoesNotExist as exception:
+        raise index_record.retry(exc=exception)
 
 
 @shared_task(default_retry_delay=10, max_retries=1)
 def index_object(pk, model, client=None):
     """Index a single PRS referral app object."""
     if not client:
-        client = utils.typesense_client()
+        client = get_typesense_client()
 
     if model == "referral":
         from referral.models import Referral
 
         try:
             referral = Referral.objects.get(pk=pk)
-            utils.typesense_index_referral(referral, client)
+            typesense_index_referral(referral, client)
             return f"Updated referral {pk}"
         except Referral.DoesNotExist as exc:
             raise index_object.retry(exc=exc)
@@ -22,7 +44,7 @@ def index_object(pk, model, client=None):
 
         try:
             record = Record.objects.get(pk=pk)
-            utils.typesense_index_record(record, client)
+            typesense_index_record(record, client)
             return f"Updated record {pk}"
         except Record.DoesNotExist as exc:
             raise index_object.retry(exc=exc)
@@ -31,7 +53,7 @@ def index_object(pk, model, client=None):
 
         try:
             task = Task.objects.get(pk=pk)
-            utils.typesense_index_task(task, client)
+            typesense_index_task(task, client)
             return f"Updated task {pk}"
         except Task.DoesNotExist as exc:
             raise index_object.retry(exc=exc)
@@ -40,7 +62,7 @@ def index_object(pk, model, client=None):
 
         try:
             note = Note.objects.get(pk=pk)
-            utils.typesense_index_note(note, client)
+            typesense_index_note(note, client)
             return f"Updated note {pk}"
         except Note.DoesNotExist as exc:
             raise index_object.retry(exc=exc)
@@ -49,7 +71,7 @@ def index_object(pk, model, client=None):
 
         try:
             condition = Condition.objects.get(pk=pk)
-            utils.typesense_index_condition(condition, client)
+            typesense_index_condition(condition, client)
             return f"Updated condition {pk}"
         except Condition.DoesNotExist as exc:
             raise index_object.retry(exc=exc)

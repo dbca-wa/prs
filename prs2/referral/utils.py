@@ -3,6 +3,7 @@ import logging
 import re
 from datetime import date
 from io import BytesIO
+from string import punctuation
 
 import docx2txt
 import requests
@@ -64,10 +65,9 @@ def smart_truncate(content, length=100, suffix="....(more)"):
         return " ".join(content[: length + 1].split(" ")[0:-1]) + suffix
 
 
-def dewordify_text(txt):
+def dewordify_text(txt: str) -> str:
     """Function to strip some of the crufty HTML that results from copy-pasting
     MS Word documents/HTML emails into the RTF text fields in this application.
-    Should always return a unicode string.
 
     Source:
     http://stackoverflow.com/questions/1175540/iterative-find-replace-from-a-list-of-tuples-in-python
@@ -96,7 +96,7 @@ def dewordify_text(txt):
         return ""
 
 
-def breadcrumbs_li(links):
+def breadcrumbs_li(links: list) -> str:
     """Returns HTML: an unordered list of URLs (no surrounding <ul> tags).
     ``links`` should be a iterable of tuples (URL, text).
     Reference: https://getbootstrap.com/docs/4.1/components/breadcrumb/
@@ -161,19 +161,19 @@ def filter_queryset(request, model, queryset):
     return queryset, search_string
 
 
-def is_prs_user(request):
+def is_prs_user(request) -> bool:
     if "PRS user" not in [group.name for group in request.user.groups.all()]:
         return False
     return True
 
 
-def is_prs_power_user(request):
+def is_prs_power_user(request) -> bool:
     if "PRS power user" not in [group.name for group in request.user.groups.all()]:
         return False
     return True
 
 
-def prs_user(request):
+def prs_user(request) -> bool:
     return is_prs_user(request) or is_prs_power_user(request) or request.user.is_superuser
 
 
@@ -332,8 +332,8 @@ def get_next_pages(page_num, count=5):
     return next_page_numbers
 
 
-def get_uploaded_file_content(record):
-    """Convience function that takes in a Record object and returns the uploaded file's text content (for a given set of file types)."""
+def get_uploaded_file_content(record) -> str:
+    """Convenience function that takes in a Record object and returns the uploaded file's text content (for a given set of file types)."""
     if not record.pk or not record.extension or record.extension not in ["PDF", "MSG", "DOCX", "TXT"]:
         return None
 
@@ -387,19 +387,231 @@ def get_uploaded_file_content(record):
             # Read the upload blob content directly.
             file_content = record.uploaded_file.read()
 
-    # Trim down the file content a little to aid indexing.
-    if file_content:
-        # Decode a bytes object to a string.
-        if isinstance(file_content, bytes):
-            file_content = file_content.decode("utf-8")
-        # Replace punctuation with a space.
-        file_content = re.sub(r"[^\w\s]", " ", file_content)
-        # Replace newlines with a space.
-        file_content = file_content.replace("\r", "").replace("\n", " ")
-        # Replace multiple spaces with a single one.
-        file_content = re.sub(r"\s+", " ", file_content)
-        file_content = file_content.strip()
-        # Transliterate some unicode characters to ASCII.
-        file_content = unidecode(file_content)
+    # Decode any bytes object to a string.
+    if isinstance(file_content, bytes):
+        file_content = file_content.decode("utf-8")
 
     return file_content
+
+
+STOP_WORDS = [
+    "about",
+    "above",
+    "after",
+    "again",
+    "against",
+    "ain",
+    "all",
+    "am",
+    "an",
+    "and",
+    "any",
+    "are",
+    "aren",
+    "aren't",
+    "as",
+    "at",
+    "be",
+    "because",
+    "been",
+    "before",
+    "being",
+    "below",
+    "between",
+    "both",
+    "but",
+    "by",
+    "can",
+    "couldn",
+    "couldn't",
+    "did",
+    "didn",
+    "didn't",
+    "do",
+    "does",
+    "doesn",
+    "doesn't",
+    "doing",
+    "don",
+    "don't",
+    "down",
+    "during",
+    "each",
+    "few",
+    "for",
+    "from",
+    "further",
+    "had",
+    "hadn",
+    "hadn't",
+    "has",
+    "hasn",
+    "hasn't",
+    "have",
+    "haven",
+    "haven't",
+    "having",
+    "he",
+    "he'd",
+    "he'll",
+    "her",
+    "here",
+    "hers",
+    "herself",
+    "he's",
+    "him",
+    "himself",
+    "his",
+    "how",
+    "i'd",
+    "if",
+    "i'll",
+    "i'm",
+    "in",
+    "into",
+    "is",
+    "isn",
+    "isn't",
+    "it",
+    "it'd",
+    "it'll",
+    "it's",
+    "its",
+    "itself",
+    "i've",
+    "just",
+    "ll",
+    "ma",
+    "me",
+    "mightn",
+    "mightn't",
+    "more",
+    "most",
+    "mustn",
+    "mustn't",
+    "my",
+    "myself",
+    "needn",
+    "needn't",
+    "no",
+    "nor",
+    "not",
+    "now",
+    "of",
+    "off",
+    "on",
+    "once",
+    "only",
+    "or",
+    "other",
+    "our",
+    "ours",
+    "ourselves",
+    "out",
+    "over",
+    "own",
+    "re",
+    "same",
+    "shan",
+    "shan't",
+    "she",
+    "she'd",
+    "she'll",
+    "she's",
+    "should",
+    "shouldn",
+    "shouldn't",
+    "should've",
+    "so",
+    "some",
+    "such",
+    "than",
+    "that",
+    "that'll",
+    "the",
+    "their",
+    "theirs",
+    "them",
+    "themselves",
+    "then",
+    "there",
+    "these",
+    "they",
+    "they'd",
+    "they'll",
+    "they're",
+    "they've",
+    "this",
+    "those",
+    "through",
+    "to",
+    "too",
+    "under",
+    "until",
+    "up",
+    "ve",
+    "very",
+    "was",
+    "wasn",
+    "wasn't",
+    "we",
+    "we'd",
+    "we'll",
+    "we're",
+    "were",
+    "weren",
+    "weren't",
+    "we've",
+    "what",
+    "when",
+    "where",
+    "which",
+    "while",
+    "who",
+    "whom",
+    "why",
+    "will",
+    "with",
+    "won",
+    "won't",
+    "wouldn",
+    "wouldn't",
+    "you",
+    "you'd",
+    "you'll",
+    "your",
+    "you're",
+    "yours",
+    "yourself",
+    "yourselves",
+    "you've",
+]
+
+
+def search_document_normalise(content):
+    """For passed in search_document content, normalise and return."""
+    # Make lowercase.
+    content = content.lower()
+
+    # Normalise unicode characters.
+    content = unidecode(content)
+
+    # Remove any single-character words.
+    content = re.sub(r"\b[a-z0-9]\b\s*", "", content)
+
+    # If the content contain line breaks, split and rejoin with spaces.
+    content = " ".join([line for line in content.splitlines() if line])
+
+    # Remove stop words.
+    content = " ".join([word for word in content.split() if word not in STOP_WORDS])
+
+    # Replace punctuation with a space.
+    content = content.translate(content.maketrans(punctuation, " " * len(punctuation)))
+
+    # Replace instances of >1 consecutive spaces with a single space.
+    content = re.sub(r"\s{2,}", " ", content)
+
+    # Strip leading/trailing whitespace.
+    content = content.strip()
+
+    return content

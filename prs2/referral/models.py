@@ -6,7 +6,6 @@ from tempfile import NamedTemporaryFile
 
 import reversion
 from django.conf import settings
-from django.contrib.auth.signals import user_logged_in
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import GeometryCollection
 from django.contrib.postgres.fields import ArrayField
@@ -21,7 +20,7 @@ from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from extract_msg import Message
 from geojson import Feature, FeatureCollection, Polygon, dumps
-from indexer.utils import typesense_client
+from indexer.utils import get_typesense_client
 from lxml.html import fromstring
 from lxml_html_clean import clean_html
 from pygeopkg.conversion.to_geopkg_geom import make_gpkg_geom_header, point_lists_to_gpkg_polygon
@@ -31,8 +30,8 @@ from pygeopkg.core.srs import SRS
 from pygeopkg.shared.constants import SHAPE
 from pygeopkg.shared.enumeration import GeometryType, SQLFieldTypes
 from referral.base import ActiveModel, Audit
-from referral.tasks import index_object
-from referral.utils import as_row_subtract_referral_cell, dewordify_text, smart_truncate
+from referral.tasks import index_object, index_record
+from referral.utils import as_row_subtract_referral_cell, dewordify_text, search_document_normalise, smart_truncate
 from taggit.managers import TaggableManager
 from typesense.exceptions import ObjectNotFound
 from unidecode import unidecode
@@ -456,8 +455,6 @@ class Referral(ReferralBaseModel):
         Set the point field value based on any assocated Location objects to the centroid.
         Update the search_document field value for search purposes.
         """
-        if self.description:
-            self.description = unidecode(self.description)
         if self.address:
             self.address = unidecode(self.address)
         # We need a PK to call self.location_set
@@ -467,10 +464,9 @@ class Referral(ReferralBaseModel):
         # Update the regions_str field (only if the object already has a PK).
         if self.pk:
             self.regions_str = self.get_regions_str()
-        # Update the search_document field.
-        self.search_document = (
-            f"{self.reference} {self.type.name} {self.referring_org.name} {self.description} {self.address} {self.file_no}"
-        )
+
+        self.search_document = f"{self.reference} {self.type.name} {self.referring_org.name} {self.address or ''} {self.file_no or ''} {self.description or ''}"
+        self.search_document = search_document_normalise(self.search_document)
 
         super().save(*args, **kwargs)
 
@@ -773,11 +769,10 @@ class Task(ReferralBaseModel):
         ]
 
     def save(self, *args, **kwargs):
-        """Overide save() to cleanse text input to the description field and populate the search_document field."""
-        if self.description:
-            self.description = unidecode(self.description)
-        # Update the search_document field.
-        self.search_document = f"{self.type.name} {self.description}"
+        """Overide save() to cleanse and populate the search_document field."""
+        self.search_document = f"{self.type.name} {self.description or ''}"
+        self.search_document = search_document_normalise(self.search_document)
+
         super().save(*args, **kwargs)
 
         # Index the task.
@@ -1031,13 +1026,13 @@ class Task(ReferralBaseModel):
         referral_url = f"https://{settings.SITE_URL}{self.referral.get_absolute_url()}"
         address = self.referral.address or "not recorded"
         text_content = f"""This is an automated message to let you know that you have
-            been assigned a PRS task ({self.pk}) by the sending user.\n
+            been assigned a PRS task ({self.pk}).\n
             This task is attached to referral ID {self.referral.pk}.\n
             The referral reference is: {self.referral.reference}.\n
             The referral address is: {address}\n
             """
         html_content = f"""<p>This is an automated message to let you know that you have
-            been assigned a PRS task ({self.type.name}) by the sending user.</p>
+            been assigned a PRS task ({self.type.name}).</p>
             <p>The task is attached to referral ID {self.referral.pk}, located at this URL:</p>
             <p><a href="{referral_url}">{referral_url}</a></p>
             <p>The referral reference is: {self.referral.reference}</p>
@@ -1097,11 +1092,9 @@ class Record(ReferralBaseModel):
         """Return a list of string values as headers for any list view."""
         return ["Record", "Date", "Name", "Infobase ID", "Referral ID", "Type", "Size"]
 
-    def save(self, *args, **kwargs):
+    def save(self, **kwargs):
         """Overide save() to cleanse text input fields and populate the search_document field."""
         self.name = unidecode(self.name).replace("\r\n", "").strip()
-        if self.description:
-            self.description = unidecode(self.description)
 
         # If the file is a .MSG we take the sent date of the email and use it for order_date.
         if self.extension == "MSG":
@@ -1109,17 +1102,17 @@ class Record(ReferralBaseModel):
             if msg.date and not self.order_date:  # Don't override any existing order_date.
                 self.order_date = msg.date
 
-        # Update the search_document field.
-        self.search_document = f"{self.name} {self.infobase_id} {self.description} {self.uploaded_file_content}"
+        self.search_document = f"{self.name} {self.infobase_id or ''} {self.uploaded_file_content or ''} {self.description or ''}"
+        self.search_document = search_document_normalise(self.search_document)
 
-        super().save(*args, **kwargs)
+        super().save(**kwargs)
 
-        # Index the record.
+        # Index the record file content.
         try:
-            index_object.delay_on_commit(pk=self.pk, model="record")
+            index_record.delay_on_commit(pk=self.pk)
         except Exception:
             # Indexing failure should never block or return an exception. Log the error to stdout.
-            LOGGER.exception(f"Error during indexing record {self}")
+            LOGGER.exception(f"Error indexing record {self}")
 
     def get_indexed_document(self, client=None):
         """Query Typesense for any indexed document of this record."""
@@ -1127,7 +1120,7 @@ class Record(ReferralBaseModel):
             return None
 
         if not client:
-            client = typesense_client()
+            client = get_typesense_client()
 
         try:
             document = client.collections["records"].documents[self.pk].retrieve()
@@ -1286,7 +1279,7 @@ class Note(ReferralBaseModel):
         help_text="The type of note (optional).",
     )
     note_html = models.TextField(verbose_name="note")
-    note = models.TextField(editable=False)
+    note = models.TextField(editable=False)  # TODO: deprecate field.
     order_date = models.DateField(
         blank=True,
         null=True,
@@ -1319,8 +1312,8 @@ class Note(ReferralBaseModel):
             t = fromstring(self.note_html)
             self.note = t.text_content().strip()
 
-        # Update the search_document field.
         self.search_document = f"{self.note}"
+        self.search_document = search_document_normalise(self.search_document)
 
         super().save(*args, **kwargs)
 
@@ -1437,7 +1430,7 @@ class Condition(ReferralBaseModel):
     """
 
     referral = models.ForeignKey(Referral, on_delete=models.PROTECT, blank=True, null=True)
-    condition = models.TextField(editable=False, blank=True, null=True)
+    condition = models.TextField(editable=False, blank=True, null=True)  # TODO: deprecate field.
     condition_html = models.TextField(
         blank=True,
         null=True,
@@ -1445,7 +1438,7 @@ class Condition(ReferralBaseModel):
         help_text="""Insert words exactly as in the decision-maker's letter
         of approval, and add any advice notes relating to DPaW.""",
     )
-    proposed_condition = models.TextField(editable=False, blank=True, null=True)
+    proposed_condition = models.TextField(editable=False, blank=True, null=True)  # TODO: deprecate field.
     proposed_condition_html = models.TextField(
         verbose_name="proposed condition",
         blank=True,
@@ -1515,8 +1508,8 @@ class Condition(ReferralBaseModel):
             self.proposed_condition_html = ""
             self.proposed_condition = ""
 
-        # Update the search_document field.
         self.search_document = f"{self.condition} {self.proposed_condition} {self.identifier}"
+        self.search_document = search_document_normalise(self.search_document)
 
         super().save(*args, **kwargs)
 
@@ -1967,12 +1960,3 @@ class UserProfile(models.Model):
     def is_power_user(self):
         """Returns group membership of the PRS power user group (or is_superuser==True)."""
         return self.user.is_superuser or self.user.groups.filter(name=settings.PRS_POWER_USER_GROUP).exists()
-
-
-def create_user_profile(**kwargs):
-    UserProfile.objects.get_or_create(user=kwargs["user"])
-
-
-# Connect the user_logged_in signal to the method above to ensure that user
-# profiles exist.
-user_logged_in.connect(create_user_profile)

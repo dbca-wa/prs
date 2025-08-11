@@ -20,7 +20,7 @@ from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import FormView, ListView, TemplateView, View
-from indexer.utils import typesense_client
+from indexer.utils import get_typesense_client
 from referral.forms import (
     ClearanceCreateForm,
     IntersectingReferralForm,
@@ -127,7 +127,7 @@ class IndexSearch(LoginRequiredMixin, TemplateView):
         if "q" in self.request.GET and self.request.GET["q"]:
             context["query_string"] = self.request.GET["q"]
             context["search_result"] = []
-            client = typesense_client()
+            client = get_typesense_client()
             page = self.request.GET.get("page", 1)
             search_q = {
                 "q": self.request.GET["q"],
@@ -241,7 +241,7 @@ class IndexSearchCombined(LoginRequiredMixin, TemplateView):
             context["query_string"] = self.request.GET["q"]
             context["search_result"] = []
             context["referral_headers"] = Referral.get_headers()
-            client = typesense_client()
+            client = get_typesense_client()
             search_q = {
                 "q": self.request.GET["q"],
                 "sort_by": "created:desc",
