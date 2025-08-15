@@ -8,7 +8,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Group
-from django.contrib.gis.geos import GEOSGeometry, MultiPolygon
+from django.contrib.gis.geos import GEOSGeometry, MultiPolygon, Point
 from django.core.mail import EmailMultiAlternatives
 from django.core.paginator import Paginator
 from django.core.serializers import serialize
@@ -1349,6 +1349,39 @@ class ReferralReferenceSearch(PrsObjectList):
         context = super().get_context_data(**kwargs)
         context["object_count"] = self.object_list.count()
         return context
+
+
+class ReferralPointSearch(View):
+    """Basic view endpoint to query PRS referrals intersecting a given spatial point."""
+
+    http_method_names = ["get"]
+
+    def get(self, request, *args, **kwargs):
+        x = request.GET.get("x", None)  # Longitude
+        y = request.GET.get("y", None)  # Latitude
+        if not x or not y:
+            return HttpResponseBadRequest("Bad request")
+        # Validate user-supplied query params.
+        try:
+            x = float(x)
+            y = float(y)
+        except:
+            return HttpResponseBadRequest("Bad request")
+
+        locations = Location.objects.current().filter(poly__intersects=Point(x, y)).distinct()
+        referrals = Referral.objects.current().filter(pk__in=[loc.referral.pk for loc in locations]).distinct()
+        resp = [
+            {
+                "id": referral.pk,
+                "referral_date": referral.referral_date.strftime("%d %b %Y"),
+                "type": referral.type.name,
+                "reference": referral.reference,
+                "url": referral.get_absolute_url(),
+            }
+            for referral in referrals
+        ]
+
+        return JsonResponse(resp, safe=False)
 
 
 class TagList(PrsObjectList):

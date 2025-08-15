@@ -205,3 +205,33 @@ const findLot = function (lotname) {
 // Add a fullscreen control to the map.
 const fullScreen = new L.control.fullscreen();
 map.addControl(fullScreen);
+
+// Click event for the map.
+map.on('click', function (evt) {
+  const [x, y] = [evt.latlng.lng, evt.latlng.lat];
+  const queryUrl = `${context.referral_point_search_url}?x=${x}&y=${y}`;
+  // Query the proxied URL for any feature intersecting the clicked-on location.
+  fetch(queryUrl)
+    .then((resp) => resp.json())
+    .then(function (data) {
+      if (data.length > 0) {
+        // data will be an array of referrals.
+        let tableRows = '';
+        data.forEach(function (el, idx, arr) {
+          tableRows += `<tr><td><a href="${el.url}">${el.id}</a></td><td>${el.referral_date}</td><td>${el.type}</td><td>${el.reference}</td></tr>`;
+        });
+
+        // Generate popup HTML content
+        let content = `<table class="table table-bordered table-striped table-sm">
+  <thead>
+    <tr><th>Referral ID</th><th>Date</th><th>Type</th><th>Reference</th></tr>
+  </thead>
+  <tbody>
+    ${tableRows}
+  </tbody>
+</table>`;
+        // Open the popup on the map.
+        L.popup().setLatLng(evt.latlng).setContent(content).openOn(map);
+      }
+    });
+});
