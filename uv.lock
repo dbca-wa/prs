@@ -538,7 +538,7 @@ wheels = [
 
 [[package]]
 name = "extract-msg"
-version = "0.54.1"
+version = "0.55.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "beautifulsoup4" },
@@ -549,9 +549,9 @@ dependencies = [
     { name = "rtfde" },
     { name = "tzlocal" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/29/ff/eece5827eb97f18219808ad606a922eb5842656fb460235100ca3e6420df/extract_msg-0.54.1.tar.gz", hash = "sha256:fb39e9f0d3971c30ca6ffa5686bc971884f364b6e97c79ccc10013fb3cbd02de", size = 330997 }
+sdist = { url = "https://files.pythonhosted.org/packages/5e/65/c70afb3b119a44b3ee36b029485dc15326cf3a7c50da19a1ecbbf949c5d1/extract_msg-0.55.0.tar.gz", hash = "sha256:cf08283498c3dfcc7f894dad1579f52e3ced9fb76b865c2355cbe757af8a54e1", size = 331170 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ac/2b/88df89164597496208e4dbfb188f5a436b5da1bb204fc5bfd5edca1d1021/extract_msg-0.54.1-py3-none-any.whl", hash = "sha256:9064f54d519429becdc05c64bb2135c89f5886f706a4aebf38bfb6901deacdc4", size = 335984 },
+    { url = "https://files.pythonhosted.org/packages/53/81/87d5241036046ea17c5c8db228f4c9e04e07e53b627015d4496a99449aaf/extract_msg-0.55.0-py3-none-any.whl", hash = "sha256:baf0cdee9a8d267b70c366bc57ceb03dbfa1e7ab2dca6824169a7fe623f0917c", size = 336033 },
 ]
 
 [[package]]
@@ -995,7 +995,7 @@ wheels = [
 
 [[package]]
 name = "prs"
-version = "2.5.64"
+version = "2.5.65"
 source = { virtual = "." }
 dependencies = [
     { name = "celery" },
@@ -1055,7 +1055,7 @@ requires-dist = [
     { name = "django-storages", extras = ["azure"], specifier = "==1.14.6" },
     { name = "django-taggit", specifier = "==6.1.0" },
     { name = "docx2txt", specifier = "==0.9" },
-    { name = "extract-msg", specifier = "==0.54.1" },
+    { name = "extract-msg", specifier = "==0.55.0" },
     { name = "geojson", specifier = "==3.2.0" },
     { name = "gunicorn", specifier = "==23.0.0" },
     { name = "lxml", extras = ["html-clean"], specifier = "==6.0.0" },
@@ -1066,7 +1066,7 @@ requires-dist = [
     { name = "python-dotenv", specifier = "==1.1.1" },
     { name = "python-magic", specifier = "==0.4.27" },
     { name = "redis", specifier = "==6.4.0" },
-    { name = "sentry-sdk", extras = ["django"], specifier = "==2.34.1" },
+    { name = "sentry-sdk", extras = ["django"], specifier = "==2.35.0" },
     { name = "typesense", specifier = "==1.1.1" },
     { name = "unidecode", specifier = "==1.4.0" },
     { name = "webtemplate-dbca", specifier = "==1.8.2" },
@@ -1278,15 +1278,15 @@ wheels = [
 
 [[package]]
 name = "sentry-sdk"
-version = "2.34.1"
+version = "2.35.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "certifi" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/3a/38/10d6bfe23df1bfc65ac2262ed10b45823f47f810b0057d3feeea1ca5c7ed/sentry_sdk-2.34.1.tar.gz", hash = "sha256:69274eb8c5c38562a544c3e9f68b5be0a43be4b697f5fd385bf98e4fbe672687", size = 336969 }
+sdist = { url = "https://files.pythonhosted.org/packages/31/83/055dc157b719651ef13db569bb8cf2103df11174478649735c1b2bf3f6bc/sentry_sdk-2.35.0.tar.gz", hash = "sha256:5ea58d352779ce45d17bc2fa71ec7185205295b83a9dbb5707273deb64720092", size = 343014 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2d/3e/bb34de65a5787f76848a533afbb6610e01fbcdd59e76d8679c254e02255c/sentry_sdk-2.34.1-py2.py3-none-any.whl", hash = "sha256:b7a072e1cdc5abc48101d5146e1ae680fa81fe886d8d95aaa25a0b450c818d32", size = 357743 },
+    { url = "https://files.pythonhosted.org/packages/36/3d/742617a7c644deb0c1628dcf6bb2d2165ab7c6aab56fe5222758994007f8/sentry_sdk-2.35.0-py2.py3-none-any.whl", hash = "sha256:6e0c29b9a5d34de8575ffb04d289a987ff3053cf2c98ede445bea995e3830263", size = 363806 },
 ]
 
 [package.optional-dependencies]
