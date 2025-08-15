@@ -1096,7 +1096,7 @@ class Record(ReferralBaseModel):
         """Return a list of string values as headers for any list view."""
         return ["Record", "Date", "Name", "Infobase ID", "Referral ID", "Type", "Size"]
 
-    def save(self, **kwargs):
+    def save(self, index=True, **kwargs):
         """Overide save() to cleanse text input fields and populate the search_document field."""
         self.name = unidecode(self.name).replace("\r\n", "").strip()
 
@@ -1113,7 +1113,9 @@ class Record(ReferralBaseModel):
 
         # Index the record file content.
         try:
-            index_record.delay_on_commit(pk=self.pk)
+            if index:
+                index_object.delay_on_commit(pk=self.pk, model="record")
+                index_record.delay_on_commit(pk=self.pk)
         except Exception:
             # Indexing failure should never block or return an exception. Log the error to stdout.
             LOGGER.exception(f"Error indexing record {self}")
