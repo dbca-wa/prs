@@ -306,13 +306,17 @@ class NoteType(ReferralLookup):
     to be accessed anywhere but the Admin site.
     """
 
+    # TODO: deprecate model and replace with static method.
+
     icon = models.ImageField(upload_to="img", blank=True, null=True)
 
 
 class Agency(ReferralLookup):
     """
-    Lookup field to distinguish different govt Agencies by acronym (DER, DPaW, etc.)
+    Lookup field to distinguish different govt Agencies by acronym (DBCA, DWER, etc.)
     """
+
+    # TODO: deprecate model (unused).
 
     code = models.CharField(max_length=16)
 
@@ -1346,9 +1350,17 @@ class Note(ReferralBaseModel):
             <td>{note}</td>
             <td class="referral-id-cell"><a href="{referral_url}">{referral}</a></td>"""
         d = copy(self.__dict__)
+        icon_map = {
+            "conversation": "<i class='fa-solid fa-comments'></i>",
+            "email": "<i class='fa-solid fa-inbox'></i>",
+            "file-note": "<i class='fa-solid fa-note-sticky'></i>",
+            "letter-in": "<i class='fa-solid fa-envelope'></i>",
+            "letter_out": "<i class='fa-solid fa-square-envelope'></i>",
+            "report": "<i class='fa-solid fa-book'></i>",
+        }
         d["url"] = self.get_absolute_url()
-        if self.type:
-            d["type"] = mark_safe(f'<img src="/static/{self.type.icon.__str__()}" title="{self.type.name}" />')
+        if self.type and self.type.slug in icon_map:
+            d["type"] = mark_safe(icon_map[self.type.slug])
         else:
             d["type"] = ""
         d["creator"] = self.creator.get_full_name()
@@ -1801,7 +1813,7 @@ class Location(ReferralBaseModel):
         d["url"] = reverse("prs_object_detail", kwargs={"pk": self.pk, "model": "locations"})
         d["address"] = self.nice_address or "none"
         if self.poly:
-            d["polygon"] = mark_safe('<img src="/static/img/draw_polyline.png" alt="Polygon" />')
+            d["polygon"] = mark_safe('<i class="fa-solid fa-draw-polygon"></i>')
         else:
             d["polygon"] = ""
         d["referral_url"] = reverse(
