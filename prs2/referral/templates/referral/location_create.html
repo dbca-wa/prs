@@ -3,22 +3,24 @@
 {% block extra_head %}
     {{ block.super }}
     <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.min.css"
-          integrity="sha512-1xoFisiGdy9nvho8EgXuXvnpR5GAMSjFwp40gSRE3NwdUdIMIKuPa7bqoUhLD0O/5tPNhteAsE5XyyMi5reQVA=="
+          href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"
+          integrity="sha512-h9FcoyWjHcOcmEVkxOfTLnmZFWIH0iZhZT1H2TbOq55xssQGEJHEaIm+PgoUaZbRvQTNTluNOEfb1ZRy6D3BOw=="
           crossorigin="anonymous"
           referrerpolicy="no-referrer" />
     <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.css"
-          integrity="sha256-RTALnHN76PJ32RJx2mxggy+RUt9TIRV+mfPLSLbI75A="
-          crossorigin="anonymous" />
+          href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/3.0.2/Control.FullScreen.min.css"
+          integrity="sha512-icRYRbqvwyLFADCizHy+7d4vVNnzF92F0ADsgIlPU2eegXZJ9iHtF1BMi7xdgo1lSyd0nsyI5Lvxhhlxx7WxZg=="
+          crossorigin="anonymous"
+          referrerpolicy="no-referrer" />
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-search/4.0.0/leaflet-search.min.css"
+          integrity="sha512-+o26nsM883F01UlBWY09KgjDn7o1rgGFi1a+lX1zI7m0I2iIh4rckpQSKVnukvn8DKsb0A9hZHoUY7lBkvLdfA=="
+          crossorigin="anonymous"
+          referrerpolicy="no-referrer" />
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"
           integrity="sha256-XzD3RpaHPv7lzX9qt+2n1j5cWj48O24KsgaGYpKN8x8="
           crossorigin="anonymous" />
-    <link rel="stylesheet"
-          type="text/css"
-          href="{% static 'css/leaflet-search.min.css' %}" />
-    <style>#map { width:100%; height: 480px;}</style>
 {% endblock %}
 {% block page_content_inner %}
     <h1>{{ title }}</h1>
@@ -50,20 +52,21 @@
     {% endblock %}
     {% block extra_js %}
         {{ block.super }}
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.min.js"
-                integrity="sha512-SeiQaaDh73yrb56sTW/RgVdi/mMqNeM2oBwubFHagc5BkixSpP1fvqF47mKzPGWYSSy4RwbBunrJBQ4Co8fRWA=="
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"
+                integrity="sha512-BwHfrr4c9kmRkLw6iXFdzcdWV/PGkVgiIyIWLLlTSXzWQzxuSg4DiQUCpauz/EWjgk5TYQqX/kvn9pG1NpYfqg=="
                 crossorigin="anonymous"
                 referrerpolicy="no-referrer"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.js"
-                integrity="sha256-6H5xWuqlbGtfk8UL9eMYmp14brCbCw1ZZialT8fHLRE="
-                crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/3.0.2/Control.FullScreen.min.js"
+                integrity="sha512-G3uVfdWq1gdYQ0tfaN8APmD3UBQCv0Am3csZtRdaNbCBzNgh57yu7MhgrXozjeflGsRapDpBVdrKCQahT99p0Q=="
+                crossorigin="anonymous"
+                referrerpolicy="no-referrer"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-search/4.0.0/leaflet-search.min.js"
+                integrity="sha512-nvy2tht2GE/ReEeu0Zu7/Y1IgKTTrX1r1MaROtD1HDol5WUvw7Ih29qA6JCNCgYURzPcBqaSv12ZnNS68Eaq6Q=="
+                crossorigin="anonymous"
+                referrerpolicy="no-referrer"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"
                 integrity="sha256-siofc4Uwjlra3YWkwthOn8Uj69cNN4aMug/iOHNiRgs="
                 crossorigin="anonymous"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-search/3.0.2/leaflet-search.min.js"
-                integrity="sha512-lmt2nQGwuhA/7xEG4KjOuzy+kBQVOgpBNFxJR2yWp8J57H8nYxWC8J7Y5woDbqBBpBVHHLbFEi503u5K49KcOA=="
-                crossorigin="anonymous"
-                referrerpolicy="no-referrer"></script>
         <script src="{% static 'js/wellknown.js' %}"></script>
         <script src="{% static 'js/referral_map.js' %}"></script>
         <script>

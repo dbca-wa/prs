@@ -13,15 +13,18 @@
           crossorigin="anonymous"
           referrerpolicy="no-referrer" />
     <link rel="stylesheet"
-          type="text/css"
-          href="{% static 'css/leaflet-search.min.css' %}" />
+          href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-search/4.0.0/leaflet-search.min.css"
+          integrity="sha512-+o26nsM883F01UlBWY09KgjDn7o1rgGFi1a+lX1zI7m0I2iIh4rckpQSKVnukvn8DKsb0A9hZHoUY7lBkvLdfA=="
+          crossorigin="anonymous"
+          referrerpolicy="no-referrer" />
     <style>
-    #map {
-        position: absolute;
-        top: 76px;
-        bottom: 0;
-        width: 100%;
-    }
+        /* Override default map widget size */
+        #map {
+            position: absolute !important;
+            top: 76px !important;
+            bottom: 0 !important;
+            height: 100% !important;}
+        }
     </style>
 {% endblock extra_style %}
 {% block breadcrumb_nav %}{% endblock %}
@@ -44,8 +47,8 @@
             integrity="sha512-G3uVfdWq1gdYQ0tfaN8APmD3UBQCv0Am3csZtRdaNbCBzNgh57yu7MhgrXozjeflGsRapDpBVdrKCQahT99p0Q=="
             crossorigin="anonymous"
             referrerpolicy="no-referrer"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-search/3.0.2/leaflet-search.min.js"
-            integrity="sha512-lmt2nQGwuhA/7xEG4KjOuzy+kBQVOgpBNFxJR2yWp8J57H8nYxWC8J7Y5woDbqBBpBVHHLbFEi503u5K49KcOA=="
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-search/4.0.0/leaflet-search.min.js"
+            integrity="sha512-nvy2tht2GE/ReEeu0Zu7/Y1IgKTTrX1r1MaROtD1HDol5WUvw7Ih29qA6JCNCgYURzPcBqaSv12ZnNS68Eaq6Q=="
             crossorigin="anonymous"
             referrerpolicy="no-referrer"></script>
     <script src="{% static 'js/referral_map.js' %}"></script>
