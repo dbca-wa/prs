@@ -293,7 +293,7 @@ jobs:
           scan-type: 'image'
           scanners: 'vuln'
           image-ref: ${{ env.GHCR_IMAGE }}
-          vuln-type: 'os,library'
+          vuln-type: 'library'
           severity: 'HIGH,CRITICAL'
           format: 'sarif'
           output: 'trivy-results.sarif'
