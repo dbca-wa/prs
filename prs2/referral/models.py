@@ -747,7 +747,7 @@ class Task(ReferralBaseModel):
     def get_headers(cls):
         """Return a list of string values as headers for any list view."""
         return [
-            "Task",
+            "Task ID",
             "Type",
             "Task description",
             "Address",
@@ -791,11 +791,11 @@ class Task(ReferralBaseModel):
         Returns a string of HTML that renders the object details as table row cells.
         Remember to enclose this function in <tr> tags.
         """
-        template = """<td><a href="{url}">Open</a></td>
+        template = """<td><a href="{url}">{id}</a></td>
             <td>{type}</td>
             <td>{description}</td>
             <td>{address}</td>
-            <td class="referral-id-cell"><a href="{referral_url}">{referral}</a></td>
+            <td class="referral-id-cell"><a href="{referral_url}">{referral_id}</a></td>
             <td>{assigned_user}</td>
             <td><span style="display:none">{start_date_ts} </span>{start_date}</td>
             <td><span style="display:none">{due_date_ts} </span>{due_date}</td>
@@ -810,7 +810,7 @@ class Task(ReferralBaseModel):
             d["description"] = ""
         d["address"] = self.referral.address or ""
         d["referral_url"] = self.referral.get_absolute_url()
-        d["referral"] = self.referral
+        d["referral_id"] = self.referral.pk
         d["assigned_user"] = self.assigned_user.get_full_name()
         if self.start_date:
             d["start_date"] = self.start_date.strftime("%d %b %Y")
@@ -854,7 +854,7 @@ class Task(ReferralBaseModel):
             d["complete_url"] = reverse("task_action", kwargs={"pk": self.pk, "action": "complete"})
             d["stop_url"] = reverse("task_action", kwargs={"pk": self.pk, "action": "stop"})
             d["cancel_url"] = reverse("task_action", kwargs={"pk": self.pk, "action": "cancel"})
-            d["delete_url"] = reverse("prs_object_delete", kwargs={"pk": self.pk, "model": "task"})
+            d["delete_url"] = reverse("prs_object_delete", kwargs={"pk": self.pk, "model": "tasks"})
         else:
             template = "<td></td>"
         return format_html(template, **d)
@@ -975,8 +975,8 @@ class Task(ReferralBaseModel):
         Returns a string of HTML to render the object details inside <tbody> tags.
         """
         template = """<tr><th>Type</th><td>{type}</td></tr>
-            <tr><th>Referral ID</th><td><a href="{referral_url}">{referral_id}</a></td></tr>
-            <tr><th>Referrer's reference</th><td>{reference}</td></tr>
+            <tr><th>Referral</th><td><a href="{referral_url}">{referral}</a></td></tr>
+            <tr><th>Referral reference</th><td>{reference}</td></tr>
             <tr><th>Assigned to</th><td>{assigned_user}</td></tr>
             <tr><th>Description</th><td>{description}</td></tr>
             <tr><th>Start date</th><td>{start_date}</td></tr>
@@ -989,7 +989,7 @@ class Task(ReferralBaseModel):
         d = copy(self.__dict__)
         d["type"] = self.type.name
         d["referral_url"] = reverse("referral_detail", kwargs={"pk": self.referral.pk, "related_model": "tasks"})
-        d["referral_id"] = self.referral.pk
+        d["referral"] = self.referral
         d["reference"] = self.referral.reference
         d["assigned_user"] = self.assigned_user.get_full_name()
         d["state"] = self.state.name
@@ -1094,7 +1094,7 @@ class Record(ReferralBaseModel):
     @classmethod
     def get_headers(cls):
         """Return a list of string values as headers for any list view."""
-        return ["Record", "Date", "Name", "Infobase ID", "Referral ID", "Type", "Size"]
+        return ["Record ID", "Date", "Name", "Infobase ID", "Referral ID", "Type", "Size"]
 
     def save(self, index=True, **kwargs):
         """Overide save() to cleanse text input fields and populate the search_document field."""
@@ -1178,12 +1178,12 @@ class Record(ReferralBaseModel):
         Returns a string of HTML that renders the object details as table row cells.
         Remember to enclose this function in <tr> tags.
         """
-        template = """<td><a href="{url}">Open</a></td>
+        template = """<td><a href="{url}">{id}</a></td>
             <td><span style="display:none">{order_date_ts} </span>{order_date}</td>
             <td>{name}</td>
             <td><a href="{infobase_url}">{infobase_id}</a></td>
-            <td class="referral-id-cell"><a href="{referral_url}">{referral}</a></td>
-            <td><a href="{download_url}">{filetype}</a></td>
+            <td class="referral-id-cell"><a href="{referral_url}">{referral_id}</a></td>
+            <td>{download_url}</td>
             <td>{filesize}</td>"""
         d = copy(self.__dict__)
         d["url"] = self.get_absolute_url()
@@ -1194,7 +1194,7 @@ class Record(ReferralBaseModel):
             d["order_date"] = ""
             d["order_date_ts"] = ""
         d["referral_url"] = self.referral.get_absolute_url()
-        d["referral"] = self.referral
+        d["referral_id"] = self.referral.pk
         if self.infobase_id:
             d["infobase_url"] = reverse("infobase_shortcut", kwargs={"pk": self.pk})
             d["infobase_id"] = self.infobase_id
@@ -1202,12 +1202,10 @@ class Record(ReferralBaseModel):
             d["infobase_url"] = ""
             d["infobase_id"] = ""
         if self.uploaded_file:
-            d["download_url"] = self.uploaded_file.url
-            d["filetype"] = self.extension
+            d["download_url"] = mark_safe(f"<a href='{self.uploaded_file.url}'><i class='fa-solid fa-download'></i> {self.extension}</a>")
             d["filesize"] = self.filesize_str
         else:
             d["download_url"] = ""
-            d["filetype"] = ""
             d["filesize"] = ""
         return format_html(template, **d)
 
@@ -1232,10 +1230,10 @@ class Record(ReferralBaseModel):
         """
         template = """<tr><th>Name</th><td>{name}</td></tr>
             <tr><th>Referral</th><td><a href="{referral_url}">{referral}</a></td></tr>
-            <tr><th>Referrer's reference</th><td>{reference}</td></tr>
+            <tr><th>Referral reference</th><td>{reference}</td></tr>
             <tr><th>Infobase ID</th><td><a href="{infobase_url}">{infobase_id}</a></td></tr>
             <tr><th>Description</th><td>{description}</td></tr>
-            <tr><th>File type</th><td><a href="{download_url}">{filetype}</a></td></tr>
+            <tr><th>File type</th><td>{download_url}</td></tr>
             <tr><th>File size</th><td>{filesize}</td></tr>
             <tr><th>Date</th><td>{order_date}</td</tr>"""
         d = copy(self.__dict__)
@@ -1253,12 +1251,10 @@ class Record(ReferralBaseModel):
             d["infobase_id"] = ""
         d["description"] = self.description or ""
         if self.uploaded_file:
-            d["download_url"] = self.uploaded_file.url
-            d["filetype"] = self.extension
+            d["download_url"] = mark_safe(f"<a href='{self.uploaded_file.url}'><i class='fa-solid fa-download'></i> {self.extension}</a>")
             d["filesize"] = self.filesize_str
         else:
             d["download_url"] = ""
-            d["filetype"] = ""
             d["filesize"] = ""
         if self.order_date:
             d["order_date"] = self.order_date.strftime("%d-%b-%Y")
@@ -1306,7 +1302,7 @@ class Note(ReferralBaseModel):
     @classmethod
     def get_headers(cls):
         """Return a list of string values as headers for any list view."""
-        return ["Note", "Type", "Creator", "Date", "Note", "Referral ID"]
+        return ["Note ID", "Type", "Creator", "Date", "Note text", "Referral ID"]
 
     def save(self, *args, **kwargs):
         """Overide the Note model save() to cleanse the HTML used and populate the search_document field."""
@@ -1345,12 +1341,12 @@ class Note(ReferralBaseModel):
         Returns a string of HTML that renders the object details as table row cells.
         Remember to enclose this function in <tr> tags.
         """
-        template = """<td><a href="{url}">Open</a></td>
+        template = """<td><a href="{url}">{id}</a></td>
             <td>{type}</td>
             <td>{creator}</td>
             <td><span style="display:none">{order_date_ts} </span>{order_date}</td>
             <td>{note}</td>
-            <td class="referral-id-cell"><a href="{referral_url}">{referral}</a></td>"""
+            <td class="referral-id-cell"><a href="{referral_url}">{referral_id}</a></td>"""
         d = copy(self.__dict__)
         icon_map = {
             "conversation": "<i class='fa-solid fa-comments'></i>",
@@ -1374,7 +1370,7 @@ class Note(ReferralBaseModel):
             d["order_date_ts"] = ""
         d["note"] = smart_truncate(unidecode(self.note), length=400)
         d["referral_url"] = self.referral.get_absolute_url()
-        d["referral"] = self.referral
+        d["referral_id"] = self.referral.pk
         return format_html(template, **d)
 
     def as_row_actions(self):
@@ -1393,11 +1389,9 @@ class Note(ReferralBaseModel):
         return as_row_subtract_referral_cell(self.as_row())
 
     def as_tbody(self):
-        """
-        Returns a string of HTML to render the object details inside <tbody> tags.
-        """
+        """Returns a string of HTML to render the object details inside <tbody> tags."""
         template = """<tr><th>Referral</th><td><a href="{referral_url}">{referral}</a></td></tr>
-            <tr><th>Referrer's reference</th><td>{reference}</td></tr>
+            <tr><th>Referral reference</th><td>{reference}</td></tr>
             <tr><th>Type</th><td>{type}</td></tr>
             <tr><th>Created by</th><td>{creator}</td</tr>
             <tr><th>Date</th><td>{order_date}</td</tr>
@@ -1493,7 +1487,7 @@ class Condition(ReferralBaseModel):
     def get_headers(cls):
         """Return a list of string values as headers for any list view."""
         return [
-            "Condition",
+            "Condition ID",
             "No.",
             "Proposed condition",
             "Approved condition",
@@ -1539,12 +1533,12 @@ class Condition(ReferralBaseModel):
         Returns a string of HTML that renders the object details as table row cells.
         Remember to enclose this function in <tr> tags.
         """
-        template = """<td><a href="{url}">Open</a></td>
+        template = """<td><a href="{url}">{id}</a></td>
             <td>{identifier}</td>
             <td>{proposed_condition}</td>
             <td>{condition}</td>
             <td>{category}</td>
-            <td class="referral-id-cell"><a href="{referral_url}">{referral}</a></td>"""
+            <td class="referral-id-cell"><a href="{referral_url}">{referral_id}</a></td>"""
         d = copy(self.__dict__)
         d["url"] = self.get_absolute_url()
         d["identifier"] = self.identifier or ""
@@ -1565,7 +1559,7 @@ class Condition(ReferralBaseModel):
             )
         else:
             d["referral_url"] = ""
-        d["referral"] = self.referral or ""
+        d["referral_id"] = self.referral.pk if self.referral else ""
         return format_html(template, **d)
 
     def as_row_actions(self):
@@ -1592,7 +1586,7 @@ class Condition(ReferralBaseModel):
         Returns a string of HTML to render the object details inside <tbody> tags.
         """
         template = """<tr><th>Referral</th><td><a href="{referral_url}">{referral}</a></td></tr>
-            <tr><th>Referrer's reference</th><td>{reference}</td></tr>
+            <tr><th>Referral reference</th><td>{reference}</td></tr>
             <tr><th>Number</th><td>{identifier}</td></tr>
             <tr><th>Model condition</th><td>{model_condition}</td></tr>
             <tr><th>Proposed condition text</th><td>{proposed_condition_html}</td></tr>
@@ -1665,7 +1659,7 @@ class Clearance(models.Model):
     def get_headers(cls):
         """Return a list of string values as headers for any list view."""
         return [
-            "Clearance",
+            "Clearance ID",
             "Condition no.",
             "Condition",
             "Category",
@@ -1682,13 +1676,13 @@ class Clearance(models.Model):
         Returns a string of HTML that renders the object details as table row
         cells. Remember to enclose this function in <tr> tags.
         """
-        template = """<td><a href="{url}">Open</a></td>
+        template = """<td><a href="{url}">{id}</a></td>
             <td>{identifier}</td>
             <td>{condition}</td>
             <td>{category}</td>
             <td>{task}</td>
             <td>{deposited_plan}</td>
-            <td class="referral-id-cell"><a href="{referral_url}">{referral}</a></td>"""
+            <td class="referral-id-cell"><a href="{referral_url}">{referral_id}</a></td>"""
         d = copy(self.__dict__)
         d["url"] = self.get_absolute_url()
         d["identifier"] = self.condition.identifier or ""
@@ -1703,8 +1697,8 @@ class Clearance(models.Model):
         else:
             d["task"] = self.task.type.name
         d["deposited_plan"] = self.deposited_plan or ""
-        d["referral"] = self.task.referral
         d["referral_url"] = self.task.referral.get_absolute_url()
+        d["referral_id"] = self.task.referral.pk
         return format_html(template, **d)
 
     def as_tbody(self):
@@ -1712,11 +1706,11 @@ class Clearance(models.Model):
         Returns a string of HTML to render the object details inside <tbody> tags.
         """
         template = """<tr><th>Referral</th><td><a href="{referral_url}">{referral}</a></td></tr>
-            <tr><th>Referrer's reference</th><td>{reference}</td></tr>
+            <tr><th>Referral reference</th><td>{reference}</td></tr>
             <tr><th>Referral description</th><td>{referral_desc}</td></tr>
-            <tr><th>Condition ID</th><td><a href="{condition_url}">{condition}</a></td></tr>
+            <tr><th>Condition</th><td><a href="{condition_url}">{condition}</a></td></tr>
             <tr><th>Approved condition text</th><td>{condition_html}</td></tr>
-            <tr><th>Task ID</th><td><a href="{task_url}">{task}</a></td></tr>
+            <tr><th>Task</th><td><a href="{task_url}">{task}</a></td></tr>
             <tr><th>Task description</th><td>{task_desc}</td></tr>
             <tr><th>Deposited plan</th><td>{deposited_plan}</td></tr>"""
         d = copy(self.__dict__)
@@ -1772,7 +1766,7 @@ class Location(ReferralBaseModel):
     @classmethod
     def get_headers(cls):
         """Return a list of string values as headers for any list view."""
-        return ["Location", "Address", "Polygon", "Referral ID"]
+        return ["Location ID", "Address", "Polygon", "Referral ID"]
 
     def save(self, *args, **kwargs):
         """
@@ -1807,10 +1801,10 @@ class Location(ReferralBaseModel):
         Returns a string of HTML that renders the object details as table row cells.
         Remember to enclose this function in <tr> tags.
         """
-        template = """<td><a href="{url}">Open</a></td>
+        template = """<td><a href="{url}">{id}</a></td>
             <td>{address}</td>
             <td>{polygon}</td>
-            <td class="referral-id-cell"><a href="{referral_url}">{referral}</a></td>"""
+            <td class="referral-id-cell"><a href="{referral_url}">{referral_id}</a></td>"""
         d = copy(self.__dict__)
         d["url"] = reverse("prs_object_detail", kwargs={"pk": self.pk, "model": "locations"})
         d["address"] = self.nice_address or "none"
@@ -1822,7 +1816,7 @@ class Location(ReferralBaseModel):
             "referral_detail",
             kwargs={"pk": self.referral.pk, "related_model": "locations"},
         )
-        d["referral"] = self.referral
+        d["referral_id"] = self.referral.pk
         return format_html(template, **d)
 
     def as_row_actions(self):
@@ -1845,7 +1839,7 @@ class Location(ReferralBaseModel):
         Returns a string of HTML to render the object details inside <tbody> tags.
         """
         template = """<tr><th>Referral</th><td><a href="{referral_url}">{referral}</a></td></tr>
-            <tr><th>Referrer's reference</th><td>{reference}</td></tr>
+            <tr><th>Referral reference</th><td>{reference}</td></tr>
             <tr><th>Address</th><td>{address}</td></tr>"""
         d = copy(self.__dict__)
         d["url"] = self.get_absolute_url()
@@ -1920,7 +1914,7 @@ class Bookmark(ReferralBaseModel):
         Returns a string of HTML to render the object details inside <tbody> tags.
         """
         template = """<tr><th>Referral</th><td><a href="{referral_url}">{referral}</a></td></tr>
-            <tr><th>Referrer's reference</th><td>{reference}</td></tr>
+            <tr><th>Referral reference</th><td>{reference}</td></tr>
             <tr><th>User</th><td>{user}</td></tr>
             <tr><th>Description</th><td>{description}</td></tr>"""
         d = copy(self.__dict__)
