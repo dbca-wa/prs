@@ -298,7 +298,7 @@ class EmailedReferral(models.Model):
             referral_preexists = False
             # Referral type
             if not ReferralType.objects.filter(name__istartswith=app["APP_TYPE"]).exists():
-                log = f'Referral type {app["APP_TYPE"]} is not recognised type; skipping'
+                log = f"Referral type {app['APP_TYPE']} is not recognised type; skipping"
                 LOGGER.warning(log)
                 self.log = f"{log}\n"
                 self.processed = True
@@ -321,7 +321,7 @@ class EmailedReferral(models.Model):
             if LocalGovernment.objects.filter(name=app["LOCAL_GOVERNMENT"]).exists():
                 referral.lga = LocalGovernment.objects.filter(name=app["LOCAL_GOVERNMENT"]).first()
             else:
-                log = f'LGA {app["LOCAL_GOVERNMENT"]} was not recognised'
+                log = f"LGA {app['LOCAL_GOVERNMENT']} was not recognised"
                 LOGGER.warning(log)
                 self.log = self.log + f"{log}\n"
                 actions.append(f"{datetime.now().isoformat()} {log}")
@@ -383,7 +383,7 @@ class EmailedReferral(models.Model):
                             regions.append(r)
                     intersected_region = True
                 except Exception:
-                    log = f'Address long/lat could not be parsed ({a["LONGITUDE"]}, {a["LATITUDE"]})'
+                    log = f"Address long/lat could not be parsed ({a['LONGITUDE']}, {a['LATITUDE']})"
                     LOGGER.warning(log)
                     self.log = f"{log}\n"
                     actions.append(f"{datetime.now().isoformat()} {log}")
@@ -406,7 +406,7 @@ class EmailedReferral(models.Model):
                                         for r in Region.objects.all():
                                             if r.region_mpoly and r.region_mpoly.intersects(p) and r not in regions:
                                                 regions.append(r)
-                        log = f'Address PIN {a["PIN"]} returned geometry from SLIP'
+                        log = f"Address PIN {a['PIN']} returned geometry from SLIP"
                         self.log = self.log + f"{log}\n"
                         LOGGER.info(log)
                     except Exception as e:
@@ -414,7 +414,7 @@ class EmailedReferral(models.Model):
                         LOGGER.error(log)
                         LOGGER.exception(e)
                 else:
-                    log = f'Address PIN could not be parsed ({a["PIN"]})'
+                    log = f"Address PIN could not be parsed ({a['PIN']})"
                     LOGGER.warning(log)
                     self.log = self.log + f"{log}\n"
 

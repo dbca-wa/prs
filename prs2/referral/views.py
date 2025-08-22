@@ -744,7 +744,7 @@ class ReferralCreateChild(PrsObjectCreate):
                 record.task_set.add(obj)
             else:
                 record.note_set.add(obj)
-        messages.success(self.request, f"The record has been added to {self.kwargs["model"].capitalize()} {self.kwargs["id"]}.")
+        messages.success(self.request, f"The record has been added to {self.kwargs['model'].capitalize()} {self.kwargs['id']}.")
 
     def create_new_record(self, form):
         request = self.request
@@ -780,7 +780,7 @@ class ReferralCreateChild(PrsObjectCreate):
         condition_qs = Condition.objects.current().filter(referral=self.parent_referral).exclude(condition="")
         condition_choices = []
         for i in condition_qs:
-            condition_choices.append((i.id, f"{i.identifier or ""} - {smart_truncate(i.condition, 100)}"))
+            condition_choices.append((i.id, f"{i.identifier or ''} - {smart_truncate(i.condition, 100)}"))
         return condition_choices
 
     def create_clearance(self, form):
@@ -824,7 +824,7 @@ class ReferralCreateChild(PrsObjectCreate):
                 msg.send(fail_silently=True)
             tasks.append(clearance_task.pk)
 
-        messages.success(self.request, f"New Clearance {str(tasks).strip("[]")} has been created.")
+        messages.success(self.request, f"New Clearance {str(tasks).strip('[]')} has been created.")
 
     def create_condition(self, obj):
         obj.save()
@@ -1022,7 +1022,7 @@ class LocationIntersects(PrsObjectCreate):
         for ref in form.cleaned_data["related_refs"]:
             self.parent_referral.add_relationship(ref)
 
-        messages.success(self.request, f"{len(form.cleaned_data["related_refs"])} Referral relationship(s) created.")
+        messages.success(self.request, f"{len(form.cleaned_data['related_refs'])} Referral relationship(s) created.")
         return redirect(self.get_success_url())
 
     def referral_intersecting_locations(self):
@@ -1582,10 +1582,10 @@ class ReferralRelate(PrsObjectList):
         """
         # NOTE: query parameters always live in request.GET.
         if not self.request.GET.get("ref_pk", None):
-            raise AttributeError(f"Relate view {self.__class__.__name__} must be called with a " "ref_pk query parameter.")
+            raise AttributeError(f"Relate view {self.__class__.__name__} must be called with a ref_pk query parameter.")
 
         if "create" not in self.request.GET and "delete" not in self.request.GET:
-            raise AttributeError(f"Relate view {self.__class__.__name__} must be called with either " "create or delete query parameters.")
+            raise AttributeError(f"Relate view {self.__class__.__name__} must be called with either create or delete query parameters.")
 
         ref1 = self.get_object()
         ref2 = get_object_or_404(Referral, pk=self.request.GET.get("ref_pk"))
