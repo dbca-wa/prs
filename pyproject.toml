@@ -51,6 +51,7 @@ dev = [
 [tool.ruff]
 line-length = 140
 indent-width = 4
+extend-exclude = ["migrations"]
 
 [tool.ruff.lint]
 ignore = ["E265", "E501", "E722"]
