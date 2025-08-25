@@ -18,7 +18,7 @@ dependencies = [
   "django-reversion==5.1.0",
   "django-taggit==6.1.0",
   "unidecode==1.4.0",
-  "pillow==11.2.1",
+  "pillow==11.3.0",
   "python-magic==0.4.27",
   "lxml[html-clean]==5.4.0",
   "xmltodict==0.14.2",
