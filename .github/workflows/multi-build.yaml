@@ -3,13 +3,9 @@
 name: Build multi arch Docker Image with separate Github Runners and run vulnerability scan
 
 on:
-  workflow_dispatch:
   push:
     branches:
       - master
-    paths:
-      - 'Dockerfile'
-      - '.github/workflows/multi-build.yaml'
   pull_request:
     branches:
       - master
