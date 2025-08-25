@@ -1766,7 +1766,7 @@ class Location(ReferralBaseModel):
     @classmethod
     def get_headers(cls):
         """Return a list of string values as headers for any list view."""
-        return ["Location ID", "Address", "Polygon", "Referral ID"]
+        return ["Location ID", "Address", "Street View", "Referral ID"]
 
     def save(self, *args, **kwargs):
         """
@@ -1803,15 +1803,17 @@ class Location(ReferralBaseModel):
         """
         template = """<td><a href="{url}">{id}</a></td>
             <td>{address}</td>
-            <td>{polygon}</td>
+            <td>{streetview_url}</td>
             <td class="referral-id-cell"><a href="{referral_url}">{referral_id}</a></td>"""
         d = copy(self.__dict__)
         d["url"] = reverse("prs_object_detail", kwargs={"pk": self.pk, "model": "locations"})
         d["address"] = self.nice_address or "none"
         if self.poly:
-            d["polygon"] = mark_safe('<i class="fa-solid fa-draw-polygon"></i>')
+            d["streetview_url"] = mark_safe(
+                f'<a href="http://maps.google.com/maps?q=&layer=c&cbll={self.poly.centroid.y},{self.poly.centroid.x}" title="Open in Google Street View" target="_blank"><i class="fa-solid fa-street-view"></i></a>'
+            )
         else:
-            d["polygon"] = ""
+            d["streetview_url"] = ""
         d["referral_url"] = reverse(
             "referral_detail",
             kwargs={"pk": self.referral.pk, "related_model": "locations"},
@@ -1850,6 +1852,10 @@ class Location(ReferralBaseModel):
         d["referral"] = self.referral
         d["reference"] = self.referral.reference
         d["address"] = self.nice_address or "none"
+
+        if self.poly:
+            template += "<tr><th>Google Street View</th><td><a href='{streetview_url}' title='Open in Google Street View' target='_blank'><i class='fa-solid fa-street-view'></i></a></td></tr>"
+            d["streetview_url"] = f"http://maps.google.com/maps?q=&layer=c&cbll={self.poly.centroid.y},{self.poly.centroid.x}"
         return format_html(template, **d)
 
     def get_regions_intersected(self):

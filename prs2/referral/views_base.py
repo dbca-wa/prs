@@ -252,7 +252,7 @@ class PrsObjectDetail(LoginRequiredMixin, DetailView):
                 context["related_records"] = obj.records.current().order_by(F("order_date").desc(nulls_last=True))
         if self.model == Location:
             # Add child locations serialised as GeoJSON (if geometry exists).
-            if obj:
+            if obj and obj.poly:
                 context["geojson_locations"] = serialize("geojson", [obj], geometry_field="poly", srid=4283)
         return context
 
