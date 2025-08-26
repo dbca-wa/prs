@@ -11,6 +11,8 @@ on:
   pull_request:
     branches:
       - master
+    tags:
+      - '*'
 env:
   # The name of the Docker image to be built and pushed to GitHub Container Registry.
   # The image name will be in the format: ghcr.io/<owner>/<repo>

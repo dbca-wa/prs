@@ -20,7 +20,7 @@ dependencies = [
   "unidecode==1.4.0",
   "pillow==11.3.0",
   "python-magic==0.4.27",
-  "lxml[html-clean]==6.0.0",
+  "lxml[html-clean]==6.0.1",
   "xmltodict==0.14.2",
   "extract-msg==0.55.0",
   "webtemplate-dbca==1.8.2",
