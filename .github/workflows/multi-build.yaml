@@ -1,14 +1,9 @@
-# This workflow builds a multi-arch Docker image using GitHub Actions and separated Github Runners with native support for ARM64 and AMD64 architectures, without using QEMU emulation.
+# This workflow builds a multi-arch Docker image using GitHub Actions and separated Github Runners with native support for ARM64 and AMD64 architectures.
 # It uses Docker Buildx to build and push the image to GitHub Container Registry (GHCR).
 name: Build multi-architecture Docker Image with separate GitHub Runners and run vulnerability scan
 
 on:
   push:
-    branches:
-      - master
-    tags:
-      - '*'
-  pull_request:
     branches:
       - master
     tags:
@@ -285,7 +280,7 @@ jobs:
       security-events: write
     steps:
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.32.0
+        uses: aquasecurity/trivy-action@0.33.1
         env:
           TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db
         with:
