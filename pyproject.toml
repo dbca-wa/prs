@@ -35,7 +35,7 @@ dependencies = [
   "django-crum==0.7.9",
   "sentry-sdk[django]==2.30.0",
   "redis==6.2.0",
-  "xlsxwriter==3.2.3",
+  "xlsxwriter==3.2.8",
   "django-storages[azure]==1.14.6",
 ]
 
