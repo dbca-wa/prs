@@ -1,8 +1,12 @@
 import json
+import os
 import re
 from copy import copy
 from datetime import date, datetime, timedelta
+from tempfile import TemporaryDirectory
+from zipfile import ZipFile
 
+import fiona
 from dbca_utils.utils import env
 from django.conf import settings
 from django.contrib import messages
@@ -26,6 +30,7 @@ from referral.forms import (
     IntersectingReferralForm,
     LocationForm,
     ReferralCreateForm,
+    ShapefileUploadForm,
     TagReplaceForm,
     TaskCancelForm,
     TaskCompleteForm,
@@ -54,6 +59,7 @@ from referral.models import (
 )
 from referral.utils import breadcrumbs_li, is_model_or_string, is_prs_power_user, prs_user, query_caddy, smart_truncate, wfs_getfeature
 from referral.views_base import PrsObjectCreate, PrsObjectDelete, PrsObjectDetail, PrsObjectList, PrsObjectUpdate
+from shapely.geometry import shape
 from taggit.models import Tag
 
 
@@ -878,6 +884,76 @@ class ReferralCreateChild(PrsObjectCreate):
         # If "email user" was checked, do so now.
         if self.request.POST.get("email_user"):
             obj.email_user()
+
+
+class ShapefileUpload(LoginRequiredMixin, FormView):
+    """Specialist view to allow upload of a zipped shapefile on a referral,
+    generating a record and location(s).
+    """
+
+    model = Location
+    form_class = ShapefileUploadForm
+    template_name = "referral/change_form.html"
+
+    def get_referral(self):
+        return Referral.objects.get(pk=self.kwargs["pk"])
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        referral = self.get_referral()
+        title = "Upload shapefile"
+        context["title"] = title.upper()
+        context["page_title"] = f"PRS | Referral {referral.pk} | {title}"
+        links = [
+            (reverse("site_home"), "Home"),
+            (reverse("prs_object_list", kwargs={"model": "referrals"}), "Referrals"),
+            (reverse("referral_detail", kwargs={"pk": referral.pk}), referral.pk),
+            (None, title),
+        ]
+        context["breadcrumb_trail"] = breadcrumbs_li(links)
+        return context
+
+    def get_success_url(self):
+        return reverse("referral_detail", kwargs={"pk": self.get_referral().pk})
+
+    def form_valid(self, form):
+        referral = self.get_referral()
+        location_count = 0
+        # Unzip the uploaded file to a temporary directory.
+        temp_dir = TemporaryDirectory()
+        zipfile = ZipFile(form.cleaned_data["uploaded_shapefile"])
+        zipfile.extractall(temp_dir.name)
+        # Parse the unzipped shapefile geometry.
+        shapefiles = [f for f in os.listdir(temp_dir.name) if f.lower().endswith(".shp")]
+
+        # Zip might contain >1 shapefile.
+        for filename in shapefiles:
+            shp = fiona.open(os.path.join(temp_dir.name, filename))
+            for obj in shp:
+                geometry = shape(obj["geometry"])
+                # For each polygon/multipolygon, create a Location object.
+                if geometry.geom_type == "MultiPolygon":
+                    geoms = list(geometry.geoms)
+                elif geometry.geom_type == "Polygon":
+                    geoms = [geometry]
+                else:
+                    continue
+
+                for geom in geoms:
+                    # Instantiate a Django polygon
+                    poly = GEOSGeometry(geom.wkt)
+                    # Generate a new location attached to the referral.
+                    _ = Location.objects.create(referral=referral, poly=poly)
+                    location_count += 1
+
+        # For the uploaded file, create a Record object.
+        new_record = Record.objects.create(
+            name=form.cleaned_data["uploaded_shapefile"].name, referral=referral, uploaded_file=form.cleaned_data["uploaded_shapefile"]
+        )
+
+        messages.success(self.request, f"Shapefile processed and saved as {new_record} - {location_count} locations generated")
+
+        return super().form_valid(form)
 
 
 class LocationCreate(ReferralCreateChild):

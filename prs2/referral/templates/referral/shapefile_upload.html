@@ -1,0 +1,30 @@
+{% extends "base_prs.html" %}
+{% load static %}
+{% block page_content_inner %}
+    <h1>{{ title }}</h1>
+    {% if address %}
+        <p>
+            <strong>Referral address: {{ address }}</strong>
+        </p>
+    {% endif %}
+    <p>
+        Choose location(s) from cadastre to add to this referral, or draw location(s):
+        <div id="map"></div>
+        <br>
+        <p>Selected locations from cadastre:</p>
+        <ol id="selected_locations">
+        </ol>
+        <form id="locations_form" action = "" method="post">
+            {% csrf_token %}
+            <input type="submit"
+                   name="save"
+                   value="Save"
+                   class="btn btn-primary btn-lg"
+                   id="submit-id-save">
+            <input type="submit"
+                   name="cancel"
+                   value="Cancel"
+                   class="btn btn-primary"
+                   id="submit-id-cancel">
+        </form>
+    {% endblock %}

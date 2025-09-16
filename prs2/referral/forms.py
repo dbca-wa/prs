@@ -439,6 +439,32 @@ class RecordCreateForm(RecordForm):
         exclude = BaseForm.Meta.exclude + ["referral", "notes"]
 
 
+class ShapefileUploadForm(forms.Form):
+    uploaded_shapefile = forms.FileField(required=True, help_text="Zipped shapefile (polygon/multipolygon features only)")
+    upload_button = Submit("upload", "Upload", css_class="btn-lg")
+    cancel_button = Submit("cancel", "Cancel", css_class="btn-secondary")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = BaseFormHelper()
+        self.helper.layout = Layout(
+            HTML(
+                """<div><p>Upload a zip file archive containing one or more shapefiles (polygon/multipolygon geometry only).</p>
+                <p>Polygons will be added to the referral as locations, and the zipfile attached as a record.</p></div>"""
+            ),
+            "uploaded_shapefile",
+            Div(self.upload_button, self.cancel_button, css_class="col-sm-offset-4 col-md-offset-3 col-lg-offset-2"),
+        )
+
+    def clean(self):
+        # Validation: zip files only.
+        cleaned_data = super().clean()
+        upload = cleaned_data.get("uploaded_shapefile")
+        if upload.content_type not in ["application/zip", "application/x-zip", "application/x-zip-compressed"]:
+            self._errors["uploaded_shapefile"] = self.error_class(["File type is not permitted (.zip only)."])
+        return cleaned_data
+
+
 class CustomFormHelper(BaseFormHelper):
     """Override the BaseFormHelper to change field_class.
     TODO: this is a bad solution for making a single field widget wider.
