@@ -61,5 +61,7 @@
     map.removeLayer(cadastre);
     map.addLayer(prsLocations)
     map.setView([-31, 118], 4);
+    // Click event for the map (PRS referrals popup).
+    map.on('click', clickMapPopup);
     </script>
 {% endblock extra_js %}

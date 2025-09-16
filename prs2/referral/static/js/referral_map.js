@@ -140,12 +140,6 @@ L.Control.LotFilter = L.Control.extend({
     input.placeholder = text;
     input.role = 'search';
     input.id = 'id_input_lotSearch';
-    // Prevent click progration (handled differently in IE11)
-    if (!window.ActiveXObject && 'ActiveXObject' in window) {
-      input.MSPointerDown = input.onmousedown = input.ondblclick = input.onpointerdown = L.DomEvent.stopPropagation;
-    } else {
-      L.DomEvent.disableClickPropagation(input); // Prevents input selection in IE11.
-    }
 
     return input;
   },
@@ -206,8 +200,9 @@ const findLot = function (lotname) {
 const fullScreen = new L.control.fullscreen();
 map.addControl(fullScreen);
 
-// Click event for the map.
-map.on('click', function (evt) {
+function clickMapPopup(evt) {
+  // Event handler function: on click, query the API for referrals that intersect the location
+  // and create a popup listing them.
   const [x, y] = [evt.latlng.lng, evt.latlng.lat];
   const queryUrl = `${context.referral_point_search_url}?x=${x}&y=${y}`;
   // Query the proxied URL for any feature intersecting the clicked-on location.
@@ -234,4 +229,4 @@ map.on('click', function (evt) {
         L.popup().setLatLng(evt.latlng).setContent(content).openOn(map);
       }
     });
-});
+}

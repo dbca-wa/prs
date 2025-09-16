@@ -159,6 +159,7 @@ map.on('draw:deleted', function (e) {
 });
 
 // Click event for the map - add clicked-on features to a list.
+map.off('click', function (e) {});
 map.on('click', function (e) {
   // IE11 hack below: prevent the click if the lot search input has focus.
   if (clickChooseEnabled && !$('input#id_input_lotSearch').is(':focus')) {

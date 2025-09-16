@@ -63,7 +63,10 @@
                     {% endif %}
                     <a class="dropdown-item"
                        href="{% url 'referral_location_create' pk=referral.pk %}"
-                       title="Add location">Create location(s)</a>
+                       title="Create location">Create location(s)</a>
+                    <a class="dropdown-item"
+                       href="{% url 'referral_shapefile_upload' pk=referral.pk %}"
+                       title="Upload shapefile">Upload shapefile</a>
                     <a class="dropdown-item"
                        href="{% url 'referral_relate' pk=referral.pk %}"
                        title="Add related">Add a related referral</a>
@@ -319,6 +322,8 @@
           locationsLayer.addData(geojsonFeatures);
           map.fitBounds(locationsLayer.getBounds());
           locationsLayer.addTo(map);
+          // Click event for the map (PRS referrals popup).
+          map.on('click', clickMapPopup);
         </script>
     {% endif %}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/dropzone.min.js"
