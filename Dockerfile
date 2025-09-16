@@ -18,7 +18,7 @@ COPY --from=ghcr.io/astral-sh/uv:0.7 /uv /uvx /bin/
 
 # Install required OS packages.
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends libgdal-dev \
+  && apt-get install -y --no-install-recommends gdal-bin libgdal-dev \
   && rm -rf /var/lib/apt/lists/*
 
 # Since there's no point in shipping lock files, we move them
