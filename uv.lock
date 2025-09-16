@@ -1199,14 +1199,14 @@ requires-dist = [
     { name = "python-dotenv", specifier = "==1.1.1" },
     { name = "python-magic", specifier = "==0.4.27" },
     { name = "redis", specifier = "==6.4.0" },
-    { name = "sentry-sdk", extras = ["django"], specifier = "==2.37.0" },
+    { name = "sentry-sdk", extras = ["django"], specifier = "==2.38.0" },
     { name = "shapely", specifier = "==2.1.1" },
     { name = "typesense", specifier = "==1.1.1" },
     { name = "unidecode", specifier = "==1.4.0" },
     { name = "webtemplate-dbca", specifier = "==1.8.2" },
-    { name = "whitenoise", extras = ["brotli"], specifier = "==6.9.0" },
-    { name = "xlsxwriter", specifier = "==3.2.5" },
-    { name = "xmltodict", specifier = "==0.15.0" },
+    { name = "whitenoise", extras = ["brotli"], specifier = "==6.10.0" },
+    { name = "xlsxwriter", specifier = "==3.2.8" },
+    { name = "xmltodict", specifier = "==1.0.0" },
 ]
 
 [package.metadata.requires-dev]
@@ -1420,15 +1420,15 @@ wheels = [
 
 [[package]]
 name = "sentry-sdk"
-version = "2.37.0"
+version = "2.38.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "certifi" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/af/9a/0b2eafc31d5c7551b6bef54ca10d29adea471e0bd16bfe985a9dc4b6633e/sentry_sdk-2.37.0.tar.gz", hash = "sha256:2c661a482dd5accf3df58464f31733545745bb4d5cf8f5e46e0e1c4eed88479f", size = 346203, upload-time = "2025-09-05T11:41:43.848Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b2/22/60fd703b34d94d216b2387e048ac82de3e86b63bc28869fb076f8bb0204a/sentry_sdk-2.38.0.tar.gz", hash = "sha256:792d2af45e167e2f8a3347143f525b9b6bac6f058fb2014720b40b84ccbeb985", size = 348116, upload-time = "2025-09-15T15:00:37.846Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/07/d5/f9f4a2bf5db2ca8f692c46f3821fee1f302f1b76a0e2914aee5390fca565/sentry_sdk-2.37.0-py2.py3-none-any.whl", hash = "sha256:89c1ed205d5c25926558b64a9bed8a5b4fb295b007cecc32c0ec4bf7694da2e1", size = 368304, upload-time = "2025-09-05T11:41:41.286Z" },
+    { url = "https://files.pythonhosted.org/packages/7a/84/bde4c4bbb269b71bc09316af8eb00da91f67814d40337cc12ef9c8742541/sentry_sdk-2.38.0-py2.py3-none-any.whl", hash = "sha256:2324aea8573a3fa1576df7fb4d65c4eb8d9929c8fa5939647397a07179eef8d0", size = 370346, upload-time = "2025-09-15T15:00:35.821Z" },
 ]
 
 [package.optional-dependencies]
@@ -1619,11 +1619,11 @@ wheels = [
 
 [[package]]
 name = "whitenoise"
-version = "6.9.0"
+version = "6.10.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/b9/cf/c15c2f21aee6b22a9f6fc9be3f7e477e2442ec22848273db7f4eb73d6162/whitenoise-6.9.0.tar.gz", hash = "sha256:8c4a7c9d384694990c26f3047e118c691557481d624f069b7f7752a2f735d609", size = 25920, upload-time = "2025-02-06T22:16:34.957Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/27/9a/4f4b84ff1f3a5c3cbc8070b6ecbbab6cd121c385244c9d24d80bb284190f/whitenoise-6.10.0.tar.gz", hash = "sha256:7b7e53de65d749cb1ce4a7100e751d9742e323b52746f9f93944c0d348ea2d02", size = 26412, upload-time = "2025-09-09T11:07:24.694Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/64/b2/2ce9263149fbde9701d352bda24ea1362c154e196d2fda2201f18fc585d7/whitenoise-6.9.0-py3-none-any.whl", hash = "sha256:c8a489049b7ee9889617bb4c274a153f3d979e8f51d2efd0f5b403caf41c57df", size = 20161, upload-time = "2025-02-06T22:16:32.589Z" },
+    { url = "https://files.pythonhosted.org/packages/cb/3b/4fa26e02935334fa0eb1422c938b1db796c55de7a432cc86b9d8cf97260c/whitenoise-6.10.0-py3-none-any.whl", hash = "sha256:bad74a40b33b055ba59731b6048dd08d5647f273b72bef922aa43ddd287b02da", size = 20194, upload-time = "2025-09-09T11:07:23.544Z" },
 ]
 
 [package.optional-dependencies]
@@ -1639,18 +1639,18 @@ sdist = { url = "https://files.pythonhosted.org/packages/89/8d/7aad74930380c8972
 
 [[package]]
 name = "xlsxwriter"
-version = "3.2.5"
+version = "3.2.8"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/a7/47/7704bac42ac6fe1710ae099b70e6a1e68ed173ef14792b647808c357da43/xlsxwriter-3.2.5.tar.gz", hash = "sha256:7e88469d607cdc920151c0ab3ce9cf1a83992d4b7bc730c5ffdd1a12115a7dbe", size = 213306, upload-time = "2025-06-17T08:59:14.619Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/06/8f/f6bec39596df9634e3860000ee8c1467398c5f489ac5461456026b074ee7/xlsxwriter-3.2.8.tar.gz", hash = "sha256:8c0dc8f1538c4052a4d4e07a1962750949c2a469138a6cfbc73349c88f6b39a7", size = 216091, upload-time = "2025-09-14T12:41:02.715Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/fa/34/a22e6664211f0c8879521328000bdcae9bf6dbafa94a923e531f6d5b3f73/xlsxwriter-3.2.5-py3-none-any.whl", hash = "sha256:4f4824234e1eaf9d95df9a8fe974585ff91d0f5e3d3f12ace5b71e443c1c6abd", size = 172347, upload-time = "2025-06-17T08:59:13.453Z" },
+    { url = "https://files.pythonhosted.org/packages/fd/45/de7a965ad9c4be23b60e99c5fe491e5f5b3c5026f530313b05ed7533ef24/xlsxwriter-3.2.8-py3-none-any.whl", hash = "sha256:cb0baf8c9bcce14fdadd01297f4e6cd64901cf536283a1f4ab5d07290d85a66b", size = 175480, upload-time = "2025-09-14T12:41:01.257Z" },
 ]
 
 [[package]]
 name = "xmltodict"
-version = "0.15.0"
+version = "1.0.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/51/ee/b30fdb281b39da57053bd7012870989de6f066d6ef1476d78de8fc427324/xmltodict-0.15.0.tar.gz", hash = "sha256:c6d46b4e3413d1e4fc3e5016f0f1c7a5c10f8ce39efaa0cb099af986ecfc9a53", size = 60285, upload-time = "2025-09-05T00:35:45.947Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/8b/79/1b8215b967eb66b92ba323a2d70ff820188b5dd18c8975326fa06e7d50ef/xmltodict-1.0.0.tar.gz", hash = "sha256:f50eb9020d28c673b40bbe3f43458ee165f0267c67f8ad8df0d70d9a4f3ac824", size = 71681, upload-time = "2025-09-12T18:48:45.93Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d6/56/507a207b96e3aa7365c28bb6702011e7c76c899c1737966b25852eaef3e8/xmltodict-0.15.0-py2.py3-none-any.whl", hash = "sha256:8887783bf1faba1754fc45fdf3fe03fbb3629c811ae57f91c018aace4c58d4ed", size = 10965, upload-time = "2025-09-05T00:35:44.583Z" },
+    { url = "https://files.pythonhosted.org/packages/89/e1/719fc59777227614641f3103964c58c6c10203c72633ef0d5cdcb2d7f676/xmltodict-1.0.0-py3-none-any.whl", hash = "sha256:64316adb5e30ca21ad5cf391f4f0f6b34f673d96b79574f1db1e32b13b43ee34", size = 13292, upload-time = "2025-09-12T18:48:44.544Z" },
 ]
