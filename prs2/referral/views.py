@@ -626,7 +626,7 @@ class ReferralCreateChild(PrsObjectCreate):
         # Sanity check: disallow addition of clearance tasks where no approved
         # conditions exist on the referral.
         if "clearance" in self.kwargs.values() and not self.get_condition_choices():
-            messages.error(self.request, "This referral has no approval conditions!")
+            messages.error(self.request, "This referral has no approval conditions!", extra_tags="danger")
             return HttpResponseRedirect(self.get_success_url())
         return super().get(request, *args, **kwargs)
 
@@ -919,16 +919,34 @@ class ShapefileUpload(LoginRequiredMixin, FormView):
     def form_valid(self, form):
         referral = self.get_referral()
         location_count = 0
+
         # Unzip the uploaded file to a temporary directory.
-        temp_dir = TemporaryDirectory()
-        zipfile = ZipFile(form.cleaned_data["uploaded_shapefile"])
-        zipfile.extractall(temp_dir.name)
+        try:
+            temp_dir = TemporaryDirectory()
+            zipfile = ZipFile(form.cleaned_data["uploaded_shapefile"])
+            zipfile.extractall(temp_dir.name)
+        except:
+            messages.error(
+                self.request,
+                f"Error encountered while extracting {form.cleaned_data["uploaded_shapefile"].name} (corrupted/invalid zip archive)",
+                extra_tags="danger",
+            )
+            return HttpResponseRedirect(self.get_success_url())
+
         # Parse the unzipped shapefile geometry.
         shapefiles = [f for f in os.listdir(temp_dir.name) if f.lower().endswith(".shp")]
 
         # Zip might contain >1 shapefile.
         for filename in shapefiles:
-            shp = fiona.open(os.path.join(temp_dir.name, filename))
+            try:
+                shp = fiona.open(os.path.join(temp_dir.name, filename))
+            except:
+                # Exception while loading the shapefile - catch and return to the referral view.
+                messages.error(
+                    self.request, f"Error encountered while loading {filename} (corrupted/invalid shapefile)", extra_tags="danger"
+                )
+                return HttpResponseRedirect(self.get_success_url())
+
             for obj in shp:
                 geometry = shape(obj["geometry"])
                 # For each polygon/multipolygon, create a Location object.
@@ -937,6 +955,7 @@ class ShapefileUpload(LoginRequiredMixin, FormView):
                 elif geometry.geom_type == "Polygon":
                     geoms = [geometry]
                 else:
+                    messages.info(self.request, f"Feature of geometry type {geometry.geom_type} not imported")
                     continue
 
                 for geom in geoms:
@@ -950,7 +969,6 @@ class ShapefileUpload(LoginRequiredMixin, FormView):
         new_record = Record.objects.create(
             name=form.cleaned_data["uploaded_shapefile"].name, referral=referral, uploaded_file=form.cleaned_data["uploaded_shapefile"]
         )
-
         messages.success(self.request, f"Shapefile processed and saved as {new_record} - {location_count} locations generated")
 
         return super().form_valid(form)
@@ -1200,13 +1218,13 @@ class TaskAction(PrsObjectUpdate):
         task = self.get_object()
 
         if action == "update" and task.stop_date and not task.restart_date:
-            messages.error(request, "You can't edit a stopped task - restart the task first!")
+            messages.error(request, "You can't edit a stopped task - restart the task first!", extra_tags="danger")
             return redirect(task.get_absolute_url())
         if action == "stop" and task.complete_date:
-            messages.error(request, "You can't stop a completed task!")
+            messages.error(request, "You can't stop a completed task!", extra_tags="danger")
             return redirect(task.get_absolute_url())
         if action == "start" and not task.stop_date:
-            messages.error(request, "You can't restart a non-stopped task!")
+            messages.error(request, "You can't restart a non-stopped task!", extra_tags="danger")
             return redirect(task.get_absolute_url())
         if action == "inherit" and task.assigned_user == request.user:
             messages.info(request, "That task is already assigned to you.")

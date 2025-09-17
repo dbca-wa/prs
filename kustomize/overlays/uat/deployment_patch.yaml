@@ -177,7 +177,3 @@ spec:
           operator: Equal
           value: spot
           effect: NoSchedule
-        - key: arch
-          operator: Equal
-          value: arm64
-          effect: NoSchedule

@@ -460,7 +460,7 @@ class ShapefileUploadForm(forms.Form):
         # Validation: zip files only.
         cleaned_data = super().clean()
         upload = cleaned_data.get("uploaded_shapefile")
-        if upload.content_type not in ["application/zip", "application/x-zip", "application/x-zip-compressed"]:
+        if upload and upload.content_type not in ["application/zip", "application/x-zip", "application/x-zip-compressed"]:
             self._errors["uploaded_shapefile"] = self.error_class(["File type is not permitted (.zip only)."])
         return cleaned_data
 
