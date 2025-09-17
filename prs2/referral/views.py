@@ -1,12 +1,9 @@
 import json
-import os
 import re
 from copy import copy
 from datetime import date, datetime, timedelta
-from tempfile import TemporaryDirectory
-from zipfile import ZipFile
 
-import fiona
+import pyproj
 from dbca_utils.utils import env
 from django.conf import settings
 from django.contrib import messages
@@ -24,6 +21,7 @@ from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import FormView, ListView, TemplateView, View
+from fiona.io import ZipMemoryFile
 from indexer.utils import get_typesense_client
 from referral.forms import (
     ClearanceCreateForm,
@@ -60,6 +58,7 @@ from referral.models import (
 from referral.utils import breadcrumbs_li, is_model_or_string, is_prs_power_user, prs_user, query_caddy, smart_truncate, wfs_getfeature
 from referral.views_base import PrsObjectCreate, PrsObjectDelete, PrsObjectDetail, PrsObjectList, PrsObjectUpdate
 from shapely.geometry import shape
+from shapely.ops import transform
 from taggit.models import Tag
 
 
@@ -919,56 +918,48 @@ class ShapefileUpload(LoginRequiredMixin, FormView):
     def form_valid(self, form):
         referral = self.get_referral()
         location_count = 0
+        name = form.cleaned_data["uploaded_shapefile"].name
 
-        # Unzip the uploaded file to a temporary directory.
+        # Open the uploaded file and parse the shapefile.
         try:
-            temp_dir = TemporaryDirectory()
-            zipfile = ZipFile(form.cleaned_data["uploaded_shapefile"])
-            zipfile.extractall(temp_dir.name)
+            zip_file = ZipMemoryFile(form.cleaned_data["uploaded_shapefile"])
+            shp = zip_file.open()
         except:
+            # Exception while opening the zipped shapefile - catch and return to the referral view.
             messages.error(
                 self.request,
-                f"Error encountered while extracting {form.cleaned_data["uploaded_shapefile"].name} (corrupted/invalid zip archive)",
+                f"Error while loading {name} (corrupt/invalid shapefile)",
                 extra_tags="danger",
             )
             return HttpResponseRedirect(self.get_success_url())
 
-        # Parse the unzipped shapefile geometry.
-        shapefiles = [f for f in os.listdir(temp_dir.name) if f.lower().endswith(".shp")]
+        source_crs = pyproj.CRS(shp.crs.to_string())
+        dest_crs = pyproj.CRS("EPSG:4283")  # GDA 94
+        # Define our projection function.
+        project = pyproj.Transformer.from_crs(source_crs, dest_crs, always_xy=True).transform
 
-        # Zip might contain >1 shapefile.
-        for filename in shapefiles:
-            try:
-                shp = fiona.open(os.path.join(temp_dir.name, filename))
-            except:
-                # Exception while loading the shapefile - catch and return to the referral view.
-                messages.error(
-                    self.request, f"Error encountered while loading {filename} (corrupted/invalid shapefile)", extra_tags="danger"
-                )
-                return HttpResponseRedirect(self.get_success_url())
+        for feature in shp:
+            geometry = shape(feature.geometry)
+            projected_geometry = transform(project, geometry)  # Project the geometry to GDA 94.
 
-            for obj in shp:
-                geometry = shape(obj["geometry"])
-                # For each polygon/multipolygon, create a Location object.
-                if geometry.geom_type == "MultiPolygon":
-                    geoms = list(geometry.geoms)
-                elif geometry.geom_type == "Polygon":
-                    geoms = [geometry]
-                else:
-                    messages.info(self.request, f"Feature of geometry type {geometry.geom_type} not imported")
-                    continue
+            # For each polygon/multipolygon, create a Location object.
+            if projected_geometry.geom_type == "MultiPolygon":
+                geometries = list(projected_geometry.geoms)
+            elif projected_geometry.geom_type == "Polygon":
+                geometries = [projected_geometry]
+            else:
+                messages.info(self.request, f"Feature of geometry type {geometry.geom_type} not imported")
+                continue
 
-                for geom in geoms:
-                    # Instantiate a Django polygon
-                    poly = GEOSGeometry(geom.wkt)
-                    # Generate a new location attached to the referral.
-                    _ = Location.objects.create(referral=referral, poly=poly)
-                    location_count += 1
+            for geom in geometries:
+                # Instantiate a Django polygon
+                poly = GEOSGeometry(geom.wkt)
+                # Generate a new location attached to the referral.
+                _ = Location.objects.create(referral=referral, poly=poly)
+                location_count += 1
 
         # For the uploaded file, create a Record object.
-        new_record = Record.objects.create(
-            name=form.cleaned_data["uploaded_shapefile"].name, referral=referral, uploaded_file=form.cleaned_data["uploaded_shapefile"]
-        )
+        new_record = Record.objects.create(name=name, referral=referral, uploaded_file=form.cleaned_data["uploaded_shapefile"])
         messages.success(self.request, f"Shapefile processed and saved as {new_record} - {location_count} locations generated")
 
         return super().form_valid(form)
