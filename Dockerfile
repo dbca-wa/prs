@@ -2,6 +2,11 @@
 # Prepare the base environment.
 FROM python:3.13-slim-bookworm AS builder_base
 
+# Install required OS packages.
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends gcc gdal-bin libgdal-dev \
+  && rm -rf /var/lib/apt/lists/*
+
 # This approximately follows this guide: https://hynek.me/articles/docker-uv/
 # Which creates a standalone environment with the dependencies.
 # - Silence uv complaining about not being able to use hard links,
