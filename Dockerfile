@@ -4,7 +4,7 @@ FROM python:3.13-slim-bookworm AS builder_base
 
 # Install required OS packages.
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends gcc gdal-bin libgdal-dev \
+  && apt-get install -y --no-install-recommends build-essential gdal-bin libgdal-dev \
   && rm -rf /var/lib/apt/lists/*
 
 # This approximately follows this guide: https://hynek.me/articles/docker-uv/
