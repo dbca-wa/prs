@@ -132,3 +132,8 @@ spec:
                       key: SENTRY_DSN
                 - name: SENTRY_ENVIRONMENT
                   value: 'uat'
+          tolerations:
+            - key: arch
+              operator: Equal
+              value: arm64
+              effect: NoSchedule

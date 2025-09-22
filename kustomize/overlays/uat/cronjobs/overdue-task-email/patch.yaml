@@ -30,3 +30,8 @@ spec:
                     secretKeyRef:
                       name: prs-env-uat
                       key: EMAIL_PORT
+          tolerations:
+            - key: arch
+              operator: Equal
+              value: arm64
+              effect: NoSchedule
