@@ -21,7 +21,7 @@ dependencies = [
   "pillow==11.2.1",
   "python-magic==0.4.27",
   "lxml[html-clean]==5.4.0",
-  "xmltodict==0.14.2",
+  "xmltodict==1.0.2",
   "extract-msg==0.54.1",
   "webtemplate-dbca==1.8.2",
   "geojson==3.2.0",
