@@ -172,12 +172,3 @@ spec:
                 secretKeyRef:
                   name: prs-env-uat
                   key: CACHE_MIDDLEWARE_SECONDS
-      tolerations:
-        - key: kubernetes.azure.com/scalesetpriority
-          operator: Equal
-          value: spot
-          effect: NoSchedule
-        - key: arch
-          operator: Equal
-          value: arm64
-          effect: NoSchedule
