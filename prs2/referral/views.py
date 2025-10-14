@@ -565,9 +565,12 @@ class ReferralCreateChild(PrsObjectCreate):
     a Note to a Record).
     """
 
+    def get_referral(self):
+        return Referral.objects.get(pk=self.kwargs["pk"])
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        referral_id = self.parent_referral.pk
+        referral = self.get_referral()
         child_model = is_model_or_string(self.kwargs["model"].capitalize())
         if "id" in self.kwargs:  # Relating to existing object.
             child_obj = str(child_model.objects.get(pk=self.kwargs["id"]))
@@ -599,7 +602,7 @@ class ReferralCreateChild(PrsObjectCreate):
         links = [
             (reverse("site_home"), "Home"),
             (reverse("prs_object_list", kwargs={"model": "referrals"}), "Referrals"),
-            (reverse("referral_detail", kwargs={"pk": referral_id}), referral_id),
+            (reverse("referral_detail", kwargs={"pk": referral.pk}), referral.pk),
             (None, last_breadcrumb),
         ]
         context["breadcrumb_trail"] = breadcrumbs_li(links)
@@ -609,17 +612,13 @@ class ReferralCreateChild(PrsObjectCreate):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        referral = self.parent_referral
+        referral = self.get_referral()
         if "clearance" in self.kwargs.values():
             kwargs["condition_choices"] = self.get_condition_choices()
             kwargs["initial"] = {"assigned_user": self.request.user}
         if "addrecord" in self.kwargs.values() or "addnote" in self.kwargs.values():
             kwargs["referral"] = referral
         return kwargs
-
-    @property
-    def parent_referral(self):
-        return Referral.objects.get(pk=self.kwargs["pk"])
 
     def get(self, request, *args, **kwargs):
         # Sanity check: disallow addition of clearance tasks where no approved
@@ -632,12 +631,13 @@ class ReferralCreateChild(PrsObjectCreate):
     def post(self, request, *args, **kwargs):
         # If the user clicked Cancel, redirect to the referral detail page.
         if request.POST.get("cancel"):
-            return HttpResponseRedirect(self.parent_referral.get_absolute_url())
+            referral = self.get_referral()
+            return HttpResponseRedirect(referral.get_absolute_url())
         return super().post(request, *args, **kwargs)
 
     def form_valid(self, form):
         self.object = form.save(commit=False)
-        self.object.referral = self.parent_referral
+        self.object.referral = self.get_referral()
         self.object.user = self.request.user
         self.object.creator, self.object.modifier = self.request.user, self.request.user
         redirect_url = None
@@ -685,7 +685,8 @@ class ReferralCreateChild(PrsObjectCreate):
             child_model = is_model_or_string(self.kwargs["model"].capitalize())
             child_obj = child_model.objects.get(pk=self.kwargs["id"])
             return child_obj.get_absolute_url()
-        return self.parent_referral.get_absolute_url()
+        referral = self.get_referral()
+        return referral.get_absolute_url()
 
     def create_existing_note(self, form):
         pk = self.kwargs["id"]
@@ -782,7 +783,8 @@ class ReferralCreateChild(PrsObjectCreate):
 
     def get_condition_choices(self):
         """Return conditions with 'approved' text only."""
-        condition_qs = Condition.objects.current().filter(referral=self.parent_referral).exclude(condition="")
+        referral = self.get_referral()
+        condition_qs = Condition.objects.current().filter(referral=referral).exclude(condition="")
         condition_choices = []
         for i in condition_qs:
             condition_choices.append((i.id, f"{i.identifier or ''} - {smart_truncate(i.condition, 100)}"))
@@ -897,6 +899,21 @@ class ShapefileUpload(LoginRequiredMixin, FormView):
     def get_referral(self):
         return Referral.objects.get(pk=self.kwargs["pk"])
 
+    def get_intersecting_locations(self, locations):
+        """Check to see if the list of locations intersects with any other locations."""
+        intersecting_locations = []
+        referral = self.get_referral()
+        for location in locations:
+            if location.poly:
+                other_locs = (
+                    Location.objects.current()
+                    .exclude(referral=referral, pk=location.pk)
+                    .filter(poly__isnull=False, poly__intersects=location.poly)
+                )
+                if other_locs.exists():
+                    intersecting_locations.append(location.pk)
+        return intersecting_locations
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         referral = self.get_referral()
@@ -917,6 +934,7 @@ class ShapefileUpload(LoginRequiredMixin, FormView):
 
     def form_valid(self, form):
         referral = self.get_referral()
+        locations = []
         location_count = 0
         name = form.cleaned_data["uploaded_shapefile"].name
 
@@ -955,14 +973,25 @@ class ShapefileUpload(LoginRequiredMixin, FormView):
                 # Instantiate a Django polygon
                 poly = GEOSGeometry(geom.wkt)
                 # Generate a new location attached to the referral.
-                _ = Location.objects.create(referral=referral, poly=poly)
-                location_count += 1
+                locations.append(Location.objects.create(referral=referral, poly=poly))
 
         # For the uploaded file, create a Record object.
         new_record = Record.objects.create(name=name, referral=referral, uploaded_file=form.cleaned_data["uploaded_shapefile"])
-        messages.success(self.request, f"Shapefile processed and saved as {new_record} - {location_count} locations generated")
+        messages.success(self.request, f"Shapefile processed and saved as {new_record} - {len(locations)} locations generated")
 
-        return super().form_valid(form)
+        # Test for intersecting locations.
+        intersecting_locations = self.get_intersecting_locations(locations)
+        if intersecting_locations:
+            # Redirect to a view where users can create relationships between referrals.
+            locs_str = "_".join(map(str, intersecting_locations))
+            return HttpResponseRedirect(
+                reverse(
+                    "referral_intersecting_locations",
+                    kwargs={"pk": referral.pk, "loc_ids": locs_str},
+                )
+            )
+        else:
+            return super().form_valid(form)
 
 
 class LocationCreate(ReferralCreateChild):
@@ -974,37 +1003,52 @@ class LocationCreate(ReferralCreateChild):
     form_class = LocationForm
     template_name = "referral/location_create.html"
 
-    @property
-    def parent_referral(self):
-        return get_object_or_404(Referral, pk=self.kwargs["pk"])
+    def get_referral(self):
+        return Referral.objects.get(pk=self.kwargs["pk"])
+
+    def get_intersecting_locations(self, locations):
+        """Check to see if the list of locations intersects with any other locations."""
+        intersecting_locations = []
+        referral = self.get_referral()
+        for location in locations:
+            if location.poly:
+                other_locs = (
+                    Location.objects.current()
+                    .exclude(referral=referral, pk=location.pk)
+                    .filter(poly__isnull=False, poly__intersects=location.poly)
+                )
+                if other_locs.exists():
+                    intersecting_locations.append(location.pk)
+        return intersecting_locations
 
     def get_context_data(self, **kwargs):
         # Standard view context data.
         self.kwargs["model"] = "location"  # Append to kwargs
         context = super().get_context_data(**kwargs)
-        ref = self.parent_referral
+        referral = self.get_referral()
         links = [
             (reverse("site_home"), "Home"),
             (reverse("prs_object_list", kwargs={"model": "referrals"}), "Referrals"),
-            (reverse("referral_detail", kwargs={"pk": ref.pk}), ref.pk),
+            (reverse("referral_detail", kwargs={"pk": referral.pk}), referral.pk),
             (None, "Create locations(s)"),
         ]
         context["breadcrumb_trail"] = breadcrumbs_li(links)
         context["title"] = "CREATE LOCATION(S)"
-        context["address"] = ref.address
+        context["address"] = referral.address
         # Add any existing referral locations serialised as GeoJSON.
-        if any([loc.poly for loc in ref.location_set.current()]):
-            context["geojson_locations"] = serialize("geojson", ref.location_set.current(), geometry_field="poly", srid=4283)
+        if any([loc.poly for loc in referral.location_set.current()]):
+            context["geojson_locations"] = serialize("geojson", referral.location_set.current(), geometry_field="poly", srid=4283)
         return context
 
     def get_success_url(self):
-        return reverse("referral_detail", kwargs={"pk": self.parent_referral.pk})
+        referral = self.get_referral()
+        return reverse("referral_detail", kwargs={"pk": referral.pk})
 
     def post(self, request, *args, **kwargs):
         if request.POST.get("cancel"):
             return HttpResponseRedirect(self.get_success_url())
-        ref = self.parent_referral
 
+        referral = self.get_referral()
         # Aggregate the submitted form values into a dict of dicts.
         forms = {}
         for key, val in request.POST.items():
@@ -1035,57 +1079,47 @@ class LocationCreate(ReferralCreateChild):
                 loc.poly = poly[0]
             else:
                 loc.poly = poly
-            loc.referral = ref
+            loc.referral = referral
             loc.save()
             locations.append(loc)
 
         messages.success(request, f"{len(forms)} location(s) created.")
 
         # Test for intersecting locations.
-        intersecting_locations = self.polygon_intersects(locations)
+        intersecting_locations = self.get_intersecting_locations(locations)
         if intersecting_locations:
             # Redirect to a view where users can create relationships between referrals.
             locs_str = "_".join(map(str, intersecting_locations))
             return HttpResponseRedirect(
                 reverse(
                     "referral_intersecting_locations",
-                    kwargs={"pk": ref.id, "loc_ids": locs_str},
+                    kwargs={"pk": referral.pk, "loc_ids": locs_str},
                 )
             )
         else:
             return HttpResponseRedirect(self.get_success_url())
-
-    def polygon_intersects(self, locations):
-        """Check to see if the location polygon intersects with any other locations."""
-        intersecting_locations = []
-        for location in locations:
-            if location.poly:
-                other_locs = Location.objects.current().exclude(pk=location.pk).filter(poly__isnull=False, poly__intersects=location.poly)
-                if other_locs.exists():
-                    intersecting_locations.append(location.pk)
-        return intersecting_locations
 
 
 class LocationIntersects(PrsObjectCreate):
     model = Referral
     form_class = IntersectingReferralForm
 
-    @property
-    def parent_referral(self):
-        return self.get_object()
+    def get_referral(self):
+        return Referral.objects.get(pk=self.kwargs["pk"])
 
     def get_success_url(self):
-        return reverse("referral_detail", kwargs={"pk": self.parent_referral.pk})
+        referral = self.get_referral()
+        return reverse("referral_detail", kwargs={"pk": referral.pk})
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs["referral"] = self.parent_referral
+        kwargs["referral"] = self.get_referral()
         kwargs["referrals"] = self.referral_intersecting_locations()
         return kwargs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        referral = self.parent_referral
+        referral = self.get_referral()
         links = [
             (reverse("site_home"), "Home"),
             (reverse("prs_object_list", kwargs={"model": "referrals"}), "Referrals"),
@@ -1105,16 +1139,18 @@ class LocationIntersects(PrsObjectCreate):
     def form_valid(self, form):
         # For each intersecting referral chosen, add a relationship
         for ref in form.cleaned_data["related_refs"]:
-            self.parent_referral.add_relationship(ref)
+            referral = self.get_referral()
+            referral.add_relationship(ref)
 
         messages.success(self.request, f"{len(form.cleaned_data['related_refs'])} Referral relationship(s) created.")
         return redirect(self.get_success_url())
 
     def referral_intersecting_locations(self):
-        # get the loc_ids string and convert to list of int's
+        # Get the loc_ids string and convert to list of int's
         loc_ids = map(int, self.kwargs["loc_ids"].split("_"))
-
         referral_ids = []
+        referral = self.get_referral()
+
         for loc_id in loc_ids:
             location = get_object_or_404(Location, pk=loc_id)
             geom = location.poly.wkt
@@ -1124,8 +1160,8 @@ class LocationIntersects(PrsObjectCreate):
             # Get a qs of referrals
             for i in intersects:
                 # Don't add the passed-in referral to the list.
-                if i.referral.id != self.parent_referral.id:
-                    referral_ids.append(i.referral.id)
+                if i.referral.pk != referral.pk:
+                    referral_ids.append(i.referral.pk)
 
         unique_referral_ids = list(set(referral_ids))
         return Referral.objects.current().filter(id__in=unique_referral_ids)
