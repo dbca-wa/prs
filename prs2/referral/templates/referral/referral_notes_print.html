@@ -1,7 +1,6 @@
-{% extends "webtemplate_dbca/base.html" %}
-
+{% extends "webtemplate_dbca/base_b5.html" %}
 {% block extra_head %}
-<style type="text/css">
+    <style type="text/css">
     body {
         padding: 0px;
     }
@@ -15,28 +14,45 @@
     @page {
         size: A4 portrait;
     }
-</style>
+    a {
+        text-decoration: none;
+        color: inherit;
+    }
+    </style>
 {% endblock %}
-
-{% block top_navbar %}
-<h3>{{ site_title }}</h3>
-{% endblock %}
-
+{% block top_navbar %}<h3>{{ site_title }}</h3>{% endblock %}
 {% block page_content %}
-<table class="table table-bordered table-condensed" style="width: auto;">
-    <tbody>
-        {{ object.as_tbody }}
-    </tbody>
-</table>
-{% for note in note_list %}
-{% if forloop.first %}{% else %}<div class="page-break"><hr></div>{% endif %}
-<h4>NOTE DATE: {{ note.order_date }}</h4>
-<table class="table table-bordered table-condensed" style="width: auto;">
-    <tbody>
-        {% if note.type %}<tr><td>Type</td><td>{{ note.type }}</td></tr>{% endif %}
-        <tr><td>Created by</td><td>{{ note.creator.get_full_name }}</td</tr>
-        <tr><td colspan="2">{{ note.note_html|safe }}</td></tr>
-    </tbody>
-</table>
-{% endfor %}
+    <table class="table table-bordered table-condensed" style="width: auto;">
+        <tbody>
+            {{ object.as_tbody }}
+        </tbody>
+    </table>
+    {% for note in note_list %}
+        {% if forloop.first %}
+        {% else %}
+            <div class="page-break">
+                <hr>
+            </div>
+        {% endif %}
+        <h4>NOTE DATE: {{ note.order_date }}</h4>
+        <table class="table table-bordered table-condensed" style="width: auto;">
+            <tbody>
+                {% if note.type %}
+                    <tr>
+                        <td>Type</td>
+                        <td>{{ note.type }}</td>
+                    </tr>
+                {% endif %}
+                <tr>
+                    <td>Created by</td>
+                    <td>
+                        {{ note.creator.get_full_name }}
+                    </td
+                </tr>
+                <tr>
+                    <td colspan="2">{{ note.note_html|safe }}</td>
+                </tr>
+            </tbody>
+        </table>
+    {% endfor %}
 {% endblock %}
