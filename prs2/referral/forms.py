@@ -450,7 +450,7 @@ class ShapefileUploadForm(forms.Form):
         self.helper.layout = Layout(
             HTML(
                 """<div><p>Upload a zip file archive containing one or more shapefiles (polygon/multipolygon geometry only).</p>
-                <p>Polygons will be added to the referral as locations, and the zipfile attached as a record.</p></div>"""
+                <p>Polygons will be added to the referral as locations, and the zip file attached as a record.</p></div>"""
             ),
             "uploaded_shapefile",
             Div(self.upload_button, self.cancel_button, css_class="col-sm-offset-4 col-md-offset-3 col-lg-offset-2"),

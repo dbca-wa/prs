@@ -935,7 +935,6 @@ class ShapefileUpload(LoginRequiredMixin, FormView):
     def form_valid(self, form):
         referral = self.get_referral()
         locations = []
-        location_count = 0
         name = form.cleaned_data["uploaded_shapefile"].name
 
         # Open the uploaded file and parse the shapefile.
@@ -976,7 +975,9 @@ class ShapefileUpload(LoginRequiredMixin, FormView):
                 locations.append(Location.objects.create(referral=referral, poly=poly))
 
         # For the uploaded file, create a Record object.
-        new_record = Record.objects.create(name=name, referral=referral, uploaded_file=form.cleaned_data["uploaded_shapefile"])
+        new_record = Record.objects.create(
+            name=name, referral=referral, uploaded_file=form.cleaned_data["uploaded_shapefile"], order_date=date.today()
+        )
         messages.success(self.request, f"Shapefile processed and saved as {new_record} - {len(locations)} locations generated")
 
         # Test for intersecting locations.
