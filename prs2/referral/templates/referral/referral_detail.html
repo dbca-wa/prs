@@ -344,7 +344,7 @@
           });
           this.on("success", function(file, response) {
             // Reload the current window at the returned URL.
-            location.assign(response.object.resource_uri);
+            location.assign(response.object.redirect_url);
           });
         },
       };

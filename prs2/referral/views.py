@@ -1215,16 +1215,16 @@ class RecordUpload(LoginRequiredMixin, View):
             if intersecting_location_pks:
                 # Redirect to a view where users can create relationships between referrals.
                 location_pks = "_".join(map(str, intersecting_location_pks))
-                resource_uri = reverse(
+                redirect_url = reverse(
                     "referral_intersecting_locations",
                     kwargs={"pk": referral.pk, "loc_ids": location_pks},
                 )
             else:
-                resource_uri = reverse("referral_detail", kwargs={"pk": referral.pk, "related_model": "records"})
+                redirect_url = reverse("referral_detail", kwargs={"pk": referral.pk, "related_model": "records"})
             return JsonResponse(
                 {
                     "success": True,
-                    "object": {"id": referral.pk, "resource_uri": resource_uri},
+                    "object": {"id": new_record.pk, "resource_uri": new_record.get_absolute_url(), "redirect_url": redirect_url},
                 }
             )
         elif self.parent_referral:  # Not a zip file, or else not parsed as a shapefile.
@@ -1237,11 +1237,11 @@ class RecordUpload(LoginRequiredMixin, View):
                 modifier=request.user,
             )
             messages.success(self.request, f"Upload processed and saved as {new_record}")
-            resource_uri = reverse("referral_detail", kwargs={"pk": referral.pk, "related_model": "records"})
+            redirect_url = reverse("referral_detail", kwargs={"pk": referral.pk, "related_model": "records"})
             return JsonResponse(
                 {
                     "success": True,
-                    "object": {"id": referral.pk, "resource_uri": resource_uri},
+                    "object": {"id": new_record.pk, "resource_uri": new_record.get_absolute_url(), "redirect_url": redirect_url},
                 }
             )
         else:  # Attaching a new file upload to an existing record.
@@ -1256,7 +1256,7 @@ class RecordUpload(LoginRequiredMixin, View):
             return JsonResponse(
                 {
                     "success": True,
-                    "object": {"id": record.pk, "resource_uri": record.get_absolute_url()},
+                    "object": {"id": record.pk, "resource_uri": record.get_absolute_url(), "redirect_url": record.get_absolute_url()},
                 }
             )
 
