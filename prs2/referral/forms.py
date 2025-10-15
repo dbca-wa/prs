@@ -444,7 +444,8 @@ class ShapefileUploadForm(forms.Form):
     upload_button = Submit("upload", "Upload", css_class="btn-lg")
     cancel_button = Submit("cancel", "Cancel", css_class="btn-secondary")
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, instance=None, *args, **kwargs):
+        # NOTE: we have to include the unused `instance` variable because this is not a ModelForm.
         super().__init__(*args, **kwargs)
         self.helper = BaseFormHelper()
         self.helper.layout = Layout(

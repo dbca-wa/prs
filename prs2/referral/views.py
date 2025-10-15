@@ -887,114 +887,6 @@ class ReferralCreateChild(PrsObjectCreate):
             obj.email_user()
 
 
-class ShapefileUpload(LoginRequiredMixin, FormView):
-    """Specialist view to allow upload of a zipped shapefile on a referral,
-    generating a record and location(s).
-    """
-
-    model = Location
-    form_class = ShapefileUploadForm
-    template_name = "referral/change_form.html"
-
-    def get_referral(self):
-        return Referral.objects.get(pk=self.kwargs["pk"])
-
-    def get_intersecting_locations(self, locations):
-        """Check to see if the list of locations intersects with any other locations."""
-        intersecting_locations = []
-        referral = self.get_referral()
-        for location in locations:
-            if location.poly:
-                other_locs = (
-                    Location.objects.current()
-                    .exclude(referral=referral, pk=location.pk)
-                    .filter(poly__isnull=False, poly__intersects=location.poly)
-                )
-                if other_locs.exists():
-                    intersecting_locations.append(location.pk)
-        return intersecting_locations
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        referral = self.get_referral()
-        title = "Upload shapefile"
-        context["title"] = title.upper()
-        context["page_title"] = f"PRS | Referral {referral.pk} | {title}"
-        links = [
-            (reverse("site_home"), "Home"),
-            (reverse("prs_object_list", kwargs={"model": "referrals"}), "Referrals"),
-            (reverse("referral_detail", kwargs={"pk": referral.pk}), referral.pk),
-            (None, title),
-        ]
-        context["breadcrumb_trail"] = breadcrumbs_li(links)
-        return context
-
-    def get_success_url(self):
-        return reverse("referral_detail", kwargs={"pk": self.get_referral().pk})
-
-    def form_valid(self, form):
-        referral = self.get_referral()
-        locations = []
-        name = form.cleaned_data["uploaded_shapefile"].name
-
-        # Open the uploaded file and parse the shapefile.
-        try:
-            zip_file = ZipMemoryFile(form.cleaned_data["uploaded_shapefile"])
-            shp = zip_file.open()
-        except:
-            # Exception while opening the zipped shapefile - catch and return to the referral view.
-            messages.error(
-                self.request,
-                f"Error while loading {name} (corrupt/invalid shapefile)",
-                extra_tags="danger",
-            )
-            return HttpResponseRedirect(self.get_success_url())
-
-        source_crs = pyproj.CRS(shp.crs.to_string())
-        dest_crs = pyproj.CRS("EPSG:4283")  # GDA 94
-        # Define our projection function.
-        project = pyproj.Transformer.from_crs(source_crs, dest_crs, always_xy=True).transform
-
-        for feature in shp:
-            geometry = shape(feature.geometry)
-            projected_geometry = transform(project, geometry)  # Project the geometry to GDA 94.
-
-            # For each polygon/multipolygon, create a Location object.
-            if projected_geometry.geom_type == "MultiPolygon":
-                geometries = list(projected_geometry.geoms)
-            elif projected_geometry.geom_type == "Polygon":
-                geometries = [projected_geometry]
-            else:
-                messages.info(self.request, f"Feature of geometry type {geometry.geom_type} not imported")
-                continue
-
-            for geom in geometries:
-                # Instantiate a Django polygon
-                poly = GEOSGeometry(geom.wkt)
-                # Generate a new location attached to the referral.
-                locations.append(Location.objects.create(referral=referral, poly=poly))
-
-        # For the uploaded file, create a Record object.
-        new_record = Record.objects.create(
-            name=name, referral=referral, uploaded_file=form.cleaned_data["uploaded_shapefile"], order_date=date.today()
-        )
-        messages.success(self.request, f"Shapefile processed and saved as {new_record} - {len(locations)} locations generated")
-
-        # Test for intersecting locations.
-        intersecting_locations = self.get_intersecting_locations(locations)
-        if intersecting_locations:
-            # Redirect to a view where users can create relationships between referrals.
-            locs_str = "_".join(map(str, intersecting_locations))
-            return HttpResponseRedirect(
-                reverse(
-                    "referral_intersecting_locations",
-                    kwargs={"pk": referral.pk, "loc_ids": locs_str},
-                )
-            )
-        else:
-            return super().form_valid(form)
-
-
 class LocationCreate(ReferralCreateChild):
     """Specialist view to allow selection of locations from cadastre, or
     digitisation of a spatial area.
@@ -1046,13 +938,16 @@ class LocationCreate(ReferralCreateChild):
         return reverse("referral_detail", kwargs={"pk": referral.pk})
 
     def post(self, request, *args, **kwargs):
+        # If the user clicked Cancel, redirect to the referral detail page.
         if request.POST.get("cancel"):
             return HttpResponseRedirect(self.get_success_url())
+        return super().post(request, *args, **kwargs)
 
+    def form_valid(self, form):
         referral = self.get_referral()
         # Aggregate the submitted form values into a dict of dicts.
         forms = {}
-        for key, val in request.POST.items():
+        for key, val in self.request.POST.items():
             if key.startswith("form-"):
                 form = re.findall("^form-[0-9]+", key)[0]
                 field = re.sub("^form-[0-9]+-", "", key)
@@ -1084,7 +979,7 @@ class LocationCreate(ReferralCreateChild):
             loc.save()
             locations.append(loc)
 
-        messages.success(request, f"{len(forms)} location(s) created.")
+        messages.success(self.request, f"{len(forms)} location(s) created.")
 
         # Test for intersecting locations.
         intersecting_locations = self.get_intersecting_locations(locations)
@@ -1099,6 +994,92 @@ class LocationCreate(ReferralCreateChild):
             )
         else:
             return HttpResponseRedirect(self.get_success_url())
+
+
+class ShapefileUpload(LocationCreate):
+    """Customised subclass of LocationCreate to allow upload of a zipped shapefile on a referral,
+    generating a record and location(s).
+    """
+
+    form_class = ShapefileUploadForm
+    template_name = "referral/change_form.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        referral = self.get_referral()
+        title = "Upload shapefile"
+        context["title"] = title.upper()
+        context["page_title"] = f"PRS | Referral {referral.pk} | {title}"
+        links = [
+            (reverse("site_home"), "Home"),
+            (reverse("prs_object_list", kwargs={"model": "referrals"}), "Referrals"),
+            (reverse("referral_detail", kwargs={"pk": referral.pk}), referral.pk),
+            (None, title),
+        ]
+        context["breadcrumb_trail"] = breadcrumbs_li(links)
+        return context
+
+    def form_valid(self, form):
+        referral = self.get_referral()
+        locations = []
+        name = form.cleaned_data["uploaded_shapefile"].name
+
+        # Open the uploaded file and parse the shapefile.
+        try:
+            zip_file = ZipMemoryFile(form.cleaned_data["uploaded_shapefile"])
+            shp = zip_file.open()
+        except:
+            # Exception while opening the zipped shapefile - catch and return to the referral view.
+            messages.error(
+                self.request,
+                f"Error while loading {name} (corrupt/invalid shapefile)",
+                extra_tags="danger",
+            )
+            return HttpResponseRedirect(self.get_success_url())
+
+        source_crs = pyproj.CRS(shp.crs.to_string())
+        dest_crs = pyproj.CRS("EPSG:4283")  # GDA 94
+        # Define our projection function.
+        project = pyproj.Transformer.from_crs(source_crs, dest_crs, always_xy=True).transform
+
+        for feature in shp:
+            geometry = shape(feature.geometry)
+            projected_geometry = transform(project, geometry)  # Project the geometry to GDA 94.
+
+            # For each polygon/multipolygon, create a Location object.
+            if projected_geometry.geom_type == "MultiPolygon":
+                geometries = list(projected_geometry.geoms)
+            elif projected_geometry.geom_type == "Polygon":
+                geometries = [projected_geometry]
+            else:
+                messages.info(self.request, f"Feature of geometry type '{geometry.geom_type}' not imported")
+                continue
+
+            for geom in geometries:
+                # Instantiate a Django polygon
+                poly = GEOSGeometry(geom.wkt)
+                # Generate a new location attached to the referral.
+                locations.append(Location.objects.create(referral=referral, poly=poly))
+
+        # For the uploaded file, create a Record object.
+        new_record = Record.objects.create(
+            name=name, referral=referral, uploaded_file=form.cleaned_data["uploaded_shapefile"], order_date=date.today()
+        )
+        messages.success(self.request, f"Shapefile processed and saved as {new_record} - {len(locations)} locations generated")
+
+        # Test for intersecting locations.
+        intersecting_locations = self.get_intersecting_locations(locations)
+        if intersecting_locations:
+            # Redirect to a view where users can create relationships between referrals.
+            locs_str = "_".join(map(str, intersecting_locations))
+            return HttpResponseRedirect(
+                reverse(
+                    "referral_intersecting_locations",
+                    kwargs={"pk": referral.pk, "loc_ids": locs_str},
+                )
+            )
+        else:
+            return super().form_valid(form)
 
 
 class LocationIntersects(PrsObjectCreate):
