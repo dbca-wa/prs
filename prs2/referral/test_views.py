@@ -1,4 +1,5 @@
 import json
+import os
 import uuid
 from datetime import date, timedelta
 
@@ -42,6 +43,7 @@ class PrsViewsTestCase(PrsTestCase):
         Bookmark,
     ]
     client = Client()
+    test_data_path = os.path.join("prs2", "referral", "test_data")
 
     def setUp(self):
         super(PrsViewsTestCase, self).setUp()
@@ -1015,3 +1017,54 @@ class RecordUploadViewTest(PrsViewsTestCase):
         self.client.login(username="readonlyuser", password="pass")
         resp = self.client.post(url, {"file": f})
         self.assertEqual(resp.status_code, 403)
+
+    def test_post_shapefile(self):
+        """Test POST response for a zipped shapefile"""
+        referral = Referral.objects.first()
+        existing_location_count = Location.objects.current().filter(referral=referral).count()
+        url = reverse("referral_record_upload", kwargs={"pk": referral.pk})
+        test_upload = open(os.path.join(self.test_data_path, "shapefile.zip"), "rb")
+        resp = self.client.post(url, {"file": test_upload})
+        self.assertEqual(resp.status_code, 200)
+        result = json.loads(resp.content.decode("utf8"))
+        self.assertTrue(Record.objects.filter(pk=result["object"]["id"]).exists())
+        # New locations have been created.
+        self.assertTrue(Location.objects.current().filter(referral=referral).count() > existing_location_count)
+
+
+class ShapefileUploadViewTest(PrsViewsTestCase):
+    def test_post(self):
+        """Test POST response with a valid shapefile"""
+        referral = Referral.objects.first()
+        existing_location_count = Location.objects.current().filter(referral=referral).count()
+        url = reverse("referral_shapefile_upload", kwargs={"pk": referral.pk})
+        test_data = open(os.path.join(self.test_data_path, "shapefile.zip"), "rb")
+        upload = SimpleUploadedFile(name="shapefile.zip", content=test_data.read(), content_type="application/zip")
+        resp = self.client.post(url, data={"uploaded_shapefile": upload}, follow=True)
+        self.assertEqual(resp.status_code, 200)
+        # New locations have been created.
+        self.assertTrue(Location.objects.current().filter(referral=referral).count() > existing_location_count)
+
+    def test_post_gda94(self):
+        """Test POST response with a shapefile having a different projection"""
+        referral = Referral.objects.first()
+        existing_location_count = Location.objects.current().filter(referral=referral).count()
+        url = reverse("referral_shapefile_upload", kwargs={"pk": referral.pk})
+        test_data = open(os.path.join(self.test_data_path, "shapefile_gda94.zip"), "rb")
+        upload = SimpleUploadedFile(name="shapefile.zip", content=test_data.read(), content_type="application/zip")
+        resp = self.client.post(url, data={"uploaded_shapefile": upload}, follow=True)
+        self.assertEqual(resp.status_code, 200)
+        # New locations have been created.
+        self.assertTrue(Location.objects.current().filter(referral=referral).count() > existing_location_count)
+
+    def test_post_invalid(self):
+        """Test POST response with an invalid shapefile"""
+        referral = Referral.objects.first()
+        existing_location_count = Location.objects.current().filter(referral=referral).count()
+        url = reverse("referral_shapefile_upload", kwargs={"pk": referral.pk})
+        test_data = open(os.path.join(self.test_data_path, "shapefile_invalid.zip"), "rb")
+        upload = SimpleUploadedFile(name="shapefile.zip", content=test_data.read(), content_type="application/zip")
+        resp = self.client.post(url, data={"uploaded_shapefile": upload}, follow=True)
+        self.assertEqual(resp.status_code, 200)
+        # New locations have NOT been created.
+        self.assertTrue(Location.objects.current().filter(referral=referral).count() == existing_location_count)
