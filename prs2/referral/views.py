@@ -1173,10 +1173,10 @@ class RecordUpload(LoginRequiredMixin, View):
         # If a zip file is being uploaded on a referral, attempt to parse it as a shapefile.
         if uploaded_file.name.lower().endswith(".zip") and self.parent_referral:
             features = parse_shapefile(uploaded_file)
+            referral = self.get_parent_object()
+            locations = []
             # If the parse function returns a non-empty list, assume that the file was a shapefile and continue to process it.
             if features:
-                referral = self.get_parent_object()
-                locations = []
                 for feature in features:
                     # For each polygon/multipolygon feature, create a Location object.
                     if feature.geom_type == "MultiPolygon":
@@ -1193,39 +1193,72 @@ class RecordUpload(LoginRequiredMixin, View):
                         # Generate a new location attached to the referral.
                         locations.append(Location.objects.create(referral=referral, poly=poly))
 
-                # For the uploaded file, create a Record object.
-                new_record = Record.objects.create(
-                    name=uploaded_file.name,
-                    referral=referral,
-                    uploaded_file=uploaded_file,
-                    order_date=date.today(),
-                    creator=request.user,
-                    modifier=request.user,
-                )
-                messages.success(self.request, f"Shapefile processed and saved as {new_record} - {len(locations)} locations generated")
-        elif self.parent_referral:  # Not a zip file, or else not parsed as a shapefile.
+            # For the uploaded file, create a Record object.
             new_record = Record.objects.create(
                 name=uploaded_file.name,
-                referral=self.get_parent_object(),
+                referral=referral,
+                uploaded_file=uploaded_file,
+                order_date=date.today(),
+                creator=request.user,
+                modifier=request.user,
+            )
+            messages.success(self.request, f"Shapefile processed and saved as {new_record} - {len(locations)} locations generated")
+
+            # Test for intersecting locations.
+            intersecting_location_pks = []
+            for location in locations:
+                if location.poly:
+                    other_locs = Location.objects.current().exclude(referral=referral).filter(poly__intersects=location.poly)
+                    if other_locs.exists():
+                        intersecting_location_pks.append(location.pk)
+
+            if intersecting_location_pks:
+                # Redirect to a view where users can create relationships between referrals.
+                location_pks = "_".join(map(str, intersecting_location_pks))
+                resource_uri = reverse(
+                    "referral_intersecting_locations",
+                    kwargs={"pk": referral.pk, "loc_ids": location_pks},
+                )
+            else:
+                resource_uri = reverse("referral_detail", kwargs={"pk": referral.pk, "related_model": "records"})
+            return JsonResponse(
+                {
+                    "success": True,
+                    "object": {"id": referral.pk, "resource_uri": resource_uri},
+                }
+            )
+        elif self.parent_referral:  # Not a zip file, or else not parsed as a shapefile.
+            referral = self.get_parent_object()
+            new_record = Record.objects.create(
+                name=uploaded_file.name,
+                referral=referral,
                 uploaded_file=uploaded_file,
                 creator=request.user,
                 modifier=request.user,
             )
-        else:  # Attaching a new file upload to a record.
-            new_record = self.get_parent_object()
-            new_record.uploaded_file = uploaded_file
-            new_record.modifier = request.user
+            messages.success(self.request, f"Upload processed and saved as {new_record}")
+            resource_uri = reverse("referral_detail", kwargs={"pk": referral.pk, "related_model": "records"})
+            return JsonResponse(
+                {
+                    "success": True,
+                    "object": {"id": referral.pk, "resource_uri": resource_uri},
+                }
+            )
+        else:  # Attaching a new file upload to an existing record.
+            record = self.get_parent_object()
+            record.uploaded_file = uploaded_file
+            record.modifier = request.user
             # Non *.msg files only: set order_date to today's date.
-            if new_record.extension != "MSG":
-                new_record.order_date = date.today()
-            new_record.save()
-
-        return JsonResponse(
-            {
-                "success": True,
-                "object": {"id": new_record.pk, "resource_uri": new_record.get_absolute_url()},
-            }
-        )
+            if record.extension != "MSG":
+                record.order_date = date.today()
+            record.save()
+            messages.success(self.request, f"Upload processed and saved to {record}")
+            return JsonResponse(
+                {
+                    "success": True,
+                    "object": {"id": record.pk, "resource_uri": record.get_absolute_url()},
+                }
+            )
 
 
 class TaskAction(PrsObjectUpdate):

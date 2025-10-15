@@ -342,9 +342,9 @@
           this.on("uploadprogress", function(file, progress) {
             console.log("File progress", progress);
           });
-          this.on("queuecomplete", function(file) {
-            // Reload the current page on completed upload(s).
-            location.assign("{% url 'referral_detail' pk=referral.pk related_model='records' %}");
+          this.on("success", function(file, response) {
+            // Reload the current window at the returned URL.
+            location.assign(response.object.resource_uri);
           });
         },
       };
