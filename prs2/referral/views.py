@@ -3,7 +3,6 @@ import re
 from copy import copy
 from datetime import date, datetime, timedelta
 
-import pyproj
 from dbca_utils.utils import env
 from django.conf import settings
 from django.contrib import messages
@@ -21,7 +20,6 @@ from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import FormView, ListView, TemplateView, View
-from fiona.io import ZipMemoryFile
 from indexer.utils import get_typesense_client
 from referral.forms import (
     ClearanceCreateForm,
@@ -55,10 +53,17 @@ from referral.models import (
     TaskState,
     TaskType,
 )
-from referral.utils import breadcrumbs_li, is_model_or_string, is_prs_power_user, prs_user, query_caddy, smart_truncate, wfs_getfeature
+from referral.utils import (
+    breadcrumbs_li,
+    is_model_or_string,
+    is_prs_power_user,
+    parse_shapefile,
+    prs_user,
+    query_caddy,
+    smart_truncate,
+    wfs_getfeature,
+)
 from referral.views_base import PrsObjectCreate, PrsObjectDelete, PrsObjectDetail, PrsObjectList, PrsObjectUpdate
-from shapely.geometry import shape
-from shapely.ops import transform
 from taggit.models import Tag
 
 
@@ -905,11 +910,7 @@ class LocationCreate(ReferralCreateChild):
         referral = self.get_referral()
         for location in locations:
             if location.poly:
-                other_locs = (
-                    Location.objects.current()
-                    .exclude(referral=referral, pk=location.pk)
-                    .filter(poly__isnull=False, poly__intersects=location.poly)
-                )
+                other_locs = Location.objects.current().exclude(referral=referral).filter(poly__intersects=location.poly)
                 if other_locs.exists():
                     intersecting_locations.append(location.pk)
         return intersecting_locations
@@ -1020,16 +1021,13 @@ class ShapefileUpload(LocationCreate):
         return context
 
     def form_valid(self, form):
-        referral = self.get_referral()
-        locations = []
+        # Begin by parsing the features in the uploaded shapefile.
         name = form.cleaned_data["uploaded_shapefile"].name
+        uploaded_shapefile = form.cleaned_data["uploaded_shapefile"]
+        features = parse_shapefile(uploaded_shapefile)
 
-        # Open the uploaded file and parse the shapefile.
-        try:
-            zip_file = ZipMemoryFile(form.cleaned_data["uploaded_shapefile"])
-            shp = zip_file.open()
-        except:
-            # Exception while opening the zipped shapefile - catch and return to the referral view.
+        # If the parse function returns False, assume an exception was thrown.
+        if features is False:
             messages.error(
                 self.request,
                 f"Error while loading {name} (corrupt/invalid shapefile)",
@@ -1037,22 +1035,16 @@ class ShapefileUpload(LocationCreate):
             )
             return HttpResponseRedirect(self.get_success_url())
 
-        source_crs = pyproj.CRS(shp.crs.to_string())
-        dest_crs = pyproj.CRS("EPSG:4283")  # GDA 94
-        # Define our projection function.
-        project = pyproj.Transformer.from_crs(source_crs, dest_crs, always_xy=True).transform
-
-        for feature in shp:
-            geometry = shape(feature.geometry)
-            projected_geometry = transform(project, geometry)  # Project the geometry to GDA 94.
-
-            # For each polygon/multipolygon, create a Location object.
-            if projected_geometry.geom_type == "MultiPolygon":
-                geometries = list(projected_geometry.geoms)
-            elif projected_geometry.geom_type == "Polygon":
-                geometries = [projected_geometry]
+        referral = self.get_referral()
+        locations = []
+        for feature in features:
+            # For each polygon/multipolygon feature, create a Location object.
+            if feature.geom_type == "MultiPolygon":
+                geometries = list(feature.geoms)
+            elif feature.geom_type == "Polygon":
+                geometries = [feature]
             else:
-                messages.info(self.request, f"Feature of geometry type '{geometry.geom_type}' not imported")
+                messages.info(self.request, f"Feature of geometry type '{feature.geom_type}' not imported")
                 continue
 
             for geom in geometries:
@@ -1178,29 +1170,60 @@ class RecordUpload(LoginRequiredMixin, View):
         if uploaded_file.content_type not in settings.ALLOWED_UPLOAD_TYPES:
             return HttpResponseBadRequest("Disallowed file type")
 
-        if self.parent_referral:
-            rec = Record(
+        # If a zip file is being uploaded on a referral, attempt to parse it as a shapefile.
+        if uploaded_file.name.lower().endswith(".zip") and self.parent_referral:
+            features = parse_shapefile(uploaded_file)
+            # If the parse function returns a non-empty list, assume that the file was a shapefile and continue to process it.
+            if features:
+                referral = self.get_parent_object()
+                locations = []
+                for feature in features:
+                    # For each polygon/multipolygon feature, create a Location object.
+                    if feature.geom_type == "MultiPolygon":
+                        geometries = list(feature.geoms)
+                    elif feature.geom_type == "Polygon":
+                        geometries = [feature]
+                    else:
+                        messages.info(self.request, f"Feature of geometry type '{feature.geom_type}' not imported")
+                        continue
+
+                    for geom in geometries:
+                        # Instantiate a Django polygon
+                        poly = GEOSGeometry(geom.wkt)
+                        # Generate a new location attached to the referral.
+                        locations.append(Location.objects.create(referral=referral, poly=poly))
+
+                # For the uploaded file, create a Record object.
+                new_record = Record.objects.create(
+                    name=uploaded_file.name,
+                    referral=referral,
+                    uploaded_file=uploaded_file,
+                    order_date=date.today(),
+                    creator=request.user,
+                    modifier=request.user,
+                )
+                messages.success(self.request, f"Shapefile processed and saved as {new_record} - {len(locations)} locations generated")
+        elif self.parent_referral:  # Not a zip file, or else not parsed as a shapefile.
+            new_record = Record.objects.create(
                 name=uploaded_file.name,
                 referral=self.get_parent_object(),
                 uploaded_file=uploaded_file,
                 creator=request.user,
                 modifier=request.user,
             )
-        else:
-            rec = self.get_parent_object()
-            rec.uploaded_file = uploaded_file
-            rec.modifier = request.user
-
-        # Non *.msg files only: set order_date to today's date.
-        if rec.extension != "MSG":
-            rec.order_date = date.today()
-
-        rec.save()
+        else:  # Attaching a new file upload to a record.
+            new_record = self.get_parent_object()
+            new_record.uploaded_file = uploaded_file
+            new_record.modifier = request.user
+            # Non *.msg files only: set order_date to today's date.
+            if new_record.extension != "MSG":
+                new_record.order_date = date.today()
+            new_record.save()
 
         return JsonResponse(
             {
                 "success": True,
-                "object": {"id": rec.pk, "resource_uri": rec.get_absolute_url()},
+                "object": {"id": new_record.pk, "resource_uri": new_record.get_absolute_url()},
             }
         )
 

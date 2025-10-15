@@ -6,6 +6,7 @@ from io import BytesIO
 from string import punctuation
 
 import docx2txt
+import pyproj
 import requests
 from dbca_utils.utils import env
 from django.apps import apps
@@ -17,8 +18,11 @@ from django.db.models.base import ModelBase
 from django.utils.encoding import smart_str
 from django.utils.safestring import mark_safe
 from extract_msg import Message
+from fiona.io import ZipMemoryFile
 from pdfminer import high_level
 from reversion.models import Version
+from shapely.geometry import shape
+from shapely.ops import transform
 from unidecode import unidecode
 
 
@@ -54,7 +58,7 @@ def is_model_or_string(model):
     return model
 
 
-def smart_truncate(content, length=100, suffix="....(more)"):
+def smart_truncate(content: str, length: int = 100, suffix: str = "....(more)") -> str:
     """Small function to truncate a string in a sensible way, sourced from:
     http://stackoverflow.com/questions/250357/smart-truncate-in-python
     """
@@ -615,3 +619,26 @@ def search_document_normalise(content):
     content = content.strip()
 
     return content
+
+
+def parse_shapefile(uploaded_shapefile) -> list | bool:
+    """For a passed-in file object, parse it as a zipped shapefile."""
+    try:
+        zip_file = ZipMemoryFile(uploaded_shapefile)
+        shapefile = zip_file.open()
+    except:
+        # Exception while opening the shapefile - catch and return to the referral view.
+        return False
+
+    source_crs = pyproj.CRS(shapefile.crs.to_string())
+    dest_crs = pyproj.CRS("EPSG:4283")  # GDA 94
+    # Define our projection function.
+    project = pyproj.Transformer.from_crs(source_crs, dest_crs, always_xy=True).transform
+    features = []
+
+    for feature in shapefile:
+        geometry = shape(feature.geometry)
+        projected_geometry = transform(project, geometry)  # Project the geometry to GDA 94.
+        features.append((projected_geometry))
+
+    return features
