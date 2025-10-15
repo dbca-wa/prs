@@ -998,7 +998,8 @@ class InfobaseShortcutTest(PrsViewsTestCase):
 class RecordUploadViewTest(PrsViewsTestCase):
     def test_post(self):
         """Test POST response for an authorised user"""
-        url = reverse("referral_record_upload", kwargs={"pk": Referral.objects.first().pk})
+        referral = Referral.objects.first()
+        url = reverse("referral_record_upload", kwargs={"pk": referral.pk})
         f = SimpleUploadedFile("file.txt", b"file_content")
         resp = self.client.post(url, {"file": f})
         self.assertEqual(resp.status_code, 200)
