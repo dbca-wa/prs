@@ -8,7 +8,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Group
-from django.contrib.gis.geos import GEOSGeometry, MultiPolygon
+from django.contrib.gis.geos import GEOSGeometry, MultiPolygon, Point
 from django.core.mail import EmailMultiAlternatives
 from django.core.paginator import Paginator
 from django.core.serializers import serialize
@@ -20,12 +20,13 @@ from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import FormView, ListView, TemplateView, View
-from indexer.utils import typesense_client
+from indexer.utils import get_typesense_client
 from referral.forms import (
     ClearanceCreateForm,
     IntersectingReferralForm,
     LocationForm,
     ReferralCreateForm,
+    ShapefileUploadForm,
     TagReplaceForm,
     TaskCancelForm,
     TaskCompleteForm,
@@ -52,7 +53,16 @@ from referral.models import (
     TaskState,
     TaskType,
 )
-from referral.utils import breadcrumbs_li, is_model_or_string, is_prs_power_user, prs_user, query_caddy, smart_truncate, wfs_getfeature
+from referral.utils import (
+    breadcrumbs_li,
+    is_model_or_string,
+    is_prs_power_user,
+    parse_shapefile,
+    prs_user,
+    query_caddy,
+    smart_truncate,
+    wfs_getfeature,
+)
 from referral.views_base import PrsObjectCreate, PrsObjectDelete, PrsObjectDetail, PrsObjectList, PrsObjectUpdate
 from taggit.models import Tag
 
@@ -80,7 +90,7 @@ class SiteHome(LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["stopped_tasks"] = self.stopped_tasks
-        context["headers"] = copy(Task.headers_site_home)
+        context["headers"] = copy(Task.get_headers_site_home())
         if not self.stopped_tasks:
             context["stopped_tasks_exist"] = Task.objects.current().filter(assigned_user=self.request.user, state__name="Stopped").exists()
         # Printable view only: pop the last element from 'headers'
@@ -127,7 +137,7 @@ class IndexSearch(LoginRequiredMixin, TemplateView):
         if "q" in self.request.GET and self.request.GET["q"]:
             context["query_string"] = self.request.GET["q"]
             context["search_result"] = []
-            client = typesense_client()
+            client = get_typesense_client()
             page = self.request.GET.get("page", 1)
             search_q = {
                 "q": self.request.GET["q"],
@@ -138,19 +148,19 @@ class IndexSearch(LoginRequiredMixin, TemplateView):
             }
 
             if collection == "referrals":
-                context["result_headers"] = Referral.headers
+                context["result_headers"] = Referral.get_headers()
                 search_q["query_by"] = "reference,description,address,type,referring_org,lga"
             elif collection == "records":
-                context["result_headers"] = Record.headers
+                context["result_headers"] = Record.get_headers()
                 search_q["query_by"] = "name,description,file_name,file_content"
             elif collection == "notes":
-                context["result_headers"] = Note.headers
+                context["result_headers"] = Note.get_headers()
                 search_q["query_by"] = "note"
             elif collection == "tasks":
-                context["result_headers"] = Task.headers
+                context["result_headers"] = Task.get_headers()
                 search_q["query_by"] = "description,assigned_user"
             elif collection == "conditions":
-                context["result_headers"] = Condition.headers
+                context["result_headers"] = Condition.get_headers()
                 search_q["query_by"] = "proposed_condition,approved_condition"
 
             search_result = client.collections[collection].documents.search(search_q)
@@ -240,8 +250,8 @@ class IndexSearchCombined(LoginRequiredMixin, TemplateView):
         if "q" in self.request.GET and self.request.GET["q"]:
             context["query_string"] = self.request.GET["q"]
             context["search_result"] = []
-            context["referral_headers"] = Referral.headers
-            client = typesense_client()
+            context["referral_headers"] = Referral.get_headers()
+            client = get_typesense_client()
             search_q = {
                 "q": self.request.GET["q"],
                 "sort_by": "created:desc",
@@ -525,7 +535,7 @@ class ReferralDetail(PrsObjectDetail):
                 obj_qs = m.objects.current().filter(referral=ref)
                 if m is Record:  # Sort records newest > oldest (nulls last).
                     obj_qs = obj_qs.order_by(F("order_date").desc(nulls_last=True))
-                headers = copy(m.headers)
+                headers = copy(m.get_headers())
                 headers.remove("Referral ID")
                 headers.append("Actions")
                 # Construct the <thead> element.
@@ -560,9 +570,12 @@ class ReferralCreateChild(PrsObjectCreate):
     a Note to a Record).
     """
 
+    def get_referral(self):
+        return Referral.objects.get(pk=self.kwargs["pk"])
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        referral_id = self.parent_referral.pk
+        referral = self.get_referral()
         child_model = is_model_or_string(self.kwargs["model"].capitalize())
         if "id" in self.kwargs:  # Relating to existing object.
             child_obj = str(child_model.objects.get(pk=self.kwargs["id"]))
@@ -594,7 +607,7 @@ class ReferralCreateChild(PrsObjectCreate):
         links = [
             (reverse("site_home"), "Home"),
             (reverse("prs_object_list", kwargs={"model": "referrals"}), "Referrals"),
-            (reverse("referral_detail", kwargs={"pk": referral_id}), referral_id),
+            (reverse("referral_detail", kwargs={"pk": referral.pk}), referral.pk),
             (None, last_breadcrumb),
         ]
         context["breadcrumb_trail"] = breadcrumbs_li(links)
@@ -604,7 +617,7 @@ class ReferralCreateChild(PrsObjectCreate):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        referral = self.parent_referral
+        referral = self.get_referral()
         if "clearance" in self.kwargs.values():
             kwargs["condition_choices"] = self.get_condition_choices()
             kwargs["initial"] = {"assigned_user": self.request.user}
@@ -612,27 +625,24 @@ class ReferralCreateChild(PrsObjectCreate):
             kwargs["referral"] = referral
         return kwargs
 
-    @property
-    def parent_referral(self):
-        return Referral.objects.get(pk=self.kwargs["pk"])
-
     def get(self, request, *args, **kwargs):
         # Sanity check: disallow addition of clearance tasks where no approved
         # conditions exist on the referral.
         if "clearance" in self.kwargs.values() and not self.get_condition_choices():
-            messages.error(self.request, "This referral has no approval conditions!")
+            messages.error(self.request, "This referral has no approval conditions!", extra_tags="danger")
             return HttpResponseRedirect(self.get_success_url())
         return super().get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         # If the user clicked Cancel, redirect to the referral detail page.
         if request.POST.get("cancel"):
-            return HttpResponseRedirect(self.parent_referral.get_absolute_url())
+            referral = self.get_referral()
+            return HttpResponseRedirect(referral.get_absolute_url())
         return super().post(request, *args, **kwargs)
 
     def form_valid(self, form):
         self.object = form.save(commit=False)
-        self.object.referral = self.parent_referral
+        self.object.referral = self.get_referral()
         self.object.user = self.request.user
         self.object.creator, self.object.modifier = self.request.user, self.request.user
         redirect_url = None
@@ -680,7 +690,8 @@ class ReferralCreateChild(PrsObjectCreate):
             child_model = is_model_or_string(self.kwargs["model"].capitalize())
             child_obj = child_model.objects.get(pk=self.kwargs["id"])
             return child_obj.get_absolute_url()
-        return self.parent_referral.get_absolute_url()
+        referral = self.get_referral()
+        return referral.get_absolute_url()
 
     def create_existing_note(self, form):
         pk = self.kwargs["id"]
@@ -744,7 +755,7 @@ class ReferralCreateChild(PrsObjectCreate):
                 record.task_set.add(obj)
             else:
                 record.note_set.add(obj)
-        messages.success(self.request, f"The record has been added to {self.kwargs["model"].capitalize()} {self.kwargs["id"]}.")
+        messages.success(self.request, f"The record has been added to {self.kwargs['model'].capitalize()} {self.kwargs['id']}.")
 
     def create_new_record(self, form):
         request = self.request
@@ -777,10 +788,11 @@ class ReferralCreateChild(PrsObjectCreate):
 
     def get_condition_choices(self):
         """Return conditions with 'approved' text only."""
-        condition_qs = Condition.objects.current().filter(referral=self.parent_referral).exclude(condition="")
+        referral = self.get_referral()
+        condition_qs = Condition.objects.current().filter(referral=referral).exclude(condition="")
         condition_choices = []
         for i in condition_qs:
-            condition_choices.append((i.id, f"{i.identifier or ""} - {smart_truncate(i.condition, 100)}"))
+            condition_choices.append((i.id, f"{i.identifier or ''} - {smart_truncate(i.condition, 100)}"))
         return condition_choices
 
     def create_clearance(self, form):
@@ -824,7 +836,7 @@ class ReferralCreateChild(PrsObjectCreate):
                 msg.send(fail_silently=True)
             tasks.append(clearance_task.pk)
 
-        messages.success(self.request, f"New Clearance {str(tasks).strip("[]")} has been created.")
+        messages.success(self.request, f"New Clearance {str(tasks).strip('[]')} has been created.")
 
     def create_condition(self, obj):
         obj.save()
@@ -877,7 +889,7 @@ class ReferralCreateChild(PrsObjectCreate):
 
         # If "email user" was checked, do so now.
         if self.request.POST.get("email_user"):
-            obj.email_user(from_email=self.request.user.email)
+            obj.email_user()
 
 
 class LocationCreate(ReferralCreateChild):
@@ -889,40 +901,54 @@ class LocationCreate(ReferralCreateChild):
     form_class = LocationForm
     template_name = "referral/location_create.html"
 
-    @property
-    def parent_referral(self):
-        return get_object_or_404(Referral, pk=self.kwargs["pk"])
+    def get_referral(self):
+        return Referral.objects.get(pk=self.kwargs["pk"])
+
+    def get_intersecting_locations(self, locations):
+        """Check to see if the list of locations intersects with any other locations."""
+        intersecting_locations = []
+        referral = self.get_referral()
+        for location in locations:
+            if location.poly:
+                other_locs = Location.objects.current().exclude(referral=referral).filter(poly__intersects=location.poly)
+                if other_locs.exists():
+                    intersecting_locations.append(location.pk)
+        return intersecting_locations
 
     def get_context_data(self, **kwargs):
         # Standard view context data.
         self.kwargs["model"] = "location"  # Append to kwargs
         context = super().get_context_data(**kwargs)
-        ref = self.parent_referral
+        referral = self.get_referral()
         links = [
             (reverse("site_home"), "Home"),
             (reverse("prs_object_list", kwargs={"model": "referrals"}), "Referrals"),
-            (reverse("referral_detail", kwargs={"pk": ref.pk}), ref.pk),
+            (reverse("referral_detail", kwargs={"pk": referral.pk}), referral.pk),
             (None, "Create locations(s)"),
         ]
         context["breadcrumb_trail"] = breadcrumbs_li(links)
         context["title"] = "CREATE LOCATION(S)"
-        context["address"] = ref.address
+        context["address"] = referral.address
         # Add any existing referral locations serialised as GeoJSON.
-        if any([loc.poly for loc in ref.location_set.current()]):
-            context["geojson_locations"] = serialize("geojson", ref.location_set.current(), geometry_field="poly", srid=4283)
+        if any([loc.poly for loc in referral.location_set.current()]):
+            context["geojson_locations"] = serialize("geojson", referral.location_set.current(), geometry_field="poly", srid=4283)
         return context
 
     def get_success_url(self):
-        return reverse("referral_detail", kwargs={"pk": self.parent_referral.pk})
+        referral = self.get_referral()
+        return reverse("referral_detail", kwargs={"pk": referral.pk})
 
     def post(self, request, *args, **kwargs):
+        # If the user clicked Cancel, redirect to the referral detail page.
         if request.POST.get("cancel"):
             return HttpResponseRedirect(self.get_success_url())
-        ref = self.parent_referral
+        return super().post(request, *args, **kwargs)
 
+    def form_valid(self, form):
+        referral = self.get_referral()
         # Aggregate the submitted form values into a dict of dicts.
         forms = {}
-        for key, val in request.POST.items():
+        for key, val in self.request.POST.items():
             if key.startswith("form-"):
                 form = re.findall("^form-[0-9]+", key)[0]
                 field = re.sub("^form-[0-9]+-", "", key)
@@ -950,57 +976,124 @@ class LocationCreate(ReferralCreateChild):
                 loc.poly = poly[0]
             else:
                 loc.poly = poly
-            loc.referral = ref
+            loc.referral = referral
             loc.save()
             locations.append(loc)
 
-        messages.success(request, f"{len(forms)} location(s) created.")
+        messages.success(self.request, f"{len(forms)} location(s) created.")
 
         # Test for intersecting locations.
-        intersecting_locations = self.polygon_intersects(locations)
+        intersecting_locations = self.get_intersecting_locations(locations)
         if intersecting_locations:
             # Redirect to a view where users can create relationships between referrals.
             locs_str = "_".join(map(str, intersecting_locations))
             return HttpResponseRedirect(
                 reverse(
                     "referral_intersecting_locations",
-                    kwargs={"pk": ref.id, "loc_ids": locs_str},
+                    kwargs={"pk": referral.pk, "loc_ids": locs_str},
                 )
             )
         else:
             return HttpResponseRedirect(self.get_success_url())
 
-    def polygon_intersects(self, locations):
-        """Check to see if the location polygon intersects with any other locations."""
-        intersecting_locations = []
-        for location in locations:
-            if location.poly:
-                other_locs = Location.objects.current().exclude(pk=location.pk).filter(poly__isnull=False, poly__intersects=location.poly)
-                if other_locs.exists():
-                    intersecting_locations.append(location.pk)
-        return intersecting_locations
+
+class ShapefileUpload(LocationCreate):
+    """Customised subclass of LocationCreate to allow upload of a zipped shapefile on a referral,
+    generating a record and location(s).
+    """
+
+    form_class = ShapefileUploadForm
+    template_name = "referral/change_form.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        referral = self.get_referral()
+        title = "Upload shapefile"
+        context["title"] = title.upper()
+        context["page_title"] = f"PRS | Referral {referral.pk} | {title}"
+        links = [
+            (reverse("site_home"), "Home"),
+            (reverse("prs_object_list", kwargs={"model": "referrals"}), "Referrals"),
+            (reverse("referral_detail", kwargs={"pk": referral.pk}), referral.pk),
+            (None, title),
+        ]
+        context["breadcrumb_trail"] = breadcrumbs_li(links)
+        return context
+
+    def form_valid(self, form):
+        # Begin by parsing the features in the uploaded shapefile.
+        name = form.cleaned_data["uploaded_shapefile"].name
+        uploaded_shapefile = form.cleaned_data["uploaded_shapefile"]
+        features = parse_shapefile(uploaded_shapefile)
+
+        # If the parse function returns False, assume an exception was thrown.
+        if features is False:
+            messages.error(
+                self.request,
+                f"Error while loading {name} (corrupt/invalid shapefile)",
+                extra_tags="danger",
+            )
+            return HttpResponseRedirect(self.get_success_url())
+
+        referral = self.get_referral()
+        locations = []
+        for feature in features:
+            # For each polygon/multipolygon feature, create a Location object.
+            if feature.geom_type == "MultiPolygon":
+                geometries = list(feature.geoms)
+            elif feature.geom_type == "Polygon":
+                geometries = [feature]
+            else:
+                messages.info(self.request, f"Feature of geometry type '{feature.geom_type}' not imported")
+                continue
+
+            for geom in geometries:
+                # Instantiate a Django polygon
+                poly = GEOSGeometry(geom.wkt)
+                # Generate a new location attached to the referral.
+                locations.append(Location.objects.create(referral=referral, poly=poly))
+
+        # For the uploaded file, create a Record object.
+        new_record = Record.objects.create(
+            name=name, referral=referral, uploaded_file=form.cleaned_data["uploaded_shapefile"], order_date=date.today()
+        )
+        messages.success(self.request, f"Shapefile processed and saved as {new_record} - {len(locations)} locations generated")
+
+        # Test for intersecting locations.
+        intersecting_locations = self.get_intersecting_locations(locations)
+        if intersecting_locations:
+            # Redirect to a view where users can create relationships between referrals.
+            locs_str = "_".join(map(str, intersecting_locations))
+            return HttpResponseRedirect(
+                reverse(
+                    "referral_intersecting_locations",
+                    kwargs={"pk": referral.pk, "loc_ids": locs_str},
+                )
+            )
+        else:
+            return super().form_valid(form)
 
 
 class LocationIntersects(PrsObjectCreate):
     model = Referral
     form_class = IntersectingReferralForm
 
-    @property
-    def parent_referral(self):
-        return self.get_object()
+    def get_referral(self):
+        return Referral.objects.get(pk=self.kwargs["pk"])
 
     def get_success_url(self):
-        return reverse("referral_detail", kwargs={"pk": self.parent_referral.pk})
+        referral = self.get_referral()
+        return reverse("referral_detail", kwargs={"pk": referral.pk})
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs["referral"] = self.parent_referral
+        kwargs["referral"] = self.get_referral()
         kwargs["referrals"] = self.referral_intersecting_locations()
         return kwargs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        referral = self.parent_referral
+        referral = self.get_referral()
         links = [
             (reverse("site_home"), "Home"),
             (reverse("prs_object_list", kwargs={"model": "referrals"}), "Referrals"),
@@ -1020,16 +1113,18 @@ class LocationIntersects(PrsObjectCreate):
     def form_valid(self, form):
         # For each intersecting referral chosen, add a relationship
         for ref in form.cleaned_data["related_refs"]:
-            self.parent_referral.add_relationship(ref)
+            referral = self.get_referral()
+            referral.add_relationship(ref)
 
-        messages.success(self.request, f"{len(form.cleaned_data["related_refs"])} Referral relationship(s) created.")
+        messages.success(self.request, f"{len(form.cleaned_data['related_refs'])} Referral relationship(s) created.")
         return redirect(self.get_success_url())
 
     def referral_intersecting_locations(self):
-        # get the loc_ids string and convert to list of int's
+        # Get the loc_ids string and convert to list of int's
         loc_ids = map(int, self.kwargs["loc_ids"].split("_"))
-
         referral_ids = []
+        referral = self.get_referral()
+
         for loc_id in loc_ids:
             location = get_object_or_404(Location, pk=loc_id)
             geom = location.poly.wkt
@@ -1039,8 +1134,8 @@ class LocationIntersects(PrsObjectCreate):
             # Get a qs of referrals
             for i in intersects:
                 # Don't add the passed-in referral to the list.
-                if i.referral.id != self.parent_referral.id:
-                    referral_ids.append(i.referral.id)
+                if i.referral.pk != referral.pk:
+                    referral_ids.append(i.referral.pk)
 
         unique_referral_ids = list(set(referral_ids))
         return Referral.objects.current().filter(id__in=unique_referral_ids)
@@ -1075,31 +1170,95 @@ class RecordUpload(LoginRequiredMixin, View):
         if uploaded_file.content_type not in settings.ALLOWED_UPLOAD_TYPES:
             return HttpResponseBadRequest("Disallowed file type")
 
-        if self.parent_referral:
-            rec = Record(
+        # If a zip file is being uploaded on a referral, attempt to parse it as a shapefile.
+        if uploaded_file.name.lower().endswith(".zip") and self.parent_referral:
+            features = parse_shapefile(uploaded_file)
+            referral = self.get_parent_object()
+            locations = []
+            # If the parse function returns a non-empty list, assume that the file was a shapefile and continue to process it.
+            if features:
+                for feature in features:
+                    # For each polygon/multipolygon feature, create a Location object.
+                    if feature.geom_type == "MultiPolygon":
+                        geometries = list(feature.geoms)
+                    elif feature.geom_type == "Polygon":
+                        geometries = [feature]
+                    else:
+                        messages.info(self.request, f"Feature of geometry type '{feature.geom_type}' not imported")
+                        continue
+
+                    for geom in geometries:
+                        # Instantiate a Django polygon
+                        poly = GEOSGeometry(geom.wkt)
+                        # Generate a new location attached to the referral.
+                        locations.append(Location.objects.create(referral=referral, poly=poly))
+
+            # For the uploaded file, create a Record object.
+            new_record = Record.objects.create(
                 name=uploaded_file.name,
-                referral=self.get_parent_object(),
+                referral=referral,
+                uploaded_file=uploaded_file,
+                order_date=date.today(),
+                creator=request.user,
+                modifier=request.user,
+            )
+            messages.success(self.request, f"Shapefile processed and saved as {new_record} - {len(locations)} locations generated")
+
+            # Test for intersecting locations.
+            intersecting_location_pks = []
+            for location in locations:
+                if location.poly:
+                    other_locs = Location.objects.current().exclude(referral=referral).filter(poly__intersects=location.poly)
+                    if other_locs.exists():
+                        intersecting_location_pks.append(location.pk)
+
+            if intersecting_location_pks:
+                # Redirect to a view where users can create relationships between referrals.
+                location_pks = "_".join(map(str, intersecting_location_pks))
+                redirect_url = reverse(
+                    "referral_intersecting_locations",
+                    kwargs={"pk": referral.pk, "loc_ids": location_pks},
+                )
+            else:
+                redirect_url = reverse("referral_detail", kwargs={"pk": referral.pk, "related_model": "records"})
+            return JsonResponse(
+                {
+                    "success": True,
+                    "object": {"id": new_record.pk, "resource_uri": new_record.get_absolute_url(), "redirect_url": redirect_url},
+                }
+            )
+        elif self.parent_referral:  # Not a zip file, or else not parsed as a shapefile.
+            referral = self.get_parent_object()
+            new_record = Record.objects.create(
+                name=uploaded_file.name,
+                referral=referral,
                 uploaded_file=uploaded_file,
                 creator=request.user,
                 modifier=request.user,
             )
-        else:
-            rec = self.get_parent_object()
-            rec.uploaded_file = uploaded_file
-            rec.modifier = request.user
-
-        # Non *.msg files only: set order_date to today's date.
-        if rec.extension != "MSG":
-            rec.order_date = date.today()
-
-        rec.save()
-
-        return JsonResponse(
-            {
-                "success": True,
-                "object": {"id": rec.pk, "resource_uri": rec.get_absolute_url()},
-            }
-        )
+            messages.success(self.request, f"Upload processed and saved as {new_record}")
+            redirect_url = reverse("referral_detail", kwargs={"pk": referral.pk, "related_model": "records"})
+            return JsonResponse(
+                {
+                    "success": True,
+                    "object": {"id": new_record.pk, "resource_uri": new_record.get_absolute_url(), "redirect_url": redirect_url},
+                }
+            )
+        else:  # Attaching a new file upload to an existing record.
+            record = self.get_parent_object()
+            record.uploaded_file = uploaded_file
+            record.modifier = request.user
+            # Non *.msg files only: set order_date to today's date.
+            if record.extension != "MSG":
+                record.order_date = date.today()
+            record.save()
+            messages.success(self.request, f"Upload processed and saved to {record}")
+            return JsonResponse(
+                {
+                    "success": True,
+                    "object": {"id": record.pk, "resource_uri": record.get_absolute_url(), "redirect_url": record.get_absolute_url()},
+                }
+            )
 
 
 class TaskAction(PrsObjectUpdate):
@@ -1124,13 +1283,13 @@ class TaskAction(PrsObjectUpdate):
         task = self.get_object()
 
         if action == "update" and task.stop_date and not task.restart_date:
-            messages.error(request, "You can't edit a stopped task - restart the task first!")
+            messages.error(request, "You can't edit a stopped task - restart the task first!", extra_tags="danger")
             return redirect(task.get_absolute_url())
         if action == "stop" and task.complete_date:
-            messages.error(request, "You can't stop a completed task!")
+            messages.error(request, "You can't stop a completed task!", extra_tags="danger")
             return redirect(task.get_absolute_url())
         if action == "start" and not task.stop_date:
-            messages.error(request, "You can't restart a non-stopped task!")
+            messages.error(request, "You can't restart a non-stopped task!", extra_tags="danger")
             return redirect(task.get_absolute_url())
         if action == "inherit" and task.assigned_user == request.user:
             messages.info(request, "That task is already assigned to you.")
@@ -1244,7 +1403,7 @@ class TaskAction(PrsObjectUpdate):
             obj.complete_date = datetime.now()
         elif action == "reassign":
             if self.request.POST.get("email_user"):
-                obj.email_user(self.request.user.email)
+                obj.email_user()
         elif action == "update":
             if obj.restart_date and obj.stop_date:
                 obj.stop_time = (obj.restart_date - obj.stop_date).days
@@ -1349,6 +1508,39 @@ class ReferralReferenceSearch(PrsObjectList):
         context = super().get_context_data(**kwargs)
         context["object_count"] = self.object_list.count()
         return context
+
+
+class ReferralPointSearch(View):
+    """Basic view endpoint to query PRS referrals intersecting a given spatial point."""
+
+    http_method_names = ["get"]
+
+    def get(self, request, *args, **kwargs):
+        x = request.GET.get("x", None)  # Longitude
+        y = request.GET.get("y", None)  # Latitude
+        if not x or not y:
+            return HttpResponseBadRequest("Bad request")
+        # Validate user-supplied query params.
+        try:
+            x = float(x)
+            y = float(y)
+        except:
+            return HttpResponseBadRequest("Bad request")
+
+        locations = Location.objects.current().filter(poly__intersects=Point(x, y)).distinct()
+        referrals = Referral.objects.current().filter(pk__in=[loc.referral.pk for loc in locations]).distinct()
+        resp = [
+            {
+                "id": referral.pk,
+                "referral_date": referral.referral_date.strftime("%d %b %Y"),
+                "type": referral.type.name,
+                "reference": referral.reference,
+                "url": referral.get_absolute_url(),
+            }
+            for referral in referrals
+        ]
+
+        return JsonResponse(resp, safe=False)
 
 
 class TagList(PrsObjectList):
@@ -1549,10 +1741,10 @@ class ReferralRelate(PrsObjectList):
         """
         # NOTE: query parameters always live in request.GET.
         if not self.request.GET.get("ref_pk", None):
-            raise AttributeError(f"Relate view {self.__class__.__name__} must be called with a " "ref_pk query parameter.")
+            raise AttributeError(f"Relate view {self.__class__.__name__} must be called with a ref_pk query parameter.")
 
         if "create" not in self.request.GET and "delete" not in self.request.GET:
-            raise AttributeError(f"Relate view {self.__class__.__name__} must be called with either " "create or delete query parameters.")
+            raise AttributeError(f"Relate view {self.__class__.__name__} must be called with either create or delete query parameters.")
 
         ref1 = self.get_object()
         ref2 = get_object_or_404(Referral, pk=self.request.GET.get("ref_pk"))

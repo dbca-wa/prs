@@ -5,63 +5,44 @@ const geoserver_wms_url = `${context.geoserver_url}/ows`;
 const geoserver_wmts_url = `${context.geoserver_url}/gwc/service/wmts?service=WMTS&request=GetTile&version=1.0.0&format=image/png&tilematrixset=mercator&tilematrix=mercator:{z}&tilecol={x}&tilerow={y}`;
 
 // Base layers
-const virtualMosaic = L.tileLayer.wms(geoserver_wms_url, {
-  layers: 'kaartdijin-boodja-private:virtual_mosaic',
-});
-const mapboxStreets = L.tileLayer.wms(geoserver_wms_url, {
-  layers: 'kaartdijin-boodja-public:mapbox-streets-public',
-});
-const waCoast = L.tileLayer.wms(geoserver_wms_url, {
-  layers: 'kaartdijin-boodja-private:WA_COAST_SMOOTHED',
-});
+const virtualMosaic = L.tileLayer(`${geoserver_wmts_url}&layer=kaartdijin-boodja-private:virtual_mosaic`);
+const mapboxStreets = L.tileLayer(`${geoserver_wmts_url}&layer=kaartdijin-boodja-public:mapbox-streets-public`);
+const waCoast = L.tileLayer(`${geoserver_wmts_url}&layer=kaartdijin-boodja-private:WA_COAST_SMOOTHED`);
 
 // Overlay layers
-const cadastre = L.tileLayer.wms(geoserver_wms_url, {
-  layers: 'kaartdijin-boodja-private:CPT_CADASTRE_SCDB',
-  format: 'image/png',
+const cadastre = L.tileLayer(`${geoserver_wmts_url}&layer=kaartdijin-boodja-private:CPT_CADASTRE_SCDB`, {
   transparent: true,
   opacity: 0.75,
-  minZoom: 13,
+  minZoom: 13, // Limit the zoom at which this layer can be visible.
 });
+// Do not use WMTS for the PRS locations layer (live layer, avoid caching).
 const prsLocations = L.tileLayer.wms(geoserver_wms_url, {
   layers: context.prs_layer_name,
   format: 'image/png',
   transparent: true,
   opacity: 0.75,
 });
-const dbcaRegions = L.tileLayer.wms(geoserver_wms_url, {
-  layers: 'kaartdijin-boodja-public:CPT_DBCA_REGIONS',
-  format: 'image/png',
+const dbcaRegions = L.tileLayer(`${geoserver_wmts_url}&layer=kaartdijin-boodja-public:CPT_DBCA_REGIONS`, {
   transparent: true,
   opacity: 0.75,
 });
-const dbcaTenure = L.tileLayer.wms(geoserver_wms_url, {
-  layers: 'kaartdijin-boodja-public:CPT_DBCA_LEGISLATED_TENURE',
-  format: 'image/png',
+const dbcaTenure = L.tileLayer(`${geoserver_wmts_url}&layer=kaartdijin-boodja-public:CPT_DBCA_LEGISLATED_TENURE`, {
   transparent: true,
   opacity: 0.75,
 });
-const regionalParks = L.tileLayer.wms(geoserver_wms_url, {
-  layers: 'kaartdijin-boodja-private:CPT_REGIONAL_PARKS',
-  format: 'image/png',
+const regionalParks = L.tileLayer(`${geoserver_wmts_url}&layer=kaartdijin-boodja-private:CPT_REGIONAL_PARKS`, {
   transparent: true,
   opacity: 0.75,
 });
-const swanCannDevContArea = L.tileLayer.wms(geoserver_wms_url, {
-  layers: 'kaartdijin-boodja-private:CPT_SWAN_CANN_DEV_CONT_AREA',
-  format: 'image/png',
+const swanCannDevContArea = L.tileLayer(`${geoserver_wmts_url}&layer=kaartdijin-boodja-private:CPT_SWAN_CANN_DEV_CONT_AREA`, {
   transparent: true,
   opacity: 0.75,
 });
-const ucl = L.tileLayer.wms(geoserver_wms_url, {
-  layers: 'kaartdijin-boodja-private:CPT_CADASTRE_UCL_1PL',
-  format: 'image/png',
+const ucl = L.tileLayer(`${geoserver_wmts_url}&layer=kaartdijin-boodja-private:CPT_CADASTRE_UCL_1PL`, {
   transparent: true,
   opacity: 0.75,
 });
-const lgaBoundaries = L.tileLayer.wms(geoserver_wms_url, {
-  layers: 'kaartdijin-boodja-public:CPT_LOCAL_GOVT_AREAS',
-  format: 'image/png',
+const lgaBoundaries = L.tileLayer(`${geoserver_wmts_url}&layer=kaartdijin-boodja-public:CPT_LOCAL_GOVT_AREAS`, {
   transparent: true,
   opacity: 0.75,
 });
@@ -159,12 +140,6 @@ L.Control.LotFilter = L.Control.extend({
     input.placeholder = text;
     input.role = 'search';
     input.id = 'id_input_lotSearch';
-    // Prevent click progration (handled differently in IE11)
-    if (!window.ActiveXObject && 'ActiveXObject' in window) {
-      input.MSPointerDown = input.onmousedown = input.ondblclick = input.onpointerdown = L.DomEvent.stopPropagation;
-    } else {
-      L.DomEvent.disableClickPropagation(input); // Prevents input selection in IE11.
-    }
 
     return input;
   },
@@ -224,3 +199,34 @@ const findLot = function (lotname) {
 // Add a fullscreen control to the map.
 const fullScreen = new L.control.fullscreen();
 map.addControl(fullScreen);
+
+function clickMapPopup(evt) {
+  // Event handler function: on click, query the API for referrals that intersect the location
+  // and create a popup listing them.
+  const [x, y] = [evt.latlng.lng, evt.latlng.lat];
+  const queryUrl = `${context.referral_point_search_url}?x=${x}&y=${y}`;
+  // Query the proxied URL for any feature intersecting the clicked-on location.
+  fetch(queryUrl)
+    .then((resp) => resp.json())
+    .then(function (data) {
+      if (data.length > 0) {
+        // data will be an array of referrals.
+        let tableRows = '';
+        data.forEach(function (el, idx, arr) {
+          tableRows += `<tr><td><a href="${el.url}">${el.id}</a></td><td>${el.referral_date}</td><td>${el.type}</td><td>${el.reference}</td></tr>`;
+        });
+
+        // Generate popup HTML content
+        let content = `<table class="table table-bordered table-striped table-sm">
+  <thead>
+    <tr><th>Referral ID</th><th>Date</th><th>Type</th><th>Reference</th></tr>
+  </thead>
+  <tbody>
+    ${tableRows}
+  </tbody>
+</table>`;
+        // Open the popup on the map.
+        L.popup().setLatLng(evt.latlng).setContent(content).openOn(map);
+      }
+    });
+}

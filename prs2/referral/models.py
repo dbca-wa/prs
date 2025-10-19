@@ -6,10 +6,11 @@ from tempfile import NamedTemporaryFile
 
 import reversion
 from django.conf import settings
-from django.contrib.auth.signals import user_logged_in
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import GeometryCollection
 from django.contrib.postgres.fields import ArrayField
+from django.contrib.postgres.indexes import GinIndex
+from django.contrib.postgres.search import SearchVectorField
 from django.core.mail import EmailMultiAlternatives
 from django.core.validators import MaxLengthValidator
 from django.db.models import Q
@@ -19,7 +20,7 @@ from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from extract_msg import Message
 from geojson import Feature, FeatureCollection, Polygon, dumps
-from indexer.utils import typesense_client
+from indexer.utils import get_typesense_client
 from lxml.html import fromstring
 from lxml_html_clean import clean_html
 from pygeopkg.conversion.to_geopkg_geom import make_gpkg_geom_header, point_lists_to_gpkg_polygon
@@ -29,8 +30,8 @@ from pygeopkg.core.srs import SRS
 from pygeopkg.shared.constants import SHAPE
 from pygeopkg.shared.enumeration import GeometryType, SQLFieldTypes
 from referral.base import ActiveModel, Audit
-from referral.tasks import index_object
-from referral.utils import as_row_subtract_referral_cell, dewordify_text, smart_truncate
+from referral.tasks import index_object, index_record
+from referral.utils import as_row_subtract_referral_cell, dewordify_text, search_document_normalise, smart_truncate
 from taggit.managers import TaggableManager
 from typesense.exceptions import ObjectNotFound
 from unidecode import unidecode
@@ -56,7 +57,6 @@ class ReferralLookup(ActiveModel, Audit):
     description = models.CharField(max_length=200, null=True, blank=True, validators=[MaxLengthValidator(200)])
     slug = models.SlugField(unique=True, help_text="Must be unique. Automatically generated from name.")
     public = models.BooleanField(default=True, help_text="Is this lookup selection available to all users?")
-    headers = ["Name", "Description", "Last modified"]
 
     class Meta:
         abstract = True
@@ -65,12 +65,17 @@ class ReferralLookup(ActiveModel, Audit):
     def __str__(self):
         return self.name
 
-    def save(self, force_insert=False, force_update=False, *args, **kwargs):
+    def save(self, *args, **kwargs):
         """Overide save() to cleanse text input fields."""
         self.name = unidecode(self.name)
         if self.description:
             self.description = unidecode(self.description)
-        super().save(force_insert, force_update)
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def get_headers(cls):
+        """Return a list of string values as headers for any list view."""
+        return ["Name", "Description", "Last modified"]
 
     def get_absolute_url(self):
         return reverse(
@@ -301,13 +306,17 @@ class NoteType(ReferralLookup):
     to be accessed anywhere but the Admin site.
     """
 
+    # TODO: deprecate model and replace with static method.
+
     icon = models.ImageField(upload_to="img", blank=True, null=True)
 
 
 class Agency(ReferralLookup):
     """
-    Lookup field to distinguish different govt Agencies by acronym (DER, DPaW, etc.)
+    Lookup field to distinguish different govt Agencies by acronym (DBCA, DWER, etc.)
     """
+
+    # TODO: deprecate model (unused).
 
     code = models.CharField(max_length=16)
 
@@ -319,9 +328,6 @@ class ReferralBaseModel(ActiveModel, Audit):
     """
     Base abstract model class for object types that are not lookups.
     """
-
-    headers = None
-    tools_template = None
 
     class Meta:
         abstract = True
@@ -338,6 +344,11 @@ class ReferralBaseModel(ActiveModel, Audit):
                 "pk": self.pk,
             },
         )
+
+    @classmethod
+    def get_tools_template(cls):
+        """Return the path to a model class template include."""
+        return f"referral/{cls._meta.model_name}_tools.html"
 
 
 @reversion.register()
@@ -366,6 +377,7 @@ class Referral(ReferralBaseModel):
         blank=True,
         help_text="[Searchable] The region(s) in which this referral belongs.",
     )
+    regions_str = models.CharField(max_length=256, blank=True, null=True, editable=False)
     referring_org = models.ForeignKey(
         Organisation,
         on_delete=models.PROTECT,
@@ -421,31 +433,46 @@ class Referral(ReferralBaseModel):
         verbose_name="local government",
         help_text="[Searchable] The LGA in which this referral resides.",
     )
-    headers = [
-        "Referral ID",
-        "Received date",
-        "Description",
-        "Address",
-        "Referrer's reference",
-        "Referred by",
-        "Region(s)",
-        "Type",
-    ]
-    tools_template = "referral/referral_tools.html"
+    search_document = models.TextField(blank=True, null=True, editable=False)
+    search_vector = SearchVectorField(null=True, editable=False)
 
-    def save(self, force_insert=False, force_update=False, *args, **kwargs):
+    class Meta:
+        ordering = ["-created"]
+        indexes = [GinIndex(fields=["search_vector"], name="idx_referral_search_vector")]
+
+    @classmethod
+    def get_headers(cls):
+        """Return a list of string values as headers for any list view."""
+        return [
+            "Referral ID",
+            "Received date",
+            "Description",
+            "Address",
+            "Referrer's reference",
+            "Referred by",
+            "Region(s)",
+            "Type",
+        ]
+
+    def save(self, *args, **kwargs):
         """Overide save to cleanse text input to the description, address fields.
-        Also set the point field value based on any assocated Location objects.
+        Set the point field value based on any assocated Location objects to the centroid.
+        Update the search_document field value for search purposes.
         """
-        if self.description:
-            self.description = unidecode(self.description)
         if self.address:
             self.address = unidecode(self.address)
         # We need a PK to call self.location_set
         if self.pk and self.location_set.current().exists():
             collection = GeometryCollection([l.poly for l in self.location_set.current() if l.poly])
             self.point = collection.centroid
-        super().save(force_insert, force_update)
+        # Update the regions_str field (only if the object already has a PK).
+        if self.pk:
+            self.regions_str = self.get_regions_str()
+
+        self.search_document = f"{self.reference} {self.type.name} {self.referring_org.name} {self.address or ''} {self.file_no or ''} {self.description or ''}"
+        self.search_document = search_document_normalise(self.search_document)
+
+        super().save(*args, **kwargs)
 
         # Index the referral.
         try:
@@ -457,14 +484,13 @@ class Referral(ReferralBaseModel):
     def get_absolute_url(self):
         return reverse("referral_detail", kwargs={"pk": self.pk})
 
-    @property
-    def regions_str(self):
+    def get_regions_str(self):
         """
         Return a unicode string of all the regions that this referral belongs to (or None).
         """
-        if not self.regions.all():
+        if not self.regions.current().exists():
             return None
-        return ", ".join([r.name for r in self.regions.all()])
+        return ", ".join([r.name for r in self.regions.current()])
 
     @property
     def dop_triggers_str(self):
@@ -506,7 +532,7 @@ class Referral(ReferralBaseModel):
         d = copy(self.__dict__)
         d["url"] = self.get_absolute_url()
         d["type"] = self.type.name
-        d["regions"] = self.regions_str
+        d["regions"] = self.regions_str or self.get_regions_str()
         d["referring_org"] = self.referring_org
         if self.referral_date:
             d["referral_date"] = self.referral_date.strftime("%d %b %Y")
@@ -542,7 +568,7 @@ class Referral(ReferralBaseModel):
         d = copy(self.__dict__)
         d["url"] = self.get_absolute_url()
         d["type"] = self.type.name
-        d["regions"] = self.regions_str
+        d["regions"] = self.regions_str or self.get_regions_str()
         d["dop_triggers"] = self.dop_triggers_str
         d["referring_org"] = self.referring_org
         d["file_no"] = self.file_no or ""
@@ -708,40 +734,50 @@ class Task(ReferralBaseModel):
         verbose_name="status",
         help_text="The status of the task.",
     )
-    headers = [
-        "Task",
-        "Type",
-        "Task description",
-        "Address",
-        "Referral ID",
-        "Assigned",
-        "Start",
-        "Due",
-        "Completed",
-        "Status",
-    ]
-    headers_site_home = [
-        "Type",
-        "Task description",
-        "Referral ID",
-        "Referral type",
-        "Referrer",
-        "Referrers reference",
-        "Due",
-        "Actions",
-    ]
-    tools_template = "referral/task_tools.html"
     records = models.ManyToManyField("Record", blank=True)
     notes = models.ManyToManyField("Note", blank=True)
+    search_document = models.TextField(blank=True, null=True, editable=False)
+    search_vector = SearchVectorField(null=True, editable=False)
 
     class Meta:
         ordering = ["-pk", "due_date"]
+        indexes = [GinIndex(fields=["search_vector"], name="idx_task_search_vector")]
 
-    def save(self, force_insert=False, force_update=False, *args, **kwargs):
-        """Overide save() to cleanse text input to the description field."""
-        if self.description:
-            self.description = unidecode(self.description)
-        super().save(force_insert, force_update)
+    @classmethod
+    def get_headers(cls):
+        """Return a list of string values as headers for any list view."""
+        return [
+            "Task ID",
+            "Type",
+            "Task description",
+            "Address",
+            "Referral ID",
+            "Assigned",
+            "Start",
+            "Due",
+            "Completed",
+            "Status",
+        ]
+
+    @classmethod
+    def get_headers_site_home(cls):
+        return [
+            "Type",
+            "Task description",
+            "Referral ID",
+            "Referral type",
+            "Referrer",
+            "Referrers reference",
+            "Due",
+            "Actions",
+        ]
+
+    def save(self, *args, **kwargs):
+        """Overide save() to cleanse and populate the search_document field."""
+        self.search_document = f"{self.type.name} {self.description or ''}"
+        self.search_document = search_document_normalise(self.search_document)
+
+        super().save(*args, **kwargs)
 
         # Index the task.
         try:
@@ -755,11 +791,11 @@ class Task(ReferralBaseModel):
         Returns a string of HTML that renders the object details as table row cells.
         Remember to enclose this function in <tr> tags.
         """
-        template = """<td><a href="{url}">Open</a></td>
+        template = """<td><a href="{url}">{id}</a></td>
             <td>{type}</td>
             <td>{description}</td>
             <td>{address}</td>
-            <td class="referral-id-cell"><a href="{referral_url}">{referral}</a></td>
+            <td class="referral-id-cell"><a href="{referral_url}">{referral_id}</a></td>
             <td>{assigned_user}</td>
             <td><span style="display:none">{start_date_ts} </span>{start_date}</td>
             <td><span style="display:none">{due_date_ts} </span>{due_date}</td>
@@ -774,7 +810,7 @@ class Task(ReferralBaseModel):
             d["description"] = ""
         d["address"] = self.referral.address or ""
         d["referral_url"] = self.referral.get_absolute_url()
-        d["referral"] = self.referral
+        d["referral_id"] = self.referral.pk
         d["assigned_user"] = self.assigned_user.get_full_name()
         if self.start_date:
             d["start_date"] = self.start_date.strftime("%d %b %Y")
@@ -818,7 +854,7 @@ class Task(ReferralBaseModel):
             d["complete_url"] = reverse("task_action", kwargs={"pk": self.pk, "action": "complete"})
             d["stop_url"] = reverse("task_action", kwargs={"pk": self.pk, "action": "stop"})
             d["cancel_url"] = reverse("task_action", kwargs={"pk": self.pk, "action": "cancel"})
-            d["delete_url"] = reverse("prs_object_delete", kwargs={"pk": self.pk, "model": "task"})
+            d["delete_url"] = reverse("prs_object_delete", kwargs={"pk": self.pk, "model": "tasks"})
         else:
             template = "<td></td>"
         return format_html(template, **d)
@@ -939,8 +975,8 @@ class Task(ReferralBaseModel):
         Returns a string of HTML to render the object details inside <tbody> tags.
         """
         template = """<tr><th>Type</th><td>{type}</td></tr>
-            <tr><th>Referral ID</th><td><a href="{referral_url}">{referral_id}</a></td></tr>
-            <tr><th>Referrer's reference</th><td>{reference}</td></tr>
+            <tr><th>Referral</th><td><a href="{referral_url}">{referral}</a></td></tr>
+            <tr><th>Referral reference</th><td>{reference}</td></tr>
             <tr><th>Assigned to</th><td>{assigned_user}</td></tr>
             <tr><th>Description</th><td>{description}</td></tr>
             <tr><th>Start date</th><td>{start_date}</td></tr>
@@ -953,7 +989,7 @@ class Task(ReferralBaseModel):
         d = copy(self.__dict__)
         d["type"] = self.type.name
         d["referral_url"] = reverse("referral_detail", kwargs={"pk": self.referral.pk, "related_model": "tasks"})
-        d["referral_id"] = self.referral.pk
+        d["referral"] = self.referral
         d["reference"] = self.referral.reference
         d["assigned_user"] = self.assigned_user.get_full_name()
         d["state"] = self.state.name
@@ -994,13 +1030,13 @@ class Task(ReferralBaseModel):
         referral_url = f"https://{settings.SITE_URL}{self.referral.get_absolute_url()}"
         address = self.referral.address or "not recorded"
         text_content = f"""This is an automated message to let you know that you have
-            been assigned a PRS task ({self.pk}) by the sending user.\n
+            been assigned a PRS task ({self.pk}).\n
             This task is attached to referral ID {self.referral.pk}.\n
             The referral reference is: {self.referral.reference}.\n
             The referral address is: {address}\n
             """
         html_content = f"""<p>This is an automated message to let you know that you have
-            been assigned a PRS task ({self.type.name}) by the sending user.</p>
+            been assigned a PRS task ({self.type.name}).</p>
             <p>The task is attached to referral ID {self.referral.pk}, located at this URL:</p>
             <p><a href="{referral_url}">{referral_url}</a></p>
             <p>The referral reference is: {self.referral.reference}</p>
@@ -1044,17 +1080,25 @@ class Record(ReferralBaseModel):
         help_text="Optional date (for sorting purposes).",
     )
     notes = models.ManyToManyField("Note", blank=True)
-    headers = ["Record", "Date", "Name", "Infobase ID", "Referral ID", "Type", "Size"]
-    tools_template = "referral/record_tools.html"
+    uploaded_file_content = models.TextField(blank=True, null=True, editable=False)
+    search_document = models.TextField(blank=True, null=True, editable=False)
+    search_vector = SearchVectorField(null=True, editable=False)
+
+    class Meta:
+        ordering = ["-created"]
+        indexes = [GinIndex(fields=["search_vector"], name="idx_record_search_vector")]
 
     def __str__(self):
         return f"Record {self.pk} ({smart_truncate(self.name, length=256)})"
 
-    def save(self, force_insert=False, force_update=False, *args, **kwargs):
-        """Overide save() to cleanse text input fields."""
+    @classmethod
+    def get_headers(cls):
+        """Return a list of string values as headers for any list view."""
+        return ["Record ID", "Date", "Name", "Infobase ID", "Referral ID", "Type", "Size"]
+
+    def save(self, index=True, **kwargs):
+        """Overide save() to cleanse text input fields and populate the search_document field."""
         self.name = unidecode(self.name).replace("\r\n", "").strip()
-        if self.description:
-            self.description = unidecode(self.description)
 
         # If the file is a .MSG we take the sent date of the email and use it for order_date.
         if self.extension == "MSG":
@@ -1062,14 +1106,19 @@ class Record(ReferralBaseModel):
             if msg.date and not self.order_date:  # Don't override any existing order_date.
                 self.order_date = msg.date
 
-        super().save(force_insert, force_update)
+        self.search_document = f"{self.name} {self.infobase_id or ''} {self.uploaded_file_content or ''} {self.description or ''}"
+        self.search_document = search_document_normalise(self.search_document)
 
-        # Index the record.
+        super().save(**kwargs)
+
+        # Index the record file content.
         try:
-            index_object.delay_on_commit(pk=self.pk, model="record")
+            if index:
+                index_object.delay_on_commit(pk=self.pk, model="record")
+                index_record.delay_on_commit(pk=self.pk)
         except Exception:
             # Indexing failure should never block or return an exception. Log the error to stdout.
-            LOGGER.exception(f"Error during indexing record {self}")
+            LOGGER.exception(f"Error indexing record {self}")
 
     def get_indexed_document(self, client=None):
         """Query Typesense for any indexed document of this record."""
@@ -1077,7 +1126,7 @@ class Record(ReferralBaseModel):
             return None
 
         if not client:
-            client = typesense_client()
+            client = get_typesense_client()
 
         try:
             document = client.collections["records"].documents[self.pk].retrieve()
@@ -1129,12 +1178,12 @@ class Record(ReferralBaseModel):
         Returns a string of HTML that renders the object details as table row cells.
         Remember to enclose this function in <tr> tags.
         """
-        template = """<td><a href="{url}">Open</a></td>
+        template = """<td><a href="{url}">{id}</a></td>
             <td><span style="display:none">{order_date_ts} </span>{order_date}</td>
             <td>{name}</td>
             <td><a href="{infobase_url}">{infobase_id}</a></td>
-            <td class="referral-id-cell"><a href="{referral_url}">{referral}</a></td>
-            <td><a href="{download_url}">{filetype}</a></td>
+            <td class="referral-id-cell"><a href="{referral_url}">{referral_id}</a></td>
+            <td>{download_url}</td>
             <td>{filesize}</td>"""
         d = copy(self.__dict__)
         d["url"] = self.get_absolute_url()
@@ -1145,7 +1194,7 @@ class Record(ReferralBaseModel):
             d["order_date"] = ""
             d["order_date_ts"] = ""
         d["referral_url"] = self.referral.get_absolute_url()
-        d["referral"] = self.referral
+        d["referral_id"] = self.referral.pk
         if self.infobase_id:
             d["infobase_url"] = reverse("infobase_shortcut", kwargs={"pk": self.pk})
             d["infobase_id"] = self.infobase_id
@@ -1153,12 +1202,10 @@ class Record(ReferralBaseModel):
             d["infobase_url"] = ""
             d["infobase_id"] = ""
         if self.uploaded_file:
-            d["download_url"] = self.uploaded_file.url
-            d["filetype"] = self.extension
+            d["download_url"] = mark_safe(f"<a href='{self.uploaded_file.url}'><i class='fa-solid fa-download'></i> {self.extension}</a>")
             d["filesize"] = self.filesize_str
         else:
             d["download_url"] = ""
-            d["filetype"] = ""
             d["filesize"] = ""
         return format_html(template, **d)
 
@@ -1183,10 +1230,10 @@ class Record(ReferralBaseModel):
         """
         template = """<tr><th>Name</th><td>{name}</td></tr>
             <tr><th>Referral</th><td><a href="{referral_url}">{referral}</a></td></tr>
-            <tr><th>Referrer's reference</th><td>{reference}</td></tr>
+            <tr><th>Referral reference</th><td>{reference}</td></tr>
             <tr><th>Infobase ID</th><td><a href="{infobase_url}">{infobase_id}</a></td></tr>
             <tr><th>Description</th><td>{description}</td></tr>
-            <tr><th>File type</th><td><a href="{download_url}">{filetype}</a></td></tr>
+            <tr><th>File type</th><td>{download_url}</td></tr>
             <tr><th>File size</th><td>{filesize}</td></tr>
             <tr><th>Date</th><td>{order_date}</td</tr>"""
         d = copy(self.__dict__)
@@ -1204,12 +1251,10 @@ class Record(ReferralBaseModel):
             d["infobase_id"] = ""
         d["description"] = self.description or ""
         if self.uploaded_file:
-            d["download_url"] = self.uploaded_file.url
-            d["filetype"] = self.extension
+            d["download_url"] = mark_safe(f"<a href='{self.uploaded_file.url}'><i class='fa-solid fa-download'></i> {self.extension}</a>")
             d["filesize"] = self.filesize_str
         else:
             d["download_url"] = ""
-            d["filetype"] = ""
             d["filesize"] = ""
         if self.order_date:
             d["order_date"] = self.order_date.strftime("%d-%b-%Y")
@@ -1236,27 +1281,31 @@ class Note(ReferralBaseModel):
         help_text="The type of note (optional).",
     )
     note_html = models.TextField(verbose_name="note")
-    note = models.TextField(editable=False)
+    note = models.TextField(editable=False)  # TODO: deprecate field.
     order_date = models.DateField(
         blank=True,
         null=True,
         verbose_name="date",
         help_text="Optional date (for sorting purposes).",
     )
-    headers = ["Note", "Type", "Creator", "Date", "Note", "Referral ID"]
-    tools_template = "referral/note_tools.html"
     records = models.ManyToManyField("Record", blank=True)
+    search_document = models.TextField(blank=True, null=True, editable=False)
+    search_vector = SearchVectorField(null=True, editable=False)
 
     class Meta:
         ordering = ["order_date"]
+        indexes = [GinIndex(fields=["search_vector"], name="idx_note_search_vector")]
 
     def __str__(self):
         return self.short_note
 
-    def save(self, force_insert=False, force_update=False, *args, **kwargs):
-        """
-        Overide the Note model save() to cleanse the HTML used.
-        """
+    @classmethod
+    def get_headers(cls):
+        """Return a list of string values as headers for any list view."""
+        return ["Note ID", "Type", "Creator", "Date", "Note text", "Referral ID"]
+
+    def save(self, *args, **kwargs):
+        """Overide the Note model save() to cleanse the HTML used and populate the search_document field."""
         self.note_html = dewordify_text(self.note_html)
         if self.note_html:
             self.note_html = clean_html(self.note_html)
@@ -1264,7 +1313,11 @@ class Note(ReferralBaseModel):
         if self.note_html:
             t = fromstring(self.note_html)
             self.note = t.text_content().strip()
-        super().save(force_insert, force_update)
+
+        self.search_document = f"{self.note}"
+        self.search_document = search_document_normalise(self.search_document)
+
+        super().save(*args, **kwargs)
 
         # Index the note.
         try:
@@ -1288,16 +1341,24 @@ class Note(ReferralBaseModel):
         Returns a string of HTML that renders the object details as table row cells.
         Remember to enclose this function in <tr> tags.
         """
-        template = """<td><a href="{url}">Open</a></td>
+        template = """<td><a href="{url}">{id}</a></td>
             <td>{type}</td>
             <td>{creator}</td>
             <td><span style="display:none">{order_date_ts} </span>{order_date}</td>
             <td>{note}</td>
-            <td class="referral-id-cell"><a href="{referral_url}">{referral}</a></td>"""
+            <td class="referral-id-cell"><a href="{referral_url}">{referral_id}</a></td>"""
         d = copy(self.__dict__)
+        icon_map = {
+            "conversation": "<i class='fa-solid fa-comments'></i>",
+            "email": "<i class='fa-solid fa-inbox'></i>",
+            "file-note": "<i class='fa-solid fa-note-sticky'></i>",
+            "letter-in": "<i class='fa-solid fa-envelope'></i>",
+            "letter_out": "<i class='fa-solid fa-square-envelope'></i>",
+            "report": "<i class='fa-solid fa-book'></i>",
+        }
         d["url"] = self.get_absolute_url()
-        if self.type:
-            d["type"] = mark_safe(f'<img src="/static/{self.type.icon.__str__()}" title="{self.type.name}" />')
+        if self.type and self.type.slug in icon_map:
+            d["type"] = mark_safe(icon_map[self.type.slug])
         else:
             d["type"] = ""
         d["creator"] = self.creator.get_full_name()
@@ -1309,7 +1370,7 @@ class Note(ReferralBaseModel):
             d["order_date_ts"] = ""
         d["note"] = smart_truncate(unidecode(self.note), length=400)
         d["referral_url"] = self.referral.get_absolute_url()
-        d["referral"] = self.referral
+        d["referral_id"] = self.referral.pk
         return format_html(template, **d)
 
     def as_row_actions(self):
@@ -1328,11 +1389,9 @@ class Note(ReferralBaseModel):
         return as_row_subtract_referral_cell(self.as_row())
 
     def as_tbody(self):
-        """
-        Returns a string of HTML to render the object details inside <tbody> tags.
-        """
+        """Returns a string of HTML to render the object details inside <tbody> tags."""
         template = """<tr><th>Referral</th><td><a href="{referral_url}">{referral}</a></td></tr>
-            <tr><th>Referrer's reference</th><td>{reference}</td></tr>
+            <tr><th>Referral reference</th><td>{reference}</td></tr>
             <tr><th>Type</th><td>{type}</td></tr>
             <tr><th>Created by</th><td>{creator}</td</tr>
             <tr><th>Date</th><td>{order_date}</td</tr>
@@ -1379,7 +1438,7 @@ class Condition(ReferralBaseModel):
     """
 
     referral = models.ForeignKey(Referral, on_delete=models.PROTECT, blank=True, null=True)
-    condition = models.TextField(editable=False, blank=True, null=True)
+    condition = models.TextField(editable=False, blank=True, null=True)  # TODO: deprecate field.
     condition_html = models.TextField(
         blank=True,
         null=True,
@@ -1387,7 +1446,7 @@ class Condition(ReferralBaseModel):
         help_text="""Insert words exactly as in the decision-maker's letter
         of approval, and add any advice notes relating to DPaW.""",
     )
-    proposed_condition = models.TextField(editable=False, blank=True, null=True)
+    proposed_condition = models.TextField(editable=False, blank=True, null=True)  # TODO: deprecate field.
     proposed_condition_html = models.TextField(
         verbose_name="proposed condition",
         blank=True,
@@ -1417,20 +1476,27 @@ class Condition(ReferralBaseModel):
         related_name="model_condition",
         help_text="Model text on which this condition is based",
     )
-    headers = [
-        "Condition",
-        "No.",
-        "Proposed condition",
-        "Approved condition",
-        "Category",
-        "Referral ID",
-    ]
-    tools_template = "referral/condition_tools.html"
+    search_document = models.TextField(blank=True, null=True, editable=False)
+    search_vector = SearchVectorField(null=True, editable=False)
 
-    def save(self, force_insert=False, force_update=False, *args, **kwargs):
-        """
-        Overide the Condition models's save() to cleanse the HTML input.
-        """
+    class Meta:
+        ordering = ["-created"]
+        indexes = [GinIndex(fields=["search_vector"], name="idx_condition_search_vector")]
+
+    @classmethod
+    def get_headers(cls):
+        """Return a list of string values as headers for any list view."""
+        return [
+            "Condition ID",
+            "No.",
+            "Proposed condition",
+            "Approved condition",
+            "Category",
+            "Referral ID",
+        ]
+
+    def save(self, *args, **kwargs):
+        """Overide the Condition models's save() to cleanse the HTML input and populate the search_document field."""
         if self.condition_html:
             self.condition_html = dewordify_text(self.condition_html)
             if self.condition_html:
@@ -1449,7 +1515,11 @@ class Condition(ReferralBaseModel):
         else:
             self.proposed_condition_html = ""
             self.proposed_condition = ""
-        super().save(force_insert, force_update)
+
+        self.search_document = f"{self.condition} {self.proposed_condition} {self.identifier}"
+        self.search_document = search_document_normalise(self.search_document)
+
+        super().save(*args, **kwargs)
 
         # Index the condition.
         if self.referral:
@@ -1463,12 +1533,12 @@ class Condition(ReferralBaseModel):
         Returns a string of HTML that renders the object details as table row cells.
         Remember to enclose this function in <tr> tags.
         """
-        template = """<td><a href="{url}">Open</a></td>
+        template = """<td><a href="{url}">{id}</a></td>
             <td>{identifier}</td>
             <td>{proposed_condition}</td>
             <td>{condition}</td>
             <td>{category}</td>
-            <td class="referral-id-cell"><a href="{referral_url}">{referral}</a></td>"""
+            <td class="referral-id-cell"><a href="{referral_url}">{referral_id}</a></td>"""
         d = copy(self.__dict__)
         d["url"] = self.get_absolute_url()
         d["identifier"] = self.identifier or ""
@@ -1489,7 +1559,7 @@ class Condition(ReferralBaseModel):
             )
         else:
             d["referral_url"] = ""
-        d["referral"] = self.referral or ""
+        d["referral_id"] = self.referral.pk if self.referral else ""
         return format_html(template, **d)
 
     def as_row_actions(self):
@@ -1516,7 +1586,7 @@ class Condition(ReferralBaseModel):
         Returns a string of HTML to render the object details inside <tbody> tags.
         """
         template = """<tr><th>Referral</th><td><a href="{referral_url}">{referral}</a></td></tr>
-            <tr><th>Referrer's reference</th><td>{reference}</td></tr>
+            <tr><th>Referral reference</th><td>{reference}</td></tr>
             <tr><th>Number</th><td>{identifier}</td></tr>
             <tr><th>Model condition</th><td>{model_condition}</td></tr>
             <tr><th>Proposed condition text</th><td>{proposed_condition_html}</td></tr>
@@ -1577,22 +1647,26 @@ class Clearance(models.Model):
     task = models.ForeignKey(Task, on_delete=models.PROTECT)
     date_created = models.DateField(auto_now_add=True)
     deposited_plan = models.CharField(max_length=200, null=True, blank=True, validators=[MaxLengthValidator(200)])
-    headers = [
-        "Clearance",
-        "Condition no.",
-        "Condition",
-        "Category",
-        "Task",
-        "Deposited plan",
-        "Referral ID",
-    ]
     objects = ClearanceManager()
+
+    class Meta:
+        ordering = ["-pk"]
 
     def __str__(self):
         return f"{self.pk} condition {self.condition.pk} has task {self.task.pk}"
 
-    class Meta:
-        ordering = ["-pk"]
+    @classmethod
+    def get_headers(cls):
+        """Return a list of string values as headers for any list view."""
+        return [
+            "Clearance ID",
+            "Condition no.",
+            "Condition",
+            "Category",
+            "Task",
+            "Deposited plan",
+            "Referral ID",
+        ]
 
     def get_absolute_url(self):
         return reverse("prs_object_detail", kwargs={"model": "clearance", "pk": self.pk})
@@ -1602,13 +1676,13 @@ class Clearance(models.Model):
         Returns a string of HTML that renders the object details as table row
         cells. Remember to enclose this function in <tr> tags.
         """
-        template = """<td><a href="{url}">Open</a></td>
+        template = """<td><a href="{url}">{id}</a></td>
             <td>{identifier}</td>
             <td>{condition}</td>
             <td>{category}</td>
             <td>{task}</td>
             <td>{deposited_plan}</td>
-            <td class="referral-id-cell"><a href="{referral_url}">{referral}</a></td>"""
+            <td class="referral-id-cell"><a href="{referral_url}">{referral_id}</a></td>"""
         d = copy(self.__dict__)
         d["url"] = self.get_absolute_url()
         d["identifier"] = self.condition.identifier or ""
@@ -1623,8 +1697,8 @@ class Clearance(models.Model):
         else:
             d["task"] = self.task.type.name
         d["deposited_plan"] = self.deposited_plan or ""
-        d["referral"] = self.task.referral
         d["referral_url"] = self.task.referral.get_absolute_url()
+        d["referral_id"] = self.task.referral.pk
         return format_html(template, **d)
 
     def as_tbody(self):
@@ -1632,11 +1706,11 @@ class Clearance(models.Model):
         Returns a string of HTML to render the object details inside <tbody> tags.
         """
         template = """<tr><th>Referral</th><td><a href="{referral_url}">{referral}</a></td></tr>
-            <tr><th>Referrer's reference</th><td>{reference}</td></tr>
+            <tr><th>Referral reference</th><td>{reference}</td></tr>
             <tr><th>Referral description</th><td>{referral_desc}</td></tr>
-            <tr><th>Condition ID</th><td><a href="{condition_url}">{condition}</a></td></tr>
+            <tr><th>Condition</th><td><a href="{condition_url}">{condition}</a></td></tr>
             <tr><th>Approved condition text</th><td>{condition_html}</td></tr>
-            <tr><th>Task ID</th><td><a href="{task_url}">{task}</a></td></tr>
+            <tr><th>Task</th><td><a href="{task_url}">{task}</a></td></tr>
             <tr><th>Task description</th><td>{task_desc}</td></tr>
             <tr><th>Deposited plan</th><td>{deposited_plan}</td></tr>"""
         d = copy(self.__dict__)
@@ -1688,8 +1762,18 @@ class Location(ReferralBaseModel):
     referral = models.ForeignKey(Referral, on_delete=models.PROTECT)
     poly = models.PolygonField(srid=4283, null=True, blank=True, help_text="Optional.")
     address_string = models.TextField(null=True, blank=True, editable=True)
-    headers = ["Location", "Address", "Polygon", "Referral ID"]
-    tools_template = "referral/location_tools.html"
+
+    @classmethod
+    def get_headers(cls):
+        """Return a list of string values as headers for any list view."""
+        return ["Location ID", "Address", "Street View", "Referral ID"]
+
+    def save(self, *args, **kwargs):
+        """
+        Overide the standard save method; inserts nice_address into address_string field.
+        """
+        self.address_string = self.nice_address.lower()
+        super().save(*args, **kwargs)
 
     @property
     def nice_address(self):
@@ -1712,34 +1796,29 @@ class Location(ReferralBaseModel):
             address += " " + self.postcode
         return escape(address)
 
-    def save(self, *args, **kwargs):
-        """
-        Overide the standard save method; inserts nice_address into address_string field.
-        """
-        self.address_string = self.nice_address.lower()
-        super().save(*args, **kwargs)
-
     def as_row(self):
         """
         Returns a string of HTML that renders the object details as table row cells.
         Remember to enclose this function in <tr> tags.
         """
-        template = """<td><a href="{url}">Open</a></td>
+        template = """<td><a href="{url}">{id}</a></td>
             <td>{address}</td>
-            <td>{polygon}</td>
-            <td class="referral-id-cell"><a href="{referral_url}">{referral}</a></td>"""
+            <td>{streetview_url}</td>
+            <td class="referral-id-cell"><a href="{referral_url}">{referral_id}</a></td>"""
         d = copy(self.__dict__)
         d["url"] = reverse("prs_object_detail", kwargs={"pk": self.pk, "model": "locations"})
         d["address"] = self.nice_address or "none"
         if self.poly:
-            d["polygon"] = mark_safe('<img src="/static/img/draw_polyline.png" alt="Polygon" />')
+            d["streetview_url"] = mark_safe(
+                f'<a href="http://maps.google.com/maps?q=&layer=c&cbll={self.poly.centroid.y},{self.poly.centroid.x}" title="Open in Google Street View" target="_blank"><i class="fa-solid fa-street-view"></i></a>'
+            )
         else:
-            d["polygon"] = ""
+            d["streetview_url"] = ""
         d["referral_url"] = reverse(
             "referral_detail",
             kwargs={"pk": self.referral.pk, "related_model": "locations"},
         )
-        d["referral"] = self.referral
+        d["referral_id"] = self.referral.pk
         return format_html(template, **d)
 
     def as_row_actions(self):
@@ -1762,7 +1841,7 @@ class Location(ReferralBaseModel):
         Returns a string of HTML to render the object details inside <tbody> tags.
         """
         template = """<tr><th>Referral</th><td><a href="{referral_url}">{referral}</a></td></tr>
-            <tr><th>Referrer's reference</th><td>{reference}</td></tr>
+            <tr><th>Referral reference</th><td>{reference}</td></tr>
             <tr><th>Address</th><td>{address}</td></tr>"""
         d = copy(self.__dict__)
         d["url"] = self.get_absolute_url()
@@ -1773,6 +1852,10 @@ class Location(ReferralBaseModel):
         d["referral"] = self.referral
         d["reference"] = self.referral.reference
         d["address"] = self.nice_address or "none"
+
+        if self.poly:
+            template += "<tr><th>Google Street View</th><td><a href='{streetview_url}' title='Open in Google Street View' target='_blank'><i class='fa-solid fa-street-view'></i></a></td></tr>"
+            d["streetview_url"] = f"http://maps.google.com/maps?q=&layer=c&cbll={self.poly.centroid.y},{self.poly.centroid.x}"
         return format_html(template, **d)
 
     def get_regions_intersected(self):
@@ -1805,13 +1888,17 @@ class Bookmark(ReferralBaseModel):
         help_text="Maximum 200 characters.",
         validators=[MaxLengthValidator(200)],
     )
-    headers = ["Referral ID", "Bookmark description", "Actions"]
 
-    def save(self, force_insert=False, force_update=False, *args, **kwargs):
+    @classmethod
+    def get_headers(cls):
+        """Return a list of string values as headers for any list view."""
+        return ["Referral ID", "Bookmark description", "Actions"]
+
+    def save(self, *args, **kwargs):
         """Overide save() to cleanse text input to the description field."""
         if self.description:
             self.description = unidecode(self.description)
-        super().save(force_insert, force_update)
+        super().save(*args, **kwargs)
 
     def as_row(self):
         """
@@ -1833,7 +1920,7 @@ class Bookmark(ReferralBaseModel):
         Returns a string of HTML to render the object details inside <tbody> tags.
         """
         template = """<tr><th>Referral</th><td><a href="{referral_url}">{referral}</a></td></tr>
-            <tr><th>Referrer's reference</th><td>{reference}</td></tr>
+            <tr><th>Referral reference</th><td>{reference}</td></tr>
             <tr><th>User</th><td>{user}</td></tr>
             <tr><th>Description</th><td>{description}</td></tr>"""
         d = copy(self.__dict__)
@@ -1853,8 +1940,6 @@ class UserProfile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     agency = models.ForeignKey(Agency, on_delete=models.PROTECT, blank=True, null=True)
     referral_history_array = ArrayField(models.IntegerField(), size=20, default=list, blank=True)
-    referral_history = models.TextField(blank=True, null=True)  # TODO: deprecate field.
-    task_history = models.TextField(blank=True, null=True)  # TODO: deprecate field.
 
     def __str__(self):
         return self.user.username
@@ -1889,12 +1974,3 @@ class UserProfile(models.Model):
     def is_power_user(self):
         """Returns group membership of the PRS power user group (or is_superuser==True)."""
         return self.user.is_superuser or self.user.groups.filter(name=settings.PRS_POWER_USER_GROUP).exists()
-
-
-def create_user_profile(**kwargs):
-    UserProfile.objects.get_or_create(user=kwargs["user"])
-
-
-# Connect the user_logged_in signal to the method above to ensure that user
-# profiles exist.
-user_logged_in.connect(create_user_profile)

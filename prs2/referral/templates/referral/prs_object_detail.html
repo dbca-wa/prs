@@ -1,256 +1,366 @@
 {% extends "base_prs.html" %}
 {% load static %}
-
 {% block extra_style %}
-{{ block.super }}
-<link href="https://cdn.datatables.net/v/bs5/dt-1.13.8/date-1.5.1/datatables.min.css" rel="stylesheet">
-{% if geojson_locations %}
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.min.css" integrity="sha512-1xoFisiGdy9nvho8EgXuXvnpR5GAMSjFwp40gSRE3NwdUdIMIKuPa7bqoUhLD0O/5tPNhteAsE5XyyMi5reQVA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/2.1.0/Control.FullScreen.min.css" integrity="sha512-DRkMa+fn898M1uc6s9JZeztUoXN6viuHsXmh/pgz3jG6a77YWO3U3QYEjLoqbxOeclc2NunWfMTya4Y5twXAKA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-<link rel="stylesheet" type="text/css" href="{% static 'css/leaflet-search.min.css' %}" />
-{% endif %}
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.1/min/basic.min.css" integrity="sha256-RvDmZ4ZtPtrWmZdibCa80jCE32m21xuR5SuW6zfJaW4=" crossorigin="anonymous" />
-<link rel="stylesheet" type="text/css" href="{% static 'css/prs_dropzone_5.7.1.css' %}" />
-<style>
-    #map { width:100%; height: 480px;}
-</style>
+    {{ block.super }}
+    <link href="https://cdn.datatables.net/v/bs5/dt-1.13.8/date-1.5.1/datatables.min.css"
+          rel="stylesheet">
+    {% if geojson_locations %}
+        <link rel="stylesheet"
+              href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.min.css"
+              integrity="sha512-1xoFisiGdy9nvho8EgXuXvnpR5GAMSjFwp40gSRE3NwdUdIMIKuPa7bqoUhLD0O/5tPNhteAsE5XyyMi5reQVA=="
+              crossorigin="anonymous"
+              referrerpolicy="no-referrer" />
+        <link rel="stylesheet"
+              href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/2.1.0/Control.FullScreen.min.css"
+              integrity="sha512-DRkMa+fn898M1uc6s9JZeztUoXN6viuHsXmh/pgz3jG6a77YWO3U3QYEjLoqbxOeclc2NunWfMTya4Y5twXAKA=="
+              crossorigin="anonymous"
+              referrerpolicy="no-referrer" />
+        <link rel="stylesheet"
+              type="text/css"
+              href="{% static 'css/leaflet-search.min.css' %}" />
+    {% endif %}
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.1/min/basic.min.css"
+          integrity="sha256-RvDmZ4ZtPtrWmZdibCa80jCE32m21xuR5SuW6zfJaW4="
+          crossorigin="anonymous" />
+    <link rel="stylesheet"
+          type="text/css"
+          href="{% static 'css/prs_dropzone_5.7.1.css' %}" />
+    <style>#map { width:100%; height: 480px;}</style>
 {% endblock extra_style %}
-
 {% if object_tools_template %}
-{% block sidebar_content %}{% include object_tools_template %}{% endblock %}
+    {% block sidebar_content %}
+        {% include object_tools_template %}
+    {% endblock %}
 {% endif %}
-
 {% block navbar_item_extra %}
-{% if object_type == 'task' %}
-<li class="nav-item dropdown">
-    <a class="nav-link dropdown-toggle" href="#" id="taskDetailNavbarDropdown" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-        Task <span class="caret"></span>
-    </a>
-    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="taskDetailNavbarDropdown">
-        {% if prs_user %}
-            <a class="dropdown-item" href="{% url 'task_action' pk=object.pk action='update' %}">Update task</a>
-            {% if task_stopped %}
-                <a class="dropdown-item" href="{% url 'task_action' pk=object.pk action='start' %}">Start task</a>
-            {% else %}
-                <a class="dropdown-item" href="{% url 'task_action' pk=object.pk action='stop' %}">Stop task</a>
-            {% endif %}
-            {% if can_complete %}
-                <a class="dropdown-item" href="{% url 'task_action' pk=object.pk action='complete' %}">Complete task</a>
-            {% else %}
-                <a class="dropdown-item" href="#" id="id_complete" title="{{ can_complete_msg }}" style="color:grey">Complete task</a>
-            {% endif %}
-            {% if not object.complete_date %}
-                <a class="dropdown-item" href="{% url 'task_action' pk=object.pk action='cancel' %}">Cancel task</a>
-            {% else %}
-                <a class="dropdown-item" href="#" style="color:grey">Cancel task</a>
-            {% endif %}
-            <a class="dropdown-item" href="{% url 'task_action' pk=object.pk action='reassign' %}">Reassign task</a>
-            <a class="dropdown-item" href="{% url 'task_action' pk=object.pk action='inherit' %}">Inherit task</a>
-            <a class="dropdown-item" href="{% url 'referral_create_child_related' pk=object.referral.pk id=object.id model='task' type='addnewrecord' %}">Add a new record to this task</a>
-            <a class="dropdown-item" href="{% url 'referral_create_child_related' pk=object.referral.pk id=object.id model='task' type='addrecord' %}">Add existing record(s) to this task</a>
-            <a class="dropdown-item" href="{% url 'referral_create_child_related' pk=object.referral.pk id=object.id model='task' type='addnewnote' %}">Add a new note to this task</a>
-            <a class="dropdown-item" href="{% url 'referral_create_child_related' pk=object.referral.pk id=object.id model='task' type='addnote' %}">Add existing note(s) to this task</a>
-            <a class="dropdown-item" href="{% url 'prs_object_delete' model='tasks' pk=object.pk %}">Delete task</a>
-        {% endif %}
-        <a class="dropdown-item" href="{% url 'prs_object_history' model='tasks' pk=object.pk %}">History</a>
-    </div>
-</li>
-{% elif object_type == 'note' %}
-<li class="nav-item dropdown">
-    <a class="nav-link dropdown-toggle" href="#" id="noteDetailNavbarDropdown" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-        Note <span class="caret"></span>
-    </a>
-    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="noteDetailNavbarDropdown">
-        {% if prs_user %}
-            <a class="dropdown-item" href="{% url 'prs_object_update' model='notes' pk=object.id %}">Update note</a>
-            <a class="dropdown-item" href="{% url 'prs_object_delete' model='notes' pk=object.id %}">Delete note</a>
-            <a class="dropdown-item" href="{% url 'referral_create_child_related' pk=object.referral.id id=object.id model='note' type='addnewrecord' %}">Add a new record to this note</a>
-            <a class="dropdown-item" href="{% url 'referral_create_child_related' pk=object.referral.id id=object.id model='note' type='addrecord' %}">Add existing record(s) to this note</a>
-        {% endif %}
-        <a class="dropdown-item" href="{% url 'prs_object_history' model='notes' pk=object.id %}">History</a>
-    </div>
-</li>
-{% elif object_type == 'record' %}
-<li class="nav-item dropdown">
-    <a class="nav-link dropdown-toggle" href="#" id="recordDetailNavbarDropdown" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-        Record <span class="caret"></span>
-    </a>
-    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="recordDetailNavbarDropdown">
-        {% if prs_user %}
-            <a class="dropdown-item" href="{% url 'prs_object_update' model='records' pk=object.id %}">Update record</a>
-            <a class="dropdown-item" href="{% url 'prs_object_delete' model='records' pk=object.id %}">Delete record</a>
-            <a class="dropdown-item" href="{% url 'referral_create_child_related' pk=object.referral.id id=object.id model='record' type='addnewnote' %}">Add a new note to this record</a>
-            <a class="dropdown-item" href="{% url 'referral_create_child_related' pk=object.referral.id id=object.id model='record' type='addnote' %}">Add existing note(s) to this record</a>
-        {% endif %}
-        <a class="dropdown-item" href="{% url 'prs_object_history' model='records' pk=object.id %}">History</a>
-    </div>
-</li>
-{% elif object_type == 'location' %}
-<li class="nav-item dropdown">
-    <a class="nav-link dropdown-toggle" href="#" id="locationDetailNavbarDropdown" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-        Location <span class="caret"></span>
-    </a>
-    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="locationDetailNavbarDropdown">
-        {% if prs_user %}
-            <a class="dropdown-item" href="{% url 'prs_object_update' model='locations' pk=object.id %}">Update location</a>
-            <a class="dropdown-item" href="{% url 'prs_object_delete' model='locations' pk=object.id %}">Delete location</a>
-        {% endif %}
-        <a class="dropdown-item" href="{% url 'prs_object_history' model='locations' pk=object.id %}">History</a>
-    </div>
-</li>
-{% elif object_type == 'condition' %}
-<li class="nav-item dropdown">
-    <a class="nav-link dropdown-toggle" href="#" id="conditionDetailNavbarDropdown" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-        Condition <span class="caret"></span>
-    </a>
-    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="conditionDetailNavbarDropdown">
-        {% if prs_user %}
-            <a class="dropdown-item" href="{% url 'prs_object_update' model='conditions' pk=object.id %}">Update condition</a>
-            <a class="dropdown-item" href="{% url 'prs_object_delete' model='conditions' pk=object.id %}">Delete condition</a>
-            <a class="dropdown-item" href="{% url 'condition_clearance_add' pk=object.id %}">Add a clearance request</a>
-        {% endif %}
-        <a class="dropdown-item" href="{% url 'prs_object_history' model='conditions' pk=object.id %}">History</a>
-    </div>
-</li>
-{% endif %}
+    {% if object_type == 'task' %}
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle"
+               href="#"
+               id="taskDetailNavbarDropdown"
+               data-bs-toggle="dropdown"
+               role="button"
+               aria-haspopup="true"
+               aria-expanded="false">
+                Task <span class="caret"></span>
+            </a>
+            <div class="dropdown-menu dropdown-menu-right"
+                 aria-labelledby="taskDetailNavbarDropdown">
+                {% if prs_user %}
+                    <a class="dropdown-item"
+                       href="{% url 'task_action' pk=object.pk action='update' %}">Update task</a>
+                    {% if task_stopped %}
+                        <a class="dropdown-item"
+                           href="{% url 'task_action' pk=object.pk action='start' %}">Start task</a>
+                    {% else %}
+                        <a class="dropdown-item"
+                           href="{% url 'task_action' pk=object.pk action='stop' %}">Stop task</a>
+                    {% endif %}
+                    {% if can_complete %}
+                        <a class="dropdown-item"
+                           href="{% url 'task_action' pk=object.pk action='complete' %}">Complete task</a>
+                    {% else %}
+                        <a class="dropdown-item"
+                           href="#"
+                           id="id_complete"
+                           title="{{ can_complete_msg }}"
+                           style="color:grey">Complete task</a>
+                    {% endif %}
+                    {% if not object.complete_date %}
+                        <a class="dropdown-item"
+                           href="{% url 'task_action' pk=object.pk action='cancel' %}">Cancel task</a>
+                    {% else %}
+                        <a class="dropdown-item" href="#" style="color:grey">Cancel task</a>
+                    {% endif %}
+                    <a class="dropdown-item"
+                       href="{% url 'task_action' pk=object.pk action='reassign' %}">Reassign task</a>
+                    <a class="dropdown-item"
+                       href="{% url 'task_action' pk=object.pk action='inherit' %}">Inherit task</a>
+                    <a class="dropdown-item"
+                       href="{% url 'referral_create_child_related' pk=object.referral.pk id=object.id model='task' type='addnewrecord' %}">Add a new record to this task</a>
+                    <a class="dropdown-item"
+                       href="{% url 'referral_create_child_related' pk=object.referral.pk id=object.id model='task' type='addrecord' %}">Add existing record(s) to this task</a>
+                    <a class="dropdown-item"
+                       href="{% url 'referral_create_child_related' pk=object.referral.pk id=object.id model='task' type='addnewnote' %}">Add a new note to this task</a>
+                    <a class="dropdown-item"
+                       href="{% url 'referral_create_child_related' pk=object.referral.pk id=object.id model='task' type='addnote' %}">Add existing note(s) to this task</a>
+                    <a class="dropdown-item"
+                       href="{% url 'prs_object_delete' model='tasks' pk=object.pk %}">Delete task</a>
+                {% endif %}
+                <a class="dropdown-item"
+                   href="{% url 'prs_object_history' model='tasks' pk=object.pk %}">History</a>
+            </div>
+        </li>
+    {% elif object_type == 'note' %}
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle"
+               href="#"
+               id="noteDetailNavbarDropdown"
+               data-bs-toggle="dropdown"
+               role="button"
+               aria-haspopup="true"
+               aria-expanded="false">
+                Note <span class="caret"></span>
+            </a>
+            <div class="dropdown-menu dropdown-menu-right"
+                 aria-labelledby="noteDetailNavbarDropdown">
+                {% if prs_user %}
+                    <a class="dropdown-item"
+                       href="{% url 'prs_object_update' model='notes' pk=object.id %}">Update note</a>
+                    <a class="dropdown-item"
+                       href="{% url 'prs_object_delete' model='notes' pk=object.id %}">Delete note</a>
+                    <a class="dropdown-item"
+                       href="{% url 'referral_create_child_related' pk=object.referral.id id=object.id model='note' type='addnewrecord' %}">Add a new record to this note</a>
+                    <a class="dropdown-item"
+                       href="{% url 'referral_create_child_related' pk=object.referral.id id=object.id model='note' type='addrecord' %}">Add existing record(s) to this note</a>
+                {% endif %}
+                <a class="dropdown-item"
+                   href="{% url 'prs_object_history' model='notes' pk=object.id %}">History</a>
+            </div>
+        </li>
+    {% elif object_type == 'record' %}
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle"
+               href="#"
+               id="recordDetailNavbarDropdown"
+               data-bs-toggle="dropdown"
+               role="button"
+               aria-haspopup="true"
+               aria-expanded="false">
+                Record <span class="caret"></span>
+            </a>
+            <div class="dropdown-menu dropdown-menu-right"
+                 aria-labelledby="recordDetailNavbarDropdown">
+                {% if prs_user %}
+                    <a class="dropdown-item"
+                       href="{% url 'prs_object_update' model='records' pk=object.id %}">Update record</a>
+                    <a class="dropdown-item"
+                       href="{% url 'prs_object_delete' model='records' pk=object.id %}">Delete record</a>
+                    <a class="dropdown-item"
+                       href="{% url 'referral_create_child_related' pk=object.referral.id id=object.id model='record' type='addnewnote' %}">Add a new note to this record</a>
+                    <a class="dropdown-item"
+                       href="{% url 'referral_create_child_related' pk=object.referral.id id=object.id model='record' type='addnote' %}">Add existing note(s) to this record</a>
+                {% endif %}
+                <a class="dropdown-item"
+                   href="{% url 'prs_object_history' model='records' pk=object.id %}">History</a>
+            </div>
+        </li>
+    {% elif object_type == 'location' %}
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle"
+               href="#"
+               id="locationDetailNavbarDropdown"
+               data-bs-toggle="dropdown"
+               role="button"
+               aria-haspopup="true"
+               aria-expanded="false">
+                Location <span class="caret"></span>
+            </a>
+            <div class="dropdown-menu dropdown-menu-right"
+                 aria-labelledby="locationDetailNavbarDropdown">
+                {% if prs_user %}
+                    <a class="dropdown-item"
+                       href="{% url 'prs_object_update' model='locations' pk=object.id %}">Update location</a>
+                    <a class="dropdown-item"
+                       href="{% url 'prs_object_delete' model='locations' pk=object.id %}">Delete location</a>
+                {% endif %}
+                <a class="dropdown-item"
+                   href="{% url 'prs_object_history' model='locations' pk=object.id %}">History</a>
+            </div>
+        </li>
+    {% elif object_type == 'condition' %}
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle"
+               href="#"
+               id="conditionDetailNavbarDropdown"
+               data-bs-toggle="dropdown"
+               role="button"
+               aria-haspopup="true"
+               aria-expanded="false">
+                Condition <span class="caret"></span>
+            </a>
+            <div class="dropdown-menu dropdown-menu-right"
+                 aria-labelledby="conditionDetailNavbarDropdown">
+                {% if prs_user %}
+                    <a class="dropdown-item"
+                       href="{% url 'prs_object_update' model='conditions' pk=object.id %}">Update condition</a>
+                    <a class="dropdown-item"
+                       href="{% url 'prs_object_delete' model='conditions' pk=object.id %}">Delete condition</a>
+                    <a class="dropdown-item"
+                       href="{% url 'condition_clearance_add' pk=object.id %}">Add a clearance request</a>
+                {% endif %}
+                <a class="dropdown-item"
+                   href="{% url 'prs_object_history' model='conditions' pk=object.id %}">History</a>
+            </div>
+        </li>
+    {% endif %}
 {% endblock %}
-
 {% block page_content_inner %}
-{% if not can_complete and can_complete_msg %}
-<div class="alert alert-danger hidden" id="complete_msg">{{ can_complete_msg }}</div>
-{% endif %}
-<div id="object-details">
-    <!-- Object details -->
-    <h1>{{ page_heading }}</h1>
-    <div class="row">
-        <div class="col-sm-12 col-md-9">
-            <table class="table table-striped table-bordered table-condensed" style="width:auto;">
+    {% if not can_complete and can_complete_msg %}
+        <div class="alert alert-danger hidden" id="complete_msg">{{ can_complete_msg }}</div>
+    {% endif %}
+    <div id="object-details">
+        <!-- Object details -->
+        <h1>{{ page_heading }}</h1>
+        <div class="row">
+            <div class="col-sm-12 col-md-9">
+                <table class="table table-striped table-bordered table-condensed"
+                       style="width:auto">
+                    <tbody>
+                        {{ object.as_tbody|safe }}
+                    </tbody>
+                </table>
+            </div>
+            {% if object_type == 'record' %}
+                <div class="col-sm-12 col-md-3">
+                    <div id="file-uploader">
+                        <form action="{% url 'record_upload' pk=object.pk %}"
+                              class="dropzone"
+                              id="id-record-dropzone">
+                            <div class="dz-message">Drop files here or click to upload.</div>
+                        </form>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        <!-- /.row -->
+    </div>
+    <!-- /#object-details -->
+    <br>
+    <!-- Object related items -->
+    {% if related_items %}
+        <div id="object-related-items">
+            <h2>{{ related_items_title }}</h2>
+            <table class="table table-striped table-bordered table-condensed related-objects-table"
+                   id="related-objects-table">
+                <thead>
+                    <tr>
+                        {% for header in related_items_headers %}<th>{{ header }}</th>{% endfor %}
+                    </tr>
+                </thead>
                 <tbody>
-                    {{ object.as_tbody|safe }}
+                    {% for object, dp in related_items %}
+                        <tr>
+                            {{ object.as_row|safe }}
+                            <td>{{ dp|default_if_none:"" }}</td>
+                        </tr>
+                    {% endfor %}
                 </tbody>
             </table>
         </div>
-
-        {% if object_type == 'record' %}
-        <div class="col-sm-12 col-md-3">
-            <div id="file-uploader">
-                <form action="{% url 'record_upload' pk=object.pk %}" class="dropzone" id="id-record-dropzone">
-                    <div class="dz-message">Drop files here or click to upload.</div>
-                </form>
+        <br>
+    {% endif %}
+    <!-- Object related records -->
+    {% if related_records %}
+        <div id="object-related-records">
+            <h2>Related records:</h2>
+            <table class="table table-striped table-bordered table-condensed related-objects-table"
+                   id="related-records-table">
+                <thead>
+                    <tr>
+                        {% for header in record_headers %}<th>{{ header }}</th>{% endfor %}
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in related_records %}
+                        <tr>
+                            {{ record.as_row }}
+                            {% if prs_user %}
+                                {{ record.as_row_actions }}
+                            {% else %}
+                                <td></td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <br>
+    {% endif %}
+    <!-- Object related tasks -->
+    {% if related_tasks %}
+        <div id="object-related-tasks">
+            <h2>Related tasks:</h2>
+            <table class="table table-striped table-bordered table-condensed related-objects-table"
+                   id="related-tasks-table">
+                <thead>
+                    <tr>
+                        {% for header in task_headers %}<th>{{ header }}</th>{% endfor %}
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in related_tasks %}
+                        <tr>
+                            {{ task.as_row }}
+                            {% if prs_user %}
+                                {{ task.as_row_actions }}
+                            {% else %}
+                                <td></td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <br>
+    {% endif %}
+    <!-- Object related notes -->
+    {% if related_notes %}
+        <div id="object-related-notes">
+            <h2>Related notes:</h2>
+            <table class="table table-striped table-bordered table-condensed related-objects-table"
+                   id="related-notes-table">
+                <thead>
+                    <tr>
+                        {% for header in note_headers %}<th>{{ header }}</th>{% endfor %}
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for note in related_notes %}
+                        <tr>
+                            {{ note.as_row }}
+                            {% if prs_user %}
+                                {{ note.as_row_actions }}
+                            {% else %}
+                                <td></td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <br>
+    {% endif %}
+    {% if geojson_locations %}
+        <div class="row">
+            <div class="col">
+                <div class="card card-body" id="map"></div>
             </div>
         </div>
-        {% endif %}
-    </div><!-- /.row -->
-</div><!-- /#object-details -->
-<br>
-
-<!-- Object related items -->
-{% if related_items %}
-<div id="object-related-items">
-    <h2>{{ related_items_title }}</h2>
-    <table class="table table-striped table-bordered table-condensed related-objects-table" id="related-objects-table">
-        <thead>
-            <tr>
-            {% for header in related_items_headers %}
-                <th>{{ header }}</th>
-            {% endfor %}
-            </tr>
-        </thead>
-        <tbody>
-            {% for object, dp in related_items %}
-            <tr>{{ object.as_row|safe }}<td>{{ dp|default_if_none:"" }}</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-<br>
-{% endif %}
-<!-- Object related records -->
-{% if related_records %}
-<div id="object-related-records">
-    <h2>Related records:</h2>
-    <table class="table table-striped table-bordered table-condensed related-objects-table" id="related-records-table">
-        <thead>
-            <tr>
-            {% for header in record_headers %}
-                <th>{{ header }}</th>
-            {% endfor %}
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for record in related_records %}
-            <tr>{{ record.as_row }}{% if prs_user %}{{ record.as_row_actions }}{% else %}<td></td>{% endif %}</tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-<br>
-{% endif %}
-<!-- Object related tasks -->
-{% if related_tasks %}
-<div id="object-related-tasks">
-    <h2>Related tasks:</h2>
-    <table class="table table-striped table-bordered table-condensed related-objects-table" id="related-tasks-table">
-        <thead>
-            <tr>
-            {% for header in task_headers %}
-                <th>{{ header }}</th>
-            {% endfor %}
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for task in related_tasks %}
-            <tr>{{ task.as_row }}{% if prs_user %}{{ task.as_row_actions }}{% else %}<td></td>{% endif %}</tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-<br>
-{% endif %}
-<!-- Object related notes -->
-{% if related_notes %}
-<div id="object-related-notes">
-    <h2>Related notes:</h2>
-    <table class="table table-striped table-bordered table-condensed related-objects-table" id="related-notes-table">
-        <thead>
-            <tr>
-            {% for header in note_headers %}
-                <th>{{ header }}</th>
-            {% endfor %}
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for note in related_notes %}
-            <tr>{{ note.as_row }}{% if prs_user %}{{ note.as_row_actions }}{% else %}<td></td>{% endif %}</tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-<br>
-{% endif %}
-
-{% if geojson_locations %}
-<div class="row">
-    <div class="col">
-        <div class="card card-body" id="map"></div>
-    </div>
-</div>
-{% endif %}
+    {% endif %}
 {% endblock page_content_inner %}
-
 {% block extra_js %}
-{{ block.super }}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.1/dropzone.min.js" integrity="sha256-fegGeSK7Ez4lvniVEiz1nKMx9pYtlLwPNRPf6uc8d+8=" crossorigin="anonymous"></script>
-<script src="https://cdn.datatables.net/v/bs5/dt-1.13.8/date-1.5.1/datatables.min.js"></script>
-{% if geojson_locations %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.min.js" integrity="sha512-SeiQaaDh73yrb56sTW/RgVdi/mMqNeM2oBwubFHagc5BkixSpP1fvqF47mKzPGWYSSy4RwbBunrJBQ4Co8fRWA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/2.1.0/Control.FullScreen.min.js" integrity="sha512-bmFAjeYoavPgi1WB5HbKPxfN8x8namh7PVWpgxlkTRoyIldWc+UpoCZAkI9m7KXD/R2aUjtMBVmWzRh3KfPg7g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script src="{% static 'js/leaflet-search.min.js' %}"></script>
-<script src="{% static 'js/referral_map.js' %}"></script>
-<script>
+    {{ block.super }}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.1/dropzone.min.js"
+            integrity="sha256-fegGeSK7Ez4lvniVEiz1nKMx9pYtlLwPNRPf6uc8d+8="
+            crossorigin="anonymous"></script>
+    <script src="https://cdn.datatables.net/v/bs5/dt-1.13.8/date-1.5.1/datatables.min.js"></script>
+    {% if geojson_locations %}
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.min.js"
+                integrity="sha512-SeiQaaDh73yrb56sTW/RgVdi/mMqNeM2oBwubFHagc5BkixSpP1fvqF47mKzPGWYSSy4RwbBunrJBQ4Co8fRWA=="
+                crossorigin="anonymous"
+                referrerpolicy="no-referrer"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/2.1.0/Control.FullScreen.min.js"
+                integrity="sha512-bmFAjeYoavPgi1WB5HbKPxfN8x8namh7PVWpgxlkTRoyIldWc+UpoCZAkI9m7KXD/R2aUjtMBVmWzRh3KfPg7g=="
+                crossorigin="anonymous"
+                referrerpolicy="no-referrer"></script>
+        <script src="{% static 'js/leaflet-search.min.js' %}"></script>
+        <script src="{% static 'js/referral_map.js' %}"></script>
+        <script>
     // Add Location polygons to the map display and zoom to their bounds.
     var geojsonFeatures = JSON.parse('{{ geojson_locations|escapejs }}');
     var locationsLayer = L.geoJson(null, {
@@ -259,9 +369,9 @@
     locationsLayer.addData(geojsonFeatures);
     map.fitBounds(locationsLayer.getBounds());
     locationsLayer.addTo(map);
-</script>
-{% endif %}
-<script type="text/javascript" charset="utf-8">
+        </script>
+    {% endif %}
+    <script type="text/javascript" charset="utf-8">
     // Configure file upload Dropzone element - needs to happen outside of $(function(){}).
     Dropzone.options.idRecordDropzone = {
         paramName: "file",
@@ -300,5 +410,5 @@
             "searching": false
         });
     });
-</script>
+    </script>
 {% endblock extra_js %}

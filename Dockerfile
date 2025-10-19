@@ -2,6 +2,11 @@
 # Prepare the base environment.
 FROM python:3.13-slim-bookworm AS builder_base
 
+# Install required OS packages.
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends build-essential gdal-bin libgdal-dev \
+  && rm -rf /var/lib/apt/lists/*
+
 # This approximately follows this guide: https://hynek.me/articles/docker-uv/
 # Which creates a standalone environment with the dependencies.
 # - Silence uv complaining about not being able to use hard links,
@@ -14,7 +19,7 @@ ENV UV_LINK_MODE=copy \
   UV_PYTHON_DOWNLOADS=never \
   UV_PROJECT_ENVIRONMENT=/app/.venv
 
-COPY --from=ghcr.io/astral-sh/uv:0.6 /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:0.7 /uv /uvx /bin/
 
 # Since there's no point in shipping lock files, we move them
 # into a directory that is NOT copied into the runtime image.
@@ -25,9 +30,7 @@ COPY pyproject.toml uv.lock /_lock/
 # This layer is cached until uv.lock or pyproject.toml change.
 RUN --mount=type=cache,target=/root/.cache \
   cd /_lock && \
-  uv sync \
-  --frozen \
-  --no-group dev
+  uv sync --frozen --no-group dev
 
 ##################################################################################
 

@@ -1,4 +1,5 @@
 import json
+import os
 import uuid
 from datetime import date, timedelta
 
@@ -42,6 +43,7 @@ class PrsViewsTestCase(PrsTestCase):
         Bookmark,
     ]
     client = Client()
+    test_data_path = os.path.join("prs2", "referral", "test_data")
 
     def setUp(self):
         super(PrsViewsTestCase, self).setUp()
@@ -79,10 +81,11 @@ class BaseViewTest(PrsViewsTestCase):
             agency=mixer.SELECT,
             referring_org=mixer.SELECT,
             referral_date=date.today(),
+            search_vector=None,
         )
-        mixer.cycle(25).blend(Task, type=mixer.SELECT, referral=mixer.SELECT, state=mixer.SELECT)
-        mixer.cycle(25).blend(Note, referral=mixer.SELECT, type=mixer.SELECT, note=mixer.RANDOM)
-        mixer.cycle(25).blend(Record, referral=mixer.SELECT)
+        mixer.cycle(25).blend(Task, type=mixer.SELECT, referral=mixer.SELECT, state=mixer.SELECT, search_vector=None)
+        mixer.cycle(25).blend(Note, referral=mixer.SELECT, type=mixer.SELECT, note=mixer.RANDOM, search_vector=None)
+        mixer.cycle(25).blend(Record, referral=mixer.SELECT, search_vector=None)
         mixer.cycle(25).blend(
             Condition,
             referral=mixer.SELECT,
@@ -90,6 +93,7 @@ class BaseViewTest(PrsViewsTestCase):
             condition=mixer.RANDOM,
             model_condition=mixer.SELECT,
             proposed_condition=mixer.RANDOM,
+            search_vector=None,
         )
         mixer.cycle(25).blend(Clearance, condition=mixer.SELECT, task=mixer.SELECT)
         mixer.cycle(25).blend(Location, referral=mixer.SELECT)
@@ -361,6 +365,7 @@ class ReferralCreateChildTest(PrsViewsTestCase):
             condition=mixer.RANDOM,
             model_condition=mixer.SELECT,
             proposed_condition=mixer.RANDOM,
+            search_vector=None,
         )
         for i in Condition.objects.filter(referral=self.ref):
             i.proposed_condition_html = "<p>Proposed condition</p>"
@@ -562,9 +567,9 @@ class ReferralCreateChildTest(PrsViewsTestCase):
     def test_relate_existing_object_to_task(self):
         """Test POST to relate existing note/record to a task"""
         # First, ensure that a task, record and note all exist.
-        task = mixer.blend(Task, referral=self.ref)
-        note = mixer.blend(Note, referral=self.ref)
-        record = mixer.blend(Record, referral=self.ref)
+        task = mixer.blend(Task, referral=self.ref, search_vector=None)
+        note = mixer.blend(Note, referral=self.ref, search_vector=None)
+        record = mixer.blend(Record, referral=self.ref, search_vector=None)
         init_records = task.records.count()
         init_notes = task.notes.count()
         url = reverse(
@@ -594,7 +599,7 @@ class ReferralCreateChildTest(PrsViewsTestCase):
 
     def test_relate_new_object_to_task(self):
         """Test POST to relate new note/record to a task"""
-        task = mixer.blend(Task, referral=self.ref)
+        task = mixer.blend(Task, referral=self.ref, search_vector=None)
         init_records = task.records.count()
         init_notes = task.notes.count()
         url = reverse(
@@ -780,7 +785,7 @@ class TagListTest(PrsViewsTestCase):
         super(TagListTest, self).setUp()
         # Create a bunch of additional Tags.
         tags = (tag for tag in ["tag1", "tag2", "tag3", "tag4", "tag5"])
-        for _count in range(5):
+        for _ in range(5):
             mixer.blend(Tag, name=tags)
 
     def test_get(self):
@@ -995,7 +1000,8 @@ class InfobaseShortcutTest(PrsViewsTestCase):
 class RecordUploadViewTest(PrsViewsTestCase):
     def test_post(self):
         """Test POST response for an authorised user"""
-        url = reverse("referral_record_upload", kwargs={"pk": Referral.objects.first().pk})
+        referral = Referral.objects.first()
+        url = reverse("referral_record_upload", kwargs={"pk": referral.pk})
         f = SimpleUploadedFile("file.txt", b"file_content")
         resp = self.client.post(url, {"file": f})
         self.assertEqual(resp.status_code, 200)
@@ -1011,3 +1017,54 @@ class RecordUploadViewTest(PrsViewsTestCase):
         self.client.login(username="readonlyuser", password="pass")
         resp = self.client.post(url, {"file": f})
         self.assertEqual(resp.status_code, 403)
+
+    def test_post_shapefile(self):
+        """Test POST response for a zipped shapefile"""
+        referral = Referral.objects.first()
+        existing_location_count = Location.objects.current().filter(referral=referral).count()
+        url = reverse("referral_record_upload", kwargs={"pk": referral.pk})
+        test_upload = open(os.path.join(self.test_data_path, "shapefile.zip"), "rb")
+        resp = self.client.post(url, {"file": test_upload})
+        self.assertEqual(resp.status_code, 200)
+        result = json.loads(resp.content.decode("utf8"))
+        self.assertTrue(Record.objects.filter(pk=result["object"]["id"]).exists())
+        # New locations have been created.
+        self.assertTrue(Location.objects.current().filter(referral=referral).count() > existing_location_count)
+
+
+class ShapefileUploadViewTest(PrsViewsTestCase):
+    def test_post(self):
+        """Test POST response with a valid shapefile"""
+        referral = Referral.objects.first()
+        existing_location_count = Location.objects.current().filter(referral=referral).count()
+        url = reverse("referral_shapefile_upload", kwargs={"pk": referral.pk})
+        test_data = open(os.path.join(self.test_data_path, "shapefile.zip"), "rb")
+        upload = SimpleUploadedFile(name="shapefile.zip", content=test_data.read(), content_type="application/zip")
+        resp = self.client.post(url, data={"uploaded_shapefile": upload}, follow=True)
+        self.assertEqual(resp.status_code, 200)
+        # New locations have been created.
+        self.assertTrue(Location.objects.current().filter(referral=referral).count() > existing_location_count)
+
+    def test_post_gda94(self):
+        """Test POST response with a shapefile having a different projection"""
+        referral = Referral.objects.first()
+        existing_location_count = Location.objects.current().filter(referral=referral).count()
+        url = reverse("referral_shapefile_upload", kwargs={"pk": referral.pk})
+        test_data = open(os.path.join(self.test_data_path, "shapefile_gda94.zip"), "rb")
+        upload = SimpleUploadedFile(name="shapefile.zip", content=test_data.read(), content_type="application/zip")
+        resp = self.client.post(url, data={"uploaded_shapefile": upload}, follow=True)
+        self.assertEqual(resp.status_code, 200)
+        # New locations have been created.
+        self.assertTrue(Location.objects.current().filter(referral=referral).count() > existing_location_count)
+
+    def test_post_invalid(self):
+        """Test POST response with an invalid shapefile"""
+        referral = Referral.objects.first()
+        existing_location_count = Location.objects.current().filter(referral=referral).count()
+        url = reverse("referral_shapefile_upload", kwargs={"pk": referral.pk})
+        test_data = open(os.path.join(self.test_data_path, "shapefile_invalid.zip"), "rb")
+        upload = SimpleUploadedFile(name="shapefile.zip", content=test_data.read(), content_type="application/zip")
+        resp = self.client.post(url, data={"uploaded_shapefile": upload}, follow=True)
+        self.assertEqual(resp.status_code, 200)
+        # New locations have NOT been created.
+        self.assertTrue(Location.objects.current().filter(referral=referral).count() == existing_location_count)

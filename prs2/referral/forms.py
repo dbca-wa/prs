@@ -51,7 +51,7 @@ class RecordChoiceField(forms.ModelMultipleChoiceField):
 
     def label_from_instance(self, obj):
         if obj.order_date:
-            label = f"{obj.name} ({obj.order_date.strftime("%d/%m/%Y")})"
+            label = f"{obj.name} ({obj.order_date.strftime('%d/%m/%Y')})"
         elif obj.infobase_id:
             label = f"{obj.name} ({obj.infobase_id})"
         elif obj.uploaded_file:
@@ -437,6 +437,33 @@ class RecordCreateForm(RecordForm):
     class Meta:
         model = Record
         exclude = BaseForm.Meta.exclude + ["referral", "notes"]
+
+
+class ShapefileUploadForm(forms.Form):
+    uploaded_shapefile = forms.FileField(required=True, help_text="Zipped shapefile (polygon/multipolygon features only)")
+    upload_button = Submit("upload", "Upload", css_class="btn-lg")
+    cancel_button = Submit("cancel", "Cancel", css_class="btn-secondary")
+
+    def __init__(self, instance=None, *args, **kwargs):
+        # NOTE: we have to include the unused `instance` variable because this is not a ModelForm.
+        super().__init__(*args, **kwargs)
+        self.helper = BaseFormHelper()
+        self.helper.layout = Layout(
+            HTML(
+                """<div><p>Upload a zip file archive containing one or more shapefiles (polygon/multipolygon geometry only).</p>
+                <p>Polygons will be added to the referral as locations, and the zip file attached as a record.</p></div>"""
+            ),
+            "uploaded_shapefile",
+            Div(self.upload_button, self.cancel_button, css_class="col-sm-offset-4 col-md-offset-3 col-lg-offset-2"),
+        )
+
+    def clean(self):
+        # Validation: zip files only.
+        cleaned_data = super().clean()
+        upload = cleaned_data.get("uploaded_shapefile")
+        if upload and upload.content_type not in ["application/zip", "application/x-zip", "application/x-zip-compressed"]:
+            self._errors["uploaded_shapefile"] = self.error_class(["File type is not permitted (.zip only)."])
+        return cleaned_data
 
 
 class CustomFormHelper(BaseFormHelper):
@@ -985,7 +1012,7 @@ class ClearanceCreateForm(BaseForm):
             </div>
             <div class="row mb-3">
                 <div class="col-xs-12 col-sm-4 col-md-3 col-lg-2">Condition no.</div>
-                <div class="col-xs-12 col-sm-8 col-md-9 col-lg-10">{condition.identifier or '(none)'}</div>
+                <div class="col-xs-12 col-sm-8 col-md-9 col-lg-10">{condition.identifier or "(none)"}</div>
             </div>"""
         )
         self.fields["assigned_user"] = PRSUserChoiceField()

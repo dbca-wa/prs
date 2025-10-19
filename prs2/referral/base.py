@@ -43,7 +43,7 @@ class Audit(models.Model):
         if not self.pk:
             self.creator = user
 
-        super(Audit, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return str(self.pk)
@@ -80,7 +80,7 @@ class ActiveModel(models.Model):
         and time.
         """
         self.effective_to = timezone.now()
-        super(ActiveModel, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
 
 class ContentTypeRestrictedFileField(FileField):
@@ -96,10 +96,10 @@ class ContentTypeRestrictedFileField(FileField):
 
     def __init__(self, content_types=None, *args, **kwargs):
         self.content_types = content_types
-        super(ContentTypeRestrictedFileField, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def to_python(self, data):
-        f = super(ContentTypeRestrictedFileField, self).to_python(data)
+        f = super().to_python(data)
         if f is None or f == "":
             return None
         content_type = magic.from_file(f.path, mime=True)

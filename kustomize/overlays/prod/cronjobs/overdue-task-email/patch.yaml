@@ -4,17 +4,17 @@ metadata:
   name: prs-cronjob
 spec:
   # At 09:00 on Monday
-  schedule: "0 9 * * 1"
+  schedule: '0 9 * * 1'
   jobTemplate:
     spec:
       template:
         spec:
           containers:
             - name: prs-cronjob
-              args: ["manage.py", "overdue_tasks_email"]
+              args: ['manage.py', 'overdue_tasks_email']
               env:
                 - name: SITE_URL
-                  value: "prs.dbca.wa.gov.au"
+                  value: 'prs.dbca.wa.gov.au'
                 - name: DATABASE_URL
                   valueFrom:
                     secretKeyRef:
@@ -25,3 +25,8 @@ spec:
                     secretKeyRef:
                       name: prs-env-prod
                       key: EMAIL_HOST
+                - name: EMAIL_PORT
+                  valueFrom:
+                    secretKeyRef:
+                      name: prs-env-prod
+                      key: EMAIL_PORT

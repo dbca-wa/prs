@@ -9,7 +9,7 @@ from pdfminer import high_level
 from unidecode import unidecode
 
 
-def typesense_client():
+def get_typesense_client():
     """Return a typesense Client object for accessing document collections."""
     client = typesense.Client(
         {
@@ -30,7 +30,7 @@ def typesense_client():
 def typesense_index_referral(ref, client=None):
     """Index a single referral in Typesense."""
     if not client:
-        client = typesense_client()
+        client = get_typesense_client()
 
     ref_document = {
         "id": str(ref.pk),
@@ -52,7 +52,7 @@ def typesense_index_referral(ref, client=None):
 def typesense_index_record(rec, client=None):
     """Index a single record in Typesense."""
     if not client:
-        client = typesense_client()
+        client = get_typesense_client()
 
     rec_document = {
         "id": str(rec.pk),
@@ -131,7 +131,7 @@ def typesense_index_record(rec, client=None):
 def typesense_index_note(note, client=None):
     """Index a single note in Typesense."""
     if not client:
-        client = typesense_client()
+        client = get_typesense_client()
 
     note_document = {
         "id": str(note.pk),
@@ -145,7 +145,7 @@ def typesense_index_note(note, client=None):
 def typesense_index_task(task, client=None):
     """Index a single task in Typesense."""
     if not client:
-        client = typesense_client()
+        client = get_typesense_client()
 
     task_document = {
         "id": str(task.pk),
@@ -160,7 +160,7 @@ def typesense_index_task(task, client=None):
 def typesense_index_condition(con, client=None):
     """Index a single condition in Typesense."""
     if not client:
-        client = typesense_client()
+        client = get_typesense_client()
 
     condition_document = {
         "id": str(con.pk),

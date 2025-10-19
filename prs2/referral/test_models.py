@@ -89,10 +89,14 @@ class PrsTestCase(TestCase):
 
         if not Referral.objects.exists():
             # Create some referral data
-            mixer.cycle(2).blend(Referral, type=mixer.SELECT, agency=mixer.SELECT, referring_org=mixer.SELECT, referral_date=date.today())
-            mixer.cycle(2).blend(Task, type=mixer.SELECT, referral=mixer.SELECT, state=mixer.SELECT, assigned_user=self.n_user)
-            mixer.cycle(2).blend(Note, referral=mixer.SELECT, type=mixer.SELECT, note=mixer.RANDOM)
-            mixer.cycle(2).blend(Record, referral=mixer.SELECT)
+            mixer.cycle(2).blend(
+                Referral, type=mixer.SELECT, agency=mixer.SELECT, referring_org=mixer.SELECT, referral_date=date.today(), search_vector=None
+            )
+            mixer.cycle(2).blend(
+                Task, type=mixer.SELECT, referral=mixer.SELECT, state=mixer.SELECT, assigned_user=self.n_user, search_vector=None
+            )
+            mixer.cycle(2).blend(Note, referral=mixer.SELECT, type=mixer.SELECT, note=mixer.RANDOM, search_vector=None)
+            mixer.cycle(2).blend(Record, referral=mixer.SELECT, search_vector=None)
             mixer.cycle(2).blend(ModelCondition, category=mixer.SELECT)
             mixer.cycle(2).blend(
                 Condition,
@@ -101,6 +105,7 @@ class PrsTestCase(TestCase):
                 condition=mixer.RANDOM,
                 model_condition=mixer.SELECT,
                 proposed_condition=mixer.RANDOM,
+                search_vector=None,
             )
             mixer.cycle(2).blend(Clearance, condition=mixer.SELECT, task=mixer.SELECT)
             mixer.cycle(2).blend(Location, referral=mixer.SELECT)
@@ -182,15 +187,13 @@ class OrganisationTest(PrsTestCase):
 class ReferralTest(PrsTestCase):
     """Unit tests specific to the Referral model class."""
 
-    def test_regions_str(self):
-        """Test the Referral model regions_str property."""
+    def test_get_regions_str(self):
+        """Test the Referral model get_regions_str() function"""
         for r in Referral.objects.all():
             # Get a random Region and add it to the Referral
             region = Region.objects.order_by("?")[0]
             r.regions.add(region)
-            s = r.regions_str
-            # String contains the region name.
-            self.assertIsNot(s.find(region.name), -1)
+            self.assertTrue(region.name in r.get_regions_str())
 
     def test_dop_triggers_str(self):
         """Test the Referral model dop_triggers_str property."""
@@ -533,9 +536,6 @@ class NoteTest(PrsTestCase):
         # save() will format the note_html value as valid HTML, while the
         # note value will be plain text.
         self.assertNotEqual(n.note_html, n.note)
-        # save() will surround the note_html value in <p> tags.
-        self.assertTrue(n.note_html.startswith("<p>"))
-        self.assertTrue(n.note_html.endswith("</p>"))
 
     def test_short_code(self):
         """Test the Note model short_note property."""
@@ -661,7 +661,7 @@ class ConditionTest(PrsTestCase):
     def test_add_clearance(self):
         """ """
         c = Condition.objects.first()
-        t = mixer.blend(Task, type=mixer.SELECT, referral=mixer.SELECT, state=mixer.SELECT)
+        t = mixer.blend(Task, type=mixer.SELECT, referral=mixer.SELECT, state=mixer.SELECT, search_vector=None)
         clear = c.add_clearance(t)
         self.assertIsInstance(clear, Clearance)
 

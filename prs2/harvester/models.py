@@ -50,7 +50,7 @@ class EmailedReferral(models.Model):
     def __str__(self):
         return self.subject
 
-    def save(self, force_insert=False, force_update=False, *args, **kwargs):
+    def save(self, *args, **kwargs):
         self.subject = self.subject.replace("\r\n", "").strip()
         # Fix rare strange subject line text encoding issue.
         pattern = r"(\=\?Windows-1252\?Q\?)"
@@ -66,7 +66,7 @@ class EmailedReferral(models.Model):
         pattern = r"(<.+>)"
         self.body = re.sub(pattern, "", self.body)
         self.body = self.body.replace("=96", "").strip()
-        super().save(force_insert, force_update)
+        super().save(*args, **kwargs)
 
     def harvest(self, create_tasks=True, create_locations=True, create_records=True, assignee=False):
         """Undertake the harvest process for this emailed referral.
@@ -298,7 +298,7 @@ class EmailedReferral(models.Model):
             referral_preexists = False
             # Referral type
             if not ReferralType.objects.filter(name__istartswith=app["APP_TYPE"]).exists():
-                log = f'Referral type {app["APP_TYPE"]} is not recognised type; skipping'
+                log = f"Referral type {app['APP_TYPE']} is not recognised type; skipping"
                 LOGGER.warning(log)
                 self.log = f"{log}\n"
                 self.processed = True
@@ -321,7 +321,7 @@ class EmailedReferral(models.Model):
             if LocalGovernment.objects.filter(name=app["LOCAL_GOVERNMENT"]).exists():
                 referral.lga = LocalGovernment.objects.filter(name=app["LOCAL_GOVERNMENT"]).first()
             else:
-                log = f'LGA {app["LOCAL_GOVERNMENT"]} was not recognised'
+                log = f"LGA {app['LOCAL_GOVERNMENT']} was not recognised"
                 LOGGER.warning(log)
                 self.log = self.log + f"{log}\n"
                 actions.append(f"{datetime.now().isoformat()} {log}")
@@ -383,7 +383,7 @@ class EmailedReferral(models.Model):
                             regions.append(r)
                     intersected_region = True
                 except Exception:
-                    log = f'Address long/lat could not be parsed ({a["LONGITUDE"]}, {a["LATITUDE"]})'
+                    log = f"Address long/lat could not be parsed ({a['LONGITUDE']}, {a['LATITUDE']})"
                     LOGGER.warning(log)
                     self.log = f"{log}\n"
                     actions.append(f"{datetime.now().isoformat()} {log}")
@@ -406,7 +406,7 @@ class EmailedReferral(models.Model):
                                         for r in Region.objects.all():
                                             if r.region_mpoly and r.region_mpoly.intersects(p) and r not in regions:
                                                 regions.append(r)
-                        log = f'Address PIN {a["PIN"]} returned geometry from SLIP'
+                        log = f"Address PIN {a['PIN']} returned geometry from SLIP"
                         self.log = self.log + f"{log}\n"
                         LOGGER.info(log)
                     except Exception as e:
@@ -414,7 +414,7 @@ class EmailedReferral(models.Model):
                         LOGGER.error(log)
                         LOGGER.exception(e)
                 else:
-                    log = f'Address PIN could not be parsed ({a["PIN"]})'
+                    log = f"Address PIN could not be parsed ({a['PIN']})"
                     LOGGER.warning(log)
                     self.log = self.log + f"{log}\n"
 
@@ -594,9 +594,7 @@ class EmailAttachment(models.Model):
         return self.name
 
     def get_xml_data(self):
-        """Convenience function to conditionally return XML data from the
-        attachment.xml (returns None otherwise).
-        """
+        """Convenience function to conditionally return XML data from the attachment.xml (returns None otherwise)."""
         d = None
         if self.name.lower() == "application.xml":
             self.attachment.seek(0)

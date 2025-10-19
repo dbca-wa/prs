@@ -3,13 +3,10 @@
 {% block extra_style %}
     {{ block.super }}
     <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.0-2/css/fontawesome.min.css"
-          integrity="sha256-CaAu1oJhcLBPo4TnfEZ8fdP+O4mpoVBQ6zyZCs2x7+o="
-          crossorigin="anonymous" />
-    <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.0-2/css/all.min.css"
-          integrity="sha256-46r060N2LrChLLb5zowXQ72/iKKNiw/lAmygmHExk/o="
-          crossorigin="anonymous" />
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+          integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A=="
+          crossorigin="anonymous"
+          referrerpolicy="no-referrer" />
     <style>
     .footer {
         background-color: #f5f5f5;
@@ -31,6 +28,10 @@
     .navbar-custom .nav-item:hover .nav-link {
         color: #ffffff;
     }
+    /* Navbar create button */
+    .navbar-custom .btn-light {
+        color: #317589;
+    }
     .navbar-toggler {
         border: 1px solid #a2c1ca;
     }
@@ -39,6 +40,18 @@
     }
     .navbar-toggler-icon {
         background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.55%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+    }
+    /* Map widget div default */
+    #map { width:100%; height: 480px;}
+    /* Map widget search button icon */
+    .leaflet-control-search .search-cancel {
+        background: url("{% static 'img/search-icon.png' %}") no-repeat 0 -46px !important;
+    }
+    .leaflet-control-search .search-button {
+        background: url("{% static 'img/search-icon.png' %}") no-repeat 4px 4px #fff !important;
+    }
+    .leaflet-control-search .search-button:hover {
+        background: url("{% static 'img/search-icon.png' %}") no-repeat 4px -20px #fafafa !important;
     }
     </style>
 {% endblock %}
@@ -64,7 +77,7 @@
                    role="button"
                    data-bs-toggle="dropdown"
                    aria-expanded="false">
-                    Search <span class="caret"></span>
+                    <i class="fa-solid fa-magnifying-glass"></i> Search <span class="caret"></span>
                 </a>
                 <div class="dropdown-menu dropdown-menu-end"
                      aria-labelledby="navbarSearchDropdown">
@@ -96,12 +109,15 @@
                 </div>
             </li>
             <li class="nav-item">
-                <a class="nav-item nav-link" href="{% url 'reports' %}" title="Reports">Reports</a>
+                <a class="nav-item nav-link" href="{% url 'reports' %}" title="Reports"><i class="fa-solid fa-table"></i> Reports</a>
             </li>
             <li class="nav-item">
                 <a class="nav-item nav-link"
                    href="{% url 'referral_map' %}"
-                   title="Referral map">Map</a>
+                   title="Referral map"><i class="fa-solid fa-map"></i> Map</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-item nav-link" href="{% url 'help_page' %}" title="Help"><i class="fa-solid fa-question"></i> Help</a>
             </li>
             {% block navbar_auth %}
                 {% if user.is_authenticated %}
@@ -112,6 +128,7 @@
                            role="button"
                            data-bs-toggle="dropdown"
                            aria-expanded="false">
+                            <i class="fa-solid fa-user"></i>
                             {% firstof user.get_full_name user.email %} <span class="caret"></span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end"
@@ -141,12 +158,11 @@
                             <a class="dropdown-item"
                                href="{% url 'stopped_tasks_list' %}"
                                title="Stopped tasks">Stopped tasks</a>
-                            <a class="dropdown-item" href="{% url 'help_page' %}" title="Help">Help</a>
                         </ul>
                     </li>
                     <a class="btn btn-light"
                        href="{% url 'referral_create' %}"
-                       title="Create a new referral"><strong>Create</strong></a>
+                       title="Create a new referral"><strong><i class="fa-solid fa-circle-plus"></i> Create</strong></a>
                 {% else %}
                     <li class="nav-item">
                         <a class="nav-link" id="id_a_login" href="{% url 'login' %}">Log in</a>
@@ -209,9 +225,10 @@
 {% endblock page_footer %}
 {% block base_js %}
     {{ block.super }}
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"
-            integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
-            crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"
+            integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g=="
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"></script>
     <script src="{% static 'js/startswith.js' %}"></script>
     {% comment %}Make additional Javascript variables available from passed-in template context{% endcomment %}
     {{ javascript_context|json_script:"javascript_context" }}

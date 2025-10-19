@@ -84,7 +84,7 @@ class DownloadView(TemplateView):
 
         if model == Referral:
             response["Content-Disposition"] = (
-                f'attachment; filename=prs_referrals_{date.today().isoformat()}_{datetime.now().strftime("%H%M")}.xlsx'
+                f"attachment; filename=prs_referrals_{date.today().isoformat()}_{datetime.now().strftime('%H%M')}.xlsx"
             )
             # Filter referral objects according to the parameters.
             referrals = (
@@ -161,7 +161,7 @@ class DownloadView(TemplateView):
 
         elif model == Clearance:
             response["Content-Disposition"] = (
-                f'attachment; filename=prs_clearance_requests_{date.today().isoformat()}_{datetime.now().strftime("%H%M")}.xlsx'
+                f"attachment; filename=prs_clearance_requests_{date.today().isoformat()}_{datetime.now().strftime('%H%M')}.xlsx"
             )
             # Filter clearance objects according to the parameters.
             clearances = (
@@ -241,7 +241,7 @@ class DownloadView(TemplateView):
 
         elif model == Task:
             response["Content-Disposition"] = (
-                f'attachment; filename=prs_tasks_{date.today().isoformat()}_{datetime.now().strftime("%H%M")}.xlsx'
+                f"attachment; filename=prs_tasks_{date.today().isoformat()}_{datetime.now().strftime('%H%M')}.xlsx"
             )
 
             # Filter task objects according to the parameters.

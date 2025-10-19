@@ -15,6 +15,7 @@ def template_context(request):
             "prs_layer_name": settings.PRS_LAYER_NAME,
             "geocoder_url": reverse("geocode_query"),
             "cadastre_query_url": reverse("cadastre_query"),
+            "referral_point_search_url": reverse("referral_point_search"),
         },
     }
     if request.user.is_authenticated:

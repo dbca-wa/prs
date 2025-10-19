@@ -1,7 +1,6 @@
-{% extends "webtemplate_dbca/base.html" %}
-
+{% extends "webtemplate_dbca/base_b5.html" %}
 {% block extra_head %}
-<style type="text/css">
+    <style type="text/css">
     body {
         padding: 0px;
     }
@@ -15,32 +14,38 @@
     @page {
         size: A4 portrait;
     }
-</style>
+    </style>
 {% endblock %}
-
-{% block top_navbar %}
-<h3>{{ site_title }}</h3>
-{% endblock %}
-
+{% block top_navbar %}<h3>{{ site_title }}</h3>{% endblock %}
 {% block page_content %}
-<h4>{% if stopped_tasks %}STOPPED TASKS{% else %}ONGOING TASKS{% endif %}</h4>
-{% if object_list %}
-<table id="tasks-table" class="table table-bordered table-condensed">
-    <thead>
-        <tr>
-        {% for header in headers %}
-        <th>{{ header }}</th>
-        {% endfor %}
-        </tr>
-    </thead>
-    <tbody>
-    {% for object in object_list %}
-        <tr>{{ object.as_row_for_index_print }}</tr>
-    {% endfor %}
-    </tbody>
-    <tfoot></tfoot>
-</table>
-{% else %}
-<p>There are no {% if stopped_tasks %}stopped{% else %}ongoing{% endif %} tasks assigned to you.</p>
-{% endif %}
+    <h4>
+        {% if stopped_tasks %}
+            STOPPED TASKS
+        {% else %}
+            ONGOING TASKS
+        {% endif %}
+    </h4>
+    {% if object_list %}
+        <table id="tasks-table" class="table table-bordered table-condensed">
+            <thead>
+                <tr>
+                    {% for header in headers %}<th>{{ header }}</th>{% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for object in object_list %}<tr>{{ object.as_row_for_index_print }}</tr>{% endfor %}
+            </tbody>
+            <tfoot></tfoot>
+        </table>
+    {% else %}
+        <p>
+            There are no
+            {% if stopped_tasks %}
+                stopped
+            {% else %}
+                ongoing
+            {% endif %}
+            tasks assigned to you.
+        </p>
+    {% endif %}
 {% endblock %}
