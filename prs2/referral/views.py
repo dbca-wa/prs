@@ -1233,6 +1233,7 @@ class RecordUpload(LoginRequiredMixin, View):
                 name=uploaded_file.name,
                 referral=referral,
                 uploaded_file=uploaded_file,
+                order_date=date.today(),
                 creator=request.user,
                 modifier=request.user,
             )
