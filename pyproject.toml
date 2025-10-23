@@ -37,7 +37,7 @@ dependencies = [
   "redis==6.4.0",
   "xlsxwriter==3.2.9",
   "django-storages[azure]==1.14.6",
-  "shapely==2.1.1",
+  "shapely==2.1.2",
   "fiona==1.10.1",
   "pyproj==3.7.2",
 ]
