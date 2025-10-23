@@ -9,10 +9,6 @@ spec:
   template:
     spec:
       terminationGracePeriodSeconds: 180
-      tolerations:
-        - effect: NoSchedule
-          key: high-memory-workload
-          operator: Exists
       containers:
         - name: prs-typesense
           image: ghcr.io/dbca-wa/typesense:27.0
@@ -27,7 +23,7 @@ spec:
               memory: '128Mi'
               cpu: '10m'
             limits:
-              memory: '6Gi'
+              memory: '2Gi'
               cpu: '1000m'
           startupProbe:
             httpGet:

@@ -19,7 +19,7 @@ spec:
           command:
             - /bin/chown
             - -R
-            - "10001:10001"
+            - '10001:10001'
             - /data
           volumeMounts:
             - mountPath: /data
@@ -43,6 +43,12 @@ spec:
                 secretKeyRef:
                   name: prs-env-prod
                   key: TYPESENSE_API_KEY
+          resources:
+            # Prod workload requires a larger request & limit for memory.
+            requests:
+              memory: '2Gi'
+            limits:
+              memory: '6Gi'
           volumeMounts:
             - mountPath: /data
               name: prs-typesense-data
