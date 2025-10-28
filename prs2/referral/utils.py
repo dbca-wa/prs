@@ -637,8 +637,9 @@ def parse_shapefile(uploaded_shapefile) -> list | bool:
     features = []
 
     for feature in shapefile:
-        geometry = shape(feature.geometry)
-        projected_geometry = transform(project, geometry)  # Project the geometry to GDA 94.
-        features.append((projected_geometry))
+        if feature.geometry:
+            geometry = shape(feature.geometry)
+            projected_geometry = transform(project, geometry)  # Project the geometry to GDA 94.
+            features.append((projected_geometry))
 
     return features
