@@ -1006,7 +1006,11 @@ class RecordUploadViewTest(PrsViewsTestCase):
         resp = self.client.post(url, {"file": f})
         self.assertEqual(resp.status_code, 200)
         result = json.loads(resp.content.decode("utf8"))
+        # New record has been created.
         self.assertTrue(Record.objects.filter(pk=result["object"]["id"]).exists())
+        record = Record.objects.get(pk=result["object"]["id"])
+        self.assertTrue(record.order_date == date.today())
+        self.assertTrue(record.creator == self.admin_user)
 
     def test_post_forbidden(self):
         """Test POST response for an unauthorised user"""
