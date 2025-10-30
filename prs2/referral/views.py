@@ -20,6 +20,7 @@ from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import FormView, ListView, TemplateView, View
+from extract_msg import Message
 from indexer.utils import get_typesense_client
 from referral.forms import (
     ClearanceCreateForm,
@@ -1229,7 +1230,7 @@ class RecordUpload(LoginRequiredMixin, View):
             )
         elif self.parent_referral:  # Not a zip file, or else not parsed as a shapefile.
             referral = self.get_parent_object()
-            new_record = Record.objects.create(
+            new_record = Record(
                 name=uploaded_file.name,
                 referral=referral,
                 uploaded_file=uploaded_file,
@@ -1237,6 +1238,14 @@ class RecordUpload(LoginRequiredMixin, View):
                 creator=request.user,
                 modifier=request.user,
             )
+
+            # *.msg files only: set order_date to the sent date of the uploaded email message.
+            if new_record.extension == "MSG":
+                msg = Message(new_record.uploaded_file)
+                if msg.date:
+                    new_record.order_date = msg.date
+
+            new_record.save()
             messages.success(self.request, f"Upload processed and saved as {new_record}")
             redirect_url = reverse("referral_detail", kwargs={"pk": referral.pk, "related_model": "records"})
             return JsonResponse(
@@ -1249,9 +1258,13 @@ class RecordUpload(LoginRequiredMixin, View):
             record = self.get_parent_object()
             record.uploaded_file = uploaded_file
             record.modifier = request.user
-            # Non *.msg files only: set order_date to today's date.
-            if record.extension != "MSG":
-                record.order_date = date.today()
+
+            # *.msg files only: set order_date to the sent date of the uploaded email message.
+            if record.extension == "MSG":
+                msg = Message(record.uploaded_file)
+                if msg.date:
+                    record.order_date = msg.date
+
             record.save()
             messages.success(self.request, f"Upload processed and saved to {record}")
             return JsonResponse(
