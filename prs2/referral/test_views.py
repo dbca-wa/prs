@@ -1072,3 +1072,15 @@ class ShapefileUploadViewTest(PrsViewsTestCase):
         self.assertEqual(resp.status_code, 200)
         # New locations have NOT been created.
         self.assertTrue(Location.objects.current().filter(referral=referral).count() == existing_location_count)
+
+    def test_post_3d_geometry(self):
+        """Test POST reponse with a shapefile containing 3D geometry"""
+        referral = Referral.objects.first()
+        existing_location_count = Location.objects.current().filter(referral=referral).count()
+        url = reverse("referral_shapefile_upload", kwargs={"pk": referral.pk})
+        test_data = open(os.path.join(self.test_data_path, "shapefile_mp_3d.zip"), "rb")
+        upload = SimpleUploadedFile(name="shapefile.zip", content=test_data.read(), content_type="application/zip")
+        resp = self.client.post(url, data={"uploaded_shapefile": upload}, follow=True)
+        self.assertEqual(resp.status_code, 200)
+        # New locations have been created.
+        self.assertTrue(Location.objects.current().filter(referral=referral).count() > existing_location_count)

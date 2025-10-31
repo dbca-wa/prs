@@ -21,6 +21,7 @@ from extract_msg import Message
 from fiona.io import ZipMemoryFile
 from pdfminer import high_level
 from reversion.models import Version
+from shapely import force_2d
 from shapely.geometry import shape
 from shapely.ops import transform
 from unidecode import unidecode
@@ -640,6 +641,6 @@ def parse_shapefile(uploaded_shapefile) -> list | bool:
         if feature.geometry:
             geometry = shape(feature.geometry)
             projected_geometry = transform(project, geometry)  # Project the geometry to GDA 94.
-            features.append((projected_geometry))
+            features.append(force_2d(projected_geometry))
 
     return features
