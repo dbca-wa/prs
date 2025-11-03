@@ -34,7 +34,7 @@ dependencies = [
   "whitenoise[brotli]==6.11.0",
   "django-crum==0.7.9",
   "sentry-sdk[django]==2.42.1",
-  "redis==7.0.0",
+  "redis==7.0.1",
   "xlsxwriter==3.2.9",
   "django-storages[azure]==1.14.6",
   "shapely==2.1.2",
