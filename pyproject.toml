@@ -1,6 +1,6 @@
 [project]
 name = "prs"
-version = "2.6.3"
+version = "2.6.4"
 description = "Planning Referral System corporate application"
 authors = [{ name = "Ashley Felton", email = "ashley.felton@dbca.wa.gov.au" }]
 license = "Apache-2.0"
