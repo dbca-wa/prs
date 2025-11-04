@@ -72,6 +72,12 @@ jobs:
           platform=${{ matrix.platform }}
           echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
 
+      - name: Harden the GitHub runner
+        # Make use of the Step Security Harden Runner workflow to monitor the build process.
+        uses: step-security/harden-runner@v2.13.1
+        with:
+          egress-policy: audit
+
       - name: Checkout
         uses: actions/checkout@v5
         # This step checks out the code from the repository.
