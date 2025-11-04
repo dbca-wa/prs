@@ -5,34 +5,28 @@ metadata:
   labels:
     app: prs-celery
 spec:
-  selector:
-    matchLabels:
-      app: prs-celery
   template:
-    metadata:
-      labels:
-        app: prs-celery
     spec:
       containers:
         - name: prs-celery
-          command: ["celery"]
+          command: ['celery']
           args:
             [
-              "--app",
-              "prs2",
-              "worker",
-              "--autoscale",
-              "2,4",
-              "--max-tasks-per-child",
-              "5",
-              "--max-memory-per-child",
-              "1572864",
-              "--loglevel",
-              "INFO",
-              "--events",
-              "--without-heartbeat",
-              "--without-gossip",
-              "--without-mingle",
+              '--app',
+              'prs2',
+              'worker',
+              '--autoscale',
+              '2,4',
+              '--max-tasks-per-child',
+              '5',
+              '--max-memory-per-child',
+              '1572864',
+              '--loglevel',
+              'INFO',
+              '--events',
+              '--without-heartbeat',
+              '--without-gossip',
+              '--without-mingle',
             ]
           imagePullPolicy: Always
           env:

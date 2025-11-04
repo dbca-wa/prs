@@ -3,13 +3,7 @@ kind: Deployment
 metadata:
   name: prs-celery
 spec:
-  selector:
-    matchLabels:
-      app: prs-celery
   template:
-    metadata:
-      labels:
-        app: prs-celery
     spec:
       containers:
         - name: prs-celery
