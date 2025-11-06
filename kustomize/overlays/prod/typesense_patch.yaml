@@ -2,16 +2,8 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: prs-typesense
-  labels:
-    app: prs-typesense
 spec:
-  selector:
-    matchLabels:
-      app: prs-typesense
   template:
-    metadata:
-      labels:
-        app: prs-typesense
     spec:
       initContainers:
         - name: data-vol-chown
@@ -26,6 +18,9 @@ spec:
               name: prs-typesense-data
       containers:
         - name: prs-typesense
+          envFrom:
+            - secretRef:
+                name: prs-env-uat
           startupProbe:
             httpGet:
               path: /health/
@@ -37,12 +32,6 @@ spec:
             timeoutSeconds: 3
             successThreshold: 1
             failureThreshold: 3
-          env:
-            - name: TYPESENSE_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-prod
-                  key: TYPESENSE_API_KEY
           resources:
             # Prod workload requires a larger request & limit for memory.
             requests:

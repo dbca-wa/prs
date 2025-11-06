@@ -19,6 +19,7 @@ spec:
       containers:
         - name: prs-celery
           image: ghcr.io/dbca-wa/prs
+          imagePullPolicy: Always
           env:
             - name: TZ
               value: 'Australia/Perth'

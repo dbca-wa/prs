@@ -2,11 +2,19 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: prs-typesense
+  labels:
+    app: prs-typesense
 spec:
+  selector:
+    matchLabels:
+      app: prs-typesense
   replicas: 1
   minReadySeconds: 10
   serviceName: prs-typesense
   template:
+    metadata:
+      labels:
+        app: prs-typesense
     spec:
       terminationGracePeriodSeconds: 180
       containers:

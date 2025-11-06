@@ -26,45 +26,6 @@ spec:
               '--without-gossip',
               '--without-mingle',
             ]
-          imagePullPolicy: Always
-          env:
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-uat
-                  key: DATABASE_URL
-            - name: TYPESENSE_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-uat
-                  key: TYPESENSE_HOST
-            - name: TYPESENSE_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-uat
-                  key: TYPESENSE_API_KEY
-            - name: CELERY_BROKER_URL
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-uat
-                  key: CELERY_BROKER_URL
-            - name: AZURE_ACCOUNT_NAME
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-uat
-                  key: AZURE_ACCOUNT_NAME
-            - name: AZURE_ACCOUNT_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-uat
-                  key: AZURE_ACCOUNT_KEY
-            - name: AZURE_CONTAINER
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-uat
-                  key: AZURE_CONTAINER
-      tolerations:
-        - key: arch
-          operator: Equal
-          value: arm64
-          effect: NoSchedule
+          envFrom:
+            - secretRef:
+                name: prs-env-uat
