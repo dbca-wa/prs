@@ -26,7 +26,7 @@ dependencies = [
   "webtemplate-dbca==1.8.3",
   "geojson==3.2.0",
   "typesense==1.1.1",
-  "pdfminer-six==20250506",
+  "pdfminer-six==20251107",
   "docx2txt==0.9",
   "celery==5.5.3",
   "django-celery-results==2.6.0",
