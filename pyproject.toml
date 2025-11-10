@@ -13,7 +13,7 @@ dependencies = [
   "dj-database-url==3.0.1",
   "gunicorn==23.0.0",
   "django-extensions==4.1",
-  "django-crispy-forms==2.4",
+  "django-crispy-forms==2.5",
   "crispy-bootstrap5==2025.6",
   "django-reversion==6.0.0",
   "django-taggit==6.1.0",
