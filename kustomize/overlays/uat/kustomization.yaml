@@ -25,4 +25,3 @@ patches:
   - path: deployment_hpa_patch.yaml
   - path: service_patch.yaml
   - path: typesense_patch.yaml
-  - path: typesense_service_patch.yaml

@@ -5,7 +5,6 @@ resources:
 nameSuffix: -overdue-task-email
 patches:
   - path: patch.yaml
-  # Patch the CronJob container name
   - target:
       kind: CronJob
       name: prs-cronjob

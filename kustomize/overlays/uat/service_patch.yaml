@@ -7,3 +7,12 @@ spec:
   selector:
     app: prs-deployment
     variant: uat
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prs-typesense
+spec:
+  selector:
+    app: prs-typesense
+    variant: uat

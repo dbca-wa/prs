@@ -2,16 +2,8 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: prs-typesense
-  labels:
-    app: prs-typesense
 spec:
-  selector:
-    matchLabels:
-      app: prs-typesense
   template:
-    metadata:
-      labels:
-        app: prs-typesense
     spec:
       initContainers:
         - name: data-vol-chown
@@ -26,12 +18,9 @@ spec:
               name: prs-typesense-data
       containers:
         - name: prs-typesense
-          env:
-            - name: TYPESENSE_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-uat
-                  key: TYPESENSE_API_KEY
+          envFrom:
+            - secretRef:
+                name: prs-env-uat
           volumeMounts:
             - mountPath: /data
               name: prs-typesense-data

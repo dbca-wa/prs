@@ -2,72 +2,31 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: prs-celery
-  labels:
-    app: prs-celery
 spec:
-  selector:
-    matchLabels:
-      app: prs-celery
   template:
-    metadata:
-      labels:
-        app: prs-celery
     spec:
       containers:
         - name: prs-celery
-          command: ["celery"]
+          imagePullPolicy: IfNotPresent
+          command: ['celery']
           args:
             [
-              "--app",
-              "prs2",
-              "worker",
-              "--autoscale",
-              "2,4",
-              "--max-tasks-per-child",
-              "5",
-              "--max-memory-per-child",
-              "1572864",
-              "--loglevel",
-              "INFO",
-              "--events",
-              "--without-heartbeat",
-              "--without-gossip",
-              "--without-mingle",
+              '--app',
+              'prs2',
+              'worker',
+              '--autoscale',
+              '2,4',
+              '--max-tasks-per-child',
+              '5',
+              '--max-memory-per-child',
+              '1572864',
+              '--loglevel',
+              'INFO',
+              '--events',
+              '--without-heartbeat',
+              '--without-gossip',
+              '--without-mingle',
             ]
-          imagePullPolicy: Always
-          env:
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-prod
-                  key: DATABASE_URL
-            - name: TYPESENSE_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-prod
-                  key: TYPESENSE_HOST
-            - name: TYPESENSE_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-prod
-                  key: TYPESENSE_API_KEY
-            - name: CELERY_BROKER_URL
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-prod
-                  key: CELERY_BROKER_URL
-            - name: AZURE_ACCOUNT_NAME
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-prod
-                  key: AZURE_ACCOUNT_NAME
-            - name: AZURE_ACCOUNT_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-prod
-                  key: AZURE_ACCOUNT_KEY
-            - name: AZURE_CONTAINER
-              valueFrom:
-                secretKeyRef:
-                  name: prs-env-prod
-                  key: AZURE_CONTAINER
+          envFrom:
+            - secretRef:
+                name: prs-env-prod
