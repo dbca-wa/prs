@@ -2,7 +2,7 @@ import logging
 import os
 from copy import copy
 from datetime import date
-from tempfile import NamedTemporaryFile
+from tempfile import TemporaryDirectory
 
 import reversion
 from django.conf import settings
@@ -16,22 +16,22 @@ from django.core.validators import MaxLengthValidator
 from django.db.models import Q
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils.html import escape, format_html
+from django.utils.html import SafeString, escape, format_html
 from django.utils.safestring import mark_safe
 from extract_msg import Message
-from geojson import Feature, FeatureCollection, Polygon, dumps
+from fudgeo import Field, GeoPackage
+from fudgeo.constant import SHAPE, WGS84
+from fudgeo.enumeration import GeometryType, SQLFieldType
+from fudgeo.geometry import Polygon
+from geojson import Feature, FeatureCollection
+from geojson import Polygon as PolygonGeoJSON
+from geojson import dumps
 from indexer.utils import get_typesense_client
 from lxml.html import fromstring
 from lxml_html_clean import clean_html
-from pygeopkg.conversion.to_geopkg_geom import make_gpkg_geom_header, point_lists_to_gpkg_polygon
-from pygeopkg.core.field import Field
-from pygeopkg.core.geopkg import GeoPackage
-from pygeopkg.core.srs import SRS
-from pygeopkg.shared.constants import SHAPE
-from pygeopkg.shared.enumeration import GeometryType, SQLFieldTypes
 from referral.base import ActiveModel, Audit
 from referral.tasks import index_object, index_record
-from referral.utils import as_row_subtract_referral_cell, dewordify_text, search_document_normalise, smart_truncate
+from referral.utils import as_row_subtract_referral_cell, dewordify_text, get_srs_wgs84, search_document_normalise, smart_truncate
 from taggit.managers import TaggableManager
 from typesense.exceptions import ObjectNotFound
 from unidecode import unidecode
@@ -603,7 +603,7 @@ class Referral(ReferralBaseModel):
             return True
         return False
 
-    def generate_qgis_layer(self, template="qgis_layer_v3-40"):
+    def generate_qgis_layer(self, template: str = "qgis_layer_v3-40") -> SafeString | None:
         """Generates and returns the content for a QGIS layer definition.
         Optionally specify the name of the template (defaults to the v3.40
         compatible template).
@@ -621,55 +621,65 @@ class Referral(ReferralBaseModel):
             },
         )
 
-    def generate_gpkg(self, source_url=""):
-        """Generates and returns a Geopackage file-like object."""
-        tmp = NamedTemporaryFile()
-        gpkg = GeoPackage.create(tmp.name, flavor="EPSG")
-        srs_wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]'
-        srs = SRS("WGS 84", "EPSG", 4326, srs_wkt)
-        fields = (
-            Field("referral", SQLFieldTypes.integer),
-            Field("referral_type", SQLFieldTypes.text),
-            Field("referral_reference", SQLFieldTypes.text),
-            Field("referring_org", SQLFieldTypes.text),
-            Field("source_url", SQLFieldTypes.text),
+    def generate_gpkg(self, source_url: str = "") -> bytes | None:
+        """Generates and returns a Geopackage object as a byte stream."""
+        if not self.location_set.current().filter(poly__isnull=False).exists():
+            return None
+        tmpdir = TemporaryDirectory()
+        # Create a new GeoPackage.
+        gpkg_path = os.path.join(tmpdir.name, f"referral_{self.pk}.gpkg")
+        gpkg = GeoPackage.create(gpkg_path, flavor="EPSG")
+
+        # Create a feature class (layer) for referral locations.
+        fc = gpkg.create_feature_class(
+            name="prs_locations",
+            srs=get_srs_wgs84(),
+            shape_type=GeometryType.polygon,
+            fields=[
+                Field("referral_id", SQLFieldType.integer),
+                Field("referral_type", SQLFieldType.text),
+                Field("referral_reference", SQLFieldType.text),
+                Field("referring_org", SQLFieldType.text),
+                Field("source_url", SQLFieldType.text),
+            ],
+            geom_name=SHAPE,
+            spatial_index=True,
+            overwrite=True,
         )
-        fc = gpkg.create_feature_class("prs_referrals", srs, fields=fields, shape_type=GeometryType.polygon)
-        field_names = [
-            SHAPE,
-            "referral",
-            "referral_type",
-            "referral_reference",
-            "referring_org",
-            "source_url",
-        ]
+        sql = """INSERT INTO prs_locations (SHAPE, referral_id, referral_type, referral_reference, referring_org, source_url)
+        VALUES (?, ?, ?, ?, ?, ?)"""
         rows = []
-        # We have to use the point_lists_to_gpkg_polygon function to insert WKB into the geopkg.
-        hdr = make_gpkg_geom_header(4326)
         for loc in self.location_set.current().filter(poly__isnull=False):
-            gpkg_wkb = point_lists_to_gpkg_polygon(hdr, loc.poly.coords)
+            pass
+            poly = Polygon(coordinates=loc.poly.coords, srs_id=WGS84)
             rows.append(
                 (
-                    gpkg_wkb,
-                    loc.referral.pk,
+                    poly,
+                    loc.referral_id,
                     loc.referral.type.name,
                     loc.referral.reference,
                     loc.referral.referring_org.name,
                     source_url,
                 )
             )
-        fc.insert_rows(field_names, rows)
-        resp = open(tmp.name, "rb").read()
-        tmp.close()
+
+        conn = gpkg.connection
+        conn.executemany(sql, rows)
+        conn.commit()
+        conn.close()
+
+        resp = open(gpkg_path, "rb").read()
         return resp  # Return the gpkg content.
 
-    def generate_geojson(self, source_url=""):
-        """Generates and returns GeoJSON."""
+    def generate_geojson(self, source_url: str = "") -> str | None:
+        """Generates and returns GeoJSON as a string."""
+        if not self.location_set.current().filter(poly__isnull=False).exists():
+            return None
         features = []
         for loc in self.location_set.current().filter(poly__isnull=False):
             features.append(
                 Feature(
-                    geometry=Polygon(loc.poly.coords),
+                    geometry=PolygonGeoJSON(loc.poly.coords),
                     properties={
                         "referral": loc.referral.pk,
                         "referral_type": loc.referral.type.name,
