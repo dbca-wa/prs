@@ -1,6 +1,4 @@
-# This workflow builds a multi-arch Docker image using GitHub Actions and separated Github Runners with native support for ARM64 and AMD64 architectures.
-# It uses Docker Buildx to build and push the image to GitHub Container Registry (GHCR).
-name: Build multi-architecture Docker Image with separate GitHub Runners and run vulnerability scan
+name: Build multi-architecture Typesense image and run vulnerability scan
 
 on:
   push:
@@ -9,11 +7,9 @@ on:
     tags:
       - '*'
 env:
-  # The name of the Docker image to be built and pushed to GitHub Container Registry.
   GHCR_IMAGE: ghcr.io/${{ github.repository_owner }}/typesense
 
 permissions:
-  # Global permissions for the workflow, which can be overridden at the job level
   contents: read
 
 concurrency:
@@ -33,8 +29,6 @@ jobs:
           - linux/arm64
 
     permissions:
-      # Permissions for the build job, which can be overridden at the step level
-      # The permissions are set to allow the job to write to the GitHub Container Registry (GHCR) and read from the repository.
       attestations: write
       actions: read
       checks: write
@@ -51,10 +45,6 @@ jobs:
       statuses: read
 
     runs-on: ${{ matrix.platform == 'linux/amd64' && 'ubuntu-latest' || matrix.platform == 'linux/arm64' && 'ubuntu-24.04-arm' }}
-    # The job runs on different runners based on the platform.
-    # For linux/amd64, it runs on the latest Ubuntu runner.
-    # For linux/arm64, it runs on an Ubuntu 24.04 ARM runner.
-    # The runner is selected based on the platform specified in the matrix.
 
     name: Build Docker image for ${{ matrix.platform }}
 
