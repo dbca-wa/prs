@@ -24,8 +24,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # The build job builds the Docker image for each platform specified in the matrix.
   build:
+    # The build job builds the Docker image for each platform specified in the matrix.
     strategy:
       fail-fast: false
       matrix:
@@ -80,6 +80,8 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
         # This step checks out the code from the repository.
         # It uses the actions/checkout action to clone the repository into the runner's workspace.
 
