@@ -19,6 +19,8 @@ from django.utils.encoding import smart_str
 from django.utils.safestring import mark_safe
 from extract_msg import Message
 from fiona.io import ZipMemoryFile
+from fudgeo.constant import WGS84
+from fudgeo.geopkg import SpatialReferenceSystem
 from pdfminer import high_level
 from reversion.models import Version
 from shapely import force_2d
@@ -644,3 +646,19 @@ def parse_shapefile(uploaded_shapefile) -> list | bool:
             features.append(force_2d(projected_geometry))
 
     return features
+
+
+SRS_WKT = """GEOGCS["WGS 84",
+    DATUM["WGS_1984",
+        SPHEROID["WGS 84",6378137,298.257223563,
+            AUTHORITY["EPSG","7030"]],
+        AUTHORITY["EPSG","6326"]],
+    PRIMEM["Greenwich",0,
+        AUTHORITY["EPSG","8901"]],
+    UNIT["degree",0.0174532925199433,
+        AUTHORITY["EPSG","9122"]],
+    AUTHORITY["EPSG","4326"]]"""
+
+
+def get_srs_wgs84() -> SpatialReferenceSystem:
+    return SpatialReferenceSystem(name="WGS 84", organization="EPSG", org_coord_sys_id=WGS84, definition=SRS_WKT)

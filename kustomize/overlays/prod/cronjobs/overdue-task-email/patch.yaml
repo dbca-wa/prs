@@ -11,6 +11,7 @@ spec:
         spec:
           containers:
             - name: prs-cronjob
+              imagePullPolicy: IfNotPresent
               args: ['manage.py', 'overdue_tasks_email']
               env:
                 - name: SITE_URL

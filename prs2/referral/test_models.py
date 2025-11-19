@@ -286,6 +286,22 @@ class ReferralTest(PrsTestCase):
             else:
                 self.assertIsNone(r.generate_qgis_layer("qgis_layer_v2-16"))
 
+    def test_generate_gpkg(self):
+        """Test the Referral model generate_gpkg method"""
+        for r in Referral.objects.all():
+            if r.location_set.current().filter(poly__isnull=False).exists():
+                self.assertTrue(r.generate_gpkg())
+            else:
+                self.assertIsNone(r.generate_gpkg())
+
+    def test_generate_geojson(self):
+        """Test the Referral model generate_geojson method"""
+        for r in Referral.objects.all():
+            if r.location_set.current().filter(poly__isnull=False).exists():
+                self.assertTrue(r.generate_geojson())
+            else:
+                self.assertIsNone(r.generate_geojson())
+
 
 class TaskTest(PrsTestCase):
     """Unit tests specific to the ``Task`` model class."""

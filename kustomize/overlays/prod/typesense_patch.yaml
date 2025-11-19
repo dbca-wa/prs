@@ -20,7 +20,7 @@ spec:
         - name: prs-typesense
           envFrom:
             - secretRef:
-                name: prs-env-uat
+                name: prs-env-prod
           startupProbe:
             httpGet:
               path: /health/
