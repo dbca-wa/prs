@@ -156,7 +156,7 @@ jobs:
             type=org.opencontainers.image.description,value=${{ github.event.repository.description || 'No description provided' }}
           tags: |
             type=raw,value=latest,enable=${{ github.ref_name == 'master' }}
-            type=semver,pattern={{version}}
+            type=raw,value=29.0,enable=true
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
