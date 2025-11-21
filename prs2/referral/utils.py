@@ -394,10 +394,12 @@ def get_uploaded_file_content(record) -> str:
             # Read the upload blob content directly.
             file_content = record.uploaded_file.read()
 
-    # Decode any bytes object to a string.
+    # Decode any bytes object to a string and remove leading/trailing whitespace.
     if isinstance(file_content, bytes):
-        file_content = file_content.decode("utf-8")
+        file_content = file_content.decode("utf-8", errors="ignore").strip()
 
+    # Remove any NUL (0x00) characters.
+    file_content = file_content.replace("\x00", "")
     return file_content
 
 
