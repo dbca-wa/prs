@@ -13,21 +13,6 @@ spec:
             - name: prs-cronjob
               imagePullPolicy: IfNotPresent
               args: ['manage.py', 'overdue_tasks_email']
-              env:
-                - name: SITE_URL
-                  value: 'prs.dbca.wa.gov.au'
-                - name: DATABASE_URL
-                  valueFrom:
-                    secretKeyRef:
-                      name: prs-env-prod
-                      key: DATABASE_URL
-                - name: EMAIL_HOST
-                  valueFrom:
-                    secretKeyRef:
-                      name: prs-env-prod
-                      key: EMAIL_HOST
-                - name: EMAIL_PORT
-                  valueFrom:
-                    secretKeyRef:
-                      name: prs-env-prod
-                      key: EMAIL_PORT
+              envFrom:
+                - secretRef:
+                    name: prs-env-prod
