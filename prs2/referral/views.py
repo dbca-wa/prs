@@ -60,7 +60,7 @@ from referral.utils import (
     is_prs_power_user,
     parse_shapefile,
     prs_user,
-    query_caddy,
+    query_geocoder,
     smart_truncate,
     wfs_getfeature,
 )
@@ -1987,5 +1987,5 @@ class GeocodeQuery(View):
 
         if not q:
             return HttpResponseBadRequest("Bad request")
-        resp = query_caddy(q)
+        resp = query_geocoder(q)
         return JsonResponse(resp, safe=False)
