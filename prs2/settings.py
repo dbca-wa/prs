@@ -170,6 +170,7 @@ ALLOWED_UPLOAD_TYPES = [
 # Caching config
 REDIS_CACHE_HOST = env("REDIS_CACHE_HOST", "")
 REDIS_CACHE_PASSWORD = env("REDIS_CACHE_PASSWORD", "")
+VALKEY_CACHE_HOST = env("VALKEY_CACHE_HOST", None)
 if REDIS_CACHE_HOST:
     CACHES = {
         "default": {
@@ -179,6 +180,17 @@ if REDIS_CACHE_HOST:
     }
     if REDIS_CACHE_PASSWORD:
         CACHES["default"]["OPTIONS"]["PASSWORD"] = REDIS_CACHE_PASSWORD
+elif VALKEY_CACHE_HOST:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_valkey.cache.ValkeyCache",
+            "LOCATION": VALKEY_CACHE_HOST,
+            "OPTIONS": {
+                "SOCKET_CONNECT_TIMEOUT": 5,  # seconds
+                "SOCKET_TIMEOUT": 5,  # seconds
+            },
+        }
+    }
 else:
     # Don't cache if we don't have a cache server configured.
     CACHES = {

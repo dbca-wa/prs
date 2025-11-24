@@ -18,6 +18,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
+from django.views.decorators.cache import cache_page
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import FormView, ListView, TemplateView, View
 from extract_msg import Message
@@ -102,7 +103,8 @@ class SiteHome(LoginRequiredMixin, ListView):
         return context
 
 
-class HelpPage(LoginRequiredMixin, TemplateView):
+@method_decorator(cache_page(settings.API_RESPONSE_CACHE_SECONDS), name="dispatch")
+class HelpPage(TemplateView):
     """Help page (static template view)."""
 
     template_name = "help_page.html"
