@@ -1,5 +1,7 @@
 {% extends "base_prs.html" %}
+{% load cache %}
 {% block page_content_inner %}
+    {% cache 60 help_page %}
     <h1>HELP</h1>
     <p>
         Welcome to the Planning Referral Sysyem, the Department's system for recording and managing land use planning referrals and related work.
@@ -51,4 +53,5 @@
         <a href="https://dpaw.sharepoint.com/resources/land-use-planning/Documents/Planning_Referral_System_User_Guide.pdf?csf=1&web=1&e=C1VWTf"
            target="_blank">PRS user documentation</a> is located on SharePoint.
     </p>
+{% endcache %}
 {% endblock %}
