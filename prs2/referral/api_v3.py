@@ -3,6 +3,7 @@ from django.contrib.auth.models import Group, User
 from django.http import JsonResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
+from django.views.decorators.vary import vary_on_cookie
 from django.views.generic import View
 from django.views.generic.detail import SingleObjectMixin
 from django.views.generic.list import MultipleObjectMixin
@@ -25,6 +26,7 @@ class ReferralTypeAPIResource(View):
     http_method_names = ["get", "options", "head", "trace"]
 
     @method_decorator(cache_control(max_age=settings.API_RESPONSE_CACHE_SECONDS, private=True))
+    @method_decorator(vary_on_cookie)
     def get(self, request, *args, **kwargs):
         queryset = ReferralType.objects.current()
 
@@ -58,6 +60,7 @@ class RegionAPIResource(View):
     http_method_names = ["get", "options", "head", "trace"]
 
     @method_decorator(cache_control(max_age=settings.API_RESPONSE_CACHE_SECONDS, private=True))
+    @method_decorator(vary_on_cookie)
     def get(self, request, *args, **kwargs):
         queryset = Region.objects.current()
 
@@ -89,6 +92,7 @@ class OrganisationAPIResource(View):
     http_method_names = ["get", "options", "head", "trace"]
 
     @method_decorator(cache_control(max_age=settings.API_RESPONSE_CACHE_SECONDS, private=True))
+    @method_decorator(vary_on_cookie)
     def get(self, request, *args, **kwargs):
         queryset = Organisation.objects.current()
 
@@ -129,6 +133,7 @@ class TaskStateAPIResource(View):
     http_method_names = ["get", "options", "head", "trace"]
 
     @method_decorator(cache_control(max_age=settings.API_RESPONSE_CACHE_SECONDS, private=True))
+    @method_decorator(vary_on_cookie)
     def get(self, request, *args, **kwargs):
         queryset = TaskState.objects.current()
 
@@ -163,6 +168,7 @@ class TaskTypeAPIResource(View):
     http_method_names = ["get", "options", "head", "trace"]
 
     @method_decorator(cache_control(max_age=settings.API_RESPONSE_CACHE_SECONDS, private=True))
+    @method_decorator(vary_on_cookie)
     def get(self, request, *args, **kwargs):
         queryset = TaskType.objects.current()
 
@@ -197,6 +203,7 @@ class UserAPIResource(View):
     http_method_names = ["get", "options", "head", "trace"]
 
     @method_decorator(cache_control(max_age=settings.API_RESPONSE_CACHE_SECONDS, private=True))
+    @method_decorator(vary_on_cookie)
     def get(self, request, *args, **kwargs):
         # Queryset should only return active users in the "PRS user" group.
         prs_user = Group.objects.get_or_create(name=settings.PRS_USER_GROUP)[0]
@@ -230,6 +237,7 @@ class TagAPIResource(View):
     http_method_names = ["get", "options", "head", "trace"]
 
     @method_decorator(cache_control(max_age=settings.API_RESPONSE_CACHE_SECONDS, private=True))
+    @method_decorator(vary_on_cookie)
     def get(self, request, *args, **kwargs):
         queryset = Tag.objects.all().order_by("name")
 
@@ -263,6 +271,7 @@ class ReferralAPIResource(View):
     http_method_names = ["get", "options", "head", "trace"]
 
     @method_decorator(cache_control(max_age=settings.API_RESPONSE_CACHE_SECONDS, private=True))
+    @method_decorator(vary_on_cookie)
     def get(self, request, *args, **kwargs):
         queryset = Referral.objects.current().prefetch_related("type", "regions", "referring_org", "dop_triggers", "tags", "lga")
 
@@ -333,6 +342,7 @@ class TaskAPIResource(View):
     http_method_names = ["get", "options", "head", "trace"]
 
     @method_decorator(cache_control(max_age=settings.API_RESPONSE_CACHE_SECONDS, private=True))
+    @method_decorator(vary_on_cookie)
     def get(self, request, *args, **kwargs):
         queryset = Task.objects.current().prefetch_related("type", "referral", "assigned_user", "state")
 
@@ -403,6 +413,7 @@ class ClearanceAPIResource(View):
     http_method_names = ["get", "options", "head", "trace"]
 
     @method_decorator(cache_control(max_age=settings.API_RESPONSE_CACHE_SECONDS, private=True))
+    @method_decorator(vary_on_cookie)
     def get(self, request, *args, **kwargs):
         queryset = Clearance.objects.current().prefetch_related("task", "condition")
 
