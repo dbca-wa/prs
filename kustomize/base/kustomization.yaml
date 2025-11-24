@@ -6,3 +6,4 @@ resources:
   - deployment_hpa.yaml
   - service.yaml
   - typesense.yaml
+  - valkey.yaml

@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prs-valkey
+  labels:
+    app: prs-valkey
+spec:
+  selector:
+    matchLabels:
+      app: prs-valkey
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: prs-valkey
+    spec:
+      containers:
+        - name: prs-valkey
+          image: valkey/valkey:9-alpine
+          imagePullPolicy: Always
+          env:
+            - name: TZ
+              value: 'Australia/Perth'
+            - name: ALLOW_EMPTY_PASSWORD
+              value: 'yes'
+          resources:
+            requests:
+              memory: '32Mi'
+              cpu: '1m'
+            limits:
+              memory: '500Mi'
+              cpu: '500m'
+          securityContext:
+            runAsNonRoot: true
+            privileged: false
+            allowPrivilegeEscalation: false
+            runAsUser: 999
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+          volumeMounts:
+            - mountPath: /tmp
+              name: tmpfs-ram
+      volumes:
+        - name: tmpfs-ram
+          emptyDir:
+            medium: 'Memory'
+      restartPolicy: Always
+      automountServiceAccountToken: false
+      tolerations:
+        - key: arch
+          operator: Equal
+          value: arm64
+          effect: NoSchedule
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              preference:
+                matchExpressions:
+                  - key: arch
+                    operator: In
+                    values:
+                      - arm64
