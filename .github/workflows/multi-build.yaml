@@ -74,7 +74,7 @@ jobs:
 
       - name: Harden the GitHub runner
         # Make use of the Step Security Harden Runner workflow to monitor the build process.
-        uses: step-security/harden-runner@v2.13.2
+        uses: step-security/harden-runner@v2.13.3
         with:
           egress-policy: audit
 

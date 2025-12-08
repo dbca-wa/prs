@@ -55,7 +55,7 @@ jobs:
           echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
 
       - name: Harden the GitHub runner
-        uses: step-security/harden-runner@v2.13.2
+        uses: step-security/harden-runner@v2.13.3
         with:
           egress-policy: audit
 
