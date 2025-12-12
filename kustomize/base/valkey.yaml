@@ -44,8 +44,13 @@ spec:
           volumeMounts:
             - mountPath: /tmp
               name: tmpfs-ram
+            - mountPath: /data
+              name: datafs-ram
       volumes:
         - name: tmpfs-ram
+          emptyDir:
+            medium: 'Memory'
+        - name: datafs-ram
           emptyDir:
             medium: 'Memory'
       restartPolicy: Always
