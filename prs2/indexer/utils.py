@@ -71,7 +71,8 @@ def typesense_index_record(rec, client=None):
             # PDF text extraction can be a little error-prone.
             # In the event of an exception here, we'll just accept it and pass.
             if settings.LOCAL_MEDIA_STORAGE:
-                file_content = high_level.extract_text(open(rec.uploaded_file.path, "rb"))
+                with open(rec.uploaded_file.path, "rb") as f:
+                    file_content = high_level.extract_text(f.read())
             else:
                 # Read the upload blob content into an in-memory file.
                 tmp = BytesIO()
@@ -82,32 +83,42 @@ def typesense_index_record(rec, client=None):
 
     # MSG document content.
     if rec.extension == "MSG":
-        if settings.LOCAL_MEDIA_STORAGE:
-            message = Message(rec.uploaded_file.path)
-        else:
-            # Read the upload blob content into an in-memory file.
-            tmp = BytesIO()
-            tmp.write(rec.uploaded_file.read())
-            message = Message(tmp)
-        file_content = f"{message.subject} {message.body}"
+        try:
+            if settings.LOCAL_MEDIA_STORAGE:
+                message = Message(rec.uploaded_file.path)
+            else:
+                # Read the upload blob content into an in-memory file.
+                tmp = BytesIO()
+                tmp.write(rec.uploaded_file.read())
+                message = Message(tmp)
+            file_content = f"{message.subject} {message.body}"
+        except:
+            pass
 
     # DOCX document content.
     if rec.extension == "DOCX":
-        if settings.LOCAL_MEDIA_STORAGE:
-            file_content = docx2txt.process(rec.uploaded_file.path)
-        else:
-            # Read the upload blob content into an in-memory file.
-            tmp = BytesIO()
-            tmp.write(rec.uploaded_file.read())
-            file_content = docx2txt.process(tmp)
+        try:
+            if settings.LOCAL_MEDIA_STORAGE:
+                file_content = docx2txt.process(rec.uploaded_file.path)
+            else:
+                # Read the upload blob content into an in-memory file.
+                tmp = BytesIO()
+                tmp.write(rec.uploaded_file.read())
+                file_content = docx2txt.process(tmp)
+        except:
+            pass
 
     # TXT document content.
     if rec.extension == "TXT":
-        if settings.LOCAL_MEDIA_STORAGE:
-            file_content = open(rec.uploaded_file.path, "r").read()
-        else:
-            # Read the upload blob content directly.
-            file_content = rec.uploaded_file.read()
+        try:
+            if settings.LOCAL_MEDIA_STORAGE:
+                with open(rec.uploaded_file.path, "r") as f:
+                    file_content = f.read()
+            else:
+                # Read the upload blob content directly.
+                file_content = rec.uploaded_file.read()
+        except:
+            pass
 
     # Trim down the file content a little to aid indexing.
     if file_content:
