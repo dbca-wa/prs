@@ -48,5 +48,5 @@ class PrsMiddleware(object):
     def __call__(self, request):
         response = self.get_response(request)
         # Reference: http://www.gnuterrypratchett.com/
-        response["X-Clacks-Overhead"] = "GNU Terry Pratchett"
+        response.headers["X-Clacks-Overhead"] = "GNU Terry Pratchett"
         return response

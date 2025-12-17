@@ -64,8 +64,8 @@ else:
 PRS_LAYER_NAME = env("PRS_LAYER_NAME", "")
 GEOCODER_URL = env("GEOCODER_URL", "")
 GEOSERVER_URL = env("GEOSERVER_URL", "")
-GEOSERVER_SSO_USER = env("GEOSERVER_SSO_USER", "username")
-GEOSERVER_SSO_PASS = env("GEOSERVER_SSO_PASS", "password")
+SSO_USERNAME = env("SSO_USERNAME", "username")
+SSO_PASSWORD = env("SSO_PASSWORD", "password")
 CADASTRE_LAYER_NAME = env("CADASTRE_LAYER_NAME", "cadastre")
 
 INSTALLED_APPS = (
@@ -95,12 +95,10 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    "django.middleware.cache.UpdateCacheMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
-    "django.middleware.cache.FetchFromCacheMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "reversion.middleware.RevisionMiddleware",
     "crum.CurrentRequestUserMiddleware",
@@ -170,6 +168,7 @@ ALLOWED_UPLOAD_TYPES = [
 # Caching config
 REDIS_CACHE_HOST = env("REDIS_CACHE_HOST", "")
 REDIS_CACHE_PASSWORD = env("REDIS_CACHE_PASSWORD", "")
+VALKEY_CACHE_HOST = env("VALKEY_CACHE_HOST", None)
 if REDIS_CACHE_HOST:
     CACHES = {
         "default": {
@@ -179,6 +178,17 @@ if REDIS_CACHE_HOST:
     }
     if REDIS_CACHE_PASSWORD:
         CACHES["default"]["OPTIONS"]["PASSWORD"] = REDIS_CACHE_PASSWORD
+elif VALKEY_CACHE_HOST:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_valkey.cache.ValkeyCache",
+            "LOCATION": VALKEY_CACHE_HOST,
+            "OPTIONS": {
+                "SOCKET_CONNECT_TIMEOUT": 5,  # seconds
+                "SOCKET_TIMEOUT": 5,  # seconds
+            },
+        }
+    }
 else:
     # Don't cache if we don't have a cache server configured.
     CACHES = {
@@ -187,7 +197,6 @@ else:
         }
     }
 API_RESPONSE_CACHE_SECONDS = env("API_RESPONSE_CACHE_SECONDS", 60)
-CACHE_MIDDLEWARE_SECONDS = env("CACHE_MIDDLEWARE_SECONDS", 0)
 
 # Email settings
 EMAIL_HOST = env("EMAIL_HOST", "email.host")

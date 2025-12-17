@@ -74,12 +74,12 @@ jobs:
 
       - name: Harden the GitHub runner
         # Make use of the Step Security Harden Runner workflow to monitor the build process.
-        uses: step-security/harden-runner@v2.13.3
+        uses: step-security/harden-runner@v2.14.0
         with:
           egress-policy: audit
 
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
         # This step checks out the code from the repository.
@@ -156,7 +156,7 @@ jobs:
         # It uses the actions/upload-artifact action to upload the file created in the previous step.
         # The artifact is named digests-${{ env.PLATFORM_PAIR }}, where PLATFORM_PAIR is the platform name with '/' replaced by '-'.
         # The artifact is retained for 1 day, and if no files are found, it will throw an error.
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: digests-${{ env.PLATFORM_PAIR }}
           path: /tmp/digests/*
@@ -192,7 +192,7 @@ jobs:
         # This step downloads the digest files uploaded in the build job.
         # It uses the actions/download-artifact action to download the artifacts with the pattern digests-*.
         # The downloaded files are merged into the /tmp/digests directory.
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           path: /tmp/digests
           pattern: digests-*

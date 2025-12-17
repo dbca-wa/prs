@@ -265,7 +265,7 @@ def wfs_getfeature(type_name, cql_filter=None, crs="EPSG:4326", max_features=50)
     """
     geoserver_url = env("GEOSERVER_URL", "")
     url = f"{geoserver_url}/ows"
-    auth = (env("GEOSERVER_SSO_USER", None), env("GEOSERVER_SSO_PASS", None))
+    auth = (env("SSO_USERNAME", None), env("SSO_PASSWORD", None))
     params = {
         "service": "WFS",
         "version": "1.1.0",
@@ -291,10 +291,10 @@ def wfs_getfeature(type_name, cql_filter=None, crs="EPSG:4326", max_features=50)
     return response
 
 
-def query_caddy(q):
-    """Utility function to proxy queries to the Caddy geocoder service."""
+def query_geocoder(q):
+    """Utility function to proxy queries to the external geocoder service."""
     url = env("GEOCODER_URL", None)
-    auth = (env("GEOSERVER_SSO_USER", None), env("GEOSERVER_SSO_PASS", None))
+    auth = (env("SSO_USERNAME", None), env("SSO_PASSWORD", None))
     params = {"q": q}
     resp = requests.get(url, auth=auth, params=params)
     try:
@@ -394,10 +394,12 @@ def get_uploaded_file_content(record) -> str:
             # Read the upload blob content directly.
             file_content = record.uploaded_file.read()
 
-    # Decode any bytes object to a string.
+    # Decode any bytes object to a string and remove leading/trailing whitespace.
     if isinstance(file_content, bytes):
-        file_content = file_content.decode("utf-8")
+        file_content = file_content.decode("utf-8", errors="ignore").strip()
 
+    # Remove any NUL (0x00) characters.
+    file_content = file_content.replace("\x00", "")
     return file_content
 
 

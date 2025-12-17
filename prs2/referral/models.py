@@ -631,7 +631,7 @@ class Referral(ReferralBaseModel):
         gpkg = GeoPackage.create(gpkg_path, flavor="EPSG")
 
         # Create a feature class (layer) for referral locations.
-        fc = gpkg.create_feature_class(
+        gpkg.create_feature_class(
             name="prs_locations",
             srs=get_srs_wgs84(),
             shape_type=GeometryType.polygon,
@@ -650,7 +650,6 @@ class Referral(ReferralBaseModel):
         VALUES (?, ?, ?, ?, ?, ?)"""
         rows = []
         for loc in self.location_set.current().filter(poly__isnull=False):
-            pass
             poly = Polygon(coordinates=loc.poly.coords, srs_id=WGS84)
             rows.append(
                 (

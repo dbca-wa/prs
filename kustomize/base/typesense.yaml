@@ -16,7 +16,6 @@ spec:
       labels:
         app: prs-typesense
     spec:
-      terminationGracePeriodSeconds: 180
       containers:
         - name: prs-typesense
           image: ghcr.io/dbca-wa/typesense:29.0
@@ -73,6 +72,7 @@ spec:
                 - ALL
             readOnlyRootFilesystem: true
       restartPolicy: Always
+      terminationGracePeriodSeconds: 180
       automountServiceAccountToken: false
       tolerations:
         - key: arch
