@@ -32,7 +32,7 @@ dependencies = [
   "django-celery-results==2.6.0",
   "whitenoise[brotli]==6.11.0",
   "django-crum==0.7.9",
-  "sentry-sdk[django]==2.47.0",
+  "sentry-sdk[django]==2.48.0",
   "redis==7.1.0",
   "xlsxwriter==3.2.9",
   "django-storages[azure]==1.14.6",
