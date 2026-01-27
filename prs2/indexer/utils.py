@@ -72,7 +72,7 @@ def typesense_index_record(rec, client=None):
             # In the event of an exception here, we'll just accept it and pass.
             if settings.LOCAL_MEDIA_STORAGE:
                 with open(rec.uploaded_file.path, "rb") as f:
-                    file_content = high_level.extract_text(f.read())
+                    file_content = high_level.extract_text(f)
             else:
                 # Read the upload blob content into an in-memory file.
                 tmp = BytesIO()
