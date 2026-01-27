@@ -6,12 +6,12 @@ authors = [{ name = "Ashley Felton", email = "ashley.felton@dbca.wa.gov.au" }]
 license = "Apache-2.0"
 requires-python = ">=3.13,<4.0"
 dependencies = [
-  "django==5.2.8",
+  "django==5.2.9",
   "psycopg[binary,pool]==3.3.2",
   "dbca-utils==2.1.5",
   "python-dotenv==1.2.1",
   "dj-database-url==3.0.1",
-  "gunicorn==23.0.0",
+  "gunicorn==24.1.1",
   "django-extensions==4.1",
   "django-crispy-forms==2.5",
   "crispy-bootstrap5==2025.6",
@@ -26,21 +26,21 @@ dependencies = [
   "webtemplate-dbca==1.8.3",
   "geojson==3.2.0",
   "typesense==1.3.0",
-  "pdfminer-six==20251107",
+  "pdfminer-six==20251228",
   "docx2txt==0.9",
   "celery==5.6.0",
   "django-celery-results==2.6.0",
   "whitenoise[brotli]==6.11.0",
   "django-crum==0.7.9",
-  "sentry-sdk[django]==2.47.0",
+  "sentry-sdk[django]==2.50.0",
   "redis==7.1.0",
   "xlsxwriter==3.2.9",
   "django-storages[azure]==1.14.6",
   "shapely==2.1.2",
   "fiona==1.10.1",
   "pyproj==3.7.2",
-  "fudgeo==1.3.1",
-  "django-valkey[libvalkey]==0.3.2",
+  "fudgeo==1.4.2",
+  "django-valkey[libvalkey]==0.4.0",
 ]
 
 [dependency-groups]

@@ -28,6 +28,8 @@ from shapely.geometry import shape
 from shapely.ops import transform
 from unidecode import unidecode
 
+LOGGER = logging.getLogger("prs")
+
 
 def is_model_or_string(model):
     """This function checks if we passed in a Model, or the name of a model as
@@ -282,9 +284,8 @@ def wfs_getfeature(type_name, cql_filter=None, crs="EPSG:4326", max_features=50)
         resp.raise_for_status()
         response = resp.json()
     except Exception as e:
-        logger = logging.getLogger("prs")
-        logger.warning(f"Exception during WFS getFeature request to {url}: {params}")
-        logger.warning(e)
+        LOGGER.warning(f"Exception during WFS getFeature request to {url}: {params}")
+        LOGGER.warning(e)
         # On exception, return an empty dict.
         return {}
 
@@ -301,9 +302,8 @@ def query_geocoder(q):
         resp.raise_for_status()
         response = resp.json()
     except Exception as e:
-        logger = logging.getLogger("prs")
-        logger.warning(f"Exception during query: {url}?q={q}")
-        logger.warning(e)
+        LOGGER.warning(f"Exception during query: {url}?q={q}")
+        LOGGER.warning(e)
         # On exception, return an empty list.
         return []
 
@@ -349,12 +349,9 @@ def get_uploaded_file_content(record) -> str:
     # PDF document content.
     if record.extension == "PDF":
         try:
-            # PDF text extraction can be a little error-prone.
-            # In the event of an exception here, we'll just accept it and pass.
             if settings.LOCAL_MEDIA_STORAGE:
-                f = open(record.uploaded_file.path, "rb")
-                file_content = high_level.extract_text(f)
-                f.close()
+                with open(record.uploaded_file.path, "rb") as f:
+                    file_content = high_level.extract_text(f)
             else:
                 # Read the upload blob content into an in-memory file.
                 tmp = BytesIO()
@@ -365,41 +362,52 @@ def get_uploaded_file_content(record) -> str:
 
     # MSG document content.
     if record.extension == "MSG":
-        if settings.LOCAL_MEDIA_STORAGE:
-            message = Message(record.uploaded_file.path)
-        else:
-            # Read the upload blob content into an in-memory file.
-            tmp = BytesIO()
-            tmp.write(record.uploaded_file.read())
-            message = Message(tmp)
-        file_content = f"{message.subject} {message.body}"
+        try:
+            if settings.LOCAL_MEDIA_STORAGE:
+                message = Message(record.uploaded_file.path)
+            else:
+                # Read the upload blob content into an in-memory file.
+                tmp = BytesIO()
+                tmp.write(record.uploaded_file.read())
+                message = Message(tmp)
+            file_content = f"{message.subject} {message.body}"
+        except UnicodeDecodeError:
+            LOGGER.warning(f"Record {record.pk} content raised UnicodeDecodeError")
+            pass
+        except:
+            pass
 
     # DOCX document content.
     if record.extension == "DOCX":
-        if settings.LOCAL_MEDIA_STORAGE:
-            file_content = docx2txt.process(record.uploaded_file.path)
-        else:
-            # Read the upload blob content into an in-memory file.
-            tmp = BytesIO()
-            tmp.write(record.uploaded_file.read())
-            file_content = docx2txt.process(tmp)
+        try:
+            if settings.LOCAL_MEDIA_STORAGE:
+                file_content = docx2txt.process(record.uploaded_file.path)
+            else:
+                # Read the upload blob content into an in-memory file.
+                tmp = BytesIO()
+                tmp.write(record.uploaded_file.read())
+                file_content = docx2txt.process(tmp)
+        except:
+            pass
 
     # TXT document content.
     if record.extension == "TXT":
-        if settings.LOCAL_MEDIA_STORAGE:
-            f = open(record.uploaded_file.path, "r")
-            file_content = f.read()
-            f.close()
-        else:
-            # Read the upload blob content directly.
-            file_content = record.uploaded_file.read()
+        try:
+            if settings.LOCAL_MEDIA_STORAGE:
+                with open(record.uploaded_file.path, "r") as f:
+                    file_content = f.read()
+            else:
+                # Read the upload blob content directly.
+                file_content = record.uploaded_file.read()
+        except:
+            pass
 
     # Decode any bytes object to a string and remove leading/trailing whitespace.
     if isinstance(file_content, bytes):
         file_content = file_content.decode("utf-8", errors="ignore").strip()
 
-    # Remove any NUL (0x00) characters.
-    file_content = file_content.replace("\x00", "")
+    # Remove any NUL (0x00) or form feed (0x0c) characters.
+    file_content = file_content.replace("\x00", "").replace("\x0c", "")
     return file_content
 
 

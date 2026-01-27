@@ -1,3 +1,5 @@
+import logging
+
 from celery import shared_task
 from indexer.utils import (
     get_typesense_client,
@@ -9,20 +11,27 @@ from indexer.utils import (
 )
 from referral.utils import get_uploaded_file_content
 
+LOGGER = logging.getLogger("prs")
 
-@shared_task(default_retry_delay=10, max_retries=3)
+
+@shared_task(default_retry_delay=10, max_retries=1)
 def index_record(pk):
     from referral.models import Record
 
     try:
         record = Record.objects.get(pk=pk)
         if not record.uploaded_file_content:
-            record.uploaded_file_content = get_uploaded_file_content(record)
-            # Set index=False to prevent an infinite save loop.
-            record.save(index=False)
-            return f"Indexed record {pk} file content"
-    except Record.DoesNotExist as exception:
-        raise index_record.retry(exc=exception)
+            try:
+                record.uploaded_file_content = get_uploaded_file_content(record)
+                # Set index=False to prevent an infinite save loop.
+                record.save(index=False)
+                return f"Indexed record {pk} file content"
+            except:
+                raise
+    except Record.DoesNotExist as exc:
+        raise index_record.retry(exc=exc)
+    except:
+        raise
 
 
 @shared_task(default_retry_delay=10, max_retries=1)
@@ -40,6 +49,8 @@ def index_object(pk, model, client=None):
             return f"Indexed referral {pk} in Typesense"
         except Referral.DoesNotExist as exc:
             raise index_object.retry(exc=exc)
+        except:
+            raise
     elif model == "record":
         from referral.models import Record
 
@@ -49,6 +60,8 @@ def index_object(pk, model, client=None):
             return f"Indexed record {pk} in Typesense"
         except Record.DoesNotExist as exc:
             raise index_object.retry(exc=exc)
+        except:
+            raise
     elif model == "task":
         from referral.models import Task
 
@@ -58,6 +71,8 @@ def index_object(pk, model, client=None):
             return f"Indexed task {pk} in Typesense"
         except Task.DoesNotExist as exc:
             raise index_object.retry(exc=exc)
+        except:
+            raise
     elif model == "note":
         from referral.models import Note
 
@@ -67,6 +82,8 @@ def index_object(pk, model, client=None):
             return f"Indexed note {pk} in Typesense"
         except Note.DoesNotExist as exc:
             raise index_object.retry(exc=exc)
+        except:
+            raise
     elif model == "condition":
         from referral.models import Condition
 
@@ -76,5 +93,7 @@ def index_object(pk, model, client=None):
             return f"Indexed condition {pk} in Typesense"
         except Condition.DoesNotExist as exc:
             raise index_object.retry(exc=exc)
+        except:
+            raise
     else:
         return
