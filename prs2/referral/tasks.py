@@ -14,7 +14,7 @@ from referral.utils import get_uploaded_file_content
 LOGGER = logging.getLogger("prs")
 
 
-@shared_task(default_retry_delay=10, max_retries=3)
+@shared_task(default_retry_delay=10, max_retries=1)
 def index_record(pk):
     from referral.models import Record
 
@@ -28,7 +28,9 @@ def index_record(pk):
                 return f"Indexed record {pk} file content"
             except:
                 raise
-    except Record.DoesNotExist:
+    except Record.DoesNotExist as exc:
+        raise index_record.retry(exc=exc)
+    except:
         raise
 
 
