@@ -406,8 +406,8 @@ def get_uploaded_file_content(record) -> str:
     if isinstance(file_content, bytes):
         file_content = file_content.decode("utf-8", errors="ignore").strip()
 
-    # Remove any NUL (0x00) characters.
-    file_content = file_content.replace("\x00", "")
+    # Remove any NUL (0x00) or form feed (0x0c) characters.
+    file_content = file_content.replace("\x00", "").replace("\x0c", "")
     return file_content
 
 
