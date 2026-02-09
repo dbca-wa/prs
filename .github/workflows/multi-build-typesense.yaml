@@ -1,6 +1,9 @@
 name: Build multi-architecture Typesense image and run vulnerability scan
 
 on:
+  schedule:
+    # 0521 AWST, Mon-Fri
+    - cron: '21 21 * * 1-5'
   push:
     branches:
       - master
