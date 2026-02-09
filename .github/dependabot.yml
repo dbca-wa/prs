@@ -1,4 +1,11 @@
 version: 2
+registries:
+  docker-hardened-images:
+    type: docker-registry
+    url: https://dhi.io
+    username: ${{secrets.DOCKERHUB_USERNAME}}
+    password: ${{secrets.DOCKERHUB_PASSWORD}}
+    replaces-base: true
 updates:
   - package-ecosystem: 'uv'
     directory: '/'
@@ -6,7 +13,21 @@ updates:
       interval: 'weekly'
     ignore:
       - dependency-name: 'requirements.txt'
+    commit-message:
+      prefix: '[python] '
   - package-ecosystem: 'github-actions'
     directory: '/'
     schedule:
       interval: 'weekly'
+    commit-message:
+      prefix: '[actions] '
+  - package-ecosystem: 'docker'
+    registries: '*'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+    commit-message:
+      prefix: '[docker] '
+    ignore:
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
