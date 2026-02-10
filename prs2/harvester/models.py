@@ -374,29 +374,29 @@ class EmailedReferral(models.Model):
             else:
                 addresses = app["ADDRESS_DETAIL"]["DOP_ADDRESS_TYPE"]
 
-            for a in addresses:
+            for address in addresses:
                 # Use the long/lat info to intersect DBCA regions.
                 try:
-                    p = Point(x=float(a["LONGITUDE"]), y=float(a["LATITUDE"]))
+                    p = Point(x=float(address["LONGITUDE"]), y=float(address["LATITUDE"]))
                     for r in Region.objects.all():
                         if r.region_mpoly and r.region_mpoly.intersects(p) and r not in regions:
                             regions.append(r)
                     intersected_region = True
                 except Exception:
-                    log = f"Address long/lat could not be parsed ({a['LONGITUDE']}, {a['LATITUDE']})"
+                    log = f"Address long/lat could not be parsed ({address['LONGITUDE']}, {address['LATITUDE']})"
                     LOGGER.warning(log)
                     self.log = f"{log}\n"
                     actions.append(f"{datetime.now().isoformat()} {log}")
                     intersected_region = False
 
                 # Use the PIN field to query SLIP for geometry.
-                if "PIN" in a and a["PIN"]:
+                if "PIN" in address and address["PIN"]:
                     try:
-                        resp = query_slip_esri(a["PIN"])
+                        resp = query_slip_esri(address["PIN"])
                         features = resp["features"]  # List of spatial features.
                         if len(features) > 0:
-                            a["FEATURES"] = features
-                            locations.append(a)  # A dict for each address location.
+                            address["FEATURES"] = features
+                            locations.append(address)  # A dict for each address location.
                             # If we haven't yet, use the feature geom to intersect DBCA regions.
                             if not intersected_region:
                                 for f in features:
@@ -406,7 +406,7 @@ class EmailedReferral(models.Model):
                                         for r in Region.objects.all():
                                             if r.region_mpoly and r.region_mpoly.intersects(p) and r not in regions:
                                                 regions.append(r)
-                        log = f"Address PIN {a['PIN']} returned geometry from SLIP"
+                        log = f"Address PIN {address['PIN']} returned geometry from SLIP"
                         self.log = self.log + f"{log}\n"
                         LOGGER.info(log)
                     except Exception as e:
@@ -414,7 +414,7 @@ class EmailedReferral(models.Model):
                         LOGGER.error(log)
                         LOGGER.exception(e)
                 else:
-                    log = f"Address PIN could not be parsed ({a['PIN']})"
+                    log = f"Address PIN could not be parsed ({address['PIN']})"
                     LOGGER.warning(log)
                     self.log = self.log + f"{log}\n"
 
