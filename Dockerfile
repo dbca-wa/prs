@@ -5,7 +5,8 @@ LABEL org.opencontainers.image.source=https://github.com/dbca-wa/prs
 
 # Install system packages required to run the project
 RUN apt-get update -y \
-  && apt-get install -y --no-install-recommends gdal-bin proj-bin libmagic1t64 \
+  # Python package dependencies: fiona requires libgdal-dev, python-magic requires libmagic1t64
+  && apt-get install -y --no-install-recommends libgdal-dev gdal-bin proj-bin libmagic1t64 \
   # Run shared library linker after installing packages
   && ldconfig \
   && rm -rf /var/lib/apt/lists/*
