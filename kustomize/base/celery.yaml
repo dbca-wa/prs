@@ -32,7 +32,7 @@ spec:
               cpu: '1000m'
           securityContext:
             runAsNonRoot: true
-            runAsUser: 1000
+            runAsUser: 65532
             privileged: false
             allowPrivilegeEscalation: false
             capabilities:
