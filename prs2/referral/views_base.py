@@ -1,4 +1,5 @@
 import json
+from urllib.parse import urlparse
 
 from django.conf import settings
 from django.contrib import messages
@@ -440,7 +441,9 @@ class PrsObjectDelete(LoginRequiredMixin, DeleteView):
         obj.delete()
 
         if self.request.POST.get("next", None):
-            success_url = self.request.POST["next"]
+            # Supplied redirect URL can only be a local path.
+            parsed_url = urlparse(self.request.POST["next"])
+            success_url = parsed_url.path
         else:
             success_url = self.get_success_url()
 

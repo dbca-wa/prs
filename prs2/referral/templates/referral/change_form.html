@@ -1,26 +1,31 @@
 {% extends "base_prs.html" %}
 {% load static %}
 {% load crispy_forms_tags %}
-
 {% block extra_head %}
-{{ block.super }}
-{{ form.media }}
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css" integrity="sha256-siyOpF/pBWUPgIcQi17TLBkjvNgNQArcmwJB8YvkAgg=" crossorigin="anonymous" />
+    {{ block.super }}
+    {{ form.media }}
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.10.0/css/bootstrap-datepicker.min.css"
+          integrity="sha512-34s5cpvaNG3BknEWSuOncX28vz97bRI59UnVtEEpFX536A7BtZSJHsDyFoCl8S7Dt2TPzcrCEoHBGeM4SUBDBw=="
+          crossorigin="anonymous"
+          referrerpolicy="no-referrer" />
 {% endblock %}
-
 {% block page_content_inner %}
-<h1>{{ title }}</h1>
-{% if form.errors %}
-<div class="alert alert-danger" role="alert">Please correct the error(s) below</div>
-{% endif %}
-{% crispy form %}
+    <h1>{{ title }}</h1>
+    {% if form.errors %}<div class="alert alert-danger" role="alert">Please correct the error(s) below</div>{% endif %}
+    {% crispy form %}
 {% endblock %}
-
 {% block extra_js %}
-{{ block.super }}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js" integrity="sha256-bqVeqGdJ7h/lYPq6xrPv/YGzMEb6dNxlfiTUHSgRCp8=" crossorigin="anonymous"></script>
-<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/tinymce/4.6.4/tinymce.min.js"></script>
-<script type="text/javascript">
+    {{ block.super }}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.10.0/js/bootstrap-datepicker.min.js"
+            integrity="sha512-LsnSViqQyaXpD4mBBdRYeP6sRwJiJveh2ZIbW41EBrNmKxgr/LFZIiWT6yr+nycvhvauz8c2nYMhrP80YhG7Cw=="
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/4.6.4/tinymce.min.js"
+            integrity="sha512-4heT9RAzAQo0qfuk1t6HkAN+iDHVS9WvoMz7gKIUmMUsyXzcCiMi8qPjQ8I9f6ENNH3fJmnRx5LEoM9OLUsjzA=="
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"></script>
+    <script type="text/javascript">
     // Document ready events:
     $(function() {
         // Initialise datepicker widgets
@@ -69,5 +74,5 @@
         toolbar: 'undo redo | styleselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | table link',
         statusbar: false
     });
-</script>
+    </script>
 {% endblock %}

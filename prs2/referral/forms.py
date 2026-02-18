@@ -133,7 +133,7 @@ class BaseFormHelper(FormHelper):
         self.form_class = "form-horizontal"
         self.form_method = "POST"
         self.label_class = "col-xs-12 col-sm-4 col-md-3 col-lg-2"
-        self.field_class = "col-xs-12 col-sm-8 col-md-6 col-lg-4"
+        self.field_class = "col-xs-12 col-sm-8 col-md-10"
         self.help_text_inline = True
         self.attrs = {"novalidate": ""}
 
@@ -407,9 +407,10 @@ class RecordCreateForm(RecordForm):
         self.fields["infobase_id"].help_text = """To link to an Infobase record,
             enter the Infobase object ID exactly as it appears in Infobase (i.e.
             case-sensitive, no spaces). E.g.: eA498596"""
+        self.fields["description"].widget = forms.Textarea(attrs={"cols": "40", "rows": "4"})
         # Add in a "Save and add another" button.
         save_another_button = Submit("save-another", "Save and add another")
-        save_another_button.field_classes = " btn btn-default"
+        save_another_button.field_classes = "btn btn-secondary"
         layout = Layout(
             "name",
             "uploaded_file",
@@ -528,6 +529,7 @@ class TaskCompleteForm(BaseForm):
             instead."""
         self.fields["description"].help_text = """To comment on the completion
             stage of the task, ADD details to this description."""
+        self.fields["description"].widget = forms.Textarea(attrs={"cols": "40", "rows": "4"})
         layout = Layout(
             "state",
             "complete_date",
@@ -562,8 +564,8 @@ class TaskStopForm(BaseForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["description"].required = True
-        self.fields["description"].help_text = """Please describe why the
-            task was stopped."""
+        self.fields["description"].help_text = "Please describe why the task was stopped."
+        self.fields["description"].widget = forms.Textarea(attrs={"cols": "40", "rows": "4"})
         layout = Layout(
             "stopped_date",
             "description",
@@ -601,8 +603,8 @@ class TaskStartForm(BaseForm):
         self.fields["due_date"].label = "Revised due date"
         self.fields["restart_date"].required = True
         self.fields["restart_date"].input_formats = settings.DATE_INPUT_FORMATS
-        self.fields["description"].help_text += """ ADD to the description a
-            brief explanation for restarting the task."""
+        self.fields["description"].help_text += " ADD to the description a brief explanation for restarting the task."
+        self.fields["description"].widget = forms.Textarea(attrs={"cols": "40", "rows": "4"})
         layout = Layout(
             "due_date",
             "restart_date",
@@ -633,6 +635,7 @@ class TaskReassignForm(BaseForm):
         self.fields["due_date"].widget = forms.DateInput(format="%d/%m/%Y")
         self.fields["due_date"].input_formats = settings.DATE_INPUT_FORMATS
         self.fields["due_date"].required = True
+        self.fields["description"].widget = forms.Textarea(attrs={"cols": "40", "rows": "4"})
         layout = Layout(
             "assigned_user",
             "email_user",
@@ -655,8 +658,8 @@ class TaskCancelForm(BaseForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["description"].help_text = """Please record why the task
-            was cancelled (optional)."""
+        self.fields["description"].help_text = "Please record why the task was cancelled (optional)."
+        self.fields["description"].widget = forms.Textarea(attrs={"cols": "40", "rows": "4"})
         layout = Layout(
             "description", Div(self.save_button, self.cancel_button, css_class="col-sm-offset-4 col-md-offset-3 col-lg-offset-2")
         )
@@ -709,6 +712,7 @@ class TaskForm(BaseForm):
         self.fields["restart_date"].widget = forms.DateInput(format="%d/%m/%Y")
         self.fields["restart_date"].input_formats = settings.DATE_INPUT_FORMATS
         self.fields["state"].queryset = TaskState.objects.current().filter(Q(task_type=self.instance.type) | Q(task_type=None))
+        self.fields["description"].widget = forms.Textarea(attrs={"cols": "40", "rows": "4"})
 
         layout = Layout(
             "assigned_user",
@@ -804,6 +808,7 @@ class TaskCreateForm(BaseForm):
             and "Provide pre-referral/preliminary advice" tasks will be
             auto-completed if no due date is recorded."""
         self.fields["description"].required = True
+        self.fields["description"].widget = forms.Textarea(attrs={"cols": "40", "rows": "4"})
         layout = Layout(
             "assigned_user",
             "email_user",
@@ -908,7 +913,7 @@ class ConditionCreateForm(ConditionForm):
             clicking <strong>Save and add another</strong>.</p>""")
         # Add in a "Save and add another" button.
         save_another_button = Submit("save-another", "Save and add another")
-        save_another_button.field_classes = "btn btn-default"
+        save_another_button.field_classes = "btn btn-secondary"
         layout = Layout(
             help_html,
             "model_condition",
