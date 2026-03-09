@@ -79,7 +79,7 @@ jobs:
           docker context create builders
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
         with:
           endpoint: builders
           platforms: ${{ matrix.platform }}
@@ -162,7 +162,7 @@ jobs:
             type=raw,value=29.0,enable=true
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
         with:
           driver-opts: |
             network=host
