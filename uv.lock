@@ -15,6 +15,18 @@ wheels = [
 ]
 
 [[package]]
+name = "anyio"
+version = "4.12.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "idna" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/96/f0/5eb65b2bb0d09ac6776f2eb54adee6abe8228ea05b20a5ad0e4945de8aac/anyio-4.12.1.tar.gz", hash = "sha256:41cfcc3a4c85d3f05c932da7c26d0201ac36f72abd4435ba90d0464a3ffed703", size = 228685, upload-time = "2026-01-06T11:45:21.246Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/38/0e/27be9fdef66e72d64c0cdc3cc2823101b80585f8119b5c112c2e8f5f7dab/anyio-4.12.1-py3-none-any.whl", hash = "sha256:d405828884fc140aa80a3c667b8beed277f1dfedec42ba031bd6ac3db606ab6c", size = 113592, upload-time = "2026-01-06T11:45:19.497Z" },
+]
+
+[[package]]
 name = "asgiref"
 version = "3.11.1"
 source = { registry = "https://pypi.org/simple" }
@@ -814,6 +826,43 @@ wheels = [
 ]
 
 [[package]]
+name = "h11"
+version = "0.16.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/01/ee/02a2c011bdab74c6fb3c75474d40b3052059d95df7e73351460c8588d963/h11-0.16.0.tar.gz", hash = "sha256:4e35b956cf45792e4caa5885e69fba00bdbc6ffafbfa020300e549b208ee5ff1", size = 101250, upload-time = "2025-04-24T03:35:25.427Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/04/4b/29cac41a4d98d144bf5f6d33995617b185d14b22401f75ca86f384e87ff1/h11-0.16.0-py3-none-any.whl", hash = "sha256:63cf8bbe7522de3bf65932fda1d9c2772064ffb3dae62d55932da54b31cb6c86", size = 37515, upload-time = "2025-04-24T03:35:24.344Z" },
+]
+
+[[package]]
+name = "httpcore"
+version = "1.0.9"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "certifi" },
+    { name = "h11" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/06/94/82699a10bca87a5556c9c59b5963f2d039dbd239f25bc2a63907a05a14cb/httpcore-1.0.9.tar.gz", hash = "sha256:6e34463af53fd2ab5d807f399a9b45ea31c3dfa2276f15a2c3f00afff6e176e8", size = 85484, upload-time = "2025-04-24T22:06:22.219Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7e/f5/f66802a942d491edb555dd61e3a9961140fd64c90bce1eafd741609d334d/httpcore-1.0.9-py3-none-any.whl", hash = "sha256:2d400746a40668fc9dec9810239072b40b4484b640a8c38fd654a024c7a1bf55", size = 78784, upload-time = "2025-04-24T22:06:20.566Z" },
+]
+
+[[package]]
+name = "httpx"
+version = "0.28.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "anyio" },
+    { name = "certifi" },
+    { name = "httpcore" },
+    { name = "idna" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b1/df/48c586a5fe32a0f01324ee087459e112ebb7224f646c0b5023f5e79e9956/httpx-0.28.1.tar.gz", hash = "sha256:75e98c5f16b0f35b567856f597f06ff2270a374470a5c2392242528e3e3e42fc", size = 141406, upload-time = "2024-12-06T15:37:23.222Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2a/39/e50c7c3a983047577ee07d2a9e53faf5a69493943ec3f6a384bdc792deb2/httpx-0.28.1-py3-none-any.whl", hash = "sha256:d909fcccc110f8c7faf814ca82a9a4d816bc5a6dbfea25d6591d6985b8ba59ad", size = 73517, upload-time = "2024-12-06T15:37:21.509Z" },
+]
+
+[[package]]
 name = "identify"
 version = "2.6.18"
 source = { registry = "https://pypi.org/simple" }
@@ -1431,7 +1480,7 @@ requires-dist = [
     { name = "redis", specifier = "==7.3.0" },
     { name = "sentry-sdk", extras = ["django"], specifier = "==2.54.0" },
     { name = "shapely", specifier = "==2.1.2" },
-    { name = "typesense", specifier = "==1.3.0" },
+    { name = "typesense", specifier = "==2.0.0" },
     { name = "unidecode", specifier = "==1.4.0" },
     { name = "webtemplate-dbca", specifier = "==1.8.3" },
     { name = "whitenoise", extras = ["brotli"], specifier = "==6.12.0" },
@@ -1836,15 +1885,15 @@ wheels = [
 
 [[package]]
 name = "typesense"
-version = "1.3.0"
+version = "2.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "requests" },
+    { name = "httpx" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/03/73/98fb4ff68278b7d24730730853586825aed9107b73162c8f20fc8c76ac8b/typesense-1.3.0.tar.gz", hash = "sha256:96b9fd600b903e252601e6680fc25285f5ee0eb49153fb6758e97d2467aa5f52", size = 51875, upload-time = "2025-11-14T16:28:25.814Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/69/92/ca06da7ad7e771804fe21fdcfbc99d24079bedb9ab0ceaedac7ea1001263/typesense-2.0.0.tar.gz", hash = "sha256:9a306e328bf0c0030679c154730ec142efbf07fd0c33845b3efae10291e983e7", size = 79292, upload-time = "2026-02-16T16:37:56.647Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/58/6c/a5ad6e25b57c04934d4304fab9eb05f1dd547af02c4cd4c63e6f17488374/typesense-1.3.0-py3-none-any.whl", hash = "sha256:d05ab55634d249ee1a8a82cc8d01cef8fa995c9ae98665ca4aad1e2d7055321f", size = 84287, upload-time = "2025-11-14T16:28:24.516Z" },
+    { url = "https://files.pythonhosted.org/packages/b6/a5/a392604f3eeed45d3d72f8f10b45a80082a826338609e62187d9e3614001/typesense-2.0.0-py3-none-any.whl", hash = "sha256:7eecc672e4049f7b5777e1cf1e7900d2d1ae2d28a670eda6545b568d1cde1700", size = 140736, upload-time = "2026-02-16T16:37:55.256Z" },
 ]
 
 [[package]]
