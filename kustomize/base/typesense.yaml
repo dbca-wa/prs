@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: prs-typesense
-          image: ghcr.io/dbca-wa/typesense:29.0
+          image: ghcr.io/dbca-wa/typesense:30.1
           imagePullPolicy: IfNotPresent
           env:
             - name: TZ
