@@ -11,7 +11,7 @@ dependencies = [
   "dbca-utils==2.1.5",
   "python-dotenv==1.2.2",
   "dj-database-url==3.1.2",
-  "gunicorn==25.1.0",
+  "gunicorn[fast]==25.2.0",
   "django-extensions==4.1",
   "django-crispy-forms==2.6",
   "crispy-bootstrap5==2026.3",
@@ -32,7 +32,7 @@ dependencies = [
   "django-celery-results==2.6.0",
   "whitenoise[brotli]==6.12.0",
   "django-crum==0.7.9",
-  "sentry-sdk[django]==2.54.0",
+  "sentry-sdk[django]==2.55.0",
   "redis==7.3.0",
   "xlsxwriter==3.2.9",
   "django-storages[azure]==1.14.6",
@@ -45,11 +45,11 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-  "ipython>=9.8.0",
+  "ipython>=9.11.0",
   "ipdb>=0.13.13",
   "mixer>=7.2.2",
-  "pre-commit>=4.5.0",
-  "coverage>=7.13.0",
+  "pre-commit>=4.5.1",
+  "coverage>=7.13.5",
 ]
 
 [tool.ruff]
@@ -58,7 +58,11 @@ indent-width = 4
 extend-exclude = ["migrations"]
 
 [tool.ruff.lint]
-ignore = ["E265", "E501", "E722"]
+ignore = [
+  "E265", # Block comment should start with #
+  "E501", # Line too long
+  "E722", # Bare except
+]
 
 # Reference: https://www.djlint.com/docs/configuration/
 [tool.djlint]
