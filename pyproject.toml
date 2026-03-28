@@ -11,7 +11,7 @@ dependencies = [
   "dbca-utils==2.1.5",
   "python-dotenv==1.2.2",
   "dj-database-url==3.1.2",
-  "gunicorn==25.1.0",
+  "gunicorn==25.3.0",
   "django-extensions==4.1",
   "django-crispy-forms==2.6",
   "crispy-bootstrap5==2026.3",
