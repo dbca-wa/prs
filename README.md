@@ -90,7 +90,7 @@ Run unit tests as follows:
 
     python manage.py test --keepdb -v2 --settings prs2.test-settings --failfast
 
-To run tests for e.g. models only:
+To run tests for example models only:
 
     python manage.py test prs2.referral.test_models --keepdb -v2 --settings prs2.test-settings
 

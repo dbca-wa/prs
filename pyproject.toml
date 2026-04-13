@@ -6,7 +6,7 @@ authors = [{ name = "Ashley Felton", email = "ashley.felton@dbca.wa.gov.au" }]
 license = "Apache-2.0"
 requires-python = ">=3.13,<4.0"
 dependencies = [
-  "django==5.2.12",
+  "django==5.2.13",
   "psycopg[binary,pool]==3.3.3",
   "dbca-utils==2.1.5",
   "python-dotenv==1.2.2",
@@ -18,7 +18,7 @@ dependencies = [
   "django-reversion==6.1.0",
   "django-taggit==6.1.0",
   "unidecode==1.4.0",
-  "pillow==12.1.1",
+  "pillow==12.2.0",
   "python-magic==0.4.27",
   "lxml[html-clean]==6.0.2",
   "xmltodict==1.0.4",
@@ -28,11 +28,11 @@ dependencies = [
   "typesense==2.0.0",
   "pdfminer-six==20260107",
   "docx2txt==0.9",
-  "celery==5.6.2",
+  "celery==5.6.3",
   "django-celery-results==2.6.0",
   "whitenoise[brotli]==6.12.0",
   "django-crum==0.7.9",
-  "sentry-sdk[django]==2.56.0",
+  "sentry-sdk[django]==2.57.0",
   "redis==7.4.0",
   "xlsxwriter==3.2.9",
   "django-storages[azure]==1.14.6",
