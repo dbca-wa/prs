@@ -151,19 +151,19 @@ def harvest_email(uid, message):
 
 def email_mark_read(imap, uid):
     """Flag an email as 'Seen' based on passed-in UID."""
-    status, response = imap.store(str(uid), "+FLAGS", "\Seen")
+    status, response = imap.store(str(uid), "+FLAGS", r"\Seen")
     return status, response
 
 
 def email_mark_unread(imap, uid):
     """Remove the 'Seen' flag from an email based on passed-in UID."""
-    status, response = imap.store(str(uid), "-FLAGS", "\Seen")
+    status, response = imap.store(str(uid), "-FLAGS", r"\Seen")
     return status, response
 
 
 def email_delete(imap, uid):
     """Flag an email for deletion."""
-    status, response = imap.store(str(uid), "+FLAGS", "\Deleted")
+    status, response = imap.store(str(uid), "+FLAGS", r"\Deleted")
     return status, response
 
 

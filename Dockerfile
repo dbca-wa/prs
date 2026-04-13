@@ -23,14 +23,18 @@ RUN uv sync --no-group dev --link-mode=copy --compile-bytecode --no-python-downl
 
 # Copy the remaining project files to finish building the project
 COPY gunicorn.py manage.py pyproject.toml ./
-COPY prs2 ./prs2
+COPY harvester ./harvester
+COPY indexer ./indexer
+COPY prs ./prs
+COPY referral ./referral
+COPY reports ./reports
 ENV PYTHONUNBUFFERED=1
 ENV PATH="/app/.venv/bin:$PATH"
 # Compile scripts and collect static files
-RUN python -m compileall prs2 \
+RUN python -m compileall -q prs harvester indexer referral reports \
   && python manage.py collectstatic --noinput
 
 # Run the project as the nonroot user
 USER nonroot
 EXPOSE 8080
-CMD ["gunicorn", "prs2.wsgi", "--config", "gunicorn.py"]
+CMD ["gunicorn", "prs.wsgi", "--config", "gunicorn.py"]

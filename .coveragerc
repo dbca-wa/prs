@@ -4,7 +4,7 @@ omit =
     */test_*
     */management/commands/*
     */__init__.py
-    prs2/wsgi.py
-    prs2/settings.py
+    prs/wsgi.py
+    prs/settings.py
     manage.py
     run_uwsgi.py

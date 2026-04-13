@@ -9,6 +9,8 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client
 from django.urls import reverse
 from mixer.backend.django import mixer
+from taggit.models import Tag
+
 from referral.models import (
     Bookmark,
     Clearance,
@@ -25,7 +27,6 @@ from referral.models import (
     TaskType,
 )
 from referral.test_models import PrsTestCase
-from taggit.models import Tag
 
 User = get_user_model()
 
@@ -43,7 +44,7 @@ class PrsViewsTestCase(PrsTestCase):
         Bookmark,
     ]
     client = Client()
-    test_data_path = os.path.join("prs2", "referral", "test_data")
+    test_data_path = os.path.join("referral", "test_data")
 
     def setUp(self):
         super(PrsViewsTestCase, self).setUp()

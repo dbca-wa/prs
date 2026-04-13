@@ -76,7 +76,7 @@ Run console commands manually:
 
 Run a single Celery worker alongside the local webserver to test indexing:
 
-    celery --app prs2 worker --loglevel INFO --events --without-heartbeat --without-gossip --without-mingle
+    celery --app prs worker --loglevel INFO --events --without-heartbeat --without-gossip --without-mingle
 
 Note: a message broker service is required for Celery tasks to run; Redis
 is typically used for this purpose. The `CELERY_BROKER_URL` env variable
@@ -88,15 +88,15 @@ should contain the broker URL value. Reference:
 
 Run unit tests as follows:
 
-    python manage.py test --keepdb -v2 --settings prs2.test-settings --failfast
+    python manage.py test --keepdb -v2 --settings prs.test-settings --failfast
 
 To run tests for example models only:
 
-    python manage.py test prs2.referral.test_models --keepdb -v2 --settings prs2.test-settings
+    python manage.py test prs.referral.test_models --keepdb -v2 --settings prs.test-settings
 
 To obtain coverage reports:
 
-    coverage run --source='.' manage.py test --keepdb -v2 --settings prs2.test-settings
+    coverage run --source='.' manage.py test --keepdb -v2 --settings prs.test-settings
     coverage report -m
 
 ## Docker image
