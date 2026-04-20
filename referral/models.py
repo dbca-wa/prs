@@ -1983,7 +1983,7 @@ class UserProfile(models.Model):
         history = [pk for pk in self.referral_history_array if pk != referral.pk]
         history.append(referral.pk)
         if len(history) > history_limit:
-            self.referral_history_array = history[-20:]
+            self.referral_history_array = history[-history_limit:]
         else:
             self.referral_history_array = history
 
