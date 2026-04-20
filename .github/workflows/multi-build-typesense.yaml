@@ -6,7 +6,7 @@ on:
     - cron: '21 21 * * 1-5'
   push:
     branches:
-      - master
+      - main
     tags:
       - '*'
 env:
@@ -158,7 +158,7 @@ jobs:
           annotations: |
             type=org.opencontainers.image.description,value=${{ github.event.repository.description || 'No description provided' }}
           tags: |
-            type=raw,value=latest,enable=${{ github.ref_name == 'master' }}
+            type=raw,value=latest,enable=${{ github.ref_name == 'main' }}
             type=raw,value=30.1,enable=true
 
       - name: Set up Docker Buildx
