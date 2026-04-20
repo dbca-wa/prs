@@ -117,3 +117,11 @@ install pre-commit hooks locally like so:
     pre-commit install
 
 Reference: <https://pre-commit.com/>
+
+## Project Structure
+
+- Main Django app (`prs/`): project configuration, middleware, URL routing and WGSI.
+- Referral app (`referral/`): core business logic for planning referrals.
+- Harvester app (`harvester/`): automated data ingestion system for populating referral data
+- Indexer app (`indexer/`): search indexing integration with Typesense for fast full-text search.
+- Reports app (`reports/`): report generation and export functionality.
