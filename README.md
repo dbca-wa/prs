@@ -120,7 +120,7 @@ Reference: <https://pre-commit.com/>
 
 ## Project Structure
 
-- Main Django app (`prs/`): project configuration, middleware, URL routing and WGSI.
+- Main Django app (`prs/`): project configuration, middleware, URL routing and WSGI.
 - Referral app (`referral/`): core business logic for planning referrals.
 - Harvester app (`harvester/`): automated data ingestion system for populating referral data
 - Indexer app (`indexer/`): search indexing integration with Typesense for fast full-text search.
