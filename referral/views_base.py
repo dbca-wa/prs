@@ -11,8 +11,6 @@ from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpRespo
 from django.shortcuts import redirect
 from django.template.defaultfilters import slugify
 from django.urls import reverse
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView, View
 from referral.forms import FORMS_MAP
 from referral.utils import breadcrumbs_li, get_next_pages, get_previous_pages, get_query, is_model_or_string, prs_user
@@ -464,7 +462,6 @@ class PrsObjectTag(LoginRequiredMixin, View):
     model = None
     pk_url_kwarg = "pk"
 
-    @method_decorator(csrf_exempt)
     def dispatch(self, request, *args, **kwargs):
         # kwargs must include a Model class, or a string.
         if "model" in kwargs:

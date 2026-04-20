@@ -1,5 +1,6 @@
 import re
 from io import BytesIO
+from typing import Any
 
 import docx2txt
 import typesense
@@ -9,9 +10,9 @@ from pdfminer import high_level
 from unidecode import unidecode
 
 
-def get_typesense_client():
+def get_typesense_client() -> typesense.Client:
     """Return a typesense Client object for accessing document collections."""
-    client = typesense.Client(
+    client: typesense.Client = typesense.Client(
         {
             "nodes": [
                 {
@@ -27,7 +28,7 @@ def get_typesense_client():
     return client
 
 
-def typesense_index_referral(ref, client=None):
+def typesense_index_referral(ref: Any, client: typesense.Client | None = None) -> None:
     """Index a single referral in Typesense."""
     if not client:
         client = get_typesense_client()
@@ -49,12 +50,12 @@ def typesense_index_referral(ref, client=None):
     client.collections["referrals"].documents.upsert(ref_document)
 
 
-def typesense_index_record(rec, client=None):
+def typesense_index_record(rec: Any, client: typesense.Client | None = None) -> None:
     """Index a single record in Typesense."""
     if not client:
         client = get_typesense_client()
 
-    rec_document = {
+    rec_document: dict[str, Any] = {
         "id": str(rec.pk),
         "created": rec.created.timestamp(),
         "referral_id": rec.referral.pk,
@@ -63,7 +64,7 @@ def typesense_index_record(rec, client=None):
         "file_name": rec.filename,
         "file_type": rec.extension,
     }
-    file_content = ""
+    file_content: str = ""
 
     # PDF document content.
     if rec.extension == "PDF":
@@ -139,12 +140,12 @@ def typesense_index_record(rec, client=None):
     client.collections["records"].documents.upsert(rec_document)
 
 
-def typesense_index_note(note, client=None):
+def typesense_index_note(note: Any, client: typesense.Client | None = None) -> None:
     """Index a single note in Typesense."""
     if not client:
         client = get_typesense_client()
 
-    note_document = {
+    note_document: dict[str, Any] = {
         "id": str(note.pk),
         "created": note.created.timestamp(),
         "referral_id": note.referral.pk,
@@ -153,12 +154,12 @@ def typesense_index_note(note, client=None):
     client.collections["notes"].documents.upsert(note_document)
 
 
-def typesense_index_task(task, client=None):
+def typesense_index_task(task: Any, client: typesense.Client | None = None) -> None:
     """Index a single task in Typesense."""
     if not client:
         client = get_typesense_client()
 
-    task_document = {
+    task_document: dict[str, Any] = {
         "id": str(task.pk),
         "created": task.created.timestamp(),
         "referral_id": task.referral.pk,
@@ -168,12 +169,12 @@ def typesense_index_task(task, client=None):
     client.collections["tasks"].documents.upsert(task_document)
 
 
-def typesense_index_condition(con, client=None):
+def typesense_index_condition(con: Any, client: typesense.Client | None = None) -> None:
     """Index a single condition in Typesense."""
     if not client:
         client = get_typesense_client()
 
-    condition_document = {
+    condition_document: dict[str, Any] = {
         "id": str(con.pk),
         "created": con.created.timestamp(),
         "referral_id": con.referral.pk if con.referral else None,

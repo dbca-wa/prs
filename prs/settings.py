@@ -31,8 +31,8 @@ if not DEBUG:
 else:
     ALLOWED_HOSTS = ["*"]
 INTERNAL_IPS = ["127.0.0.1", "::1"]
-ROOT_URLCONF = "prs2.urls"
-WSGI_APPLICATION = "prs2.wsgi.application"
+ROOT_URLCONF = "prs.urls"
+WSGI_APPLICATION = "prs.wsgi.application"
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 STORAGES = {
     "default": {
@@ -91,7 +91,7 @@ INSTALLED_APPS = (
     "indexer",
 )
 MIDDLEWARE = [
-    "prs2.middleware.HealthCheckMiddleware",
+    "prs.middleware.HealthCheckMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -103,7 +103,7 @@ MIDDLEWARE = [
     "reversion.middleware.RevisionMiddleware",
     "crum.CurrentRequestUserMiddleware",
     "dbca_utils.middleware.SSOLoginMiddleware",
-    "prs2.middleware.PrsMiddleware",
+    "prs.middleware.PrsMiddleware",
 ]
 TEMPLATES = [
     {
@@ -124,7 +124,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.template.context_processors.csrf",
                 "django.contrib.messages.context_processors.messages",
-                "prs2.context_processors.template_context",
+                "prs.context_processors.template_context",
             ],
         },
     }
@@ -245,7 +245,7 @@ DATE_INPUT_FORMATS = (
 # Static files (CSS, JavaScript, Images)
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 STATIC_URL = "/static/"
-STATICFILES_DIRS = (os.path.join(BASE_DIR, "prs2", "static"),)
+STATICFILES_DIRS = (os.path.join(BASE_DIR, "prs", "static"),)
 WHITENOISE_ROOT = STATIC_ROOT
 
 # Media uploads

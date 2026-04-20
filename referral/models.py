@@ -585,6 +585,7 @@ class Referral(ReferralBaseModel):
         return format_html(template, **d)
 
     def add_relationship(self, referral):
+        """Generate a forward and reverse relationship between the current referral and the passed-in referral."""
         # Disallow self-referential relationships:
         if self == referral:
             return None
@@ -594,6 +595,7 @@ class Referral(ReferralBaseModel):
             return forward_rel
 
     def remove_relationship(self, referral):
+        """Remove any forward and reverse relationship between the current referral and the passed-in referral."""
         qs1 = RelatedReferral.objects.filter(from_referral=self, to_referral=referral)
         qs2 = RelatedReferral.objects.filter(from_referral=referral, to_referral=self)
 
@@ -770,6 +772,7 @@ class Task(ReferralBaseModel):
 
     @classmethod
     def get_headers_site_home(cls):
+        """Return a list of string values as headers for the site home view."""
         return [
             "Type",
             "Task description",
@@ -1146,6 +1149,7 @@ class Record(ReferralBaseModel):
 
     @property
     def filename(self):
+        """Metadata: returns the filename of the uploaded file"""
         if settings.LOCAL_MEDIA_STORAGE:
             if self.uploaded_file and os.path.exists(self.uploaded_file.path):
                 return self.uploaded_file.name.rsplit("/", 1)[-1]
@@ -1159,6 +1163,7 @@ class Record(ReferralBaseModel):
 
     @property
     def extension(self):
+        """Metadata: returns the file extension of the uploaded file"""
         try:
             if self.uploaded_file:
                 ext = os.path.splitext(self.uploaded_file.name)[1]
@@ -1170,6 +1175,7 @@ class Record(ReferralBaseModel):
 
     @property
     def filesize_str(self):
+        """Metadata: returns a human-friendly file size of the uploaded file"""
         try:
             if self.uploaded_file:
                 num = self.uploaded_file.size
@@ -1337,6 +1343,7 @@ class Note(ReferralBaseModel):
 
     @property
     def short_note(self, x=12):
+        """Returns a truncated/shortened version of the note text."""
         text = unidecode(self.note)
         text = text.replace("\n", " ").replace("\r", " ")  # Replace newlines.
         words = text.split(" ")
@@ -1634,16 +1641,19 @@ class Condition(ReferralBaseModel):
 
 class ClearanceManager(models.Manager):
     """
-    Custom Manager for Clearance models to return current clearances.
+    Custom Manager for Clearance models to return current clearances in line with other models inheriting from the ActiveModel mixin.
     """
 
     def current(self):
+        """Returns current/non-deleted models only"""
         return self.filter(task__effective_to__isnull=True, condition__effective_to__isnull=True)
 
     def active(self):
-        return self.filter(task__effective_to__isnull=True, condition__effective_to__isnull=True)
+        """Returns current/non-deleted models only"""
+        return self.current()
 
     def deleted(self):
+        """Returns non-current/deleted models only"""
         return self.filter(task__effective_to__isnull=False)
 
 
@@ -1786,6 +1796,7 @@ class Location(ReferralBaseModel):
 
     @property
     def nice_address(self):
+        """Generates and returns a single-line address value for the location."""
         address = ""
         if self.address_no:
             address += str(self.address_no)
@@ -1803,7 +1814,7 @@ class Location(ReferralBaseModel):
             address += " " + self.locality
         if self.postcode:
             address += " " + self.postcode
-        return escape(address)
+        return escape(address.strip())
 
     def as_row(self):
         """
@@ -1966,11 +1977,13 @@ class UserProfile(models.Model):
 
         return None
 
-    def update_referral_history(self, referral):
+    def update_referral_history(self, referral, history_limit: int = 20):
+        """Updates the referral_history_array field with the passed-in referral, limiting the length of history to the defined value.
+        History is a simple list of referral object primary key integers."""
         history = [pk for pk in self.referral_history_array if pk != referral.pk]
         history.append(referral.pk)
-        if len(history) > 20:
-            self.referral_history_array = history[-20:]
+        if len(history) > history_limit:
+            self.referral_history_array = history[-history_limit:]
         else:
             self.referral_history_array = history
 

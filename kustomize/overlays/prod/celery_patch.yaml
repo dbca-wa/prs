@@ -12,7 +12,7 @@ spec:
           args:
             [
               '--app',
-              'prs2',
+              'prs',
               'worker',
               '--autoscale',
               '2,4',

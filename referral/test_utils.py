@@ -6,6 +6,7 @@ from django.db.models.base import ModelBase
 from django.db.models.query import QuerySet
 from django.test import RequestFactory
 from extract_msg import Message
+
 from referral.models import Record, Referral, Task
 from referral.test_models import PrsTestCase
 from referral.utils import (
@@ -144,7 +145,7 @@ class UtilsTest(PrsTestCase):
 
     def test_message_import(self):
         """Test Outlook MSG file import & date parsing"""
-        path = Path(settings.BASE_DIR, "prs2", "referral", "fixtures", "test_email.msg")
+        path = Path(settings.BASE_DIR, "referral", "fixtures", "test_email.msg")
         msg = Message(path)
         self.assertTrue(msg.date)
         record = Record.objects.all()[0]

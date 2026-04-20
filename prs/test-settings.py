@@ -14,7 +14,7 @@ TEMPLATES[0]["OPTIONS"] = {
         "django.template.context_processors.request",
         "django.template.context_processors.csrf",
         "django.contrib.messages.context_processors.messages",
-        "prs2.context_processors.template_context",
+        "prs.context_processors.template_context",
     ],
 }
 PASSWORD_HASHERS = ("django.contrib.auth.hashers.MD5PasswordHasher",)

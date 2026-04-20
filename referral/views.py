@@ -16,9 +16,7 @@ from django.db.models import F, Q
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
-from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
-from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import FormView, ListView, TemplateView, View
 from extract_msg import Message
 from indexer.utils import get_typesense_client
@@ -102,7 +100,7 @@ class SiteHome(LoginRequiredMixin, ListView):
         return context
 
 
-class HelpPage(TemplateView):
+class HelpPage(LoginRequiredMixin, TemplateView):
     """Help page (static template view)."""
 
     template_name = "help_page.html"
@@ -1151,7 +1149,6 @@ class RecordUpload(LoginRequiredMixin, View):
     http_method_names = ["post"]
     parent_referral = False
 
-    @method_decorator(csrf_exempt)
     def dispatch(self, request, *args, **kwargs):
         if not prs_user(request):
             return HttpResponseForbidden("You do not have permission to create records")
@@ -1524,7 +1521,7 @@ class ReferralReferenceSearch(PrsObjectList):
         return context
 
 
-class ReferralPointSearch(View):
+class ReferralPointSearch(LoginRequiredMixin, View):
     """Basic view endpoint to query PRS referrals intersecting a given spatial point."""
 
     http_method_names = ["get"]
@@ -1774,7 +1771,7 @@ class ReferralRelate(PrsObjectList):
         return redirect(ref1.get_absolute_url())
 
 
-class ReferralLocationDownload(View):
+class ReferralLocationDownload(LoginRequiredMixin, View):
     """Basic view to generate spatial data for a given referral's location, and return it as a download.
     Several formats are available via the `format` request parameter, otherwise defaults to GeoJSON.
     """
@@ -1924,7 +1921,7 @@ class ConditionClearanceCreate(PrsObjectCreate):
         return redirect(clearance_task.get_absolute_url())
 
 
-class InfobaseShortcut(View):
+class InfobaseShortcut(LoginRequiredMixin, View):
     """Basic view to generate a shortcut file to an Infobase object
     The file is a one-line text file containing the Infobase ID, with a .obr
     file extension.
@@ -1945,7 +1942,7 @@ class InfobaseShortcut(View):
             return HttpResponseRedirect(record.get_absolute_url())
 
 
-class CadastreQuery(View):
+class CadastreQuery(LoginRequiredMixin, View):
     """Basic view endpoint to send a CQL filter query to the Cadastre spatial service."""
 
     http_method_names = ["get"]
@@ -1977,8 +1974,8 @@ class ReferralMap(LoginRequiredMixin, TemplateView):
         return context
 
 
-class GeocodeQuery(View):
-    """Basic view endpoint to send a geocode query to the Caddy spatial service."""
+class GeocodeQuery(LoginRequiredMixin, View):
+    """Basic view endpoint to send a geocode query to the Geocoder spatial service."""
 
     http_method_names = ["get"]
 

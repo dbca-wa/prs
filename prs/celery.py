@@ -10,7 +10,7 @@ if os.path.exists(dot_env_file):
 
     load_dotenv()
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "prs2.settings")
-app = Celery("prs2")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "prs.settings")
+app = Celery("prs")
 app.config_from_object("django.conf:settings")
 app.autodiscover_tasks()

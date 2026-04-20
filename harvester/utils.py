@@ -5,6 +5,7 @@ import re
 from datetime import date, datetime
 from imaplib import IMAP4_SSL
 from io import StringIO
+from typing import Any
 from zoneinfo import ZoneInfo
 
 import requests
@@ -15,11 +16,11 @@ from django.core.mail import EmailMultiAlternatives
 from lxml.html import fromstring
 from lxml_html_clean import clean_html
 
-LOGGER = logging.getLogger("harvester")
-UTC = ZoneInfo("UTC")
+LOGGER: logging.Logger = logging.getLogger("harvester")
+UTC: ZoneInfo = ZoneInfo("UTC")
 
 
-def get_imap(mailbox="INBOX"):
+def get_imap(mailbox: str = "INBOX") -> IMAP4_SSL:
     """Instantiate a new IMAP object, login, and connect to a mailbox."""
     imap = IMAP4_SSL(settings.REFERRAL_EMAIL_HOST)
     imap.login(settings.REFERRAL_EMAIL_USER, settings.REFERRAL_EMAIL_PASSWORD)
@@ -27,9 +28,9 @@ def get_imap(mailbox="INBOX"):
     return imap
 
 
-def unread_from_email(imap, from_email):
+def unread_from_email(imap: IMAP4_SSL, from_email: str) -> tuple[str, list[bytes]]:
     """Returns (status, list of UIDs) of unread emails from a sender."""
-    search = f'(UNSEEN FROM "{from_email}")'
+    search: str = f'(UNSEEN FROM "{from_email}")'
     status, response = imap.search(None, search)
     if status != "OK":
         return status, response
@@ -37,11 +38,11 @@ def unread_from_email(imap, from_email):
     return status, response[0].split()
 
 
-def fetch_email(imap, uid):
+def fetch_email(imap: IMAP4_SSL, uid: int | bytes | str) -> tuple[str, Any]:
     """Returns (status, message) for an email by UID.
     Email is returned as an email.Message class object.
     """
-    message = None
+    message: Any = None
     status, response = imap.fetch(str(uid), "(BODY.PEEK[])")
 
     if status != "OK":
@@ -57,7 +58,7 @@ def fetch_email(imap, uid):
     return status, message
 
 
-def harvest_email(uid, message):
+def harvest_email(uid: int | bytes | str, message: Any) -> bool | None:
     """Harvest a passed-in UID and email message.
     Abort if UID exists in the database already.
     """
@@ -149,29 +150,29 @@ def harvest_email(uid, message):
     return True
 
 
-def email_mark_read(imap, uid):
+def email_mark_read(imap: IMAP4_SSL, uid: int | bytes | str) -> tuple[str, Any]:
     """Flag an email as 'Seen' based on passed-in UID."""
-    status, response = imap.store(str(uid), "+FLAGS", "\Seen")
+    status, response = imap.store(str(uid), "+FLAGS", r"\Seen")
     return status, response
 
 
-def email_mark_unread(imap, uid):
+def email_mark_unread(imap: IMAP4_SSL, uid: int | bytes | str) -> tuple[str, Any]:
     """Remove the 'Seen' flag from an email based on passed-in UID."""
-    status, response = imap.store(str(uid), "-FLAGS", "\Seen")
+    status, response = imap.store(str(uid), "-FLAGS", r"\Seen")
     return status, response
 
 
-def email_delete(imap, uid):
+def email_delete(imap: IMAP4_SSL, uid: int | bytes | str) -> tuple[str, Any]:
     """Flag an email for deletion."""
-    status, response = imap.store(str(uid), "+FLAGS", "\Deleted")
+    status, response = imap.store(str(uid), "+FLAGS", r"\Deleted")
     return status, response
 
 
-def harvest_unread_emails(from_email, purge_email=False):
+def harvest_unread_emails(from_email: str, purge_email: bool = False) -> list[str]:
     """Download a list of unread email from the specified email address and
     harvest each one. Optionally purge harvested emails on completion.
     """
-    actions = []
+    actions: list[str] = []
     LOGGER.info(f"Requesting unread emails from {from_email}")
 
     try:  # Handle IMAP connection error.
@@ -226,11 +227,11 @@ def harvest_unread_emails(from_email, purge_email=False):
     return actions
 
 
-def import_harvested_refs():
+def import_harvested_refs() -> list[str]:
     """Process harvested referrals and generate referrals & records within PRS"""
     from .models import EmailedReferral
 
-    actions = []
+    actions: list[str] = []
     LOGGER.info("Starting import of harvested referrals")
     actions.append(f"{datetime.now().isoformat()} Starting import of harvested referrals")
     # Process harvested refs that are unprocessed at present.
@@ -242,11 +243,11 @@ def import_harvested_refs():
     return actions
 
 
-def email_harvest_actions(to_emails, actions):
+def email_harvest_actions(to_emails: list[str], actions: list[str]) -> None:
     """Function to email a log of harvest actions to users.
     Accepts a list of emails and list of actions to append.
     """
-    ts = date.today().strftime("%x")
+    ts: str = date.today().strftime("%x")
     subject = f"PRS emailed referral harvest log {ts}"
     from_email = "PRS-Alerts@dbca.wa.gov.au"
     text_content = """This is an automated message to summarise harvest
@@ -264,7 +265,7 @@ def email_harvest_actions(to_emails, actions):
     msg.send(fail_silently=True)
 
 
-def query_slip(pin):
+def query_slip(pin: int | str) -> requests.Response:
     """Function to query the Landgate SLIP service for a cadastral location, by PIN.
     DEPRECATED - use query_slip_esri instead.
     """
@@ -279,11 +280,11 @@ def query_slip(pin):
         "outputFormat": "json",
         "cql_filter": f"polygon_number={pin}",
     }
-    resp = requests.get(url, auth=auth, params=params)
+    resp: requests.Response = requests.get(url, auth=auth, params=params)
     return resp
 
 
-def query_slip_esri(pin):
+def query_slip_esri(pin: int | str) -> dict[str, Any]:
     """Function to query the Landgate SLIP service (Esri REST API) for a cadastral location, by PIN.
     Ref: https://catalogue.data.wa.gov.au/group/about/cadastre
     """
@@ -297,6 +298,6 @@ def query_slip_esri(pin):
         "returnGeometry": "true",
         "where": f"polygon_number={pin}",
     }
-    resp = requests.get(url, auth=auth, params=params)
+    resp: requests.Response = requests.get(url, auth=auth, params=params)
     resp.raise_for_status()
     return resp.json()

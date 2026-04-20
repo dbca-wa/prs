@@ -1,5 +1,5 @@
 """
-WSGI config for prs2 project.
+WSGI config for prs project.
 It exposes the WSGI callable as a module-level variable named ``application``.
 """
 
@@ -16,5 +16,5 @@ if os.path.exists(dot_env):
 
     load_dotenv()
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "prs2.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "prs.settings")
 application = get_wsgi_application()

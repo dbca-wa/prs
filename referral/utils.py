@@ -4,6 +4,7 @@ import re
 from datetime import date
 from io import BytesIO
 from string import punctuation
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import docx2txt
 import pyproj
@@ -15,6 +16,7 @@ from django.contrib import admin
 from django.core.mail import EmailMultiAlternatives
 from django.db.models import Q
 from django.db.models.base import ModelBase
+from django.http import HttpRequest
 from django.utils.encoding import smart_str
 from django.utils.safestring import mark_safe
 from extract_msg import Message
@@ -31,7 +33,7 @@ from unidecode import unidecode
 LOGGER = logging.getLogger("prs")
 
 
-def is_model_or_string(model):
+def is_model_or_string(model: Union[str, ModelBase]) -> Optional[ModelBase]:
     """This function checks if we passed in a Model, or the name of a model as
     a case-insensitive string. The string may also be plural to some extent
     (i.e. ending with "s"). If we passed in a string, return the named Model
@@ -105,7 +107,7 @@ def dewordify_text(txt: str) -> str:
         return ""
 
 
-def breadcrumbs_li(links: list) -> str:
+def breadcrumbs_li(links: List[Tuple[str, str]]) -> str:
     """Returns HTML: an unordered list of URLs (no surrounding <ul> tags).
     ``links`` should be a iterable of tuples (URL, text).
     Reference: https://getbootstrap.com/docs/4.1/components/breadcrumb/
@@ -120,7 +122,7 @@ def breadcrumbs_li(links: list) -> str:
     return crumbs
 
 
-def get_query(query_string, search_fields):
+def get_query(query_string: str, search_fields: List[str]) -> Optional[Q]:
     """Returns a query which is a combination of Q objects. That combination
     aims to search keywords within a model by testing the given search fields.
 
@@ -146,7 +148,7 @@ def get_query(query_string, search_fields):
     return query
 
 
-def as_row_subtract_referral_cell(html_row):
+def as_row_subtract_referral_cell(html_row: str) -> str:
     """Function to take some HTML of a table row and then remove the cell
     containing the Referral ID (we don't need to display this on the referral details page).
     """
@@ -155,7 +157,7 @@ def as_row_subtract_referral_cell(html_row):
     return mark_safe(html_row)
 
 
-def filter_queryset(request, model, queryset):
+def filter_queryset(request: HttpRequest, model: ModelBase, queryset: Any) -> Tuple[Any, str]:
     """
     Function to dynamically filter a model queryset, based upon the search_fields defined in
     admin.py for that model. If search_fields is not defined, the queryset is returned unchanged.
@@ -170,23 +172,23 @@ def filter_queryset(request, model, queryset):
     return queryset, search_string
 
 
-def is_prs_user(request) -> bool:
+def is_prs_user(request: HttpRequest) -> bool:
     if "PRS user" not in [group.name for group in request.user.groups.all()]:
         return False
     return True
 
 
-def is_prs_power_user(request) -> bool:
+def is_prs_power_user(request: HttpRequest) -> bool:
     if "PRS power user" not in [group.name for group in request.user.groups.all()]:
         return False
     return True
 
 
-def prs_user(request) -> bool:
+def prs_user(request: HttpRequest) -> bool:
     return is_prs_user(request) or is_prs_power_user(request) or request.user.is_superuser
 
 
-def update_revision_history(app_model):
+def update_revision_history(app_model: str) -> None:
     """Function to bulk-update Version objects where the data model
     is changed. This function is for reference, as these change will tend to
     be one-off and customised.
@@ -214,7 +216,7 @@ def update_revision_history(app_model):
             """
 
 
-def overdue_task_email():
+def overdue_task_email() -> bool:
     """A utility function to send an email to each user with tasks that are overdue."""
     from django.contrib.auth.models import Group
 
@@ -261,7 +263,12 @@ def overdue_task_email():
     return True
 
 
-def wfs_getfeature(type_name, cql_filter=None, crs="EPSG:4326", max_features=50):
+def wfs_getfeature(
+    type_name: str,
+    cql_filter: Optional[str] = None,
+    crs: str = "EPSG:4326",
+    max_features: int = 50,
+) -> Dict[str, Any]:
     """A utility function to perform a GetFeature request on a WFS endpoint
     and return results as GeoJSON.
     """
@@ -292,7 +299,7 @@ def wfs_getfeature(type_name, cql_filter=None, crs="EPSG:4326", max_features=50)
     return response
 
 
-def query_geocoder(q):
+def query_geocoder(q: str) -> List[Dict[str, Any]]:
     """Utility function to proxy queries to the external geocoder service."""
     url = env("GEOCODER_URL", None)
     auth = (env("SSO_USERNAME", None), env("SSO_PASSWORD", None))
@@ -310,7 +317,7 @@ def query_geocoder(q):
     return response
 
 
-def get_previous_pages(page_num, count=5):
+def get_previous_pages(page_num: Any, count: int = 5) -> List[int]:
     """Convenience function to take a Paginator page object and return the previous `count`
     page numbers, to a minimum of 1.
     """
@@ -325,7 +332,7 @@ def get_previous_pages(page_num, count=5):
     return prev_page_numbers
 
 
-def get_next_pages(page_num, count=5):
+def get_next_pages(page_num: Any, count: int = 5) -> List[int]:
     """Convenience function to take a Paginator page object and return the next `count`
     page numbers, to a maximum of the paginator page count.
     """
@@ -339,7 +346,7 @@ def get_next_pages(page_num, count=5):
     return next_page_numbers
 
 
-def get_uploaded_file_content(record) -> str:
+def get_uploaded_file_content(record: Any) -> Optional[str]:
     """Convenience function that takes in a Record object and returns the uploaded file's text content (for a given set of file types)."""
     if not record.pk or not record.extension or record.extension not in ["PDF", "MSG", "DOCX", "TXT"]:
         return None
@@ -605,7 +612,7 @@ STOP_WORDS = [
 ]
 
 
-def search_document_normalise(content):
+def search_document_normalise(content: str) -> str:
     """For passed in search_document content, normalise and return."""
     # Make lowercase.
     content = content.lower()
@@ -634,7 +641,7 @@ def search_document_normalise(content):
     return content
 
 
-def parse_shapefile(uploaded_shapefile) -> list | bool:
+def parse_shapefile(uploaded_shapefile: Any) -> Union[List[Any], bool]:
     """For a passed-in file object, parse it as a zipped shapefile."""
     try:
         zip_file = ZipMemoryFile(uploaded_shapefile)

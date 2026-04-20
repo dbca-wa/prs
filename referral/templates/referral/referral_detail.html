@@ -166,9 +166,8 @@
         <div class="col-sm-12 col-md-4">
             {% if prs_user %}
                 <div id="file-uploader">
-                    <form action="{% url 'referral_record_upload' pk=object.pk %}"
-                          class="dropzone"
-                          id="id_referral_dropzone">
+                    <form action="{% url 'referral_record_upload' pk=object.pk %}" class="dropzone" id="id_referral_dropzone">
+                        {% csrf_token %}
                         <div class="dz-message">Drop files here or click to upload.</div>
                     </form>
                 </div>
