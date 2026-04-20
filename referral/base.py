@@ -11,9 +11,11 @@ from django.utils import timezone
 
 class ActiveModelManager(models.Manager):
     def current(self):
+        """Returns current/non-deleted models only"""
         return self.filter(effective_to=None)
 
     def deleted(self):
+        """Returns non-current/deleted models only"""
         return self.filter(effective_to__isnull=False)
 
 
@@ -31,7 +33,7 @@ class Audit(models.Model):
     modified = models.DateTimeField(auto_now=True, editable=False)
 
     def save(self, *args, **kwargs):
-        """This falls back on using an admin user if a request user object is absent (i.e. the
+        """Set the creator field to the request user on initial save. This falls back on using an admin user if a request user object is absent (i.e. the
         object was saved outside the web application).
         """
         user = get_current_user()
