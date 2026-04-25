@@ -49,7 +49,7 @@ dev = [
   "ipython>=9.12.0",
   "ipdb>=0.13.13",
   "mixer>=7.2.2",
-  "pre-commit>=4.5.1",
+  "pre-commit>=4.6.0",
   "coverage>=7.13.5",
 ]
 
