@@ -39,7 +39,6 @@ jobs:
       - name: Install GDAL
         id: install-gdal
         run: |
-          sudo apt-add-repository --yes ppa:ubuntugis/ubuntugis-unstable
           sudo apt-get update
           sudo apt-get install --no-install-recommends --yes gdal-bin libgdal-dev
       #----------------------------------------------
