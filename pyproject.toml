@@ -8,11 +8,11 @@ readme = "README.md"
 requires-python = ">=3.13,<4"
 dependencies = [
   "django==5.2.13",
-  "psycopg[binary,pool]==3.3.3",
+  "psycopg[binary,pool]==3.3.4",
   "dbca-utils==2.1.5",
   "python-dotenv==1.2.2",
   "dj-database-url==3.1.2",
-  "gunicorn[fast]==25.3.0",
+  "gunicorn[fast]==26.0.0",
   "django-extensions==4.1",
   "django-crispy-forms==2.6",
   "crispy-bootstrap5==2026.3",
@@ -40,16 +40,16 @@ dependencies = [
   "shapely==2.1.2",
   "fiona==1.10.1",
   "pyproj==3.7.2",
-  "fudgeo==1.5.7",
+  "fudgeo==1.5.9",
   "django-valkey[libvalkey]==0.4.0",
 ]
 
 [dependency-groups]
 dev = [
-  "ipython>=9.12.0",
+  "ipython>=9.13.0",
   "ipdb>=0.13.13",
   "mixer>=7.2.2",
-  "pre-commit>=4.5.1",
+  "pre-commit>=4.6.0",
   "coverage>=7.13.5",
 ]
 
