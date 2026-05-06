@@ -8,7 +8,7 @@ spec:
   selector:
     matchLabels:
       app: prs-typesense
-  replicas: 1
+  replicas: 0
   minReadySeconds: 10
   serviceName: prs-typesense
   template:
@@ -90,3 +90,8 @@ spec:
                     operator: In
                     values:
                       - arm64
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: Exists
