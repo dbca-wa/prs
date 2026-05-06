@@ -64,3 +64,8 @@ spec:
                     operator: In
                     values:
                       - arm64
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: Exists
