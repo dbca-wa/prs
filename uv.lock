@@ -1412,7 +1412,7 @@ wheels = [
 
 [[package]]
 name = "prs"
-version = "2.6.7"
+version = "2.6.8"
 source = { virtual = "." }
 dependencies = [
     { name = "celery" },
