@@ -8,7 +8,7 @@ spec:
   selector:
     matchLabels:
       app: prs-typesense
-  replicas: 0
+  replicas: 1
   minReadySeconds: 10
   serviceName: prs-typesense
   template:
