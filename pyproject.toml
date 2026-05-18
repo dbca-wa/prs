@@ -7,16 +7,16 @@ license = "Apache-2.0"
 readme = "README.md"
 requires-python = ">=3.13,<4"
 dependencies = [
-  "django==5.2.13",
+  "django==5.2.14",
   "psycopg[binary,pool]==3.3.4",
-  "dbca-utils==2.1.5",
+  "dbca-utils==2.2.0",
   "python-dotenv==1.2.2",
   "dj-database-url==3.1.2",
   "gunicorn[fast]==26.0.0",
   "django-extensions==4.1",
   "django-crispy-forms==2.6",
   "crispy-bootstrap5==2026.3",
-  "django-reversion==6.1.0",
+  "django-reversion==6.2.0",
   "django-taggit==6.1.0",
   "unidecode==1.4.0",
   "pillow==12.2.0",
@@ -33,7 +33,7 @@ dependencies = [
   "django-celery-results==2.6.0",
   "whitenoise[brotli]==6.12.0",
   "django-crum==0.7.9",
-  "sentry-sdk[django]==2.59.0",
+  "sentry-sdk[django]==2.60.0",
   "redis==7.4.0",
   "xlsxwriter==3.2.9",
   "django-storages[azure]==1.14.6",
@@ -50,7 +50,7 @@ dev = [
   "ipdb>=0.13.13",
   "mixer>=7.2.2",
   "pre-commit>=4.6.0",
-  "coverage>=7.13.5",
+  "coverage>=7.14.0",
 ]
 
 [tool.ruff]
