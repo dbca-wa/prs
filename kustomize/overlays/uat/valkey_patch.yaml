@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prs-valkey
+spec:
+  template:
+    spec:
+      containers:
+        - name: prs-valkey
+          volumeMounts:
+            - name: valkey-config
+              mountPath: /etc/valkey
+              readOnly: true
+      imagePullSecrets:
+        - name: dhi-registry-secret-uat
+      volumes:
+        - name: valkey-config
+          configMap:
+            name: valkey-configmap-uat
+            optional: false
