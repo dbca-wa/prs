@@ -45,7 +45,7 @@ jobs:
       # Checkout repo
       #----------------------------------------------
       - name: Checkout repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         id: checkout-repo
         with:
           fetch-depth: 0
@@ -53,7 +53,7 @@ jobs:
       # Install & configure uv
       #----------------------------------------------
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@94527f2e458b27549849d47d273a16bec83a01e9 # v7
         with:
           python-version: '3.13'
           enable-cache: true

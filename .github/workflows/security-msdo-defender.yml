@@ -22,23 +22,23 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0
 
       - name: Set up Python 3.13
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
           python-version: '3.13'
 
       # Required for credscan
       - name: Install .NET 6 runtime
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
         with:
           dotnet-version: '6.0.x'
 
       - name: Run Microsoft Security DevOps (Defender for Cloud)
-        uses: microsoft/security-devops-action@v1
+        uses: microsoft/security-devops-action@5b26a185ff02cf7c100778adeff0ebbf704ca144 # v1
         with:
           tools: bandit,credscan
           categories: code,secrets
@@ -47,6 +47,6 @@ jobs:
 
       - name: Upload SARIF to GitHub Code Scanning
         if: always()
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@7c1e4cf0b20d7c1872b26569c00ba908797a59bf # v4
         with:
           sarif_file: ${{ env.MSDO_SARIF_FILE }}
