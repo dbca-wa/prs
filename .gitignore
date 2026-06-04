@@ -80,9 +80,10 @@ target/
 # celery beat schedule file
 celerybeat-schedule
 
-# dotenv
+# dotenv / secrets
 .env
-.env.act
+.env.*
+dhi-registry-config.json
 
 # virtualenv
 venv/

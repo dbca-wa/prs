@@ -13,6 +13,14 @@ secretGenerator:
     type: Opaque
     envs:
       - .env
+  - name: dhi-registry-secret
+    type: kubernetes.io/dockerconfigjson
+    files:
+      - .dockerconfigjson=dhi-registry-config.json
+configMapGenerator:
+  - name: valkey-configmap
+    files:
+      - valkey.conf
 generatorOptions:
   disableNameSuffixHash: true
 labels:
@@ -25,3 +33,4 @@ patches:
   - path: deployment_hpa_patch.yaml
   - path: service_patch.yaml
   - path: typesense_patch.yaml
+  - path: valkey_patch.yaml
