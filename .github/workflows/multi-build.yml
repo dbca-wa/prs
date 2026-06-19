@@ -82,7 +82,7 @@ jobs:
           egress-policy: audit
 
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           fetch-depth: 0
         # This step checks out the code from the repository.
@@ -94,7 +94,7 @@ jobs:
         # The metadata includes information such as the image name, tags, and labels.
         # The metadata will be used later in the workflow to build and push the Docker image.
         id: meta
-        uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6
+        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9 # v6
         with:
           images: ${{ env.GHCR_IMAGE }}
 
@@ -110,7 +110,7 @@ jobs:
         # This step sets up Docker Buildx, which is a Docker CLI plugin for extended build capabilities with BuildKit.
         # It uses the docker/setup-buildx-action to configure Buildx with the specified context and platforms.
         # The platforms are specified in the matrix and will be used for building the Docker image.
-        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4
         with:
           endpoint: builders
           platforms: ${{ matrix.platform }}
@@ -139,7 +139,7 @@ jobs:
         # The cache-from and cache-to options are used to enable caching for the build process.
         # The cache is stored in GitHub Actions cache and is scoped to the repository, branch, and platform.
         id: build
-        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7
         env:
           DOCKER_BUILDKIT: 1
         with:
@@ -213,7 +213,7 @@ jobs:
         # It uses the docker/metadata-action to create metadata based on the repository information.
         # The metadata includes information such as the image name, tags, and labels.
         id: meta
-        uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6
+        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9 # v6
         with:
           images: ${{ env.GHCR_IMAGE }}
           annotations: |
@@ -223,7 +223,7 @@ jobs:
             type=semver,pattern={{version}}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4
         # This step sets up Docker Buildx, which is a Docker CLI plugin for extended build capabilities with BuildKit.
         with:
           driver-opts: |
@@ -310,6 +310,6 @@ jobs:
           format: 'sarif'
           output: 'trivy-results.sarif'
       - name: Upload scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@9e0d7b8d25671d64c341c19c0152d693099fb5ba # v4
+        uses: github/codeql-action/upload-sarif@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4
         with:
           sarif_file: 'trivy-results.sarif'
