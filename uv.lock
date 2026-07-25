@@ -765,7 +765,7 @@ wheels = [
 
 [[package]]
 name = "extract-msg"
-version = "0.55.0"
+version = "0.56.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "beautifulsoup4" },
@@ -776,9 +776,9 @@ dependencies = [
     { name = "rtfde" },
     { name = "tzlocal" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/5e/65/c70afb3b119a44b3ee36b029485dc15326cf3a7c50da19a1ecbbf949c5d1/extract_msg-0.55.0.tar.gz", hash = "sha256:cf08283498c3dfcc7f894dad1579f52e3ced9fb76b865c2355cbe757af8a54e1", size = 331170, upload-time = "2025-08-12T16:07:56.537Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/49/eb/bf60bb8ba0c22cbefecb49248ba730b1c27a83014654a4a6e24700b8675e/extract_msg-0.56.0.tar.gz", hash = "sha256:378d57487fbb9c2f0f4559b9713f8158744cd0c7e76baec1bcc021c9f3b04c27", size = 333093, upload-time = "2026-07-18T21:13:54.165Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/53/81/87d5241036046ea17c5c8db228f4c9e04e07e53b627015d4496a99449aaf/extract_msg-0.55.0-py3-none-any.whl", hash = "sha256:baf0cdee9a8d267b70c366bc57ceb03dbfa1e7ab2dca6824169a7fe623f0917c", size = 336033, upload-time = "2025-08-12T16:07:54.886Z" },
+    { url = "https://files.pythonhosted.org/packages/6c/2f/4217b0dfd05621d8406400d81ed7d29095cdc4994bdaa95bbbff81ab3deb/extract_msg-0.56.0-py3-none-any.whl", hash = "sha256:16adab2254cf95d7efe39c174a5ce98e3a799b25be01228f23f122ea84b8580b", size = 337625, upload-time = "2026-07-18T21:13:52.652Z" },
 ]
 
 [[package]]
@@ -1525,7 +1525,7 @@ requires-dist = [
     { name = "django-taggit", specifier = "==6.1.0" },
     { name = "django-valkey", extras = ["libvalkey"], specifier = "==0.4.1" },
     { name = "docx2txt", specifier = "==0.9" },
-    { name = "extract-msg", specifier = "==0.55.0" },
+    { name = "extract-msg", specifier = "==0.56.0" },
     { name = "fiona", specifier = "==1.10.1" },
     { name = "fudgeo", specifier = "==1.5.9" },
     { name = "geojson", specifier = "==3.3.0" },
