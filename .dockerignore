@@ -4,3 +4,5 @@
 .venv
 Dockerfile
 __pycache__
+media/
+staticfiles/

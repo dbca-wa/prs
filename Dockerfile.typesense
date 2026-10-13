@@ -1,14 +1,21 @@
 # syntax=docker/dockerfile:1
-# NOTE: when updating the Typesense base version, update the static tag in the GitHub workflow too.
-FROM typesense/typesense:30.2
-LABEL org.opencontainers.image.authors=asi@dbca.wa.gov.au
-LABEL org.opencontainers.image.source=https://github.com/dbca-wa/typesense
+# Args to centralise versions.
+# NOTE: when updating the Typesense version, update the variable in `docker-bake.hcl` as well.
+ARG TYPESENSE_VERSION=30.2
+ARG UID=65532
+ARG GID=65532
 
-# Create a non-root user.
-ARG UID=10001
-ARG GID=10001
-RUN groupadd -g ${GID} typesense \
-  && useradd --no-create-home --no-log-init --uid ${UID} --gid ${GID} typesense
+FROM typesense/typesense:${TYPESENSE_VERSION}
+LABEL org.opencontainers.image.authors=asi@dbca.wa.gov.au \
+  org.opencontainers.image.source=https://github.com/dbca-wa/typesense \
+  org.opencontainers.image.description="Typesense"
+# Arg scope: re-declare bare args inside the build stage.
+ARG UID
+ARG GID
 
-RUN chown -R typesense:typesense /opt/typesense-server
+# Create a nonroot user.
+RUN groupadd -g ${GID} nonroot \
+  && useradd --no-create-home --no-log-init --uid ${UID} --gid ${GID} nonroot
+
+RUN chown -R nonroot:nonroot /opt/typesense-server
 USER ${UID}
