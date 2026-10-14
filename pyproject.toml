@@ -10,7 +10,7 @@ dependencies = [
   "django==5.2.18",
   "psycopg[binary,pool]==3.3.6",
   "dbca-utils==3.0.13",
-  "python-dotenv==1.2.3",
+  "python-dotenv==1.2.4",
   "dj-database-url==3.1.2",
   "gunicorn[fast]==26.2.0",
   "django-extensions==4.1",
@@ -51,7 +51,7 @@ dev = [
   "ipdb>=0.13.13",
   "mixer>=7.2.2",
   "pre-commit>=4.6.1",
-  "coverage>=7.15.4",
+  "coverage>=7.16.2",
   "django-stubs>=6.1.0",
   "deptry>=0.25.1",
 ]
