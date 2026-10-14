@@ -1,5 +1,5 @@
 version = 1
-revision = 5
+revision = 3
 requires-python = ">=3.13, <4"
 
 [[package]]
@@ -1778,7 +1778,7 @@ requires-dist = [
     { name = "requests", specifier = "==2.34.2" },
     { name = "sentry-sdk", extras = ["django"], specifier = "==2.71.0" },
     { name = "shapely", specifier = "==2.1.2" },
-    { name = "typesense", specifier = "==2.0.0" },
+    { name = "typesense", specifier = "==2.1.0" },
     { name = "unidecode", specifier = "==1.4.0" },
     { name = "webtemplate-dbca", specifier = "==1.9.0" },
     { name = "whitenoise", extras = ["brotli"], specifier = "==6.12.0" },
@@ -2307,15 +2307,15 @@ wheels = [
 
 [[package]]
 name = "typesense"
-version = "2.0.0"
+version = "2.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/69/92/ca06da7ad7e771804fe21fdcfbc99d24079bedb9ab0ceaedac7ea1001263/typesense-2.0.0.tar.gz", hash = "sha256:9a306e328bf0c0030679c154730ec142efbf07fd0c33845b3efae10291e983e7", size = 79292, upload-time = "2026-02-16T16:37:56.647Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/db/a8/0bcb32ef0234b40261ef4ddde32d46dac2c29fd9a3d1222b7eae8771f576/typesense-2.1.0.tar.gz", hash = "sha256:4fe40fc6ace5fcb73e272a695d13073e265da79f605595d329a718e563cb0aa8", size = 97287, upload-time = "2026-10-07T14:11:19.659Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b6/a5/a392604f3eeed45d3d72f8f10b45a80082a826338609e62187d9e3614001/typesense-2.0.0-py3-none-any.whl", hash = "sha256:7eecc672e4049f7b5777e1cf1e7900d2d1ae2d28a670eda6545b568d1cde1700", size = 140736, upload-time = "2026-02-16T16:37:55.256Z" },
+    { url = "https://files.pythonhosted.org/packages/47/05/c6bd875a522f4ce4ec69b149aa10c4c547e0222c4e2f3d9c5161aecf9fd1/typesense-2.1.0-py3-none-any.whl", hash = "sha256:51ab05688f4eb33a84d60c6056fdc6c586654413983082f400b5aee164f698fc", size = 160491, upload-time = "2026-10-07T14:11:18.211Z" },
 ]
 
 [[package]]
