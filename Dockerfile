@@ -24,9 +24,7 @@ RUN uv sync --no-group dev --link-mode=copy --compile-bytecode --no-python-downl
 
 # ---- runtime stage: minimal packages needed to run the application ----
 FROM dhi.io/python:${PYTHON_VERSION} AS runtime
-LABEL org.opencontainers.image.authors=asi@dbca.wa.gov.au \
-  org.opencontainers.image.source=https://github.com/dbca-wa/prs \
-  org.opencontainers.image.description="DBCA Planning Referral System" \
+LABEL org.opencontainers.image.description="DBCA Planning Referral System" \
   org.opencontainers.image.source="https://github.com/dbca-wa/prs" \
   org.opencontainers.image.vendor="DBCA" \
   org.opencontainers.image.authors="asi@dbca.wa.gov.au"

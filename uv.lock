@@ -1772,11 +1772,11 @@ requires-dist = [
     { name = "pillow", specifier = "==12.3.0" },
     { name = "psycopg", extras = ["binary", "pool"], specifier = "==3.3.6" },
     { name = "pyproj", specifier = "==3.8.0" },
-    { name = "python-dotenv", specifier = "==1.2.3" },
+    { name = "python-dotenv", specifier = "==1.2.4" },
     { name = "python-magic", specifier = "==0.4.27" },
     { name = "redis", specifier = "==8.1.0" },
     { name = "requests", specifier = "==2.34.2" },
-    { name = "sentry-sdk", extras = ["django"], specifier = "==2.68.1" },
+    { name = "sentry-sdk", extras = ["django"], specifier = "==2.71.0" },
     { name = "shapely", specifier = "==2.1.2" },
     { name = "typesense", specifier = "==2.0.0" },
     { name = "unidecode", specifier = "==1.4.0" },
@@ -1788,7 +1788,7 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "coverage", specifier = ">=7.15.4" },
+    { name = "coverage", specifier = ">=7.16.2" },
     { name = "deptry", specifier = ">=0.25.1" },
     { name = "django-stubs", specifier = ">=6.1.0" },
     { name = "ipdb", specifier = ">=0.13.13" },
@@ -2024,11 +2024,11 @@ wheels = [
 
 [[package]]
 name = "python-dotenv"
-version = "1.2.3"
+version = "1.2.4"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/6a/53/ed9d74092561d4b01a2ef1349d52cdbc135e526c245f366b089cfca6de49/python_dotenv-1.2.3.tar.gz", hash = "sha256:a20a594dabeaa385725aa239d5244871c143ecb356add8a20fcf23773a6c3a35", size = 58945, upload-time = "2026-08-16T16:54:54.067Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/74/26/2fbeedb218a787a5eea551c7532cac4e009f83d689dd2faa0d0353473f86/python_dotenv-1.2.4.tar.gz", hash = "sha256:f0d53e69935a851c0dcc78f3ab7aaccd8cabef0b92382b576b824212902873c0", size = 60824, upload-time = "2026-10-01T05:36:10Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0d/17/c5c6b53ddc18f297992099b3d9ec16c855c0ccc83263a21fe4d1c625ec6c/python_dotenv-1.2.3-py3-none-any.whl", hash = "sha256:904552145e8bfed22162c09dab1c2b9b54fefa7b23ba780f4f26ca0316b0f0d9", size = 22780, upload-time = "2026-08-16T16:54:52.473Z" },
+    { url = "https://files.pythonhosted.org/packages/60/d1/38f3a3405989a89ac18390803e70c6ad7c7760da4f9b83cbeca0c44a0c72/python_dotenv-1.2.4-py3-none-any.whl", hash = "sha256:42269a8a5b3fd54ffa6f3d84b18abed50064717576b4ecf03dc4a55d8aa04fdc", size = 23266, upload-time = "2026-10-01T05:36:08.633Z" },
 ]
 
 [[package]]
@@ -2133,15 +2133,15 @@ wheels = [
 
 [[package]]
 name = "sentry-sdk"
-version = "2.68.1"
+version = "2.71.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "certifi" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/9a/e7/c504a4bd2d95df2e0ab73714a9161ff1cf6ff1486922685e5f46dfd9eba8/sentry_sdk-2.68.1.tar.gz", hash = "sha256:6a97895230b04bc35d4d8d2e51e3b9e21902dfb0086ccf1f131a80c15c7b997a", size = 1019262, upload-time = "2026-08-24T13:09:38.108Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/67/93/9ef70bfb7346c778caf09b7cd10c17c33f601f2d17019fa1aedcda738b5f/sentry_sdk-2.71.0.tar.gz", hash = "sha256:7beb27a22f06396f3a05510c3da6ea10e1c79e02e859993c27ce4ff074e296d6", size = 1052358, upload-time = "2026-09-28T14:04:00.645Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2b/28/465ad9382be98f2172e691f5836cf87f936773913ad7ab85ba1ba1d6706e/sentry_sdk-2.68.1-py3-none-any.whl", hash = "sha256:775b78871783a0ffd758276ad01b3bb2b1ebcdad8f9d2f0a7723f76b73c99b65", size = 520851, upload-time = "2026-08-24T13:09:36.186Z" },
+    { url = "https://files.pythonhosted.org/packages/a4/f6/b3e68b2e08e9a52e6c8a279ca2fc0d3a535f3886222375f54ef9efbd694d/sentry_sdk-2.71.0-py3-none-any.whl", hash = "sha256:9ed36b4c206048aa67b5ddba0a6e28d59fc55cf10d60f5f7aea2c3917184bf4a", size = 534254, upload-time = "2026-09-28T14:03:58.668Z" },
 ]
 
 [package.optional-dependencies]
