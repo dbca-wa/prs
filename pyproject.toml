@@ -27,7 +27,7 @@ dependencies = [
   "extract-msg==0.56.1",
   "webtemplate-dbca==1.9.0",
   "geojson==3.3.0",
-  "typesense==2.0.0",
+  "typesense==2.1.0",
   "pdfminer-six==20260107",
   "docx2txt==0.9",
   "celery==5.6.3",
