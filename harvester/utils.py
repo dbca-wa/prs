@@ -1,11 +1,13 @@
 import base64
-import email
 import logging
-import re
 from datetime import date, datetime
+from email import message_from_bytes
+from email.message import EmailMessage
+from email.policy import default
+from email.utils import getaddresses, parseaddr, parsedate
 from imaplib import IMAP4_SSL
-from io import StringIO
-from typing import Any
+from ssl import SSLEOFError
+from typing import Any, Literal
 from zoneinfo import ZoneInfo
 
 import requests
@@ -13,6 +15,7 @@ from dbca_utils.utils import env
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.mail import EmailMultiAlternatives
+from django.utils import timezone
 from lxml.html import fromstring
 from lxml_html_clean import clean_html
 
@@ -20,45 +23,80 @@ LOGGER: logging.Logger = logging.getLogger("harvester")
 UTC: ZoneInfo = ZoneInfo("UTC")
 
 
-def get_imap(mailbox: str = "INBOX") -> IMAP4_SSL:
+def get_imap(mailbox: str = "INBOX") -> IMAP4_SSL | Literal[False]:
     """Instantiate a new IMAP object, login, and connect to a mailbox."""
-    imap = IMAP4_SSL(settings.REFERRAL_EMAIL_HOST)
-    imap.login(settings.REFERRAL_EMAIL_USER, settings.REFERRAL_EMAIL_PASSWORD)
-    imap.select(mailbox)
-    return imap
+    try:
+        imap = IMAP4_SSL(settings.REFERRAL_EMAIL_HOST)
+        imap.login(settings.REFERRAL_EMAIL_USER, settings.REFERRAL_EMAIL_PASSWORD)
+        imap.select(mailbox)
+        return imap
+    except (IMAP4_SSL.abort, IMAP4_SSL.error, SSLEOFError) as err:
+        LOGGER.warning(f"Unable to log into mailbox: {err}")
+        return False
 
 
-def unread_from_email(imap: IMAP4_SSL, from_email: str) -> tuple[str, list[bytes]]:
-    """Returns (status, list of UIDs) of unread emails from a sender."""
-    search: str = f'(UNSEEN FROM "{from_email}")'
-    status, response = imap.search(None, search)
-    if status != "OK":
-        return status, response
-    # Return status and list of unread email UIDs.
-    return status, response[0].split()
-
-
-def fetch_email(imap: IMAP4_SSL, uid: int | bytes | str) -> tuple[str, Any]:
-    """Returns (status, message) for an email by UID.
-    Email is returned as an email.Message class object.
-    """
-    message: Any = None
-    status, response = imap.fetch(str(uid), "(BODY.PEEK[])")
+def email_get_unread(imap: IMAP4_SSL, from_email: str) -> tuple[str, list] | tuple[Literal[False], Literal[False]]:
+    """Returns (status, [list of UIDs]) of unread emails."""
+    try:
+        status, response = imap.uid("SEARCH", f'(UNSEEN FROM "{from_email}" UNFLAGGED)')
+    except (IMAP4_SSL.abort, IMAP4_SSL.error) as err:
+        LOGGER.warning(f"Unable to search unread emails from {from_email}: {err}")
+        return False, False
 
     if status != "OK":
         return status, response
 
-    for i in response:
-        if isinstance(i, tuple):
-            s = i[1]
-            if isinstance(s, bytes):
-                s = s.decode("utf-8")
-            message = email.message_from_string(s)
-
-    return status, message
+    return status, response[0].split() if response and response[0] else []
 
 
-def harvest_email(uid: int | bytes | str, message: Any) -> bool | None:
+def normalise_imap_uid(value: str | bytes | int | None) -> str | None:
+    """Return a valid IMAP UID string, or None when the value is unusable."""
+    if value is None:
+        return None
+
+    if isinstance(value, bytes):
+        value = value.decode("ascii", errors="ignore")
+    elif isinstance(value, int):
+        value = str(value)
+
+    value = str(value).strip()
+    if not value or value == "0":
+        return None
+
+    try:
+        int(value)
+    except ValueError:
+        return None
+
+    return value
+
+
+def email_fetch(imap: IMAP4_SSL, uid: str) -> tuple[str, EmailMessage] | tuple[Literal[False], Literal[False]]:
+    """Fetch a single email and return a tuple of status, EmailMessage."""
+    uid_value = normalise_imap_uid(uid)
+    if not uid_value:
+        LOGGER.warning(f"Unable to fetch email: invalid message UID {uid!r}")
+        return False, False
+
+    try:
+        status, msg_data = imap.uid("FETCH", uid_value, "(RFC822)")
+    except (IMAP4_SSL.abort, IMAP4_SSL.error) as err:
+        LOGGER.warning(f"Unable to fetch email: {err}")
+        return False, False
+
+    if status != "OK" or not msg_data or msg_data[0] is None:
+        return False, False
+
+    raw_email = msg_data[0][1]
+    if not isinstance(raw_email, bytes):
+        return False, False
+
+    email_msg = message_from_bytes(s=raw_email, policy=default)
+
+    return status, email_msg
+
+
+def harvest_email(uid: int | bytes | str, message: Any) -> bool:
     """Harvest a passed-in UID and email message.
     Abort if UID exists in the database already.
     """
@@ -93,23 +131,25 @@ def harvest_email(uid: int | bytes | str, message: Any) -> bool | None:
             if not to_emails:  # Still might be no recipient(s) if we've been BCC'd.
                 to_emails = ""
 
+            to_e = "BCC"
             if to_emails:
-                to_emails = to_emails.split(",")
-                pattern = r"\<(.+)\>"
-                to_e = ""
-                for rec in to_emails:
-                    m = re.search(pattern, rec.strip())
-                    if m:
-                        email_address = m.group(1).lower()
-                        if email_address in settings.ASSESSOR_EMAILS:
-                            to_e = email_address
-            else:
-                to_e = "BCC"
+                for _, email_address in getaddresses([to_emails]):
+                    if not email_address:
+                        continue
+                    email_address = email_address.lower()
+                    if email_address in settings.ASSESSOR_EMAILS:
+                        to_e = email_address
+                        break
 
-            from_e = email.utils.parseaddr(message.get("From"))[1]
+            from_e = parseaddr(message.get("From"))[1]
             # Parse the 'sent' date & time (assume UTC from the server).
-            d = email.utils.parsedate(message.get("Date"))[0:6]  # Returns a tuple, but we only want part of it.
-            dt = datetime(*d, tzinfo=UTC)  # Construct datetime from the tuple.
+            d = parsedate(message.get("Date"))
+            # Returns a tuple, but we only want part of it.
+            if d:
+                d = d[0:6]
+                dt = datetime(*d, tzinfo=UTC)  # Construct datetime from the tuple.
+            else:
+                dt = timezone.now()
             received = dt.astimezone(settings.TZ)
             # Generate an EmailedReferral object.
             em_new = EmailedReferral(
@@ -133,64 +173,95 @@ def harvest_email(uid: int | bytes | str, message: Any) -> bool | None:
                 try:
                     data = a.get_payload(decode=True)
                 except Exception:
-                    data = StringIO(base64.decodestring(a.get_payload()))
+                    payload = a.get_payload()
+                    if isinstance(payload, str):
+                        data = base64.b64decode(payload, validate=False)
+                    else:
+                        data = payload
+                if data is None:
+                    continue
                 if att_name and data:  # Some attachments may have no payload.
                     new_file = ContentFile(data)
                     att_new.attachment.save(att_name, new_file)
                     att_new.save()
                     LOGGER.info(f"Email attachment created: {att_new.name}")
-        except Exception as e:
-            LOGGER.error(f"Email UID {uid} generated exception during harvest")
-            LOGGER.exception(e)
-            return None
+        except Exception:
+            LOGGER.exception(f"Email UID {uid} generated exception during harvest")
+            return False
     else:
         LOGGER.error(f"Email UID {uid} had no message body")
-        return None
+        return False
 
     return True
 
 
-def email_mark_read(imap: IMAP4_SSL, uid: int | bytes | str) -> tuple[str, Any]:
+def email_mark_read(imap: IMAP4_SSL, uid: str) -> tuple[str, list[Any]] | tuple[Literal[False], Literal[False]]:
     """Flag an email as 'Seen' based on passed-in UID."""
-    status, response = imap.store(str(uid), "+FLAGS", r"\Seen")
-    return status, response
+    uid_value = normalise_imap_uid(uid)
+    if not uid_value:
+        return False, False
+
+    try:
+        status, response = imap.uid("STORE", uid_value, "+FLAGS", r"(\Seen)")
+        return status, response
+    except (IMAP4_SSL.abort, IMAP4_SSL.error) as err:
+        LOGGER.warning(f"Unable to mark email read: {err}")
+        return False, False
 
 
-def email_mark_unread(imap: IMAP4_SSL, uid: int | bytes | str) -> tuple[str, Any]:
+def email_mark_unread(imap: IMAP4_SSL, uid: str) -> tuple[str, list[Any]] | tuple[Literal[False], Literal[False]]:
     """Remove the 'Seen' flag from an email based on passed-in UID."""
-    status, response = imap.store(str(uid), "-FLAGS", r"\Seen")
-    return status, response
+    uid_value = normalise_imap_uid(uid)
+    if not uid_value:
+        return False, False
+
+    try:
+        status, response = imap.uid("STORE", uid_value, "-FLAGS", r"(\Seen)")
+        return status, response
+    except (IMAP4_SSL.abort, IMAP4_SSL.error) as err:
+        LOGGER.warning(f"Unable to mark email unread: {err}")
+        return False, False
 
 
-def email_delete(imap: IMAP4_SSL, uid: int | bytes | str) -> tuple[str, Any]:
-    """Flag an email for deletion."""
-    status, response = imap.store(str(uid), "+FLAGS", r"\Deleted")
-    return status, response
+def email_mark_deleted(imap: IMAP4_SSL, uid: str) -> tuple[str, list[Any]] | tuple[Literal[False], Literal[False]]:
+    """Flag an email for deletion based on the passed-in UID."""
+    uid_value = normalise_imap_uid(uid)
+    if not uid_value:
+        return False, False
+
+    try:
+        status, response = imap.uid("STORE", uid_value, "+FLAGS", r"(\Deleted)")
+        return status, response
+    except (IMAP4_SSL.abort, IMAP4_SSL.error) as err:
+        LOGGER.warning(f"Unable to delete email: {err}")
+        return False, False
 
 
-def harvest_unread_emails(from_email: str, purge_email: bool = False) -> list[str]:
+def harvest_unread_emails(from_email: str, purge_email: bool = False) -> list[str] | Literal[False]:
     """Download a list of unread email from the specified email address and
     harvest each one. Optionally purge harvested emails on completion.
     """
-    actions: list[str] = []
     LOGGER.info(f"Requesting unread emails from {from_email}")
 
-    try:  # Handle IMAP connection error.
-        imap = get_imap()
-    except:
+    imap = get_imap()
+    if not imap:
         LOGGER.warning("IMAP connection error")
-        return actions
+        return False
 
-    actions.append(f"{datetime.now().isoformat()} Requesting unread emails from {from_email}")
-    status, uids = unread_from_email(imap, from_email)
+    actions: list[str] = []
+    actions.append(f"{timezone.now().isoformat()} Requesting unread emails from {from_email}")
+    status, uids = email_get_unread(imap, from_email)
 
     if status != "OK":
         LOGGER.error(f"Server response failure: {status}")
-        actions.append(f"{datetime.now().isoformat()} Server response failure: {status}")
+        actions.append(f"{timezone.now().isoformat()} Server response failure: {status}")
+        return actions
+
+    if not uids:
         return actions
 
     LOGGER.info(f"Server lists {len(uids)} unread emails from {from_email}")
-    actions.append(f"{datetime.now().isoformat()} Server lists {len(uids)} unread emails")
+    actions.append(f"{timezone.now().isoformat()} Server lists {len(uids)} unread emails")
 
     if uids:
         for uid in uids:
@@ -200,27 +271,27 @@ def harvest_unread_emails(from_email: str, purge_email: bool = False) -> list[st
 
             # Fetch email message.
             LOGGER.info(f"Fetching email UID {uid}")
-            status, message = fetch_email(imap, uid)
+            status, message = email_fetch(imap, uid)
             if status != "OK":
                 LOGGER.error(f"Server response failure on fetching email UID {uid}: {status}")
                 continue
             LOGGER.info(f"Harvesting email UID {uid}")
-            actions.append(f"{datetime.now().isoformat()} Harvesting email UID {uid}")
+            actions.append(f"{timezone.now().isoformat()} Harvesting email UID {uid}")
             harvest_email(uid, message)
 
             # Optionally mark email as read and flag it for deletion.
             if purge_email:
                 # Mark email as read.
-                status, response = email_mark_read(imap, uid)
+                status, _ = email_mark_read(imap, uid)
                 if status == "OK":
                     LOGGER.info(f'Email UID {uid} was marked as "Read"')
                 # Mark email for deletion.
-                status, response = email_delete(imap, uid)
+                status, _ = email_mark_deleted(imap, uid)
                 if status == "OK":
                     LOGGER.info(f"Email UID {uid} was marked for deletion")
 
         LOGGER.info(f"Harvest process completed ({from_email})")
-        actions.append(f"{datetime.now().isoformat()} Harvest process completed ({from_email})")
+        actions.append(f"{timezone.now().isoformat()} Harvest process completed ({from_email})")
 
     imap.expunge()
     imap.logout()
@@ -233,13 +304,13 @@ def import_harvested_refs() -> list[str]:
 
     actions: list[str] = []
     LOGGER.info("Starting import of harvested referrals")
-    actions.append(f"{datetime.now().isoformat()} Starting import of harvested referrals")
+    actions.append(f"{timezone.now().isoformat()} Starting import of harvested referrals")
     # Process harvested refs that are unprocessed at present.
     for er in EmailedReferral.objects.filter(referral__isnull=True, processed=False):
         actions += er.harvest()
 
     LOGGER.info("Import process completed")
-    actions.append(f"{datetime.now().isoformat()} Import process completed")
+    actions.append(f"{timezone.now().isoformat()} Import process completed")
     return actions
 
 

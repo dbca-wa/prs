@@ -3,8 +3,9 @@ import os
 from django.contrib.auth import get_user_model
 from django.core.files import File
 from django.utils import timezone
-from harvester.models import EmailAttachment, EmailedReferral, RegionAssignee
 from mixer.backend.django import mixer
+
+from harvester.models import EmailAttachment, EmailedReferral, RegionAssignee
 from referral.models import Agency, DopTrigger, LocalGovernment, Record, Referral, Region, Task
 from referral.test_models import PrsTestCase
 
@@ -13,7 +14,7 @@ User = get_user_model()
 
 class HarvesterModelTestCase(PrsTestCase):
     def setUp(self):
-        super(HarvesterModelTestCase, self).setUp()
+        super().setUp()
         mixer.cycle(2).blend(RegionAssignee)
         mixer.blend(LocalGovernment, name="BUNBURY", slug="bunbury")
         self.admin = User.objects.get_or_create(username="admin")
@@ -28,7 +29,7 @@ class RegionAssigneeModelTest(HarvesterModelTestCase):
 
 class EmailedReferralModelTest(HarvesterModelTestCase):
     def setUp(self):
-        super(EmailedReferralModelTest, self).setUp()
+        super().setUp()
         # Instantiate some objects from real data.
         curr = os.path.dirname(os.path.abspath(__file__))
         email = open(os.path.join(curr, "test_data", "test_referral_email.txt"))
@@ -58,7 +59,7 @@ class EmailedReferralModelTest(HarvesterModelTestCase):
         # NOTE: we don't test email harvesting or parsing.
         # NOTE: creation of Locations requires that we query the Landgate SLIP service.
         # As we can't commit the username or password, explicitly skip creation of locations here.
-        actions = self.e_ref.harvest(create_locations=False)
+        actions = self.e_ref.harvest(create_locations=False, assignee=self.admin_user)
         # actions should not be an empty list.
         self.assertTrue(bool(actions))
         # >0 Referrals, Tasks and Records should have been created.
