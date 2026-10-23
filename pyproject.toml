@@ -20,7 +20,7 @@ dependencies = [
   "django-taggit==6.1.0",
   "requests==2.34.2",
   "unidecode==1.4.0",
-  "pillow==12.3.0",
+  "pillow==13.0.0",
   "python-magic==0.4.27",
   "lxml[html-clean]==6.1.3",
   "xmltodict==1.0.4",
