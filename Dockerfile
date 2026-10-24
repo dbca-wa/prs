@@ -18,7 +18,7 @@ apt-get install -y --no-install-recommends \
 EOF
 
 WORKDIR /app
-COPY --from=ghcr.io/astral-sh/uv:0.12 /uv /bin/
+COPY --from=ghcr.io/astral-sh/uv:0.13 /uv /bin/
 COPY pyproject.toml uv.lock ./
 RUN uv sync --no-group dev --link-mode=copy --compile-bytecode --no-python-downloads --frozen
 

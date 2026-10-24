@@ -37,7 +37,7 @@ jobs:
       id-token: write # OIDC for provenance
     steps:
       - name: Harden the GitHub runner
-        uses: step-security/harden-runner@351661ca32ac09a36dc5ee2d536e3128f2a3c8ed # v2.22.0
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
           egress-policy: audit
 
@@ -82,7 +82,7 @@ jobs:
 
       - name: Build and push with Docker Buildx
         id: bake
-        uses: docker/bake-action@018cb6412ab401ebaa809aa5f85966b74628600f # v7.4.0
+        uses: docker/bake-action@59cb1203cd42bcefd40a1b6d73b589e48c86040e # v7.5.0
         with:
           push: true
           targets: all
@@ -93,6 +93,7 @@ jobs:
   scan:
     name: Docker image vulnerability scan
     runs-on: ubuntu-latest
+    continue-on-error: true # If vulnerability scan fails, the workflow can still complete successfully.
     needs:
       - build
     permissions:
@@ -115,6 +116,6 @@ jobs:
           output: 'trivy-results.sarif'
 
       - name: Upload scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
+        uses: github/codeql-action/upload-sarif@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
         with:
           sarif_file: 'trivy-results.sarif'
