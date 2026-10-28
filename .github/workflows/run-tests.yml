@@ -28,6 +28,7 @@ jobs:
     env:
       DATABASE_URL: postgis://postgres:postgres@localhost:5432/postgres
       LOCAL_MEDIA_STORAGE: true
+      SECRET_KEY: ci-only-not-a-real-secret
     permissions:
       contents: read
     services:

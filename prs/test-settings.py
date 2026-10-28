@@ -1,10 +1,21 @@
 import logging
+import os
 
-from .settings import *
+# Tests must be able to run without deployment configuration: settings.py
+# refuses to start without a SECRET_KEY when DEBUG is False, so provide a
+# throwaway value (never used outside of tests).
+os.environ.setdefault("SECRET_KEY", "test-only-insecure-secret-key")
+
+from .settings import *  # noqa: E402
 
 # Modify project settings to speed up unit tests.
 logging.disable(logging.CRITICAL)
 DEBUG = False
+# The test client speaks plain HTTP, and sessions are not security-relevant here.
+SECURE_SSL_REDIRECT = False
+SECURE_HSTS_SECONDS = 0
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
 TEMPLATES[0]["OPTIONS"] = {
     "debug": False,
     "context_processors": [

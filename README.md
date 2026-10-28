@@ -28,14 +28,15 @@ This project uses **python-dotenv** to set environment variables (in a `.env` fi
 The following variables are required for the project to run:
 
     DATABASE_URL="postgis://USER:PASSWORD@HOST:5432/DATABASE_NAME"
+    SECRET_KEY="ThisIsASecretKey"
+
+Note: `SECRET_KEY` is mandatory whenever `DEBUG` is `False`.
 
 Variables below may also need to be defined in production (context-dependent):
 
-    SECRET_KEY="ThisIsASecretKey"
     DEBUG=True
-    ALLOWED_DOMAINS=".dbca.wa.gov.au,localhost"
-    CSRF_COOKIE_SECURE=False
-    SESSION_COOKIE_SECURE=False
+    ALLOWED_HOSTS="prs.dbca.wa.gov.au,localhost"
+    SECURE_REFERRER_POLICY="same-origin"
     EMAIL_HOST="email.host"
     EMAIL_PORT=25
     REFERRAL_EMAIL_HOST="outlook.office365.com"

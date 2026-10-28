@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 
 import dj_database_url
 from dbca_utils.utils import env
-from django.core.exceptions import DisallowedHost
+from django.core.exceptions import DisallowedHost, ImproperlyConfigured
 from django.db.utils import OperationalError
 from redis.exceptions import ConnectionError, TimeoutError
 
@@ -19,17 +19,33 @@ sys.path.insert(0, PROJECT_DIR)
 
 # Application definition
 DEBUG = env("DEBUG", False)
-SECRET_KEY = env("SECRET_KEY", "PlaceholderSecretKey")
-CSRF_COOKIE_SECURE = env("CSRF_COOKIE_SECURE", False)
+SECRET_KEY = env("SECRET_KEY", "")
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = "insecure-local-development-only"
+    else:
+        # Fail safe:
+        raise ImproperlyConfigured("The SECRET_KEY environment variable must be set when DEBUG is False.")
+# Fail safe: cookies are only sent over HTTPS unless explicitly disabled
+# (e.g. for a local development server running on plain HTTP).
+CSRF_COOKIE_SECURE = env("CSRF_COOKIE_SECURE", not DEBUG)
 CSRF_COOKIE_NAME = env("CSRF_COOKIE_NAME", "prs_csrftoken")
 CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS", "http://127.0.0.1").split(",")
-SESSION_COOKIE_SECURE = env("SESSION_COOKIE_SECURE", False)
+SESSION_COOKIE_SECURE = env("SESSION_COOKIE_SECURE", not DEBUG)
 SESSION_COOKIE_NAME = env("SESSION_COOKIE_NAME", "prs_sessionid")
 if not DEBUG:
     ALLOWED_HOSTS = env("ALLOWED_HOSTS", "localhost").split(",")
 else:
     ALLOWED_HOSTS = ["*"]
 INTERNAL_IPS = ["127.0.0.1", "::1"]
+
+# Transport security
+# TLS is terminated upstream of the application, so trust the scheme reported
+# by the proxy when deciding whether a request is secure.
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+# Only enable the redirect below once the terminating proxy is known to send
+# X-Forwarded-Proto, otherwise requests are redirected in a loop.
+SECURE_SSL_REDIRECT = env("SECURE_SSL_REDIRECT", False)
 ROOT_URLCONF = "prs.urls"
 WSGI_APPLICATION = "prs.wsgi.application"
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"

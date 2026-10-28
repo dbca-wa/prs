@@ -62,7 +62,8 @@ COPY --chown=nonroot:nonroot reports ./reports
 # Compile scripts and collect static files
 RUN <<EOF
 python -m compileall -q prs harvester indexer referral reports
-python manage.py collectstatic --noinput
+# collectstatic needs a SECRET_KEY value to run.
+SECRET_KEY=build-time-secret-key python manage.py collectstatic --noinput
 EOF
 
 # Run the project as the nonroot user
