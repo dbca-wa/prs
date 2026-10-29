@@ -35,8 +35,7 @@ Note: `SECRET_KEY` is mandatory whenever `DEBUG` is `False`.
 Variables below may also need to be defined in production (context-dependent):
 
     DEBUG=True
-    ALLOWED_HOSTS="prs.dbca.wa.gov.au,localhost"
-    SECURE_REFERRER_POLICY="same-origin"
+    ALLOWED_HOSTS="*.dbca.wa.gov.au,localhost"
     EMAIL_HOST="email.host"
     EMAIL_PORT=25
     REFERRAL_EMAIL_HOST="outlook.office365.com"

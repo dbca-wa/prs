@@ -14,6 +14,30 @@ const userApiResourceUrl = `${context.user_api_resource_url}`;
 const tagApiResourceUrl = `${context.tag_api_resource_url}`;
 const spinner = new Spinner({ scale: 3, top: '120px' });
 
+// DataTables inserts cell values into the DOM as HTML by default. API fields
+// such as referral/task descriptions are user-supplied, so they must be
+// escaped before being passed to DataTables to avoid stored XSS.
+function escapeHtml(value) {
+  if (value === null || value === undefined) {
+    return '';
+  }
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function renderText(data) {
+  return escapeHtml(data);
+}
+
+function renderReferralLink(data) {
+  const id = encodeURIComponent(data).replace(/'/g, '%27');
+  return `<a href='${refListUrl}${id}/'>${escapeHtml(data)}</a>`;
+}
+
 function startSpinner() {
   spinner.spin();
   $('#modal-spinner').append(spinner.el);
@@ -173,32 +197,28 @@ const configRefTable = {
     {
       data: 'id',
       render: function (data, type, row, meta) {
-        return `<a href='${refListUrl}${data}/'>${data}</a>`;
+        return renderReferralLink(data);
       },
     },
-    { data: 'regions' },
-    { data: 'referring_org' },
-    { data: 'type' },
-    { data: 'reference' },
+    { data: 'regions', render: renderText },
+    { data: 'referring_org', render: renderText },
+    { data: 'type', render: renderText },
+    { data: 'reference', render: renderText },
     {
       data: 'referral_date',
       type: 'date',
       render: function (data, type, row, meta) {
         var d = new Date(data);
-        return d.toDateString();
+        return escapeHtml(d.toDateString());
       },
     },
     {
       data: 'tags',
       render: function (data, type, row, meta) {
-        return data
-          .map(function (obj) {
-            return obj;
-          })
-          .join(', ');
+        return data.map(escapeHtml).join(', ');
       },
     },
-    { data: 'description' },
+    { data: 'description', render: renderText },
   ],
 };
 
@@ -235,23 +255,22 @@ const configClearTable = {
     {
       data: 'referral_id',
       render: function (data, type, row, meta) {
-        return `<a href='${refListUrl}${data}/'>${data}</a>`;
+        return renderReferralLink(data);
       },
     },
-    { data: 'regions' },
-    { data: 'identifier' },
+    { data: 'regions', render: renderText },
+    { data: 'identifier', render: renderText },
     {
       data: 'condition',
       render: function (data, type, row, meta) {
-        var c = '<div>{}</div>';
-        return c.replace('{}', data);
+        return `<div>${escapeHtml(data)}</div>`;
       },
     },
-    { data: 'category' },
-    { data: 'description' },
-    { data: 'deposited_plan' },
-    { data: 'assigned_user' },
-    { data: 'state' },
+    { data: 'category', render: renderText },
+    { data: 'description', render: renderText },
+    { data: 'deposited_plan', render: renderText },
+    { data: 'assigned_user', render: renderText },
+    { data: 'state', render: renderText },
   ],
 };
 
@@ -288,27 +307,27 @@ const configTaskTable = {
     {
       data: 'referral_id',
       render: function (data, type, row, meta) {
-        return `<a href='${refListUrl}${data}/'>${data}</a>`;
+        return renderReferralLink(data);
       },
     },
-    { data: 'referral_reference' },
-    { data: 'regions' },
-    { data: 'assigned_user' },
-    { data: 'type' },
-    { data: 'description' },
-    { data: 'state' },
+    { data: 'referral_reference', render: renderText },
+    { data: 'regions', render: renderText },
+    { data: 'assigned_user', render: renderText },
+    { data: 'type', render: renderText },
+    { data: 'description', render: renderText },
+    { data: 'state', render: renderText },
     {
       data: 'start_date',
       type: 'date',
       render: function (data, type, row, meta) {
-        return new Date(data).toDateString();
+        return escapeHtml(new Date(data).toDateString());
       },
     },
     {
       data: 'due_date',
       type: 'date',
       render: function (data, type, row, meta) {
-        return new Date(data).toDateString();
+        return escapeHtml(new Date(data).toDateString());
       },
     },
     {
@@ -316,7 +335,7 @@ const configTaskTable = {
       type: 'date',
       render: function (data, type, row, meta) {
         if (data) {
-          return new Date(data).toDateString();
+          return escapeHtml(new Date(data).toDateString());
         } else {
           return '';
         }
