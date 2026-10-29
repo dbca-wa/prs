@@ -12,6 +12,10 @@ from taggit.models import Tag
 
 from .models import Clearance, Organisation, Referral, ReferralType, Region, Task, TaskState, TaskType
 
+# Pagination defaults for the API resources that support it.
+DEFAULT_PAGE_SIZE = 50
+MAX_PAGE_SIZE = 500
+
 
 class ApiResourceMixin(LoginRequiredMixin):
     """Mixin class for all v3 API resources.
@@ -22,6 +26,28 @@ class ApiResourceMixin(LoginRequiredMixin):
     """
 
     http_method_names = ["get", "options", "head"]
+
+    def get_page_bounds(self, count):
+        """Return validated ``(start, stop)`` slice bounds for a response.
+
+        ``limit`` is the maximum number of objects to return, counting from
+        ``offset``. It defaults to DEFAULT_PAGE_SIZE and is clamped to
+        MAX_PAGE_SIZE. Raises ValueError for malformed values, so callers can
+        return an HTTP 400 rather than raising a server error.
+        """
+        try:
+            offset = int(self.request.GET.get("offset", 0))
+            limit = int(self.request.GET.get("limit", DEFAULT_PAGE_SIZE))
+        except (TypeError, ValueError):
+            raise ValueError("Pagination values 'offset' and 'limit' must be integers.")
+        if offset < 0 or limit < 1:
+            raise ValueError("Pagination values 'offset' and 'limit' must be positive integers.")
+        # Ignore any offset which is greater than the result count.
+        if offset >= count:
+            offset = 0
+        # Django's queryset slicing is smart enough that we don't need to
+        # worry about "wrapping around".
+        return offset, offset + min(limit, MAX_PAGE_SIZE)
 
 
 class ListApiResource(ApiResourceMixin, View, MultipleObjectMixin):
@@ -288,22 +314,11 @@ class ReferralAPIResource(ApiResourceMixin, View):
             queryset = queryset.filter(tags__pk__in=[self.request.GET["tag__id"]])
 
         obj_count = queryset.count()  # Count the filtered results.
-
-        # Paginate the queryset.
-        offset = 0
-        if self.request.GET.get("offset"):
-            offset = int(self.request.GET["offset"])
-            # Ignore any offset which is greater than the result count.
-            if offset >= obj_count:
-                offset = 0
-
-        # Django's queryset slicing is smart enough that we don't need to worry about "wrapping around".
-        if self.request.GET.get("limit"):
-            limit = offset + int(self.request.GET["limit"])
-        else:
-            limit = offset + 50  # Default to a maximum of 50 objects in the response.
-
-        queryset = queryset[offset:limit]
+        try:
+            start, stop = self.get_page_bounds(obj_count)
+        except ValueError as exc:
+            return JsonResponse({"error": str(exc)}, status=400)
+        queryset = queryset[start:stop]
         resp = {
             "count": obj_count,
             "objects": [
@@ -357,22 +372,11 @@ class TaskAPIResource(ApiResourceMixin, View):
             queryset = queryset.filter(start_date__lte=self.request.GET["start_date__lte"])
 
         obj_count = queryset.count()  # Count the filtered results.
-
-        # Paginate the queryset.
-        offset = 0
-        if self.request.GET.get("offset"):
-            offset = int(self.request.GET["offset"])
-            # Ignore any offset which is greater than the result count.
-            if offset >= obj_count:
-                offset = 0
-
-        # Django's queryset slicing is smart enough that we don't need to worry about "wrapping around".
-        if self.request.GET.get("limit"):
-            limit = offset + int(self.request.GET["limit"])
-        else:
-            limit = offset + 50  # Default to a maximum of 50 objects in the response.
-
-        queryset = queryset[offset:limit]
+        try:
+            start, stop = self.get_page_bounds(obj_count)
+        except ValueError as exc:
+            return JsonResponse({"error": str(exc)}, status=400)
+        queryset = queryset[start:stop]
         resp = {
             "count": obj_count,
             "objects": [
@@ -424,22 +428,11 @@ class ClearanceAPIResource(ApiResourceMixin, View):
             queryset = queryset.filter(task__start_date__lte=self.request.GET["start_date__lte"])
 
         obj_count = queryset.count()  # Count the filtered results.
-
-        # Paginate the queryset.
-        offset = 0
-        if self.request.GET.get("offset"):
-            offset = int(self.request.GET["offset"])
-            # Ignore any offset which is greater than the result count.
-            if offset >= obj_count:
-                offset = 0
-
-        # Django's queryset slicing is smart enough that we don't need to worry about "wrapping around".
-        if self.request.GET.get("limit"):
-            limit = offset + int(self.request.GET["limit"])
-        else:
-            limit = offset + 50  # Default to a maximum of 50 objects in the response.
-
-        queryset = queryset[offset:limit]
+        try:
+            start, stop = self.get_page_bounds(obj_count)
+        except ValueError as exc:
+            return JsonResponse({"error": str(exc)}, status=400)
+        queryset = queryset[start:stop]
         resp = {
             "count": obj_count,
             "objects": [
