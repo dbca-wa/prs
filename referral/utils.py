@@ -176,16 +176,29 @@ def filter_queryset(request: HttpRequest, model: ModelBase, queryset: Any) -> tu
     return queryset, search_string
 
 
+def get_user_group_names(request: HttpRequest) -> set[str]:
+    """Return the names of the auth groups the request's user belongs to.
+
+    The result is cached on the request object, because group membership is
+    checked several times while handling a single request (the ``is_prs_user``
+    and ``is_prs_power_user`` permission helpers, plus the template context
+    processor which runs for every rendered template). Without the cache each
+    check costs its own query.
+    """
+    if not hasattr(request, "_prs_group_names"):
+        if request.user.is_authenticated:
+            request._prs_group_names = set(request.user.groups.values_list("name", flat=True))
+        else:
+            request._prs_group_names = set()
+    return request._prs_group_names
+
+
 def is_prs_user(request: HttpRequest) -> bool:
-    if "PRS user" not in [group.name for group in request.user.groups.all()]:
-        return False
-    return True
+    return settings.PRS_USER_GROUP in get_user_group_names(request)
 
 
 def is_prs_power_user(request: HttpRequest) -> bool:
-    if "PRS power user" not in [group.name for group in request.user.groups.all()]:
-        return False
-    return True
+    return settings.PRS_POWER_USER_GROUP in get_user_group_names(request)
 
 
 def prs_user(request: HttpRequest) -> bool:

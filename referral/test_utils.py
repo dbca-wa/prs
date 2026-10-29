@@ -3,9 +3,13 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 from django.conf import settings
+from django.contrib.auth.models import AnonymousUser
+from django.db import connection
 from django.db.models.base import ModelBase
 from django.db.models.query import QuerySet
 from django.test import RequestFactory, SimpleTestCase
+from django.test.utils import CaptureQueriesContext
+from django.urls import reverse
 from extract_msg import Message
 
 from referral.models import Record, Referral, Task
@@ -14,8 +18,12 @@ from referral.utils import (
     breadcrumbs_li,
     dewordify_text,
     filter_queryset,
+    get_user_group_names,
     is_model_or_string,
+    is_prs_power_user,
+    is_prs_user,
     overdue_task_email,
+    prs_user,
     query_geocoder,
     smart_truncate,
     update_revision_history,
@@ -184,3 +192,67 @@ class HttpRequestTimeoutTest(SimpleTestCase):
         ):
             query_geocoder("test")
         self.assertEqual(mock_get.call_args.kwargs["timeout"], settings.HTTP_TIMEOUT)
+
+
+class GroupMembershipTest(PrsTestCase):
+    """Group membership checks should not run a query per call.
+
+    A single request checks membership several times: the ``prs_user*`` helpers
+    in view dispatch methods and the template context processor, which runs for
+    every rendered template.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.factory = RequestFactory()
+
+    def get_request(self, user):
+        request = self.factory.get("/")
+        request.user = user
+        return request
+
+    @staticmethod
+    def group_name_queries(queries):
+        """Filter captured queries down to current-user group-name lookups."""
+        return [q for q in queries if 'FROM "auth_group" INNER JOIN "auth_user_groups"' in q["sql"]]
+
+    def test_membership_flags(self):
+        self.assertTrue(is_prs_user(self.get_request(self.n_user)))
+        self.assertFalse(is_prs_user(self.get_request(self.ro_user)))
+        self.assertTrue(is_prs_power_user(self.get_request(self.p_user)))
+        self.assertFalse(is_prs_power_user(self.get_request(self.n_user)))
+        self.assertTrue(prs_user(self.get_request(self.p_user)))
+        self.assertFalse(prs_user(self.get_request(self.ro_user)))
+
+    def test_anonymous_user_is_not_a_prs_user(self):
+        request = self.get_request(AnonymousUser())
+        self.assertEqual(get_user_group_names(request), set())
+        self.assertFalse(is_prs_user(request))
+        self.assertFalse(is_prs_power_user(request))
+        self.assertFalse(prs_user(request))
+
+    def test_membership_checks_share_one_query(self):
+        request = self.get_request(self.n_user)
+        with CaptureQueriesContext(connection) as ctx:
+            is_prs_user(request)
+            is_prs_power_user(request)
+            prs_user(request)
+            get_user_group_names(request)
+        self.assertEqual(len(self.group_name_queries(ctx.captured_queries)), 1)
+
+    def test_page_render_uses_one_group_query(self):
+        """The context processor and dispatch checks must share the cached groups."""
+        self.client.login(username="normaluser", password="pass")
+        for url_name in ("site_home", "referral_create"):
+            with self.subTest(url_name=url_name):
+                with CaptureQueriesContext(connection) as ctx:
+                    response = self.client.get(reverse(url_name))
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(len(self.group_name_queries(ctx.captured_queries)), 1)
+
+    def test_power_user_context_includes_superusers(self):
+        """Superusers see power-user navigation, as they did before caching."""
+        self.client.login(username="admin", password="pass")
+        response = self.client.get(reverse("site_home"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["prs_power_user"])
