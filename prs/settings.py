@@ -198,14 +198,22 @@ REDIS_CACHE_HOST = env("REDIS_CACHE_HOST", "")
 REDIS_CACHE_PASSWORD = env("REDIS_CACHE_PASSWORD", "")
 VALKEY_CACHE_HOST = env("VALKEY_CACHE_HOST", None)
 if REDIS_CACHE_HOST:
+    # Django passes OPTIONS straight through to redis-py's
+    # ConnectionPool.from_url(), so option names must be redis-py
+    # (lowercase) connection keyword arguments.
+    cache_options = {
+        "socket_connect_timeout": 5,  # seconds
+        "socket_timeout": 5,  # seconds
+    }
+    if REDIS_CACHE_PASSWORD:
+        cache_options["password"] = REDIS_CACHE_PASSWORD
     CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.redis.RedisCache",
             "LOCATION": REDIS_CACHE_HOST,
+            "OPTIONS": cache_options,
         }
     }
-    if REDIS_CACHE_PASSWORD:
-        CACHES["default"]["OPTIONS"]["PASSWORD"] = REDIS_CACHE_PASSWORD
 elif VALKEY_CACHE_HOST:
     CACHES = {
         "default": {
