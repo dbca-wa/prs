@@ -286,7 +286,7 @@ def wfs_getfeature(
     }
     if cql_filter:
         params["cql_filter"] = cql_filter
-    resp = requests.get(url, auth=auth, params=params)
+    resp = requests.get(url, auth=auth, params=params, timeout=settings.HTTP_TIMEOUT)
     try:
         resp.raise_for_status()
         response = resp.json()
@@ -304,7 +304,7 @@ def query_geocoder(q: str) -> list[dict[str, Any]]:
     url = env("GEOCODER_URL", None)
     auth = (env("SSO_USERNAME", None), env("SSO_PASSWORD", None))
     params = {"q": q}
-    resp = requests.get(url, auth=auth, params=params)
+    resp = requests.get(url, auth=auth, params=params, timeout=settings.HTTP_TIMEOUT)
     try:
         resp.raise_for_status()
         response = resp.json()

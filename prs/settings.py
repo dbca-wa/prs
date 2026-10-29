@@ -187,6 +187,12 @@ MAX_UPLOAD_SIZE_BYTES = env("MAX_UPLOAD_SIZE_BYTES", 52428800)
 # zip bombs being expanded in memory by the shapefile parser.
 MAX_UPLOAD_UNCOMPRESSED_BYTES = env("MAX_UPLOAD_UNCOMPRESSED_BYTES", 524288000)
 
+# Timeouts (in seconds) for outbound HTTP requests, so a slow or unresponsive
+# upstream service cannot tie up a web or Celery worker indefinitely.
+HTTP_CONNECT_TIMEOUT = env("HTTP_CONNECT_TIMEOUT", 5)
+HTTP_READ_TIMEOUT = env("HTTP_READ_TIMEOUT", 20)
+HTTP_TIMEOUT = (HTTP_CONNECT_TIMEOUT, HTTP_READ_TIMEOUT)
+
 # Caching config
 REDIS_CACHE_HOST = env("REDIS_CACHE_HOST", "")
 REDIS_CACHE_PASSWORD = env("REDIS_CACHE_PASSWORD", "")

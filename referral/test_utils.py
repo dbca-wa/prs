@@ -1,10 +1,11 @@
 from datetime import date, timedelta
 from pathlib import Path
+from unittest.mock import Mock, patch
 
 from django.conf import settings
 from django.db.models.base import ModelBase
 from django.db.models.query import QuerySet
-from django.test import RequestFactory
+from django.test import RequestFactory, SimpleTestCase
 from extract_msg import Message
 
 from referral.models import Record, Referral, Task
@@ -15,8 +16,10 @@ from referral.utils import (
     filter_queryset,
     is_model_or_string,
     overdue_task_email,
+    query_geocoder,
     smart_truncate,
     update_revision_history,
+    wfs_getfeature,
 )
 
 WORD_HTML_SAMPLE = """<div class=Section1>
@@ -158,3 +161,26 @@ class UtilsTest(PrsTestCase):
         record.save()
         # Record order_date is no longer empty.
         self.assertTrue(record.order_date)
+
+
+class HttpRequestTimeoutTest(SimpleTestCase):
+    """Outbound HTTP requests must always specify a timeout, so an unresponsive
+    upstream service cannot block a web or Celery worker indefinitely.
+    """
+
+    def test_wfs_getfeature_sets_timeout(self):
+        response = Mock()
+        response.json.return_value = {"type": "FeatureCollection", "features": []}
+        with patch("referral.utils.requests.get", return_value=response) as mock_get:
+            wfs_getfeature("some:layer")
+        self.assertEqual(mock_get.call_args.kwargs["timeout"], settings.HTTP_TIMEOUT)
+
+    def test_query_geocoder_sets_timeout(self):
+        response = Mock()
+        response.json.return_value = []
+        with (
+            patch("referral.utils.env", return_value="https://geocoder.example"),
+            patch("referral.utils.requests.get", return_value=response) as mock_get,
+        ):
+            query_geocoder("test")
+        self.assertEqual(mock_get.call_args.kwargs["timeout"], settings.HTTP_TIMEOUT)
