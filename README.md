@@ -28,14 +28,15 @@ This project uses **python-dotenv** to set environment variables (in a `.env` fi
 The following variables are required for the project to run:
 
     DATABASE_URL="postgis://USER:PASSWORD@HOST:5432/DATABASE_NAME"
+    SECRET_KEY="ThisIsASecretKey"
+
+Note: `SECRET_KEY` is mandatory whenever `DEBUG` is `False`.
 
 Variables below may also need to be defined in production (context-dependent):
 
-    SECRET_KEY="ThisIsASecretKey"
     DEBUG=True
-    ALLOWED_DOMAINS=".dbca.wa.gov.au,localhost"
-    CSRF_COOKIE_SECURE=False
-    SESSION_COOKIE_SECURE=False
+    ALLOWED_HOSTS="prs.dbca.wa.gov.au,localhost"
+    SECURE_REFERRER_POLICY="same-origin"
     EMAIL_HOST="email.host"
     EMAIL_PORT=25
     REFERRAL_EMAIL_HOST="outlook.office365.com"
@@ -63,6 +64,12 @@ Credentials for Azure should be defined in the following environment variables:
     AZURE_ACCOUNT_NAME=name
     AZURE_ACCOUNT_KEY=key
     AZURE_CONTAINER=container_name
+
+Uploads are validated server-side (by filename extension, size and sniffed file
+content), and are capped at 50 MB each. The size limit can be adjusted:
+
+    MAX_UPLOAD_SIZE_BYTES=52428800        # 50 MiB per file
+    MAX_UPLOAD_UNCOMPRESSED_BYTES=524288000  # 500 MiB for a zip archive's contents
 
 ## Running
 

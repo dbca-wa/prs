@@ -106,6 +106,9 @@ ENV/
 [._]*.s[a-w][a-z]
 [._]s[a-w][a-z]
 
+.vscode/
+
 # Agent artifacts
 .omo/
+.opencode/memory.local.jsonc
 AGENTS.md

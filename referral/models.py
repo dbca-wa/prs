@@ -34,7 +34,14 @@ from unidecode import unidecode
 from indexer.utils import get_typesense_client
 from referral.base import ActiveModelMixin, AuditMixin
 from referral.tasks import index_object, index_record
-from referral.utils import as_row_subtract_referral_cell, dewordify_text, get_srs_wgs84, search_document_normalise, smart_truncate
+from referral.utils import (
+    as_row_subtract_referral_cell,
+    dewordify_text,
+    get_srs_wgs84,
+    search_document_normalise,
+    smart_truncate,
+    validate_uploaded_file,
+)
 
 LOGGER = logging.getLogger("prs")
 # Australian state choices, for addresses.
@@ -959,7 +966,6 @@ class Task(ReferralBaseModel):
             <td>{reference}</td>
             <td>{due_date}</td>"""
         d = copy(self.__dict__)
-        d["type"] = self.type.name
         if self.description:
             d["description"] = unidecode(self.description)
         else:
@@ -1072,7 +1078,11 @@ class Record(ReferralBaseModel):
         null=True,
         max_length=255,
         upload_to="uploads/%Y/%m/%d",
-        help_text="Allowed file types: TIF,JPG,GIF,PNG,DOC,DOCX,XLS,XLSX,CSV,PDF,TXT,ZIP,MSG,QGS,XML",
+        validators=[validate_uploaded_file],
+        help_text=(
+            "Allowed file types: TIF,JPG,GIF,PNG,DOC,DOCX,XLS,XLSX,CSV,PDF,TXT,ZIP,MSG,QGS,XML "
+            f"(max {settings.MAX_UPLOAD_SIZE_BYTES // (1024 * 1024)} MB)"
+        ),
     )
     infobase_id = models.SlugField(
         blank=True,

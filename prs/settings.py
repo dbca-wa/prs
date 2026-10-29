@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 
 import dj_database_url
 from dbca_utils.utils import env
-from django.core.exceptions import DisallowedHost
+from django.core.exceptions import DisallowedHost, ImproperlyConfigured
 from django.db.utils import OperationalError
 from redis.exceptions import ConnectionError, TimeoutError
 
@@ -19,17 +19,33 @@ sys.path.insert(0, PROJECT_DIR)
 
 # Application definition
 DEBUG = env("DEBUG", False)
-SECRET_KEY = env("SECRET_KEY", "PlaceholderSecretKey")
-CSRF_COOKIE_SECURE = env("CSRF_COOKIE_SECURE", False)
+SECRET_KEY = env("SECRET_KEY", "")
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = "insecure-local-development-only"
+    else:
+        # Fail safe:
+        raise ImproperlyConfigured("The SECRET_KEY environment variable must be set when DEBUG is False.")
+# Fail safe: cookies are only sent over HTTPS unless explicitly disabled
+# (e.g. for a local development server running on plain HTTP).
+CSRF_COOKIE_SECURE = env("CSRF_COOKIE_SECURE", not DEBUG)
 CSRF_COOKIE_NAME = env("CSRF_COOKIE_NAME", "prs_csrftoken")
 CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS", "http://127.0.0.1").split(",")
-SESSION_COOKIE_SECURE = env("SESSION_COOKIE_SECURE", False)
+SESSION_COOKIE_SECURE = env("SESSION_COOKIE_SECURE", not DEBUG)
 SESSION_COOKIE_NAME = env("SESSION_COOKIE_NAME", "prs_sessionid")
 if not DEBUG:
     ALLOWED_HOSTS = env("ALLOWED_HOSTS", "localhost").split(",")
 else:
     ALLOWED_HOSTS = ["*"]
 INTERNAL_IPS = ["127.0.0.1", "::1"]
+
+# Transport security
+# TLS is terminated upstream of the application, so trust the scheme reported
+# by the proxy when deciding whether a request is secure.
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+# Only enable the redirect below once the terminating proxy is known to send
+# X-Forwarded-Proto, otherwise requests are redirected in a loop.
+SECURE_SSL_REDIRECT = env("SECURE_SSL_REDIRECT", False)
 ROOT_URLCONF = "prs.urls"
 WSGI_APPLICATION = "prs.wsgi.application"
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
@@ -141,42 +157,63 @@ APPLICATION_ALERTS_EMAIL = "PRS-Alerts@dbca.wa.gov.au"
 SITE_URL = env("SITE_URL", "localhost")
 PRS_USER_GROUP = env("PRS_USER_GROUP", "PRS user")
 PRS_POWER_USER_GROUP = env("PRS_PWUSER_GROUP", "PRS power user")
-ALLOWED_UPLOAD_TYPES = [
-    "application/msword",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "application/vnd.ms-word.document.12",
-    "application/vnd.ms-excel",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    "application/xml",
-    "application/pdf",
-    "application/zip",
-    "application/x-zip",
-    "application/x-zip-compressed",
-    "application/octet-stream",  # MIME type for zip files in Chrome.
-    "application/vnd.ms-outlook",  # Outlook MSG format.
-    "application/x-qgis-project",
-    "image/tiff",
-    "image/jpeg",
-    "image/gif",
-    "image/png",
-    "text/csv",
-    "text/html",
-    "text/plain",
+# Uploads are validated server-side by filename extension and by sniffed file
+# content (see referral.utils.validate_uploaded_file). The Content-Type header
+# sent by the browser is never trusted, because the client controls it.
+ALLOWED_UPLOAD_EXTENSIONS = [
+    "csv",
+    "doc",
+    "docx",
+    "gif",
+    "jpeg",
+    "jpg",
+    "msg",
+    "pdf",
+    "png",
+    "qgs",
+    "tif",
+    "tiff",
+    "txt",
+    "xls",
+    "xlsx",
+    "xml",
+    "zip",
 ]
+# Maximum size of a single uploaded file, in bytes (50 MiB). Uploads are read
+# into memory in places (e.g. search indexing), so an unbounded upload can
+# exhaust a web or Celery worker.
+MAX_UPLOAD_SIZE_BYTES = env("MAX_UPLOAD_SIZE_BYTES", 52428800)
+# Maximum size a zip archive may expand to, in bytes (500 MiB). Guards against
+# zip bombs being expanded in memory by the shapefile parser.
+MAX_UPLOAD_UNCOMPRESSED_BYTES = env("MAX_UPLOAD_UNCOMPRESSED_BYTES", 524288000)
+
+# Timeouts (in seconds) for outbound HTTP requests, so a slow or unresponsive
+# upstream service cannot tie up a web or Celery worker indefinitely.
+HTTP_CONNECT_TIMEOUT = env("HTTP_CONNECT_TIMEOUT", 5)
+HTTP_READ_TIMEOUT = env("HTTP_READ_TIMEOUT", 20)
+HTTP_TIMEOUT = (HTTP_CONNECT_TIMEOUT, HTTP_READ_TIMEOUT)
 
 # Caching config
 REDIS_CACHE_HOST = env("REDIS_CACHE_HOST", "")
 REDIS_CACHE_PASSWORD = env("REDIS_CACHE_PASSWORD", "")
 VALKEY_CACHE_HOST = env("VALKEY_CACHE_HOST", None)
 if REDIS_CACHE_HOST:
+    # Django passes OPTIONS straight through to redis-py's
+    # ConnectionPool.from_url(), so option names must be redis-py
+    # (lowercase) connection keyword arguments.
+    cache_options = {
+        "socket_connect_timeout": 5,  # seconds
+        "socket_timeout": 5,  # seconds
+    }
+    if REDIS_CACHE_PASSWORD:
+        cache_options["password"] = REDIS_CACHE_PASSWORD
     CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.redis.RedisCache",
             "LOCATION": REDIS_CACHE_HOST,
+            "OPTIONS": cache_options,
         }
     }
-    if REDIS_CACHE_PASSWORD:
-        CACHES["default"]["OPTIONS"]["PASSWORD"] = REDIS_CACHE_PASSWORD
 elif VALKEY_CACHE_HOST:
     CACHES = {
         "default": {

@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.urls import reverse
 
+from referral.utils import is_prs_power_user, is_prs_user
+
 
 def template_context(request):
     """Pass extra context variables to every template."""
@@ -19,8 +21,9 @@ def template_context(request):
         },
     }
     if request.user.is_authenticated:
-        context["prs_user"] = request.user.userprofile.is_prs_user()
-        context["prs_power_user"] = request.user.userprofile.is_power_user()
+        context["prs_user"] = is_prs_user(request)
+        # Superusers count as power users, matching UserProfile.is_power_user().
+        context["prs_power_user"] = request.user.is_superuser or is_prs_power_user(request)
         context["last_referral"] = request.user.userprofile.last_referral()
     context.update(settings.STATIC_CONTEXT_VARS)
     return context

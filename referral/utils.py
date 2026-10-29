@@ -1,18 +1,22 @@
 import json
 import logging
 import re
+import zipfile
 from datetime import date
 from io import BytesIO
+from pathlib import PurePosixPath
 from string import punctuation
 from typing import Any
 
 import docx2txt
+import magic
 import pyproj
 import requests
 from dbca_utils.utils import env
 from django.apps import apps
 from django.conf import settings
 from django.contrib import admin
+from django.core.exceptions import ValidationError
 from django.core.mail import EmailMultiAlternatives
 from django.db.models import Q
 from django.db.models.base import ModelBase
@@ -172,16 +176,29 @@ def filter_queryset(request: HttpRequest, model: ModelBase, queryset: Any) -> tu
     return queryset, search_string
 
 
+def get_user_group_names(request: HttpRequest) -> set[str]:
+    """Return the names of the auth groups the request's user belongs to.
+
+    The result is cached on the request object, because group membership is
+    checked several times while handling a single request (the ``is_prs_user``
+    and ``is_prs_power_user`` permission helpers, plus the template context
+    processor which runs for every rendered template). Without the cache each
+    check costs its own query.
+    """
+    if not hasattr(request, "_prs_group_names"):
+        if request.user.is_authenticated:
+            request._prs_group_names = set(request.user.groups.values_list("name", flat=True))
+        else:
+            request._prs_group_names = set()
+    return request._prs_group_names
+
+
 def is_prs_user(request: HttpRequest) -> bool:
-    if "PRS user" not in [group.name for group in request.user.groups.all()]:
-        return False
-    return True
+    return settings.PRS_USER_GROUP in get_user_group_names(request)
 
 
 def is_prs_power_user(request: HttpRequest) -> bool:
-    if "PRS power user" not in [group.name for group in request.user.groups.all()]:
-        return False
-    return True
+    return settings.PRS_POWER_USER_GROUP in get_user_group_names(request)
 
 
 def prs_user(request: HttpRequest) -> bool:
@@ -282,7 +299,7 @@ def wfs_getfeature(
     }
     if cql_filter:
         params["cql_filter"] = cql_filter
-    resp = requests.get(url, auth=auth, params=params)
+    resp = requests.get(url, auth=auth, params=params, timeout=settings.HTTP_TIMEOUT)
     try:
         resp.raise_for_status()
         response = resp.json()
@@ -300,7 +317,7 @@ def query_geocoder(q: str) -> list[dict[str, Any]]:
     url = env("GEOCODER_URL", None)
     auth = (env("SSO_USERNAME", None), env("SSO_PASSWORD", None))
     params = {"q": q}
-    resp = requests.get(url, auth=auth, params=params)
+    resp = requests.get(url, auth=auth, params=params, timeout=settings.HTTP_TIMEOUT)
     try:
         resp.raise_for_status()
         response = resp.json()
@@ -635,6 +652,127 @@ def search_document_normalise(content: str) -> str:
     content = content.strip()
 
     return content
+
+
+# Content types that are never accepted for upload, no matter what the filename
+# or the client-supplied Content-Type header claims to be. HTML, SVG and
+# JavaScript are blocked because they can execute script when opened in a
+# browser; the executable/archive formats are blocked because PRS must not
+# become a distribution channel for binaries.
+DISALLOWED_UPLOAD_CONTENT_TYPES = frozenset(
+    [
+        "application/java-archive",
+        "application/javascript",
+        "application/x-dosexec",
+        "application/x-executable",
+        "application/x-httpd-php",
+        "application/x-mach-binary",
+        "application/x-msdownload",
+        "application/x-pie-executable",
+        "application/x-sharedlib",
+        "application/x-shockwave-flash",
+        "application/xhtml+xml",
+        "image/svg+xml",
+        "text/html",
+        "text/javascript",
+    ]
+)
+
+# Maximum number of members permitted in an uploaded zip archive. A shapefile
+# contains a handful of files; many more than that indicates a zip bomb.
+MAX_ZIP_ENTRIES = 100
+
+
+def get_upload_content_type(uploaded_file: Any) -> str:
+    """Return the MIME type of an uploaded file, determined from the file's
+    content (via libmagic) rather than from the Content-Type header supplied by
+    the client, which the client is free to lie about."""
+    header = uploaded_file.read(2048)
+    uploaded_file.seek(0)
+    return magic.from_buffer(header, mime=True) if header else "application/x-empty"
+
+
+def validate_zip_archive(uploaded_file: Any) -> None:
+    """Reject zip archives that would expand to an unreasonable size, that
+    contain an unreasonable number of members, or that contain unsafe member
+    paths. Raises ``ValidationError``."""
+    uploaded_file.seek(0)
+    try:
+        with zipfile.ZipFile(uploaded_file) as archive:
+            members = archive.infolist()
+    except zipfile.BadZipFile as exc:
+        raise ValidationError("File is not a valid zip archive.") from exc
+    finally:
+        uploaded_file.seek(0)
+
+    if len(members) > MAX_ZIP_ENTRIES:
+        raise ValidationError(f"Zip archive contains too many files (maximum {MAX_ZIP_ENTRIES}).")
+
+    total_size = sum(member.file_size for member in members)
+    if total_size > settings.MAX_UPLOAD_UNCOMPRESSED_BYTES:
+        raise ValidationError(f"Zip archive is too large when uncompressed ({total_size:,} bytes).")
+
+    for member in members:
+        path = PurePosixPath(member.filename.replace("\\", "/"))
+        if path.is_absolute() or ".." in path.parts:
+            raise ValidationError("Zip archive contains an unsafe file path.")
+
+
+def _pending_upload(value: Any) -> Any:
+    """Return the upload behind ``value`` if it is a file that is yet to be
+    stored, otherwise ``None``.
+
+    ``value`` may be a raw upload (an ``UploadedFile``, which carries a
+    ``content_type``), or a ``FieldFile`` wrapping one because a model field
+    has already been assigned. Files that are already stored are not validated
+    again (they were validated when uploaded), which also avoids fetching them
+    back from remote storage.
+    """
+    if hasattr(value, "content_type"):
+        return value
+    file_obj = getattr(value, "_file", None)  # A FieldFile's pending upload.
+    if file_obj is not None and hasattr(file_obj, "content_type"):
+        return file_obj
+    return None
+
+
+def validate_uploaded_file(uploaded_file: Any) -> None:
+    """Server-side validation of an uploaded file, raising ``ValidationError``
+    if it is not acceptable.
+
+    Files are checked by size, by filename extension and by sniffed content.
+    The Content-Type header supplied by the client is deliberately not trusted.
+    Files that are already stored are ignored, so this is safe to use as a
+    model field validator.
+    """
+    upload = _pending_upload(uploaded_file)
+    if upload is None:
+        return
+
+    max_size = settings.MAX_UPLOAD_SIZE_BYTES
+    if upload.size > max_size:
+        raise ValidationError(f"File is too large ({upload.size:,} bytes). The maximum size is {max_size // (1024 * 1024)} MB.")
+
+    extension = PurePosixPath(upload.name).suffix.lstrip(".").lower()
+    if extension not in settings.ALLOWED_UPLOAD_EXTENSIONS:
+        allowed = ", ".join(sorted(settings.ALLOWED_UPLOAD_EXTENSIONS))
+        raise ValidationError(f"Files of type '{extension or 'unknown'}' are not permitted. Allowed types: {allowed}.")
+
+    content_type = get_upload_content_type(upload)
+    if content_type in DISALLOWED_UPLOAD_CONTENT_TYPES:
+        raise ValidationError(f"File content of type '{content_type}' is not permitted.")
+
+    if extension == "zip":
+        validate_zip_archive(upload)
+
+
+def validate_zip_upload(uploaded_file: Any) -> None:
+    """Validate that an uploaded file is an acceptable zip archive (used by the
+    shapefile upload form)."""
+    validate_uploaded_file(uploaded_file)
+    upload = _pending_upload(uploaded_file)
+    if upload is not None and PurePosixPath(upload.name).suffix.lstrip(".").lower() != "zip":
+        raise ValidationError("File type is not permitted (.zip only).")
 
 
 def parse_shapefile(uploaded_shapefile: Any) -> list[Any] | bool:

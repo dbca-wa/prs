@@ -27,7 +27,7 @@ jobs:
   build:
     name: Build and push multi-arch image
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     outputs:
       image_ref: ${{ env.GHCR_IMAGE }}:${{ steps.image_tag.outputs.value }}
     permissions:
@@ -37,7 +37,7 @@ jobs:
       id-token: write # OIDC for provenance
     steps:
       - name: Harden the GitHub runner
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
         with:
           egress-policy: audit
 
@@ -102,20 +102,18 @@ jobs:
       security-events: write
     timeout-minutes: 30
     steps:
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-        env:
-          TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db
+      - name: Run Anchore vulnerability scanner
+        id: scan
+        uses: anchore/scan-action@8576240a41341d866dbd7ebc72cd9fc0ef023f54 # v7.4.2
         with:
-          scan-type: 'image'
-          scanners: 'vuln'
-          image-ref: ${{ needs.build.outputs.image_ref }}
-          vuln-type: 'library'
-          severity: 'HIGH,CRITICAL'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
+          image: ${{ needs.build.outputs.image_ref }}
+          fail-build: false
+          output-format: sarif
+          severity-cutoff: high
+          only-fixed: true
+          cache-db: true
 
       - name: Upload scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
+        uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
         with:
-          sarif_file: 'trivy-results.sarif'
+          sarif_file: ${{ steps.scan.outputs.sarif }}

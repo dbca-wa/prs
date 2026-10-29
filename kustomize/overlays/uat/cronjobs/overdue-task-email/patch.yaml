@@ -3,8 +3,8 @@ kind: CronJob
 metadata:
   name: prs-cronjob
 spec:
-  # 09:00 on Monday (AWST -> UTC)
-  schedule: '0 1 * * 1'
+  schedule: '0 9 * * 1'
+  suspend: true
   jobTemplate:
     spec:
       template:

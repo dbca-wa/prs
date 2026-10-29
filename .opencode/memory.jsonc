@@ -1,0 +1,8 @@
+{
+  // Project memory for PRS. Committed so every session in this repo resolves
+  // the same project namespace. Machine-specific overrides (for example a work
+  // user namespace) belong in .opencode/memory.local.jsonc, which is ignored.
+  "namespaces": {
+    "project": "project_prs"
+  }
+}

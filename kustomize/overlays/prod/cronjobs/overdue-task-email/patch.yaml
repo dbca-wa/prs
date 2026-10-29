@@ -3,7 +3,6 @@ kind: CronJob
 metadata:
   name: prs-cronjob
 spec:
-  # At 09:00 on Monday
   schedule: '0 9 * * 1'
   jobTemplate:
     spec:

@@ -1,9 +1,8 @@
 from datetime import date
-from tempfile import NamedTemporaryFile
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 
-from referral.forms import OrganisationForm, RecordCreateForm, RecordForm, ReferralForm
+from referral.forms import OrganisationForm, RecordCreateForm, RecordForm, ReferralForm, ShapefileUploadForm
 from referral.models import DopTrigger, Organisation, ReferralType, Region
 from referral.test_models import PrsTestCase
 
@@ -56,37 +55,61 @@ class OrganisationFormTest(PrsTestCase):
 
 
 class RecordFormTest(PrsTestCase):
-    def test_form_clean(self):
-        """Test the RecordForm clean method"""
-        f1 = NamedTemporaryFile("w+b")
-        f1.write(b"Test data")
-        f1.seek(0)
-        f2 = NamedTemporaryFile("w+b")
-        f2.write(b"Test data")
-        f2.seek(0)
-        # An accepted file type.
-        up_file1 = SimpleUploadedFile(name=f1.name, content=f1.read(), content_type="text/plain")
-        # Non-accepted file type.
-        up_file2 = SimpleUploadedFile(name=f2.name, content=f2.read(), content_type="application/x-shockwave-flash")
-        file_data = {"uploaded_file": up_file1}
-        form_data = {"name": "Test file", "uploaded_file": up_file1.name}
-        form = RecordForm(data=form_data, files=file_data)
-        # Validation should pass (accepted file type).
-        self.assertTrue(form.is_valid())
-        file_data = {"uploaded_file": up_file2}
-        form = RecordForm(data=form_data, files=file_data)
-        # Validation should fail (non-accepted file type).
+    def setUp(self):
+        super().setUp()
+        self.form_data = {"name": "Test file"}
+
+    def test_form_accepts_allowed_file(self):
+        """An allowed file (by extension and content) should validate"""
+        upload = SimpleUploadedFile("test.txt", b"Test data", content_type="text/plain")
+        form = RecordForm(data=self.form_data, files={"uploaded_file": upload})
+        self.assertTrue(form.is_valid(), form.errors)
+
+    def test_form_rejects_disallowed_extension(self):
+        """A disallowed extension must be rejected even when the browser
+        claims the file has an allowed Content-Type"""
+        upload = SimpleUploadedFile("payload.exe", b"Test data", content_type="text/plain")
+        form = RecordForm(data=self.form_data, files={"uploaded_file": upload})
         self.assertFalse(form.is_valid())
+        self.assertIn("uploaded_file", form.errors)
+
+    def test_form_rejects_disallowed_content(self):
+        """HTML content must be rejected even when the filename and the
+        declared Content-Type look harmless"""
+        upload = SimpleUploadedFile("notes.txt", b"<html><script>alert(1)</script></html>", content_type="text/plain")
+        form = RecordForm(data=self.form_data, files={"uploaded_file": upload})
+        self.assertFalse(form.is_valid())
+        self.assertIn("uploaded_file", form.errors)
+
+    def test_form_rejects_oversized_file(self):
+        """A file larger than MAX_UPLOAD_SIZE_BYTES must be rejected"""
+        upload = SimpleUploadedFile("test.txt", b"Test data", content_type="text/plain")
+        with self.settings(MAX_UPLOAD_SIZE_BYTES=4):
+            form = RecordForm(data=self.form_data, files={"uploaded_file": upload})
+            valid = form.is_valid()
+        self.assertFalse(valid)
+        self.assertIn("uploaded_file", form.errors)
+
+
+class ShapefileUploadFormTest(PrsTestCase):
+    def test_accepts_zip(self):
+        upload = SimpleUploadedFile("shapefile.zip", b"PK\x05\x06" + b"\x00" * 18, content_type="text/plain")
+        # A minimal empty zip archive is structurally valid; only the upload
+        # validation is under test here.
+        form = ShapefileUploadForm(data={}, files={"uploaded_shapefile": upload})
+        self.assertTrue(form.is_valid(), form.errors)
+
+    def test_rejects_non_zip(self):
+        upload = SimpleUploadedFile("shapefile.txt", b"Test data", content_type="application/zip")
+        form = ShapefileUploadForm(data={}, files={"uploaded_shapefile": upload})
+        self.assertFalse(form.is_valid())
+        self.assertIn("uploaded_shapefile", form.errors)
 
 
 class RecordCreateFormTest(PrsTestCase):
     def test_form_clean(self):
         """Test the RecordCreateForm clean method"""
-        f = NamedTemporaryFile("w+b")
-        f.write(b"Test data")
-        f.seek(0)
-        # An accepted file type.
-        up_file = SimpleUploadedFile(name=f.name, content=f.read())
+        up_file = SimpleUploadedFile("test.txt", b"Test data")
         file_data = {"uploaded_file": up_file}
         form_data = {"name": "Test file"}
         form = RecordCreateForm(data=form_data)

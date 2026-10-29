@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Group, User
 from django.http import JsonResponse
 from django.utils.decorators import method_decorator
@@ -11,19 +12,54 @@ from taggit.models import Tag
 
 from .models import Clearance, Organisation, Referral, ReferralType, Region, Task, TaskState, TaskType
 
+# Pagination defaults for the API resources that support it.
+DEFAULT_PAGE_SIZE = 50
+MAX_PAGE_SIZE = 500
 
-class ListApiResource(View, MultipleObjectMixin):
+
+class ApiResourceMixin(LoginRequiredMixin):
+    """Mixin class for all v3 API resources.
+
+    Every API response contains PRS data, so each resource requires an
+    authenticated user; anonymous requests are redirected to the login page.
+    This mixin must precede ``View`` in the MRO of each concrete resource.
+    """
+
     http_method_names = ["get", "options", "head"]
 
+    def get_page_bounds(self, count):
+        """Return validated ``(start, stop)`` slice bounds for a response.
 
-class DetailApiResource(View, SingleObjectMixin):
-    http_method_names = ["get", "options", "head"]
+        ``limit`` is the maximum number of objects to return, counting from
+        ``offset``. It defaults to DEFAULT_PAGE_SIZE and is clamped to
+        MAX_PAGE_SIZE. Raises ValueError for malformed values, so callers can
+        return an HTTP 400 rather than raising a server error.
+        """
+        try:
+            offset = int(self.request.GET.get("offset", 0))
+            limit = int(self.request.GET.get("limit", DEFAULT_PAGE_SIZE))
+        except (TypeError, ValueError):
+            raise ValueError("Pagination values 'offset' and 'limit' must be integers.")
+        if offset < 0 or limit < 1:
+            raise ValueError("Pagination values 'offset' and 'limit' must be positive integers.")
+        # Ignore any offset which is greater than the result count.
+        if offset >= count:
+            offset = 0
+        # Django's queryset slicing is smart enough that we don't need to
+        # worry about "wrapping around".
+        return offset, offset + min(limit, MAX_PAGE_SIZE)
 
 
-class ReferralTypeAPIResource(View):
+class ListApiResource(ApiResourceMixin, View, MultipleObjectMixin):
+    pass
+
+
+class DetailApiResource(ApiResourceMixin, View, SingleObjectMixin):
+    pass
+
+
+class ReferralTypeAPIResource(ApiResourceMixin, View):
     """An API view that returns JSON of current, active referral types."""
-
-    http_method_names = ["get", "options", "head", "trace"]
 
     @method_decorator(cache_control(max_age=settings.API_RESPONSE_CACHE_SECONDS, private=True))
     @method_decorator(vary_on_cookie)
@@ -54,10 +90,8 @@ class ReferralTypeAPIResource(View):
         return JsonResponse(objects, safe=False)
 
 
-class RegionAPIResource(View):
+class RegionAPIResource(ApiResourceMixin, View):
     """An API view that returns JSON of current, active department regions."""
-
-    http_method_names = ["get", "options", "head", "trace"]
 
     @method_decorator(cache_control(max_age=settings.API_RESPONSE_CACHE_SECONDS, private=True))
     @method_decorator(vary_on_cookie)
@@ -86,10 +120,8 @@ class RegionAPIResource(View):
         return JsonResponse(objects, safe=False)
 
 
-class OrganisationAPIResource(View):
+class OrganisationAPIResource(ApiResourceMixin, View):
     """An API view that returns JSON of current, active referring organisations."""
-
-    http_method_names = ["get", "options", "head", "trace"]
 
     @method_decorator(cache_control(max_age=settings.API_RESPONSE_CACHE_SECONDS, private=True))
     @method_decorator(vary_on_cookie)
@@ -127,10 +159,8 @@ class OrganisationAPIResource(View):
         return JsonResponse(objects, safe=False)
 
 
-class TaskStateAPIResource(View):
+class TaskStateAPIResource(ApiResourceMixin, View):
     """An API view that returns JSON of current, active task states."""
-
-    http_method_names = ["get", "options", "head", "trace"]
 
     @method_decorator(cache_control(max_age=settings.API_RESPONSE_CACHE_SECONDS, private=True))
     @method_decorator(vary_on_cookie)
@@ -162,10 +192,8 @@ class TaskStateAPIResource(View):
         return JsonResponse(objects, safe=False)
 
 
-class TaskTypeAPIResource(View):
+class TaskTypeAPIResource(ApiResourceMixin, View):
     """An API view that returns JSON of current, active referral types."""
-
-    http_method_names = ["get", "options", "head", "trace"]
 
     @method_decorator(cache_control(max_age=settings.API_RESPONSE_CACHE_SECONDS, private=True))
     @method_decorator(vary_on_cookie)
@@ -197,10 +225,8 @@ class TaskTypeAPIResource(View):
         return JsonResponse(objects, safe=False)
 
 
-class UserAPIResource(View):
+class UserAPIResource(ApiResourceMixin, View):
     """An API view that returns JSON of current, active users."""
-
-    http_method_names = ["get", "options", "head", "trace"]
 
     @method_decorator(cache_control(max_age=settings.API_RESPONSE_CACHE_SECONDS, private=True))
     @method_decorator(vary_on_cookie)
@@ -231,10 +257,8 @@ class UserAPIResource(View):
         return JsonResponse(objects, safe=False)
 
 
-class TagAPIResource(View):
+class TagAPIResource(ApiResourceMixin, View):
     """An API view that returns JSON of current, active users."""
-
-    http_method_names = ["get", "options", "head", "trace"]
 
     @method_decorator(cache_control(max_age=settings.API_RESPONSE_CACHE_SECONDS, private=True))
     @method_decorator(vary_on_cookie)
@@ -263,12 +287,10 @@ class TagAPIResource(View):
         return JsonResponse(objects, safe=False)
 
 
-class ReferralAPIResource(View):
+class ReferralAPIResource(ApiResourceMixin, View):
     """An API view that returns JSON of current, active referrals.
     This API resource is more elaborate than those above, including pagination and filtering.
     """
-
-    http_method_names = ["get", "options", "head", "trace"]
 
     @method_decorator(cache_control(max_age=settings.API_RESPONSE_CACHE_SECONDS, private=True))
     @method_decorator(vary_on_cookie)
@@ -292,22 +314,11 @@ class ReferralAPIResource(View):
             queryset = queryset.filter(tags__pk__in=[self.request.GET["tag__id"]])
 
         obj_count = queryset.count()  # Count the filtered results.
-
-        # Paginate the queryset.
-        offset = 0
-        if self.request.GET.get("offset"):
-            offset = int(self.request.GET["offset"])
-            # Ignore any offset which is greater than the result count.
-            if offset >= obj_count:
-                offset = 0
-
-        # Django's queryset slicing is smart enough that we don't need to worry about "wrapping around".
-        if self.request.GET.get("limit"):
-            limit = offset + int(self.request.GET["limit"])
-        else:
-            limit = offset + 50  # Default to a maximum of 50 objects in the response.
-
-        queryset = queryset[offset:limit]
+        try:
+            start, stop = self.get_page_bounds(obj_count)
+        except ValueError as exc:
+            return JsonResponse({"error": str(exc)}, status=400)
+        queryset = queryset[start:stop]
         resp = {
             "count": obj_count,
             "objects": [
@@ -334,12 +345,10 @@ class ReferralAPIResource(View):
         return JsonResponse(resp)
 
 
-class TaskAPIResource(View):
+class TaskAPIResource(ApiResourceMixin, View):
     """An API view that returns JSON of current, active tasks.
     This API resource is more elaborate than those above, including pagination and filtering.
     """
-
-    http_method_names = ["get", "options", "head", "trace"]
 
     @method_decorator(cache_control(max_age=settings.API_RESPONSE_CACHE_SECONDS, private=True))
     @method_decorator(vary_on_cookie)
@@ -363,22 +372,11 @@ class TaskAPIResource(View):
             queryset = queryset.filter(start_date__lte=self.request.GET["start_date__lte"])
 
         obj_count = queryset.count()  # Count the filtered results.
-
-        # Paginate the queryset.
-        offset = 0
-        if self.request.GET.get("offset"):
-            offset = int(self.request.GET["offset"])
-            # Ignore any offset which is greater than the result count.
-            if offset >= obj_count:
-                offset = 0
-
-        # Django's queryset slicing is smart enough that we don't need to worry about "wrapping around".
-        if self.request.GET.get("limit"):
-            limit = offset + int(self.request.GET["limit"])
-        else:
-            limit = offset + 50  # Default to a maximum of 50 objects in the response.
-
-        queryset = queryset[offset:limit]
+        try:
+            start, stop = self.get_page_bounds(obj_count)
+        except ValueError as exc:
+            return JsonResponse({"error": str(exc)}, status=400)
+        queryset = queryset[start:stop]
         resp = {
             "count": obj_count,
             "objects": [
@@ -405,12 +403,10 @@ class TaskAPIResource(View):
         return JsonResponse(resp)
 
 
-class ClearanceAPIResource(View):
+class ClearanceAPIResource(ApiResourceMixin, View):
     """An API view that returns JSON of current, active clearance requests.
     This API resource is more elaborate than those above, including pagination and filtering.
     """
-
-    http_method_names = ["get", "options", "head", "trace"]
 
     @method_decorator(cache_control(max_age=settings.API_RESPONSE_CACHE_SECONDS, private=True))
     @method_decorator(vary_on_cookie)
@@ -432,22 +428,11 @@ class ClearanceAPIResource(View):
             queryset = queryset.filter(task__start_date__lte=self.request.GET["start_date__lte"])
 
         obj_count = queryset.count()  # Count the filtered results.
-
-        # Paginate the queryset.
-        offset = 0
-        if self.request.GET.get("offset"):
-            offset = int(self.request.GET["offset"])
-            # Ignore any offset which is greater than the result count.
-            if offset >= obj_count:
-                offset = 0
-
-        # Django's queryset slicing is smart enough that we don't need to worry about "wrapping around".
-        if self.request.GET.get("limit"):
-            limit = offset + int(self.request.GET["limit"])
-        else:
-            limit = offset + 50  # Default to a maximum of 50 objects in the response.
-
-        queryset = queryset[offset:limit]
+        try:
+            start, stop = self.get_page_bounds(obj_count)
+        except ValueError as exc:
+            return JsonResponse({"error": str(exc)}, status=400)
+        queryset = queryset[start:stop]
         resp = {
             "count": obj_count,
             "objects": [

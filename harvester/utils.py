@@ -327,9 +327,9 @@ def email_harvest_actions(to_emails: list[str], actions: list[str]) -> None:
     html_content = """<p>This is an automated message to summarise harvest
     actions undertaken for emailed referrals.</p>
     <p>Actions:</p>"""
-    for l in actions:
-        text_content += f"{l}\n"
-        html_content += f"{l}<br>"
+    for action in actions:
+        text_content += f"{action}\n"
+        html_content += f"{action}<br>"
     msg = EmailMultiAlternatives(subject, text_content, from_email, to_emails)
     msg.attach_alternative(html_content, "text/html")
     # Email should fail gracefully (no Exception raised on failure).
@@ -351,7 +351,7 @@ def query_slip(pin: int | str) -> requests.Response:
         "outputFormat": "json",
         "cql_filter": f"polygon_number={pin}",
     }
-    resp: requests.Response = requests.get(url, auth=auth, params=params)
+    resp: requests.Response = requests.get(url, auth=auth, params=params, timeout=settings.HTTP_TIMEOUT)
     return resp
 
 
@@ -369,6 +369,6 @@ def query_slip_esri(pin: int | str) -> dict[str, Any]:
         "returnGeometry": "true",
         "where": f"polygon_number={pin}",
     }
-    resp: requests.Response = requests.get(url, auth=auth, params=params)
+    resp: requests.Response = requests.get(url, auth=auth, params=params, timeout=settings.HTTP_TIMEOUT)
     resp.raise_for_status()
     return resp.json()

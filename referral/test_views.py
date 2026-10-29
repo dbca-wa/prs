@@ -1,12 +1,16 @@
+import io
 import json
 import os
 import uuid
+import zipfile
 from datetime import date, timedelta
 
 from django.contrib.auth import get_user_model
 from django.contrib.gis.geos import Polygon
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db import connection
 from django.test import Client
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from mixer.backend.django import mixer
 from taggit.models import Tag
@@ -24,9 +28,11 @@ from referral.models import (
     ReferralType,
     Region,
     Task,
+    TaskState,
     TaskType,
 )
 from referral.test_models import PrsTestCase
+from referral.utils import MAX_ZIP_ENTRIES
 
 User = get_user_model()
 
@@ -119,6 +125,24 @@ class BaseViewTest(PrsViewsTestCase):
 
 class SiteHomeTest(PrsViewsTestCase):
     """Test the SiteHome view."""
+
+    def get_query_count(self, url_name="site_home"):
+        with CaptureQueriesContext(connection) as ctx:
+            resp = self.client.get(reverse(url_name))
+        self.assertEqual(resp.status_code, 200)
+        return len(ctx)
+
+    def test_query_count_is_constant(self):
+        """Rendering more task rows must not add queries (no N+1)."""
+        baseline = self.get_query_count()
+        ongoing = TaskState.objects.get(name="In progress")
+        mixer.cycle(5).blend(Task, referral=mixer.SELECT, type=mixer.SELECT, state=ongoing, assigned_user=self.n_user, search_vector=None)
+        self.assertEqual(self.get_query_count(), baseline)
+
+    def test_query_budget(self):
+        """Guard against per-row foreign key lookups on the site home tables."""
+        self.assertLessEqual(self.get_query_count(), 10)
+        self.assertLessEqual(self.get_query_count("site_home_print"), 10)
 
     def test_homepage(self):
         """Test that site homepage view contains required elements"""
@@ -247,6 +271,38 @@ class ReferralDetailTest(PrsViewsTestCase):
         Bookmark.objects.create(referral=self.ref, user=self.n_user)
         resp = self.client.get(url)
         self.assertContains(resp, "Remove bookmark")
+
+
+class ReferralDetailQueryCountTest(PrsViewsTestCase):
+    """Query-count regressions on the referral detail page.
+
+    The page renders a table per child model, so it is easy to accidentally
+    reintroduce an N+1 query pattern (one query per row per foreign key).
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.ref = Referral.objects.first()
+        self.url = self.ref.get_absolute_url()
+
+    def get_query_count(self):
+        with CaptureQueriesContext(connection) as ctx:
+            resp = self.client.get(self.url)
+        self.assertEqual(resp.status_code, 200)
+        return len(ctx)
+
+    def test_child_rows_do_not_add_queries(self):
+        """Rendering extra child rows must not add queries."""
+        baseline = self.get_query_count()
+        mixer.cycle(5).blend(Task, referral=self.ref, type=mixer.SELECT, state=mixer.SELECT, assigned_user=self.n_user, search_vector=None)
+        mixer.cycle(5).blend(Note, referral=self.ref, type=mixer.SELECT, note=mixer.RANDOM, search_vector=None)
+        mixer.cycle(5).blend(Record, referral=self.ref, search_vector=None)
+        mixer.cycle(5).blend(Location, referral=self.ref)
+        self.assertEqual(self.get_query_count(), baseline)
+
+    def test_query_budget(self):
+        """Guard against duplicate object queries and re-queried child sets."""
+        self.assertLessEqual(self.get_query_count(), 30)
 
 
 class ReferralCreateTest(PrsViewsTestCase):
@@ -1022,6 +1078,58 @@ class RecordUploadViewTest(PrsViewsTestCase):
         self.client.login(username="readonlyuser", password="pass")
         resp = self.client.post(url, {"file": f})
         self.assertEqual(resp.status_code, 403)
+
+    def test_post_disallowed_extension(self):
+        """A disallowed extension is rejected even if the client claims an
+        allowed Content-Type"""
+        referral = Referral.objects.first()
+        url = reverse("referral_record_upload", kwargs={"pk": referral.pk})
+        f = SimpleUploadedFile("payload.exe", b"MZ\x90\x00", content_type="text/plain")
+        resp = self.client.post(url, {"file": f})
+        self.assertEqual(resp.status_code, 400)
+
+    def test_post_disallowed_content(self):
+        """HTML content is rejected even with an allowed extension and a
+        harmless declared Content-Type"""
+        referral = Referral.objects.first()
+        url = reverse("referral_record_upload", kwargs={"pk": referral.pk})
+        f = SimpleUploadedFile("notes.txt", b"<html><script>alert(1)</script></html>", content_type="text/plain")
+        resp = self.client.post(url, {"file": f})
+        self.assertEqual(resp.status_code, 400)
+
+    def test_post_oversized(self):
+        """Uploads larger than MAX_UPLOAD_SIZE_BYTES are rejected"""
+        referral = Referral.objects.first()
+        url = reverse("referral_record_upload", kwargs={"pk": referral.pk})
+        f = SimpleUploadedFile("test.txt", b"x" * 32, content_type="text/plain")
+        with self.settings(MAX_UPLOAD_SIZE_BYTES=16):
+            resp = self.client.post(url, {"file": f})
+        self.assertEqual(resp.status_code, 400)
+
+    def test_post_zip_too_many_entries(self):
+        """A zip containing an unreasonable number of entries is rejected
+        before it is parsed"""
+        referral = Referral.objects.first()
+        url = reverse("referral_record_upload", kwargs={"pk": referral.pk})
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, "w") as archive:
+            for i in range(MAX_ZIP_ENTRIES + 1):
+                archive.writestr(f"file_{i}.txt", "x")
+        f = SimpleUploadedFile("archive.zip", buffer.getvalue(), content_type="application/zip")
+        resp = self.client.post(url, {"file": f})
+        self.assertEqual(resp.status_code, 400)
+
+    def test_post_zip_expands_too_large(self):
+        """A zip that expands beyond MAX_UPLOAD_UNCOMPRESSED_BYTES is rejected"""
+        referral = Referral.objects.first()
+        url = reverse("referral_record_upload", kwargs={"pk": referral.pk})
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+            archive.writestr("shp.shp", b"0" * 1024)
+        f = SimpleUploadedFile("archive.zip", buffer.getvalue(), content_type="application/zip")
+        with self.settings(MAX_UPLOAD_UNCOMPRESSED_BYTES=512):
+            resp = self.client.post(url, {"file": f})
+        self.assertEqual(resp.status_code, 400)
 
     def test_post_shapefile(self):
         """Test POST response for a zipped shapefile"""
