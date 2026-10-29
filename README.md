@@ -65,6 +65,12 @@ Credentials for Azure should be defined in the following environment variables:
     AZURE_ACCOUNT_KEY=key
     AZURE_CONTAINER=container_name
 
+Uploads are validated server-side (by filename extension, size and sniffed file
+content), and are capped at 50 MB each. The size limit can be adjusted:
+
+    MAX_UPLOAD_SIZE_BYTES=52428800        # 50 MiB per file
+    MAX_UPLOAD_UNCOMPRESSED_BYTES=524288000  # 500 MiB for a zip archive's contents
+
 ## Running
 
 Use `runserver` to run a local copy of the application:

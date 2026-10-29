@@ -1,6 +1,8 @@
+import io
 import json
 import os
 import uuid
+import zipfile
 from datetime import date, timedelta
 
 from django.contrib.auth import get_user_model
@@ -27,6 +29,7 @@ from referral.models import (
     TaskType,
 )
 from referral.test_models import PrsTestCase
+from referral.utils import MAX_ZIP_ENTRIES
 
 User = get_user_model()
 
@@ -1022,6 +1025,58 @@ class RecordUploadViewTest(PrsViewsTestCase):
         self.client.login(username="readonlyuser", password="pass")
         resp = self.client.post(url, {"file": f})
         self.assertEqual(resp.status_code, 403)
+
+    def test_post_disallowed_extension(self):
+        """A disallowed extension is rejected even if the client claims an
+        allowed Content-Type"""
+        referral = Referral.objects.first()
+        url = reverse("referral_record_upload", kwargs={"pk": referral.pk})
+        f = SimpleUploadedFile("payload.exe", b"MZ\x90\x00", content_type="text/plain")
+        resp = self.client.post(url, {"file": f})
+        self.assertEqual(resp.status_code, 400)
+
+    def test_post_disallowed_content(self):
+        """HTML content is rejected even with an allowed extension and a
+        harmless declared Content-Type"""
+        referral = Referral.objects.first()
+        url = reverse("referral_record_upload", kwargs={"pk": referral.pk})
+        f = SimpleUploadedFile("notes.txt", b"<html><script>alert(1)</script></html>", content_type="text/plain")
+        resp = self.client.post(url, {"file": f})
+        self.assertEqual(resp.status_code, 400)
+
+    def test_post_oversized(self):
+        """Uploads larger than MAX_UPLOAD_SIZE_BYTES are rejected"""
+        referral = Referral.objects.first()
+        url = reverse("referral_record_upload", kwargs={"pk": referral.pk})
+        f = SimpleUploadedFile("test.txt", b"x" * 32, content_type="text/plain")
+        with self.settings(MAX_UPLOAD_SIZE_BYTES=16):
+            resp = self.client.post(url, {"file": f})
+        self.assertEqual(resp.status_code, 400)
+
+    def test_post_zip_too_many_entries(self):
+        """A zip containing an unreasonable number of entries is rejected
+        before it is parsed"""
+        referral = Referral.objects.first()
+        url = reverse("referral_record_upload", kwargs={"pk": referral.pk})
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, "w") as archive:
+            for i in range(MAX_ZIP_ENTRIES + 1):
+                archive.writestr(f"file_{i}.txt", "x")
+        f = SimpleUploadedFile("archive.zip", buffer.getvalue(), content_type="application/zip")
+        resp = self.client.post(url, {"file": f})
+        self.assertEqual(resp.status_code, 400)
+
+    def test_post_zip_expands_too_large(self):
+        """A zip that expands beyond MAX_UPLOAD_UNCOMPRESSED_BYTES is rejected"""
+        referral = Referral.objects.first()
+        url = reverse("referral_record_upload", kwargs={"pk": referral.pk})
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+            archive.writestr("shp.shp", b"0" * 1024)
+        f = SimpleUploadedFile("archive.zip", buffer.getvalue(), content_type="application/zip")
+        with self.settings(MAX_UPLOAD_UNCOMPRESSED_BYTES=512):
+            resp = self.client.post(url, {"file": f})
+        self.assertEqual(resp.status_code, 400)
 
     def test_post_shapefile(self):
         """Test POST response for a zipped shapefile"""

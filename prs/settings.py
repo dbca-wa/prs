@@ -157,28 +157,35 @@ APPLICATION_ALERTS_EMAIL = "PRS-Alerts@dbca.wa.gov.au"
 SITE_URL = env("SITE_URL", "localhost")
 PRS_USER_GROUP = env("PRS_USER_GROUP", "PRS user")
 PRS_POWER_USER_GROUP = env("PRS_PWUSER_GROUP", "PRS power user")
-ALLOWED_UPLOAD_TYPES = [
-    "application/msword",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "application/vnd.ms-word.document.12",
-    "application/vnd.ms-excel",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    "application/xml",
-    "application/pdf",
-    "application/zip",
-    "application/x-zip",
-    "application/x-zip-compressed",
-    "application/octet-stream",  # MIME type for zip files in Chrome.
-    "application/vnd.ms-outlook",  # Outlook MSG format.
-    "application/x-qgis-project",
-    "image/tiff",
-    "image/jpeg",
-    "image/gif",
-    "image/png",
-    "text/csv",
-    "text/html",
-    "text/plain",
+# Uploads are validated server-side by filename extension and by sniffed file
+# content (see referral.utils.validate_uploaded_file). The Content-Type header
+# sent by the browser is never trusted, because the client controls it.
+ALLOWED_UPLOAD_EXTENSIONS = [
+    "csv",
+    "doc",
+    "docx",
+    "gif",
+    "jpeg",
+    "jpg",
+    "msg",
+    "pdf",
+    "png",
+    "qgs",
+    "tif",
+    "tiff",
+    "txt",
+    "xls",
+    "xlsx",
+    "xml",
+    "zip",
 ]
+# Maximum size of a single uploaded file, in bytes (50 MiB). Uploads are read
+# into memory in places (e.g. search indexing), so an unbounded upload can
+# exhaust a web or Celery worker.
+MAX_UPLOAD_SIZE_BYTES = env("MAX_UPLOAD_SIZE_BYTES", 52428800)
+# Maximum size a zip archive may expand to, in bytes (500 MiB). Guards against
+# zip bombs being expanded in memory by the shapefile parser.
+MAX_UPLOAD_UNCOMPRESSED_BYTES = env("MAX_UPLOAD_UNCOMPRESSED_BYTES", 524288000)
 
 # Caching config
 REDIS_CACHE_HOST = env("REDIS_CACHE_HOST", "")

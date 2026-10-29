@@ -10,6 +10,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Group
 from django.contrib.gis.geos import GEOSGeometry, MultiPolygon, Point
+from django.core.exceptions import ValidationError
 from django.core.mail import EmailMultiAlternatives
 from django.core.paginator import Paginator
 from django.core.serializers import serialize
@@ -63,6 +64,7 @@ from referral.utils import (
     prs_user,
     query_geocoder,
     smart_truncate,
+    validate_uploaded_file,
     wfs_getfeature,
 )
 from referral.views_base import PrsObjectCreate, PrsObjectDelete, PrsObjectDetail, PrsObjectList, PrsObjectUpdate
@@ -1162,8 +1164,12 @@ class RecordUpload(LoginRequiredMixin, View):
             return HttpResponseBadRequest("File not found")
 
         uploaded_file = request.FILES["file"]
-        if uploaded_file.content_type not in settings.ALLOWED_UPLOAD_TYPES:
-            return HttpResponseBadRequest("Disallowed file type")
+        # File type and size are validated from the file itself; the
+        # Content-Type header supplied by the browser is not trusted.
+        try:
+            validate_uploaded_file(uploaded_file)
+        except ValidationError as exc:
+            return HttpResponseBadRequest(exc.messages[0])
 
         # If a zip file is being uploaded on a referral, attempt to parse it as a shapefile.
         if uploaded_file.name.lower().endswith(".zip") and self.parent_referral:

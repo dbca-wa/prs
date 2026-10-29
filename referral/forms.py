@@ -27,6 +27,7 @@ from referral.models import (
     TaskState,
     TaskType,
 )
+from referral.utils import validate_zip_upload
 
 
 class OrganisationChoiceField(forms.ModelChoiceField):
@@ -384,12 +385,9 @@ class RecordForm(BaseForm):
         model = Record
         exclude = BaseForm.Meta.exclude + ["referral"]
 
-    def clean(self):
-        cleaned_data = super().clean()
-        u = cleaned_data.get("uploaded_file")
-        if u and hasattr(u, "content_type") and u.content_type not in settings.ALLOWED_UPLOAD_TYPES:
-            self._errors["uploaded_file"] = self.error_class(["File type is not permitted."])
-        return cleaned_data
+    # NOTE: uploaded files are validated by ``Record.uploaded_file``'s
+    # validators (referral.utils.validate_uploaded_file); the Content-Type
+    # header supplied by the browser is not trusted.
 
 
 class RecordCreateForm(RecordForm):
@@ -442,7 +440,11 @@ class RecordCreateForm(RecordForm):
 
 
 class ShapefileUploadForm(forms.Form):
-    uploaded_shapefile = forms.FileField(required=True, help_text="Zipped shapefile (polygon/multipolygon features only)")
+    uploaded_shapefile = forms.FileField(
+        required=True,
+        validators=[validate_zip_upload],
+        help_text="Zipped shapefile (polygon/multipolygon features only)",
+    )
     upload_button = Submit("upload", "Upload", css_class="btn-lg")
     cancel_button = Submit("cancel", "Cancel", css_class="btn-secondary")
 
@@ -458,14 +460,6 @@ class ShapefileUploadForm(forms.Form):
             "uploaded_shapefile",
             Div(self.upload_button, self.cancel_button, css_class="col-sm-offset-4 col-md-offset-3 col-lg-offset-2"),
         )
-
-    def clean(self):
-        # Validation: zip files only.
-        cleaned_data = super().clean()
-        upload = cleaned_data.get("uploaded_shapefile")
-        if upload and upload.content_type not in ["application/zip", "application/x-zip", "application/x-zip-compressed"]:
-            self._errors["uploaded_shapefile"] = self.error_class(["File type is not permitted (.zip only)."])
-        return cleaned_data
 
 
 class CustomFormHelper(BaseFormHelper):
