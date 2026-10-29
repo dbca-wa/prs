@@ -8,7 +8,9 @@ from datetime import date, timedelta
 from django.contrib.auth import get_user_model
 from django.contrib.gis.geos import Polygon
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db import connection
 from django.test import Client
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from mixer.backend.django import mixer
 from taggit.models import Tag
@@ -26,6 +28,7 @@ from referral.models import (
     ReferralType,
     Region,
     Task,
+    TaskState,
     TaskType,
 )
 from referral.test_models import PrsTestCase
@@ -122,6 +125,24 @@ class BaseViewTest(PrsViewsTestCase):
 
 class SiteHomeTest(PrsViewsTestCase):
     """Test the SiteHome view."""
+
+    def get_query_count(self, url_name="site_home"):
+        with CaptureQueriesContext(connection) as ctx:
+            resp = self.client.get(reverse(url_name))
+        self.assertEqual(resp.status_code, 200)
+        return len(ctx)
+
+    def test_query_count_is_constant(self):
+        """Rendering more task rows must not add queries (no N+1)."""
+        baseline = self.get_query_count()
+        ongoing = TaskState.objects.get(name="In progress")
+        mixer.cycle(5).blend(Task, referral=mixer.SELECT, type=mixer.SELECT, state=ongoing, assigned_user=self.n_user, search_vector=None)
+        self.assertEqual(self.get_query_count(), baseline)
+
+    def test_query_budget(self):
+        """Guard against per-row foreign key lookups on the site home tables."""
+        self.assertLessEqual(self.get_query_count(), 10)
+        self.assertLessEqual(self.get_query_count("site_home_print"), 10)
 
     def test_homepage(self):
         """Test that site homepage view contains required elements"""
@@ -250,6 +271,38 @@ class ReferralDetailTest(PrsViewsTestCase):
         Bookmark.objects.create(referral=self.ref, user=self.n_user)
         resp = self.client.get(url)
         self.assertContains(resp, "Remove bookmark")
+
+
+class ReferralDetailQueryCountTest(PrsViewsTestCase):
+    """Query-count regressions on the referral detail page.
+
+    The page renders a table per child model, so it is easy to accidentally
+    reintroduce an N+1 query pattern (one query per row per foreign key).
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.ref = Referral.objects.first()
+        self.url = self.ref.get_absolute_url()
+
+    def get_query_count(self):
+        with CaptureQueriesContext(connection) as ctx:
+            resp = self.client.get(self.url)
+        self.assertEqual(resp.status_code, 200)
+        return len(ctx)
+
+    def test_child_rows_do_not_add_queries(self):
+        """Rendering extra child rows must not add queries."""
+        baseline = self.get_query_count()
+        mixer.cycle(5).blend(Task, referral=self.ref, type=mixer.SELECT, state=mixer.SELECT, assigned_user=self.n_user, search_vector=None)
+        mixer.cycle(5).blend(Note, referral=self.ref, type=mixer.SELECT, note=mixer.RANDOM, search_vector=None)
+        mixer.cycle(5).blend(Record, referral=self.ref, search_vector=None)
+        mixer.cycle(5).blend(Location, referral=self.ref)
+        self.assertEqual(self.get_query_count(), baseline)
+
+    def test_query_budget(self):
+        """Guard against duplicate object queries and re-queried child sets."""
+        self.assertLessEqual(self.get_query_count(), 30)
 
 
 class ReferralCreateTest(PrsViewsTestCase):

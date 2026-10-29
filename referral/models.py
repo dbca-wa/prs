@@ -966,7 +966,6 @@ class Task(ReferralBaseModel):
             <td>{reference}</td>
             <td>{due_date}</td>"""
         d = copy(self.__dict__)
-        d["type"] = self.type.name
         if self.description:
             d["description"] = unidecode(self.description)
         else:

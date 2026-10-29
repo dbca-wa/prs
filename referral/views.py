@@ -71,6 +71,17 @@ from referral.views_base import PrsObjectCreate, PrsObjectDelete, PrsObjectDetai
 
 LOGGER = logging.getLogger("prs")
 
+# Foreign keys dereferenced by each child model's as_row()/as_row_actions()
+# when the referral detail page builds its tables. Fetched up front with the
+# rows so that rendering does not issue one query per object per foreign key.
+CHILD_MODEL_SELECT_RELATED = {
+    "task": ("type", "referral", "assigned_user", "state"),
+    "note": ("type", "creator", "referral"),
+    "record": ("referral",),
+    "location": ("referral",),
+    "condition": ("category", "referral"),
+}
+
 
 class SiteHome(LoginRequiredMixin, ListView):
     """Site home page view. Returns an object list of tasks (ongoing or stopped)."""
@@ -79,7 +90,14 @@ class SiteHome(LoginRequiredMixin, ListView):
     printable = False
 
     def get_queryset(self):
-        qs = Task.objects.current().filter(assigned_user=self.request.user)
+        # Foreign keys rendered by Task.as_row_for_site_home() and
+        # as_row_for_index_print(): one row per task, so without select_related
+        # each row costs several extra queries.
+        qs = (
+            Task.objects.current()
+            .filter(assigned_user=self.request.user)
+            .select_related("type", "state", "referral", "referral__type", "referral__referring_org")
+        )
         if self.stopped_tasks:
             qs = qs.filter(state__name="Stopped").order_by("stop_date")
         else:
@@ -520,26 +538,33 @@ class ReferralDetail(PrsObjectDetail):
         context["page_title"] = f"PRS | Referrals | {ref.pk}"
         context["rel_model"] = self.related_model
         # Test if the user has bookmarked this referral.
-        if Bookmark.objects.current().filter(referral=ref, user=self.request.user).exists():
-            context["bookmark"] = Bookmark.objects.filter(referral=ref, user=self.request.user)[0]
+        bookmark = Bookmark.objects.current().filter(referral=ref, user=self.request.user).first()
+        if bookmark:
+            context["bookmark"] = bookmark
 
         # Generate a table for each child model type: task_list, note_list, etc. and add to the context.
         for m in [Task, Note, Record, Location, Condition]:
             obj_tab = f"tab_{m._meta.model_name}"
             obj_list = f"{m._meta.model_name}_list"
-            if m.objects.current().filter(referral=ref):
-                obj_name = m._meta.object_name.lower()
-                context[f"{obj_name}_count"] = m.objects.current().filter(referral=ref).count()
-                obj_qs = m.objects.current().filter(referral=ref)
-                if m is Record:  # Sort records newest > oldest (nulls last).
-                    obj_qs = obj_qs.order_by(F("order_date").desc(nulls_last=True))
+            obj_name = m._meta.object_name.lower()
+            select_related = CHILD_MODEL_SELECT_RELATED.get(m._meta.model_name, ())
+            obj_qs = m.objects.current().filter(referral=ref).select_related(*select_related)
+            if m is Record:  # Sort records newest > oldest (nulls last).
+                obj_qs = obj_qs.order_by(F("order_date").desc(nulls_last=True))
+            # Evaluate the queryset once: the count, the table rows and the
+            # context list all come from the same objects. Previously this ran
+            # an EXISTS query, a COUNT query and a third query for the rows,
+            # plus a query per foreign key dereferenced by each row.
+            objs = list(obj_qs)
+            if objs:
+                context[f"{obj_name}_count"] = len(objs)
                 headers = copy(m.get_headers())
                 headers.remove("Referral ID")
                 headers.append("Actions")
                 # Construct the <thead> element.
                 thead = "".join([f"<th>{header}</th>" for header in headers])
                 # Construct the <tbody> element.
-                rows = [f"<tr>{obj.as_row_minus_referral()}{obj.as_row_actions()}</tr>" for obj in obj_qs]
+                rows = [f"<tr>{obj.as_row_minus_referral()}{obj.as_row_actions()}</tr>" for obj in objs]
                 tbody = "".join(rows)
                 # Construct the <table> element.
                 table_html = f"""<table class="table table-striped table-bordered table-condensed prs-object-table">
@@ -548,15 +573,18 @@ class ReferralDetail(PrsObjectDetail):
                     table_html += '<div id="ref_locations"></div>'
                 obj_tab_html = mark_safe(table_html)
                 context[obj_tab] = obj_tab_html
-                context[obj_list] = obj_qs
+                context[obj_list] = objs
             else:
-                context[f"{m._meta.object_name.lower()}_count"] = 0
+                context[f"{obj_name}_count"] = 0
                 context[obj_tab] = f"No {m._meta.verbose_name_plural} found for this referral"
                 context[obj_list] = None
 
-        # Add child locations serialised as GeoJSON (if geometry exists).
-        if any([loc.poly for loc in ref.location_set.current()]):
-            context["geojson_locations"] = serialize("geojson", ref.location_set.current(), geometry_field="poly", srid=4283)
+        # Add child locations serialised as GeoJSON (if geometry exists). Reuse
+        # the locations already fetched for the table above instead of
+        # re-querying the same objects.
+        locations = context.get("location_list") or []
+        if any(loc.poly for loc in locations):
+            context["geojson_locations"] = serialize("geojson", locations, geometry_field="poly", srid=4283)
 
         context["has_conditions"] = ref.condition_set.exists()
         return context

@@ -181,6 +181,17 @@ class PrsObjectDetail(LoginRequiredMixin, DetailView):
             self.model = is_model_or_string(kwargs["model"])
         return super().dispatch(request, *args, **kwargs)
 
+    def get_object(self, queryset=None):
+        """Fetch the object once per request and reuse it.
+
+        get(), get_context_data() and subclass overrides all call this method,
+        which previously meant a duplicate query (or three, on the referral
+        detail page) for the same row.
+        """
+        if getattr(self, "object", None) is None:
+            self.object = super().get_object(queryset)
+        return self.object
+
     def get_context_data(self, **kwargs):
         from referral.models import Location, Note, Record, Task
 
