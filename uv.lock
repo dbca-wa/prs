@@ -1809,7 +1809,7 @@ requires-dist = [
     { name = "requests", specifier = "==2.34.2" },
     { name = "sentry-sdk", extras = ["django"], specifier = "==2.72.0" },
     { name = "shapely", specifier = "==2.2.0" },
-    { name = "typesense", specifier = "==2.1.0" },
+    { name = "typesense", specifier = "==2.1.1" },
     { name = "unidecode", specifier = "==1.4.0" },
     { name = "webtemplate-dbca", specifier = "==1.9.1" },
     { name = "whitenoise", extras = ["brotli"], specifier = "==6.12.0" },
@@ -2352,15 +2352,15 @@ wheels = [
 
 [[package]]
 name = "typesense"
-version = "2.1.0"
+version = "2.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/db/a8/0bcb32ef0234b40261ef4ddde32d46dac2c29fd9a3d1222b7eae8771f576/typesense-2.1.0.tar.gz", hash = "sha256:4fe40fc6ace5fcb73e272a695d13073e265da79f605595d329a718e563cb0aa8", size = 97287, upload-time = "2026-10-07T14:11:19.659Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5c/25/5e582ea98ffe6df71e9db8c4288a9bc9179efbace1d49a371e716ffd93f1/typesense-2.1.1.tar.gz", hash = "sha256:5d1fded865ecf9a9e564a4e6b8aa9229c34287e958dc3b16eec408376d142a42", size = 97341, upload-time = "2026-10-23T09:23:19.964Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/47/05/c6bd875a522f4ce4ec69b149aa10c4c547e0222c4e2f3d9c5161aecf9fd1/typesense-2.1.0-py3-none-any.whl", hash = "sha256:51ab05688f4eb33a84d60c6056fdc6c586654413983082f400b5aee164f698fc", size = 160491, upload-time = "2026-10-07T14:11:18.211Z" },
+    { url = "https://files.pythonhosted.org/packages/38/22/d848100d45976e612865251f89607d941199003d24a622b8afc5b9503b88/typesense-2.1.1-py3-none-any.whl", hash = "sha256:e37f799be67cc3a948ac756826e0c2451882a61d37d4da6235a4a80c2436afd6", size = 160564, upload-time = "2026-10-23T09:23:18.461Z" },
 ]
 
 [[package]]
