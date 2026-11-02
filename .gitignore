@@ -110,5 +110,5 @@ ENV/
 
 # Agent artifacts
 .omo/
-.opencode/memory.local.jsonc
+.opencode/*
 AGENTS.md

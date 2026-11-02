@@ -34,6 +34,19 @@ class AuditMixin(models.Model):
     created = models.DateTimeField(default=timezone.now, editable=False, db_index=True)
     modified = models.DateTimeField(auto_now=True, editable=False, db_index=True)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._initial = {}
+        if self.pk:
+            self._reset_initial()
+
+    def __str__(self):
+        return str(self.pk)
+
+    def _reset_initial(self):
+        """Snapshot the current field values as the baseline for change tracking."""
+        self._initial = {field.attname: self.__dict__[field.attname] for field in self._meta.fields if field.attname in self.__dict__}
+
     def save(self, *args, **kwargs):
         """Set the creator field to the request user on initial save. This falls back on using an admin user if a request user object is absent (i.e. the
         object was saved outside the web application).
@@ -49,12 +62,29 @@ class AuditMixin(models.Model):
 
         super().save(*args, **kwargs)
 
-    def __str__(self):
-        return str(self.pk)
+        # Refresh the snapshot, otherwise changed_data would keep reporting the
+        # changes that were just saved.
+        self._reset_initial()
 
     def get_absolute_url(self):
-        opts = self._meta.app_label, self._meta.module_name
-        return reverse("admin:%s_%s_change" % opts, args=(self.pk,))
+        return reverse(f"admin:{self._meta.app_label}_{self._meta.model_name}_change", args=(self.pk,))
+
+    def refresh_from_db(self, *args, **kwargs):
+        super().refresh_from_db(*args, **kwargs)
+        self._reset_initial()
+
+    @property
+    def changed_data(self):
+        """Returns a list of fields with data that differs from initial
+        values. May be utilised by revision mechanisms, as required.
+        """
+        self._changed_data = []
+        for field, value in self._initial.items():
+            if field in ["modified", "modifier_id"]:
+                continue  # Disregard modifer field as a test for changed data.
+            if getattr(self, field) != value:
+                self._changed_data.append(field)
+        return self._changed_data
 
 
 class ActiveModelMixin(models.Model):
@@ -79,10 +109,12 @@ class ActiveModelMixin(models.Model):
         return not self.is_active()
 
     def delete(self, *args, **kwargs):
+        """Override the standard delete method; sets effective_to to the current
+        date and time, unless ``force=True`` is passed.
         """
-        Overide the standard delete method; sets effective_to the current date
-        and time.
-        """
+        force = kwargs.pop("force", False)
+        if force:
+            return super().delete(*args, **kwargs)
         self.effective_to = timezone.now()
         super().save(*args, **kwargs)
 
