@@ -807,14 +807,14 @@ wheels = [
 
 [[package]]
 name = "django-reversion"
-version = "6.4.0"
+version = "6.5.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/14/a2/24623a19b30930aedeaf8cc387e432d1496390eebf4a6e01c8fdfbfbaf9b/django_reversion-6.4.0.tar.gz", hash = "sha256:fce089d8bab8d64b4ec41e9db758ce552ba06a008e42a1c9e4eb2f5faaa01cbc", size = 80991, upload-time = "2026-10-15T13:08:04.788Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a5/a7/62c39e46c5cd46a37cc88965c9c7a8878b8233009fba9debf67f89242ff8/django_reversion-6.5.1.tar.gz", hash = "sha256:eb0131db820416b61fabb75d0e813cc40d8cc30ab45a25df6c87ac9192266786", size = 82088, upload-time = "2026-11-02T21:14:30.471Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5c/98/73f11ef908a9ddeb1ff482937067209466fed74d4d538189c6756bff7a11/django_reversion-6.4.0-py3-none-any.whl", hash = "sha256:641a6630eedbdda7c6ebcc90881370ff6439bca1f12c8afe97af251fd7f67492", size = 93472, upload-time = "2026-10-15T13:08:03.534Z" },
+    { url = "https://files.pythonhosted.org/packages/b7/d8/34bdd5a3348dce859bfd9c675f508ec982cf82cac41235a01423579b8130/django_reversion-6.5.1-py3-none-any.whl", hash = "sha256:c9625af1698655b7b502f7af2fb87f88b70bdd2cda3f27a5d3460af11bf807af", size = 92921, upload-time = "2026-11-02T21:14:29.431Z" },
 ]
 
 [[package]]
@@ -1788,7 +1788,7 @@ requires-dist = [
     { name = "django-crispy-forms", specifier = "==2.7" },
     { name = "django-crum", specifier = "==0.7.9" },
     { name = "django-extensions", specifier = "==4.1" },
-    { name = "django-reversion", specifier = "==6.4.0" },
+    { name = "django-reversion", specifier = "==6.5.1" },
     { name = "django-storages", extras = ["azure"], specifier = "==1.14.6" },
     { name = "django-taggit", specifier = "==6.1.0" },
     { name = "django-valkey", extras = ["libvalkey"], specifier = "==0.4.1" },
