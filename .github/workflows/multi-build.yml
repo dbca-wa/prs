@@ -37,7 +37,7 @@ jobs:
       id-token: write # OIDC for provenance
     steps:
       - name: Harden the GitHub runner
-        uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 
@@ -56,7 +56,7 @@ jobs:
           driver: docker-container
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -67,16 +67,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          tag="$(git tag --points-at HEAD | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1 || true)"
+          # Parse any valid semver tag, including optional leading 'v' and prerelease/build metadata.
+          tag="$(git tag --points-at HEAD | grep -E '^v?(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$' | head -n 1 || true)"
           if [ -n "$tag" ]; then
-            # strip a leading 'v' (e.g. v1.2.3 -> 1.2.3)
+            # strip a leading 'v' (e.g. v1.2.3-rc.1 -> 1.2.3-rc.1)
             semtag="${tag#v}"
             echo "value=${semtag}" >> "$GITHUB_OUTPUT"
-            echo "tags=${GHCR_IMAGE}:latest,${GHCR_IMAGE}:${semtag}" >> "$GITHUB_OUTPUT"
             echo "has_version_tag=true" >> "$GITHUB_OUTPUT"
           else
             echo "value=latest" >> "$GITHUB_OUTPUT"
-            echo "tags=${GHCR_IMAGE}:latest" >> "$GITHUB_OUTPUT"
             echo "has_version_tag=false" >> "$GITHUB_OUTPUT"
           fi
 
@@ -84,11 +83,12 @@ jobs:
         id: bake
         uses: docker/bake-action@59cb1203cd42bcefd40a1b6d73b589e48c86040e # v7.5.0
         with:
+          files: docker-bake.hcl
+          targets: ci # CI-only target: gha cache + pull
           push: true
-          targets: all
           set: |
-            app.tags=${{ env.GHCR_IMAGE }}:latest
-            ${{ steps.image_tag.outputs.has_version_tag == 'true' && format('app.tags={0}:{1}', env.GHCR_IMAGE, steps.image_tag.outputs.value) || '' }}
+            ci.tags=${{ env.GHCR_IMAGE }}:latest
+            ${{ steps.image_tag.outputs.has_version_tag == 'true' && format('ci.tags+={0}:{1}', env.GHCR_IMAGE, steps.image_tag.outputs.value) || '' }}
 
   scan:
     name: Docker image vulnerability scan
@@ -114,6 +114,6 @@ jobs:
           cache-db: true
 
       - name: Upload scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
         with:
           sarif_file: ${{ steps.scan.outputs.sarif }}

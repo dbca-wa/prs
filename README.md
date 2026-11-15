@@ -107,9 +107,9 @@ To obtain coverage reports:
 
 ## Docker image
 
-To build a new Docker image from the `Dockerfile`:
+To build a new Docker image locally (`ghcr.io/dbca-wa/prs:dev`):
 
-    docker image build -t ghcr.io/dbca-wa/prs .
+    docker buildx bake local
 
 ## Pre-commit hooks
 

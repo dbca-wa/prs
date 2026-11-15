@@ -1,8 +1,10 @@
 .dockerignore
 .git*
 .env
+.env.*
 .venv
 Dockerfile
 __pycache__
 media/
 staticfiles/
+kustomize/

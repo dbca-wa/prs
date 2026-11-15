@@ -294,7 +294,7 @@ class ReferralAPIResource(ApiResourceMixin, View):
 
     @method_decorator(cache_control(max_age=settings.API_RESPONSE_CACHE_SECONDS, private=True))
     @method_decorator(vary_on_cookie)
-    def get(self, request, *args, **kwargs):
+    def get(self, *args, **kwargs):
         queryset = Referral.objects.current().prefetch_related("type", "regions", "referring_org", "dop_triggers", "tags", "lga")
 
         # Queryset filtering.
@@ -316,8 +316,8 @@ class ReferralAPIResource(ApiResourceMixin, View):
         obj_count = queryset.count()  # Count the filtered results.
         try:
             start, stop = self.get_page_bounds(obj_count)
-        except ValueError as exc:
-            return JsonResponse({"error": str(exc)}, status=400)
+        except ValueError:
+            return JsonResponse({}, status=400)
         queryset = queryset[start:stop]
         resp = {
             "count": obj_count,
@@ -352,7 +352,7 @@ class TaskAPIResource(ApiResourceMixin, View):
 
     @method_decorator(cache_control(max_age=settings.API_RESPONSE_CACHE_SECONDS, private=True))
     @method_decorator(vary_on_cookie)
-    def get(self, request, *args, **kwargs):
+    def get(self, *args, **kwargs):
         queryset = Task.objects.current().prefetch_related("type", "referral", "assigned_user", "state")
 
         # Queryset filtering.
@@ -374,8 +374,8 @@ class TaskAPIResource(ApiResourceMixin, View):
         obj_count = queryset.count()  # Count the filtered results.
         try:
             start, stop = self.get_page_bounds(obj_count)
-        except ValueError as exc:
-            return JsonResponse({"error": str(exc)}, status=400)
+        except ValueError:
+            return JsonResponse({}, status=400)
         queryset = queryset[start:stop]
         resp = {
             "count": obj_count,
@@ -410,7 +410,7 @@ class ClearanceAPIResource(ApiResourceMixin, View):
 
     @method_decorator(cache_control(max_age=settings.API_RESPONSE_CACHE_SECONDS, private=True))
     @method_decorator(vary_on_cookie)
-    def get(self, request, *args, **kwargs):
+    def get(self, *args, **kwargs):
         queryset = Clearance.objects.current().prefetch_related("task", "condition")
 
         # Queryset filtering.
@@ -430,8 +430,8 @@ class ClearanceAPIResource(ApiResourceMixin, View):
         obj_count = queryset.count()  # Count the filtered results.
         try:
             start, stop = self.get_page_bounds(obj_count)
-        except ValueError as exc:
-            return JsonResponse({"error": str(exc)}, status=400)
+        except ValueError:
+            return JsonResponse({}, status=400)
         queryset = queryset[start:stop]
         resp = {
             "count": obj_count,

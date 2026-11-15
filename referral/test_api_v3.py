@@ -100,7 +100,6 @@ class PrsAPIPaginationTest(PrsTestCase):
                 with self.subTest(model=model, params=params):
                     response = self.client.get(self.get_url(model, **params))
                     self.assertEqual(response.status_code, 400)
-                    self.assertIn("error", response.json())
 
     def test_limit_is_capped(self):
         """A limit above MAX_PAGE_SIZE is clamped, not honoured."""
