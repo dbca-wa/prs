@@ -21,12 +21,7 @@ function escapeHtml(value) {
   if (value === null || value === undefined) {
     return '';
   }
-  return String(value)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+  return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 function renderText(data) {
@@ -150,16 +145,17 @@ function queryTaskFilters() {
 }
 
 function downloadData(model) {
-  if (model == 'referral') {
+  var params;
+  if (model === 'referral') {
     params = queryReferralFilters();
-    params['model'] = model;
-  } else if (model == 'clearance') {
+  } else if (model === 'clearance') {
     params = queryClearanceFilters();
-    params['model'] = model;
-  } else if (model == 'task') {
+  } else if (model === 'task') {
     params = queryTaskFilters();
-    params['model'] = model;
+  } else {
+    return; // Unknown model: nothing to download.
   }
+  params['model'] = model;
   window.open(`${reportDownloadUrl}?${$.param(params)}`, '_blank');
 }
 
