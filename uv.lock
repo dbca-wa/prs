@@ -889,15 +889,15 @@ wheels = [
 
 [[package]]
 name = "django-valkey"
-version = "0.4.1"
+version = "0.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
     { name = "valkey" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4e/3c/0cebfa4d4e6c15cc7abd3b233ac5ae2f13ddbf43fbacf78c8e10b621255e/django_valkey-0.4.1.tar.gz", hash = "sha256:312f1096971cfb3d0fa4ee3e8a9b1b9e657104f68a91fa3e9e8a96bec83848e5", size = 82911, upload-time = "2026-05-06T22:11:49.287Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b5/c4/2dc225b4123caa428bb644f80067920e6b8e9bf2cc3a83ee1f104cf3872b/django_valkey-0.5.0.tar.gz", hash = "sha256:fdd1983be15a04b93c34b3b1c473b559b1b94ce7b95d3db2760f121b80e38ee1", size = 91148, upload-time = "2026-11-09T07:57:57.916Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/16/37/cd3c597ab2d89bd7a49aad9c9ae2758183d1e078b015fbdfc2e7364fcf3e/django_valkey-0.4.1-py3-none-any.whl", hash = "sha256:50509c60be59f61f6094720c3e326a22f54c6a3537e4729b9c63aa2e83c69e0b", size = 48425, upload-time = "2026-05-06T22:11:48.023Z" },
+    { url = "https://files.pythonhosted.org/packages/9e/19/4982b373e57135919353d1305820fd6b5e14dc56b3d278cc16a5e947fb47/django_valkey-0.5.0-py3-none-any.whl", hash = "sha256:bf91682e5cd733960aecc72421272513c12ce8efc4aa9c70bd8994540ea28f6b", size = 51667, upload-time = "2026-11-09T07:57:55.448Z" },
 ]
 
 [package.optional-dependencies]
@@ -1802,7 +1802,7 @@ requires-dist = [
     { name = "django-reversion", specifier = "==6.5.1" },
     { name = "django-storages", extras = ["azure"], specifier = "==1.14.6" },
     { name = "django-taggit", specifier = "==7.0.0" },
-    { name = "django-valkey", extras = ["libvalkey"], specifier = "==0.4.1" },
+    { name = "django-valkey", extras = ["libvalkey"], specifier = "==0.5.0" },
     { name = "docx2txt", specifier = "==0.9" },
     { name = "extract-msg", specifier = "==0.58.2" },
     { name = "fiona", specifier = "==1.10.1" },
