@@ -2,8 +2,10 @@
 {% load static %}
 {% block extra_style %}
     {{ block.super }}
-    <link href="https://cdn.datatables.net/v/bs5/dt-1.13.8/date-1.5.1/datatables.min.css"
-          rel="stylesheet">
+    <link href="https://cdn.datatables.net/v/bs5/dt-1.13.8/r-2.5.0/date-1.5.1/datatables.min.css"
+          rel="stylesheet"
+          integrity="sha384-tfiPuMV4qH29FPUWr+NOMfV5pgpkknr1vUuKPhYILp6fuTbDyGfzT5GmOc2QzVMu"
+          crossorigin="anonymous">
 {% endblock %}
 {% block page_content_inner %}
     <h1>{% if stopped_tasks %}STOPPED TASKS{% else %}ONGOING TASKS{% endif %}</h1>
@@ -48,7 +50,9 @@
 {% endblock %}
 {% block extra_js %}
     {{ block.super }}
-    <script src="https://cdn.datatables.net/v/bs5/dt-1.13.8/date-1.5.1/datatables.min.js"></script>
+    <script src="https://cdn.datatables.net/v/bs5/dt-1.13.8/r-2.5.0/date-1.5.1/datatables.min.js"
+            integrity="sha384-qRCYHQ6ce+NvoMqev6htDPx+p1EmMOblMk6VuLIk1x+0GaY2KJjhzQyy/UtI5Dct"
+            crossorigin="anonymous"></script>
     <script type="text/javascript">
     // Document ready events
     $(function() {

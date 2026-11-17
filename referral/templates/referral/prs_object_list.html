@@ -1,56 +1,63 @@
 {% extends "base_prs.html" %}
 {% load static %}
-
 {% block extra_style %}
-{{ block.super }}
-<link href="https://cdn.datatables.net/v/bs5/dt-1.13.8/date-1.5.1/datatables.min.css" rel="stylesheet">
+    {{ block.super }}
+    <link href="https://cdn.datatables.net/v/bs5/dt-1.13.8/r-2.5.0/date-1.5.1/datatables.min.css"
+          rel="stylesheet"
+          integrity="sha384-tfiPuMV4qH29FPUWr+NOMfV5pgpkknr1vUuKPhYILp6fuTbDyGfzT5GmOc2QzVMu"
+          crossorigin="anonymous">
 {% endblock %}
-
 {% block page_content_inner %}
-<h1>{{ object_type_plural|upper }}</h1>
-<!-- Search bar -->
-<form action="" method="get">
-    <div class="row">
-        <div class="hidden-xs col-sm-1">
-            <label for="search_field">Search:</label>
+    <h1>{{ object_type_plural|upper }}</h1>
+    <!-- Search bar -->
+    <form action="" method="get">
+        <div class="row">
+            <div class="hidden-xs col-sm-1">
+                <label for="search_field">Search:</label>
+            </div>
+            <div class="col-xs-12 col-sm-11 col-md-8">
+                <input id="search_field"
+                       type="text"
+                       class="form-control"
+                       name="q"
+                       placeholder="Search all text..."
+                       value="{{ query_string }}">
+            </div>
         </div>
-        <div class="col-xs-12 col-sm-11 col-md-8">
-            <input id="search_field" type="text" class="form-control" name="q" placeholder="Search all text..." value="{{ query_string }}">
-        </div>
-    </div>
-</form>
-<hr>
-<!-- Number of results returned -->
-{% if object_list %}
-<h3>Search results: {{ object_count }}</h3>
-{% include "referral/pagination.html" %}
-{% block object_list_table %}
-<table class="table table-striped table-bordered prs-object-table">
-    <thead>
-        <tr>
-        {% for header in object_list_headers %}
-            <th>{{ header }}</th>
-        {% endfor %}
-        </tr>
-    </thead>
-    <tbody>
-    {% for object in object_list %}
-        <tr>{{ object.as_row }}</tr>
-    {% endfor %}
-    </tbody>
-</table>
-{% endblock object_list_table %}
-{% include "referral/pagination.html" %}
-{% else %}
-<p>No results</p>
-{% endif %}
-<br>
+    </form>
+    <hr>
+    <!-- Number of results returned -->
+    {% if object_list %}
+        <h3>Search results: {{ object_count }}</h3>
+        {% include "referral/pagination.html" %}
+        {% block object_list_table %}
+            <table class="table table-striped table-bordered prs-object-table">
+                <thead>
+                    <tr>
+                        {% for header in object_list_headers %}
+                            <th>{{ header }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for object in object_list %}
+                        <tr>{{ object.as_row }}</tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endblock object_list_table %}
+        {% include "referral/pagination.html" %}
+    {% else %}
+        <p>No results</p>
+    {% endif %}
+    <br>
 {% endblock %}
-
 {% block extra_js %}
-{{ block.super }}
-<script src="https://cdn.datatables.net/v/bs5/dt-1.13.8/date-1.5.1/datatables.min.js"></script>
-<script type="text/javascript">
+    {{ block.super }}
+    <script src="https://cdn.datatables.net/v/bs5/dt-1.13.8/r-2.5.0/date-1.5.1/datatables.min.js"
+            integrity="sha384-qRCYHQ6ce+NvoMqev6htDPx+p1EmMOblMk6VuLIk1x+0GaY2KJjhzQyy/UtI5Dct"
+            crossorigin="anonymous"></script>
+    <script type="text/javascript">
     // Document ready events
     $(function() {
         // Initialise the DataTable.
@@ -63,5 +70,5 @@
             "searching": false
         });
     });
-</script>
+    </script>
 {% endblock extra_js %}

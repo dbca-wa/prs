@@ -12,7 +12,10 @@ const taskStateApiResourceUrl = `${context.taskstate_api_resource_url}`;
 const taskTypeApiResourceUrl = `${context.tasktype_api_resource_url}`;
 const userApiResourceUrl = `${context.user_api_resource_url}`;
 const tagApiResourceUrl = `${context.tag_api_resource_url}`;
-const spinner = new Spinner({ scale: 3, top: '120px' });
+const spinner = new Spinner({ scale: 3, top: '120px', left: '50%' });
+// The initial page load requests all three tables at once, so the spinner is
+// reference-counted: it is only removed when every in-flight request is done.
+let pendingRequests = 0;
 
 // DataTables inserts cell values into the DOM as HTML by default. API fields
 // such as referral/task descriptions are user-supplied, so they must be
@@ -21,12 +24,7 @@ function escapeHtml(value) {
   if (value === null || value === undefined) {
     return '';
   }
-  return String(value)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+  return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 function renderText(data) {
@@ -34,33 +32,96 @@ function renderText(data) {
 }
 
 function renderReferralLink(data) {
+  if (data === null || data === undefined) {
+    return '';
+  }
   const id = encodeURIComponent(data).replace(/'/g, '%27');
   return `<a href='${refListUrl}${id}/'>${escapeHtml(data)}</a>`;
 }
 
+function renderDate(data) {
+  // API dates are ISO (YYYY-MM-DD) or null. Parse at local midnight so the
+  // displayed day doesn't shift for users outside UTC, and never render the
+  // epoch ("Thu Jan 01 1970") for a missing date.
+  if (!data) {
+    return '';
+  }
+  const d = new Date(`${data}T00:00:00`);
+  return isNaN(d.getTime()) ? '' : escapeHtml(d.toDateString());
+}
+
+function parseDateParam(value) {
+  // Parse a d/m/yyyy value entered via the datepicker. Returns '' for an
+  // incomplete or invalid date so the API never receives "Invalid date".
+  const parsed = moment(value, 'D/M/YYYY', true);
+  return parsed.isValid() ? parsed.format('YYYY-MM-DD') : '';
+}
+
 function startSpinner() {
-  spinner.spin();
-  $('#modal-spinner').append(spinner.el);
+  pendingRequests += 1;
+  if (pendingRequests === 1) {
+    spinner.spin();
+    $('#modal-spinner').append(spinner.el);
+  }
+}
+
+function stopSpinner() {
+  pendingRequests = Math.max(0, pendingRequests - 1);
+  if (pendingRequests === 0) {
+    spinner.stop();
+  }
 }
 
 function _getSelectlistOptions(url, filters, dom_elements) {
   // Utility function to replace options in a select element(s)
   // by querying a passed-in endpoint URL.
+  dom_elements.prop('disabled', true);
   $.ajax({
     url: url,
     data: filters,
-    success: function (data) {
+  })
+    .done(function (data) {
+      if (!Array.isArray(data)) {
+        console.error(`Unexpected select list response from ${url}`);
+        return;
+      }
       dom_elements.each(function () {
-        this.disabled = true;
         this.options.length = 0;
         this.options.add(new Option('--------', ''));
-        for (var i in data) {
-          this.options.add(new Option(data[i].text, data[i].id));
-        }
-        this.disabled = false;
+        data.forEach(function (item) {
+          this.options.add(new Option(item.text, item.id));
+        }, this);
       });
-    },
-  });
+    })
+    .fail(function (xhr) {
+      console.error(`Could not load select list options from ${url} (${xhr.status})`);
+    })
+    .always(function () {
+      // Re-enable the selects even when the request failed, otherwise the
+      // filter stays permanently greyed out.
+      dom_elements.prop('disabled', false);
+    });
+}
+
+function loadTableRows(url, params, callback) {
+  // Shared DataTables AJAX loader: fetch one page of results from an API
+  // endpoint and map the {count, objects} response to DataTables' shape.
+  startSpinner();
+  $.get(url, params)
+    .done(function (resp) {
+      callback({
+        data: resp.objects || [],
+        recordsTotal: resp.count || 0,
+        recordsFiltered: resp.count || 0,
+      });
+    })
+    .fail(function (xhr) {
+      // Fall back to an empty table; otherwise DataTables' callback is never
+      // invoked and the table stays stuck on the "Processing" overlay.
+      console.error(`Report data request failed (${xhr.status}): ${url}`);
+      callback({ data: [], recordsTotal: 0, recordsFiltered: 0 });
+    })
+    .always(stopSpinner);
 }
 
 function queryReferralFilters() {
@@ -78,13 +139,13 @@ function queryReferralFilters() {
   if (referralType) {
     $.extend(data, { type__id: referralType });
   }
-  var fromDate = $('input#filter-fromDate-referral').val();
+  var fromDate = parseDateParam($('input#filter-fromDate-referral').val());
   if (fromDate) {
-    $.extend(data, { referral_date__gte: moment(fromDate, 'D/M/YYYY').format('YYYY-MM-DD') });
+    $.extend(data, { referral_date__gte: fromDate });
   }
-  var toDate = $('input#filter-toDate-referral').val();
+  var toDate = parseDateParam($('input#filter-toDate-referral').val());
   if (toDate) {
-    $.extend(data, { referral_date__lte: moment(toDate, 'D/M/YYYY').format('YYYY-MM-DD') });
+    $.extend(data, { referral_date__lte: toDate });
   }
   var tags = $('#filter-referralTag').val();
   if (tags) {
@@ -108,13 +169,13 @@ function queryClearanceFilters() {
   if (taskState) {
     $.extend(data, { state__id: taskState });
   }
-  var fromDate = $('input#filter-fromDate-clearance').val();
+  var fromDate = parseDateParam($('input#filter-fromDate-clearance').val());
   if (fromDate) {
-    $.extend(data, { start_date__gte: moment(fromDate, 'D/M/YYYY').format('YYYY-MM-DD') });
+    $.extend(data, { start_date__gte: fromDate });
   }
-  var toDate = $('input#filter-toDate-clearance').val();
+  var toDate = parseDateParam($('input#filter-toDate-clearance').val());
   if (toDate) {
-    $.extend(data, { start_date__lte: moment(toDate, 'D/M/YYYY').format('YYYY-MM-DD') });
+    $.extend(data, { start_date__lte: toDate });
   }
   return data;
 }
@@ -134,13 +195,13 @@ function queryTaskFilters() {
   if (taskState) {
     $.extend(data, { state__id: taskState });
   }
-  var fromDate = $('input#filter-fromDate-task').val();
+  var fromDate = parseDateParam($('input#filter-fromDate-task').val());
   if (fromDate) {
-    $.extend(data, { start_date__gte: moment(fromDate, 'D/M/YYYY').format('YYYY-MM-DD') });
+    $.extend(data, { start_date__gte: fromDate });
   }
-  var toDate = $('input#filter-toDate-task').val();
+  var toDate = parseDateParam($('input#filter-toDate-task').val());
   if (toDate) {
-    $.extend(data, { start_date__lte: moment(toDate, 'D/M/YYYY').format('YYYY-MM-DD') });
+    $.extend(data, { start_date__lte: toDate });
   }
   var assigned = $('select#filter-assignedUser').val();
   if (assigned) {
@@ -150,17 +211,27 @@ function queryTaskFilters() {
 }
 
 function downloadData(model) {
-  if (model == 'referral') {
+  var params;
+  if (model === 'referral') {
     params = queryReferralFilters();
-    params['model'] = model;
-  } else if (model == 'clearance') {
+  } else if (model === 'clearance') {
     params = queryClearanceFilters();
-    params['model'] = model;
-  } else if (model == 'task') {
+  } else if (model === 'task') {
     params = queryTaskFilters();
-    params['model'] = model;
+  } else {
+    return; // Unknown model: nothing to download.
   }
-  window.open(`${reportDownloadUrl}?${$.param(params)}`, '_blank');
+  params['model'] = model;
+  // Trigger the download via a synthetic link rather than window.location, so
+  // an error response (e.g. "Report too large") opens in a new tab instead of
+  // navigating away from the reports page.
+  var link = document.createElement('a');
+  link.href = `${reportDownloadUrl}?${$.param(params)}`;
+  link.target = '_blank';
+  link.rel = 'noopener';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 
 // DataTables configuration.
@@ -179,19 +250,7 @@ const configRefTable = {
     data.limit = settings._iDisplayLength;
     data.offset = settings._iDisplayStart;
     var params = $.extend({}, data, queryReferralFilters());
-    $.get(
-      referralApiResourceUrl,
-      params, // Query parameters for the API call.
-      function (resp) {
-        spinner.stop();
-        // Map the API response to the DataTables format and pass it to DataTables callback.
-        callback({
-          data: JSON.parse(JSON.stringify(resp.objects)),
-          recordsTotal: JSON.parse(JSON.stringify(resp.count)),
-          recordsFiltered: JSON.parse(JSON.stringify(resp.count)),
-        });
-      }
-    );
+    loadTableRows(referralApiResourceUrl, params, callback); // Query parameters for the API call.
   },
   columns: [
     {
@@ -208,14 +267,13 @@ const configRefTable = {
       data: 'referral_date',
       type: 'date',
       render: function (data, type, row, meta) {
-        var d = new Date(data);
-        return escapeHtml(d.toDateString());
+        return renderDate(data);
       },
     },
     {
       data: 'tags',
       render: function (data, type, row, meta) {
-        return data.map(escapeHtml).join(', ');
+        return (data || []).map(escapeHtml).join(', ');
       },
     },
     { data: 'description', render: renderText },
@@ -237,19 +295,7 @@ const configClearTable = {
     data.limit = settings._iDisplayLength;
     data.offset = settings._iDisplayStart;
     var params = $.extend({}, data, queryClearanceFilters());
-    $.get(
-      clearanceApiResourceUrl,
-      params, // Query parameters for the API call.
-      function (resp) {
-        spinner.stop();
-        // Map the API response to the DataTables format and pass it to DataTables callback.
-        callback({
-          data: JSON.parse(JSON.stringify(resp.objects)),
-          recordsTotal: JSON.parse(JSON.stringify(resp.count)),
-          recordsFiltered: JSON.parse(JSON.stringify(resp.count)),
-        });
-      }
-    );
+    loadTableRows(clearanceApiResourceUrl, params, callback); // Query parameters for the API call.
   },
   columns: [
     {
@@ -289,19 +335,7 @@ const configTaskTable = {
     data.limit = settings._iDisplayLength;
     data.offset = settings._iDisplayStart;
     var params = $.extend({}, data, queryTaskFilters());
-    $.get(
-      taskApiResourceUrl,
-      params, // Query parameters for the API call.
-      function (resp) {
-        spinner.stop();
-        // Map the API response to the DataTables format and pass it to DataTables callback.
-        callback({
-          data: JSON.parse(JSON.stringify(resp.objects)),
-          recordsTotal: JSON.parse(JSON.stringify(resp.count)),
-          recordsFiltered: JSON.parse(JSON.stringify(resp.count)),
-        });
-      }
-    );
+    loadTableRows(taskApiResourceUrl, params, callback); // Query parameters for the API call.
   },
   columns: [
     {
@@ -320,25 +354,21 @@ const configTaskTable = {
       data: 'start_date',
       type: 'date',
       render: function (data, type, row, meta) {
-        return escapeHtml(new Date(data).toDateString());
+        return renderDate(data);
       },
     },
     {
       data: 'due_date',
       type: 'date',
       render: function (data, type, row, meta) {
-        return escapeHtml(new Date(data).toDateString());
+        return renderDate(data);
       },
     },
     {
       data: 'complete_date',
       type: 'date',
       render: function (data, type, row, meta) {
-        if (data) {
-          return escapeHtml(new Date(data).toDateString());
-        } else {
-          return '';
-        }
+        return renderDate(data);
       },
     },
   ],
@@ -346,12 +376,28 @@ const configTaskTable = {
 
 // Document ready
 $(function () {
-  startSpinner();
-
-  // Initialise the DataTables.
+  // Initialise the DataTables. The shared loader starts and stops the spinner,
+  // so no explicit spinner calls are needed around reloads.
   var refDataTable = $('table#referralsTable').DataTable(configRefTable);
   var clearDataTable = $('table#clearancesTable').DataTable(configClearTable);
   var taskDataTable = $('table#tasksTable').DataTable(configTaskTable);
+
+  // Tables in inactive tabs are initialised while hidden, so column widths are
+  // calculated against a zero-width container. Recalculate when a tab becomes
+  // visible. The CDN bundle does not include the Responsive extension, so the
+  // `responsive: true` config option is inert and `table.responsive` is absent.
+  $('a[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+    var pane = $(e.target).attr('data-bs-target') || $(e.target).attr('href');
+    $(pane)
+      .find('table.dataTable')
+      .each(function () {
+        var table = $(this).DataTable();
+        table.columns.adjust();
+        if (table.responsive) {
+          table.responsive.recalc();
+        }
+      });
+  });
 
   // Initialise datepicker widgets
   $('.dateinput')
@@ -364,13 +410,10 @@ $(function () {
       // Onchange event for all datepickers (separate to below, because
       // the widget triggers multiple change events.
       if (e.target.id.indexOf('referral') > -1) {
-        startSpinner();
         refDataTable.ajax.reload();
       } else if (e.target.id.indexOf('clearance') > -1) {
-        startSpinner();
         clearDataTable.ajax.reload();
       } else if (e.target.id.indexOf('task') > -1) {
-        startSpinner();
         taskDataTable.ajax.reload();
       }
     });
@@ -387,29 +430,30 @@ $(function () {
 
   // Onchange events for Referral filters.
   $('#filter-region-referral, #filter-organisation-referral, #filter-referralType, #filter-referralTag').change(function () {
-    startSpinner();
     refDataTable.ajax.reload();
   });
 
   // Onchange events for Clearance filters.
   $('#filter-region-clearance, #filter-organisation-clearance, #filter-taskState-clearance').change(function () {
-    startSpinner();
     clearDataTable.ajax.reload();
   });
   // Onchange events for Task filters.
   $('#filter-taskType, #filter-region-task, #filter-taskState-task, #filter-assignedUser').change(function () {
-    startSpinner();
     taskDataTable.ajax.reload();
   });
 
-  // Click events for the 'Download' buttons.
-  $('a#id_download_referrals').click(function () {
+  // Click events for the 'Download' buttons. The anchors use href="#", so
+  // suppress the default navigation; the download itself is a navigation.
+  $('a#id_download_referrals').click(function (e) {
+    e.preventDefault();
     downloadData('referral');
   });
-  $('a#id_download_clearances').click(function () {
+  $('a#id_download_clearances').click(function (e) {
+    e.preventDefault();
     downloadData('clearance');
   });
-  $('a#id_download_tasks').click(function () {
+  $('a#id_download_tasks').click(function (e) {
+    e.preventDefault();
     downloadData('task');
   });
 });

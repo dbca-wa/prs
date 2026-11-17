@@ -27,8 +27,10 @@
     <link rel="stylesheet"
           type="text/css"
           href="{% static 'css/prs_dropzone_5.7.1.css' %}" />
-    <link href="https://cdn.datatables.net/v/bs5/dt-1.13.8/date-1.5.1/datatables.min.css"
-          rel="stylesheet">
+    <link href="https://cdn.datatables.net/v/bs5/dt-1.13.8/r-2.5.0/date-1.5.1/datatables.min.css"
+          rel="stylesheet"
+          integrity="sha384-tfiPuMV4qH29FPUWr+NOMfV5pgpkknr1vUuKPhYILp6fuTbDyGfzT5GmOc2QzVMu"
+          crossorigin="anonymous">
 {% endblock extra_style %}
 {% block navbar_item_extra %}
     <li class="nav-item dropdown">
@@ -146,155 +148,157 @@
                             {% endif %}
                         {% endfor %}
                     {% else %}
-                    No issues recorded</a>
+                        No issues recorded</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <!-- Referral details table -->
+        <div class="row">
+            <div class="col-sm-12 col-md-8">
+                <div id="referral-details-table">
+                    <table class="table table-striped table-bordered table-condensed">
+                        <tbody>
+                            {{ object.as_tbody }}
+                        </tbody>
+                    </table>
+                    <br>
+                </div>
+            </div>
+            <div class="col-sm-12 col-md-4">
+                {% if prs_user %}
+                    <div id="file-uploader">
+                        <form action="{% url 'referral_record_upload' pk=object.pk %}"
+                              class="dropzone"
+                              id="id_referral_dropzone">
+                            {% csrf_token %}
+                            <div class="dz-message">Drop files here or click to upload.</div>
+                        </form>
+                    </div>
                 {% endif %}
             </div>
         </div>
-    </div>
-    <!-- Referral details table -->
-    <div class="row">
-        <div class="col-sm-12 col-md-8">
-            <div id="referral-details-table">
-                <table class="table table-striped table-bordered table-condensed">
-                    <tbody>
-                        {{ object.as_tbody }}
-                    </tbody>
-                </table>
-                <br>
-            </div>
-        </div>
-        <div class="col-sm-12 col-md-4">
-            {% if prs_user %}
-                <div id="file-uploader">
-                    <form action="{% url 'referral_record_upload' pk=object.pk %}" class="dropzone" id="id_referral_dropzone">
-                        {% csrf_token %}
-                        <div class="dz-message">Drop files here or click to upload.</div>
-                    </form>
+        <!-- /.row -->
+        <div class="row">
+            <div class="col">
+                <!-- Navigation tabs -->
+                <ul class="nav nav-tabs">
+                    <li class="nav-item">
+                        <a class="nav-link{% if rel_model == 'tasks' %} active{% endif %}"
+                           id="tasks-tab"
+                           data-bs-toggle="tab"
+                           href="#tab_tasks"
+                           aria-controls="tab_tasks"
+                           aria-selected="{% if rel_model == 'tasks' %}true{% else %}false{% endif %}">
+                            {% if task_count %}
+                                <strong>Tasks ({{ task_count }})</strong>
+                            {% else %}
+                                Tasks
+                            {% endif %}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link{% if rel_model == 'notes' %} active{% endif %}"
+                           id="notes-tab"
+                           data-bs-toggle="tab"
+                           href="#tab_notes"
+                           aria-controls="tab_notes"
+                           aria-selected="{% if rel_model == 'notes' %}true{% else %}false{% endif %}">
+                            {% if note_count %}
+                                <strong>Notes ({{ note_count }})</strong>
+                            {% else %}
+                                Notes
+                            {% endif %}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link{% if rel_model == 'records' %} active{% endif %}"
+                           id="records-tab"
+                           data-bs-toggle="tab"
+                           href="#tab_records"
+                           aria-controls="tab_records"
+                           aria-selected="{% if rel_model == 'records' %}true{% else %}false{% endif %}">
+                            {% if record_count %}
+                                <strong>Records ({{ record_count }})</strong>
+                            {% else %}
+                                Records
+                            {% endif %}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link{% if rel_model == 'locations' %} active{% endif %}"
+                           id="locations-tab"
+                           data-bs-toggle="tab"
+                           href="#tab_locations"
+                           aria-controls="tab_locations"
+                           aria-selected="{% if rel_model == 'locations' %}true{% else %}false{% endif %}">
+                            {% if location_count %}
+                                <strong>Locations ({{ location_count }})</strong>
+                            {% else %}
+                                Locations
+                            {% endif %}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link{% if rel_model == 'conditions' %} active{% endif %}"
+                           id="conditions-tab"
+                           data-bs-toggle="tab"
+                           href="#tab_conditions"
+                           aria-controls="tab_conditions"
+                           aria-selected="{% if rel_model == 'conditions' %}true{% else %}false{% endif %}">
+                            {% if condition_count %}
+                                <strong>Conditions ({{ condition_count }})</strong>
+                            {% else %}
+                                Conditions
+                            {% endif %}
+                        </a>
+                    </li>
+                </ul>
+                <div class="tab-content">
+                    <div class="tab-pane{% if rel_model == 'tasks' %} active{% endif %}"
+                         id="tab_tasks"
+                         role="tabpanel"
+                         aria-labelledby="tasks-tab">{{ tab_task }}</div>
+                    <div class="tab-pane{% if rel_model == 'notes' %} active{% endif %}"
+                         id="tab_notes"
+                         role="tabpanel"
+                         aria-labelledby="notes-tab">{{ tab_note }}</div>
+                    <div class="tab-pane{% if rel_model == 'records' %} active{% endif %}"
+                         id="tab_records"
+                         role="tabpanel"
+                         aria-labelledby="records-tab">{{ tab_record }}</div>
+                    <div class="tab-pane{% if rel_model == 'locations' %} active{% endif %}"
+                         id="tab_locations"
+                         role="tabpanel"
+                         aria-labelledby="locations-tab">{{ tab_location }}</div>
+                    <div class="tab-pane{% if rel_model == 'conditions' %} active{% endif %}"
+                         id="tab_conditions"
+                         role="tabpanel"
+                         aria-labelledby="conditions-tab">{{ tab_condition }}</div>
                 </div>
-            {% endif %}
+            </div>
+            <!-- /.col -->
         </div>
-    </div>
-    <!-- /.row -->
-    <div class="row">
-        <div class="col">
-            <!-- Navigation tabs -->
-            <ul class="nav nav-tabs">
-                <li class="nav-item">
-                    <a class="nav-link{% if rel_model == 'tasks' %} active{% endif %}"
-                       id="tasks-tab"
-                       data-bs-toggle="tab"
-                       href="#tab_tasks"
-                       aria-controls="tab_tasks"
-                       aria-selected="{% if rel_model == 'tasks' %}true{% else %}false{% endif %}">
-                        {% if task_count %}
-                            <strong>Tasks ({{ task_count }})</strong>
-                        {% else %}
-                            Tasks
-                        {% endif %}
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link{% if rel_model == 'notes' %} active{% endif %}"
-                       id="notes-tab"
-                       data-bs-toggle="tab"
-                       href="#tab_notes"
-                       aria-controls="tab_notes"
-                       aria-selected="{% if rel_model == 'notes' %}true{% else %}false{% endif %}">
-                        {% if note_count %}
-                            <strong>Notes ({{ note_count }})</strong>
-                        {% else %}
-                            Notes
-                        {% endif %}
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link{% if rel_model == 'records' %} active{% endif %}"
-                       id="records-tab"
-                       data-bs-toggle="tab"
-                       href="#tab_records"
-                       aria-controls="tab_records"
-                       aria-selected="{% if rel_model == 'records' %}true{% else %}false{% endif %}">
-                        {% if record_count %}
-                            <strong>Records ({{ record_count }})</strong>
-                        {% else %}
-                            Records
-                        {% endif %}
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link{% if rel_model == 'locations' %} active{% endif %}"
-                       id="locations-tab"
-                       data-bs-toggle="tab"
-                       href="#tab_locations"
-                       aria-controls="tab_locations"
-                       aria-selected="{% if rel_model == 'locations' %}true{% else %}false{% endif %}">
-                        {% if location_count %}
-                            <strong>Locations ({{ location_count }})</strong>
-                        {% else %}
-                            Locations
-                        {% endif %}
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link{% if rel_model == 'conditions' %} active{% endif %}"
-                       id="conditions-tab"
-                       data-bs-toggle="tab"
-                       href="#tab_conditions"
-                       aria-controls="tab_conditions"
-                       aria-selected="{% if rel_model == 'conditions' %}true{% else %}false{% endif %}">
-                        {% if condition_count %}
-                            <strong>Conditions ({{ condition_count }})</strong>
-                        {% else %}
-                            Conditions
-                        {% endif %}
-                    </a>
-                </li>
-            </ul>
-            <div class="tab-content">
-                <div class="tab-pane{% if rel_model == 'tasks' %} active{% endif %}"
-                     id="tab_tasks"
-                     role="tabpanel"
-                     aria-labelledby="tasks-tab">{{ tab_task }}</div>
-                <div class="tab-pane{% if rel_model == 'notes' %} active{% endif %}"
-                     id="tab_notes"
-                     role="tabpanel"
-                     aria-labelledby="notes-tab">{{ tab_note }}</div>
-                <div class="tab-pane{% if rel_model == 'records' %} active{% endif %}"
-                     id="tab_records"
-                     role="tabpanel"
-                     aria-labelledby="records-tab">{{ tab_record }}</div>
-                <div class="tab-pane{% if rel_model == 'locations' %} active{% endif %}"
-                     id="tab_locations"
-                     role="tabpanel"
-                     aria-labelledby="locations-tab">{{ tab_location }}</div>
-                <div class="tab-pane{% if rel_model == 'conditions' %} active{% endif %}"
-                     id="tab_conditions"
-                     role="tabpanel"
-                     aria-labelledby="conditions-tab">{{ tab_condition }}</div>
+        <!-- /.row -->
+    {% endif %}
+    {% if geojson_locations %}
+        <hr>
+        <div class="row">
+            <div class="col">
+                <p>
+                    <button class="btn btn-primary"
+                            role="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#id_collapseMap"
+                            aria-expanded="true"
+                            aria-controls="id_collapseMap">Show/hide locations</button>
+                </p>
+                <div class="collapse show" id="id_collapseMap">
+                    <div class="card card-body" id="map"></div>
+                </div>
             </div>
         </div>
-        <!-- /.col -->
-    </div>
-    <!-- /.row -->
-{% endif %}
-{% if geojson_locations %}
-    <hr>
-    <div class="row">
-        <div class="col">
-            <p>
-                <button class="btn btn-primary"
-                        role="button"
-                        data-bs-toggle="collapse"
-                        data-bs-target="#id_collapseMap"
-                        aria-expanded="true"
-                        aria-controls="id_collapseMap">Show/hide locations</button>
-            </p>
-            <div class="collapse show" id="id_collapseMap">
-                <div class="card card-body" id="map"></div>
-            </div>
-        </div>
-    </div>
-{% endif %}
+    {% endif %}
 {% endblock page_content_inner %}
 {% block extra_js %}
     {{ block.super }}
@@ -329,7 +333,9 @@
             integrity="sha512-U2WE1ktpMTuRBPoCFDzomoIorbOyUv0sP8B+INA3EzNAhehbzED1rOJg6bCqPf/Tuposxb5ja/MAUnC8THSbLQ=="
             crossorigin="anonymous"
             referrerpolicy="no-referrer"></script>
-    <script src="https://cdn.datatables.net/v/bs5/dt-1.13.8/date-1.5.1/datatables.min.js"></script>
+    <script src="https://cdn.datatables.net/v/bs5/dt-1.13.8/r-2.5.0/date-1.5.1/datatables.min.js"
+            integrity="sha384-qRCYHQ6ce+NvoMqev6htDPx+p1EmMOblMk6VuLIk1x+0GaY2KJjhzQyy/UtI5Dct"
+            crossorigin="anonymous"></script>
     <script type="text/javascript">
       // Configure file upload Dropzone element - needs to happen outside of $(function(){}).
       Dropzone.options.idReferralDropzone = {
