@@ -83,12 +83,15 @@ target "typesense" {
   cache-to   = ["type=registry,ref=ghcr.io/dbca-wa/typesense:${CACHE_TAG},mode=max,ignore-error=true"]
 }
 
-# CI-only: GitHub Actions cache, and always refresh base images so any
-# scheduled rebuild picks up upstream security fixes.
+# CI-only: reuses the GHCR registry cache (`${CACHE_TAG}`, shared with release
+# builds) rather than the GitHub Actions cache, so a `mode=max` cache export is
+# not limited by the ~10 GB repo-wide Actions cache budget.
+# Requires the builder to be logged in to the registry (multi-build.yml does
+# this before the bake step) with push access to the package.
+# Also always refreshes base images so any scheduled rebuild picks up upstream
+# security fixes.
 # Note that CI overrides tags in multi-build.yml via set: ci.tags=...
 target "ci" {
-  inherits   = ["app"]
-  cache-from = ["type=gha"]
-  cache-to   = ["type=gha,mode=max"]
-  pull       = true
+  inherits = ["app"]
+  pull     = true
 }
