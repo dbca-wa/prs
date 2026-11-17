@@ -84,7 +84,7 @@ jobs:
         uses: docker/bake-action@59cb1203cd42bcefd40a1b6d73b589e48c86040e # v7.5.0
         with:
           files: docker-bake.hcl
-          targets: ci # CI-only target: gha cache + pull
+          targets: ci # CI-only target: GHCR registry cache + pull
           push: true
           set: |
             ci.tags=${{ env.GHCR_IMAGE }}:latest
