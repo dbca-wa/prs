@@ -1,6 +1,6 @@
 [project]
 name = "prs"
-version = "2.6.14"
+version = "2.6.15"
 description = "Planning Referral System corporate application"
 authors = [{ name = "Ashley Felton", email = "ashley.felton@dbca.wa.gov.au" }]
 license = "Apache-2.0"
@@ -42,7 +42,7 @@ dependencies = [
   "fiona==1.10.1",
   "pyproj==3.8.0",
   "fudgeo==1.5.10",
-  "django-valkey[libvalkey]==0.4.1",
+  "django-valkey[libvalkey]==0.5.0",
 ]
 
 [dependency-groups]
