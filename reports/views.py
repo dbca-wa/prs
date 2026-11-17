@@ -36,7 +36,7 @@ class ReportView(TemplateView):
             "taskstate_api_resource_url": reverse("api:taskstate_api_resource"),
             "tasktype_api_resource_url": reverse("api:tasktype_api_resource"),
             "user_api_resource_url": reverse("api:user_api_resource"),
-            "tag_api_resource_url": reverse("api:user_api_resource"),
+            "tag_api_resource_url": reverse("api:tag_api_resource"),
         }
         return context
 
