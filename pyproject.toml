@@ -1,6 +1,6 @@
 [project]
 name = "prs"
-version = "2.6.15"
+version = "2.6.16"
 description = "Planning Referral System corporate application"
 authors = [{ name = "Ashley Felton", email = "ashley.felton@dbca.wa.gov.au" }]
 license = "Apache-2.0"
@@ -30,7 +30,7 @@ dependencies = [
   "typesense==2.1.1",
   "pdfminer-six==20260107",
   "docx2txt==0.9",
-  "celery==5.7.0",
+  "celery[redis]==5.7.0",
   "django-celery-results==2.6.0",
   "whitenoise[brotli]==6.12.0",
   "django-crum==0.7.9",
