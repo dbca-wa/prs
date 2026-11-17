@@ -36,4 +36,4 @@ patches:
   - path: valkey_patch.yaml
 images:
   - name: ghcr.io/dbca-wa/prs
-    newTag: 2.6.15
+    newTag: 2.6.16

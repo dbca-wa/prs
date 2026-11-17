@@ -1747,7 +1747,7 @@ wheels = [
 
 [[package]]
 name = "prs"
-version = "2.6.15"
+version = "2.6.16"
 source = { virtual = "." }
 dependencies = [
     { name = "celery", extra = ["redis"] },
