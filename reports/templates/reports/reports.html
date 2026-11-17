@@ -2,13 +2,15 @@
 {% load static %}
 {% block extra_style %}
     {{ block.super }}
-    <link href="https://cdn.datatables.net/v/bs5/dt-1.13.8/date-1.5.1/datatables.min.css"
-          rel="stylesheet">
+    <link href="https://cdn.datatables.net/v/bs5/dt-1.13.8/r-2.5.0/date-1.5.1/datatables.min.css"
+          rel="stylesheet"
+          integrity="sha384-tfiPuMV4qH29FPUWr+NOMfV5pgpkknr1vUuKPhYILp6fuTbDyGfzT5GmOc2QzVMu"
+          crossorigin="anonymous">
     <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.10.0/css/bootstrap-datepicker.min.css"
+          href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.10.1/css/bootstrap-datepicker.min.css"
           integrity="sha512-34s5cpvaNG3BknEWSuOncX28vz97bRI59UnVtEEpFX536A7BtZSJHsDyFoCl8S7Dt2TPzcrCEoHBGeM4SUBDBw=="
           crossorigin="anonymous"
-          referrerpolicy="no-referrer" />
+          referrerpolicy="no-referrer">
 {% endblock %}
 {% block page_content_inner %}
     <div class="row">
@@ -80,7 +82,7 @@
                                                     </div>
                                                     <!-- /.form-group -->
                                                     <div class="form-group">
-                                                        <label for="filter-dateFrom-referral">From date referred</label>
+                                                        <label for="filter-fromDate-referral">From date referred</label>
                                                         <input class="form-control dateinput" id="filter-fromDate-referral">
                                                     </div>
                                                     <!-- /.form-group -->
@@ -93,7 +95,7 @@
                                                     </div>
                                                     <!-- /.form-group -->
                                                     <div class="form-group">
-                                                        <label for="filter-dateTo-referral">To date referred</label>
+                                                        <label for="filter-toDate-referral">To date referred</label>
                                                         <input class="form-control dateinput" id="filter-toDate-referral">
                                                     </div>
                                                     <!-- /.form-group -->
@@ -198,7 +200,7 @@
                                                     </div>
                                                     <!-- /.form-group -->
                                                     <div class="form-group">
-                                                        <label for="filter-dateFrom-clearance">From date started</label>
+                                                        <label for="filter-fromDate-clearance">From date started</label>
                                                         <input class="form-control dateinput" id="filter-fromDate-clearance">
                                                     </div>
                                                     <!-- /.form-group -->
@@ -211,7 +213,7 @@
                                                     </div>
                                                     <!-- /.form-group -->
                                                     <div class="form-group">
-                                                        <label for="filter-dateTo-clearance">To date started</label>
+                                                        <label for="filter-toDate-clearance">To date started</label>
                                                         <input class="form-control dateinput" id="filter-toDate-clearance">
                                                     </div>
                                                     <!-- /.form-group -->
@@ -325,7 +327,7 @@
                                                     </div>
                                                     <!-- /.form-group -->
                                                     <div class="form-group">
-                                                        <label for="filter-dateFrom-task">From date started</label>
+                                                        <label for="filter-fromDate-task">From date started</label>
                                                         <input class="form-control dateinput" id="filter-fromDate-task">
                                                     </div>
                                                     <!-- /.form-group -->
@@ -338,7 +340,7 @@
                                                     </div>
                                                     <!-- /.form-group -->
                                                     <div class="form-group">
-                                                        <label for="filter-dateTo-task">To date started</label>
+                                                        <label for="filter-toDate-task">To date started</label>
                                                         <input class="form-control dateinput" id="filter-toDate-task">
                                                     </div>
                                                     <!-- /.form-group -->
@@ -409,20 +411,24 @@
 {% block extra_js %}
     {{ block.super }}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.15/lodash.min.js"
-            integrity="sha256-VeNaFBVDhoX3H+gJ37DpT/nTuZTdjYro9yBruHjVmoQ="
+            integrity="sha512-3oappXMVVac3Ge3OndW0WqpGTWx9jjRJA8SXin8RxmPfc8rg87b31FGy14WHG/ZMRISo9pBjezW9y00RYAEONA=="
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"></script>
+    <script src="https://cdn.datatables.net/v/bs5/dt-1.13.8/r-2.5.0/date-1.5.1/datatables.min.js"
+            integrity="sha384-qRCYHQ6ce+NvoMqev6htDPx+p1EmMOblMk6VuLIk1x+0GaY2KJjhzQyy/UtI5Dct"
             crossorigin="anonymous"></script>
-    <script src="https://cdn.datatables.net/v/bs5/dt-1.13.8/date-1.5.1/datatables.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.10.0/js/bootstrap-datepicker.min.js"
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.10.1/js/bootstrap-datepicker.min.js"
             integrity="sha512-LsnSViqQyaXpD4mBBdRYeP6sRwJiJveh2ZIbW41EBrNmKxgr/LFZIiWT6yr+nycvhvauz8c2nYMhrP80YhG7Cw=="
             crossorigin="anonymous"
             referrerpolicy="no-referrer"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/spin.js/2.3.2/spin.min.js"
-            integrity="sha256-PieqE0QdEDMppwXrTzSZQr6tWFX3W5KkyRVyF1zN3eg="
-            crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.26.0/moment.min.js"
-            integrity="sha256-5oApc/wMda1ntIEK4qoWJ4YItnV4fBHMwywunj8gPqc="
-            crossorigin="anonymous"></script>
-    {% comment %}Make additional Javascript variables available from passed-in context.{% endcomment %}
-    {{ javascript_context|json_script:"javascript_context" }}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/spin.js/4.1.2/spin.min.js"
+            integrity="sha512-mMJ7PknucJrpbv38jYUNTLavDx9yNOihF7Pw0eQFwBuVceVsPFbcWbLD9S3YC1PU55NAtuGRX1ZDSGDVe76fCw=="
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.31.0/moment.min.js"
+            integrity="sha512-iJIt5wigccZYA4F3G8kWt8H0r43JDWpvBweaGct6QsveuU4zmyP6VX2EXMfSfA/Z80b1PfHUNLioFfY1Z55cCg=="
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"></script>
+    {% comment %}The 'context' JavaScript object is provided by the base template's json_script block.{% endcomment %}
     <script type="text/javascript" src="{% static 'js/reports.js' %}"></script>
 {% endblock %}

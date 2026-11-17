@@ -2,8 +2,10 @@
 {% load static %}
 {% block extra_style %}
     {{ block.super }}
-    <link href="https://cdn.datatables.net/v/bs5/dt-1.13.8/date-1.5.1/datatables.min.css"
-          rel="stylesheet">
+    <link href="https://cdn.datatables.net/v/bs5/dt-1.13.8/r-2.5.0/date-1.5.1/datatables.min.css"
+          rel="stylesheet"
+          integrity="sha384-tfiPuMV4qH29FPUWr+NOMfV5pgpkknr1vUuKPhYILp6fuTbDyGfzT5GmOc2QzVMu"
+          crossorigin="anonymous">
     {% if geojson_locations %}
         <link rel="stylesheet"
               href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.min.css"
@@ -20,9 +22,10 @@
               href="{% static 'css/leaflet-search.min.css' %}" />
     {% endif %}
     <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.1/min/basic.min.css"
-          integrity="sha256-RvDmZ4ZtPtrWmZdibCa80jCE32m21xuR5SuW6zfJaW4="
-          crossorigin="anonymous" />
+          href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/6.3.5/basic.min.css"
+          integrity="sha512-gnjaA0QhZoXWa8RjKNeReY5+vH/H9MnPkkpdVXLZgB+f07mzcZms3oVZdMEuDWTjj335RB9AamXs1kjT8Se8Ew=="
+          crossorigin="anonymous"
+          referrerpolicy="no-referrer">
     <link rel="stylesheet"
           type="text/css"
           href="{% static 'css/prs_dropzone_5.7.1.css' %}" />
@@ -345,10 +348,13 @@
 {% endblock page_content_inner %}
 {% block extra_js %}
     {{ block.super }}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.1/dropzone.min.js"
-            integrity="sha256-fegGeSK7Ez4lvniVEiz1nKMx9pYtlLwPNRPf6uc8d+8="
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/6.3.5/dropzone.min.js"
+            integrity="sha512-G4PNtCrV7LxV1tfaTm6OQm/0HWyS2YDtxnJlELbB/ji81HrX3ZoyktLJsDEam3j5YkjN0VywTegn5xr5N/FznA=="
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"></script>
+    <script src="https://cdn.datatables.net/v/bs5/dt-1.13.8/r-2.5.0/date-1.5.1/datatables.min.js"
+            integrity="sha384-qRCYHQ6ce+NvoMqev6htDPx+p1EmMOblMk6VuLIk1x+0GaY2KJjhzQyy/UtI5Dct"
             crossorigin="anonymous"></script>
-    <script src="https://cdn.datatables.net/v/bs5/dt-1.13.8/date-1.5.1/datatables.min.js"></script>
     {% if geojson_locations %}
         <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.min.js"
                 integrity="sha512-SeiQaaDh73yrb56sTW/RgVdi/mMqNeM2oBwubFHagc5BkixSpP1fvqF47mKzPGWYSSy4RwbBunrJBQ4Co8fRWA=="
