@@ -19,9 +19,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# `IMAGE` is read by docker-bake.hcl (variable of the same name) and is used for
+# the image tags and the registry cache refs, so a fork pushes to its own
+# namespace instead of the upstream one.
 env:
-  GHCR_IMAGE: ghcr.io/${{ github.repository }}
-  REGISTRY: ghcr.io/${{ github.repository_owner }}
+  IMAGE: ghcr.io/${{ github.repository }}
 
 jobs:
   build:
@@ -29,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     outputs:
-      image_ref: ${{ env.GHCR_IMAGE }}:${{ steps.image_tag.outputs.value }}
+      image_ref: ${{ steps.image_tag.outputs.ref }}
     permissions:
       contents: read
       packages: write # push image to GHCR
@@ -73,9 +75,11 @@ jobs:
             # strip a leading 'v' (e.g. v1.2.3-rc.1 -> 1.2.3-rc.1)
             semtag="${tag#v}"
             echo "value=${semtag}" >> "$GITHUB_OUTPUT"
+            echo "ref=${IMAGE}:${semtag}" >> "$GITHUB_OUTPUT"
             echo "has_version_tag=true" >> "$GITHUB_OUTPUT"
           else
             echo "value=latest" >> "$GITHUB_OUTPUT"
+            echo "ref=${IMAGE}:latest" >> "$GITHUB_OUTPUT"
             echo "has_version_tag=false" >> "$GITHUB_OUTPUT"
           fi
 
@@ -86,9 +90,12 @@ jobs:
           files: docker-bake.hcl
           targets: ci # CI-only target: GHCR registry cache + pull
           push: true
+          # The `ci` target inherits `app`'s tags, and bake appends `+=` values to
+          # inherited lists rather than replacing them, so `IMAGE` is overridden
+          # in the workflow env (both entries below resolve to this repository).
           set: |
-            ci.tags=${{ env.GHCR_IMAGE }}:latest
-            ${{ steps.image_tag.outputs.has_version_tag == 'true' && format('ci.tags+={0}:{1}', env.GHCR_IMAGE, steps.image_tag.outputs.value) || '' }}
+            ci.tags=${{ env.IMAGE }}:latest
+            ${{ steps.image_tag.outputs.has_version_tag == 'true' && format('ci.tags+={0}:{1}', env.IMAGE, steps.image_tag.outputs.value) || '' }}
 
   scan:
     name: Docker image vulnerability scan
