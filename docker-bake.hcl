@@ -1,11 +1,11 @@
 # docker-bake.hcl — reproducible, multi-arch build config.
 # Build (local single-platform): docker buildx bake
 # Build + push (multi-arch):      docker buildx bake --push
-# Override at runtime:            TAG=v2 REGISTRY=ghcr.io/me docker buildx bake
+# Override at runtime:            IMAGE=ghcr.io/me TAG=v2 docker buildx bake
 # Override a Dockerfile ARG:      docker buildx bake --set app.args.PYTHON_VERSION=3.13-debian13-dev
 
 variable "IMAGE" {
-  description = "Fully-qualified image name, without the tag."
+  description = "Fully-qualified image name, without the tag. Overridden by the IMAGE environment variable (multi-build.yml sets it from github.repository, so forks push to their own namespace)."
   default     = "ghcr.io/dbca-wa/prs"
 }
 
@@ -27,6 +27,11 @@ variable "PLATFORMS" {
 
 variable "TYPESENSE_VERSION" {
   default = "30.2"
+}
+
+variable "TYPESENSE_IMAGE" {
+  description = "Fully-qualified Typesense image name, without the tag."
+  default     = "ghcr.io/dbca-wa/typesense"
 }
 
 variable "CACHE_TAG" {
@@ -74,13 +79,13 @@ target "typesense" {
   context    = "."
   dockerfile = "Dockerfile.typesense"
   tags       = [
-    "ghcr.io/dbca-wa/typesense:${TAG}",
-    "ghcr.io/dbca-wa/typesense:${TYPESENSE_VERSION}",
+    "${TYPESENSE_IMAGE}:${TAG}",
+    "${TYPESENSE_IMAGE}:${TYPESENSE_VERSION}",
   ]
   platforms  = PLATFORMS
   attest     = ["type=provenance,mode=max", "type=sbom"]
-  cache-from = ["type=registry,ref=ghcr.io/dbca-wa/typesense:${CACHE_TAG}"]
-  cache-to   = ["type=registry,ref=ghcr.io/dbca-wa/typesense:${CACHE_TAG},mode=max,ignore-error=true"]
+  cache-from = ["type=registry,ref=${TYPESENSE_IMAGE}:${CACHE_TAG}"]
+  cache-to   = ["type=registry,ref=${TYPESENSE_IMAGE}:${CACHE_TAG},mode=max,ignore-error=true"]
 }
 
 # CI-only: reuses the GHCR registry cache (`${CACHE_TAG}`, shared with release
@@ -90,7 +95,10 @@ target "typesense" {
 # this before the bake step) with push access to the package.
 # Also always refreshes base images so any scheduled rebuild picks up upstream
 # security fixes.
-# Note that CI overrides tags in multi-build.yml via set: ci.tags=...
+# Note that CI sets the image tags in multi-build.yml via set: ci.tags=...
+# The `tags` attribute is inherited from `app`, and buildx bake APPENDS `+=`
+# assignments to inherited list values, so CI must also override `IMAGE`
+# (via env) or the inherited upstream tag would be pushed as well.
 target "ci" {
   inherits = ["app"]
   pull     = true

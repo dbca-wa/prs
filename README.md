@@ -111,6 +111,13 @@ To build a new Docker image locally (`ghcr.io/dbca-wa/prs:dev`):
 
     docker buildx bake local
 
+Forks can target their own namespace by overriding `IMAGE`:
+
+    IMAGE=ghcr.io/myuser/prs docker buildx bake local
+
+`docker buildx bake --push` uses the same `IMAGE` for the image tags and the
+registry build cache, so the two never point at different repositories.
+
 ## Pre-commit hooks
 
 This project includes the following pre-commit hooks:
