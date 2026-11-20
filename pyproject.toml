@@ -7,12 +7,12 @@ license = "Apache-2.0"
 readme = "README.md"
 requires-python = ">=3.13,<4"
 dependencies = [
-  "django==5.2.18",
-  "psycopg[binary,pool]==3.3.8",
-  "dbca-utils==3.0.16",
+  "django==5.2.19",
+  "psycopg[binary,pool]==3.3.9",
+  "gunicorn[fast]==27.0.1",
   "python-dotenv==1.2.4",
+  "dbca-utils==3.0.16",
   "dj-database-url==3.1.2",
-  "gunicorn[fast]==26.2.0",
   "django-extensions==4.1",
   "django-crispy-forms==2.7",
   "crispy-bootstrap5==2026.9",
