@@ -66,6 +66,8 @@ target "local" {
 
 # Multi-arch image for the registry (manual release build & push or CI).
 # Push-only target.
+# `cache-to` publishes BuildKit's layer cache as a manifest tagged
+# `${CACHE_TAG}` in the same repository. It is not a runnable image.
 target "app" {
   inherits   = ["_base"]
   tags       = ["${IMAGE}:${TAG}"]

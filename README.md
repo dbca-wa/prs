@@ -118,6 +118,11 @@ Forks can target their own namespace by overriding `IMAGE`:
 `docker buildx bake --push` uses the same `IMAGE` for the image tags and the
 registry build cache, so the two never point at different repositories.
 
+Builds also publish BuildKit's registry cache to the same package as the
+`buildcache` tag (see `CACHE_TAG` in `docker-bake.hcl`). That tag is not a
+runnable image and must not be pulled or deployed; it lets repeat builds reuse
+layers. It is safe to delete from GHCR, but the next build will recreate it.
+
 ## Pre-commit hooks
 
 This project includes the following pre-commit hooks:
