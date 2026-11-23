@@ -41,7 +41,7 @@ dependencies = [
   "shapely==2.2.0",
   "fiona==1.10.1",
   "pyproj==3.8.0",
-  "fudgeo==1.5.10",
+  "fudgeo==1.6.0",
   "django-valkey[libvalkey]==0.5.0",
 ]
 
