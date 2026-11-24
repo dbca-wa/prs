@@ -16,7 +16,7 @@ dependencies = [
   "django-extensions==4.1",
   "django-crispy-forms==2.7",
   "crispy-bootstrap5==2026.9",
-  "django-reversion==6.5.1",
+  "django-reversion==6.5.2",
   "django-taggit==7.0.0",
   "requests==2.34.2",
   "unidecode==1.4.0",
@@ -34,7 +34,7 @@ dependencies = [
   "django-celery-results==2.6.0",
   "whitenoise[brotli]==6.12.0",
   "django-crum==0.7.9",
-  "sentry-sdk[django]==2.74.0",
+  "sentry-sdk[django]==2.75.0",
   "redis==8.1.0",
   "xlsxwriter==3.3.1",
   "django-storages[azure]==1.14.6",
@@ -47,13 +47,13 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-  "ipython>=9.18.1",
-  "ipdb>=0.13.13",
-  "mixer>=7.2.2",
-  "pre-commit>=4.7.0",
-  "coverage>=7.16.2",
-  "django-stubs>=6.1.0",
-  "deptry>=0.25.1",
+  "ipython>=9.19",
+  "ipdb>=0.13",
+  "mixer>=7.2",
+  "pre-commit>=4.7",
+  "coverage>=7.16",
+  "django-stubs>=6.1",
+  "deptry>=0.25",
 ]
 
 [tool.ruff]
