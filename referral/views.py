@@ -1231,7 +1231,19 @@ class RecordUpload(LoginRequiredMixin, View):
                 creator=request.user,
                 modifier=request.user,
             )
-            messages.success(self.request, f"Shapefile processed and saved as {new_record} - {len(locations)} locations generated")
+            if features is False:
+                messages.error(
+                    self.request,
+                    f"Error while loading {uploaded_file.name} (corrupt/invalid shapefile); saved as {new_record} with no locations",
+                    extra_tags="danger",
+                )
+            elif not features:
+                messages.warning(
+                    self.request,
+                    f"No polygon features found in {uploaded_file.name}; saved as {new_record} with no locations",
+                )
+            else:
+                messages.success(self.request, f"Shapefile processed and saved as {new_record} - {len(locations)} locations generated")
 
             # Test for intersecting locations.
             intersecting_location_pks = []

@@ -29,9 +29,8 @@ from fudgeo.constant import WGS84
 from fudgeo.geopkg import SpatialReferenceSystem
 from pdfminer import high_level
 from reversion.models import Version
-from shapely import force_2d
+from shapely import transform as transform_geometry
 from shapely.geometry import shape
-from shapely.ops import transform
 from unidecode import unidecode
 
 LOGGER = logging.getLogger("prs")
@@ -718,6 +717,23 @@ def validate_zip_archive(uploaded_file: Any) -> None:
             raise ValidationError("Zip archive contains an unsafe file path.")
 
 
+def zip_member_names(uploaded_file: Any) -> list[str]:
+    """Return the names of the members of an uploaded zip archive, excluding
+    directory entries. Raises ``zipfile.BadZipFile`` if it is not a zip."""
+    uploaded_file.seek(0)
+    try:
+        with zipfile.ZipFile(uploaded_file) as archive:
+            return [member.filename for member in archive.infolist() if not member.is_dir()]
+    finally:
+        uploaded_file.seek(0)
+
+
+def shapefile_member_names(uploaded_file: Any) -> list[str]:
+    """Return the names of the shapefiles (.shp members) in an uploaded zip
+    archive. Members may sit at the archive root or inside a folder."""
+    return [name for name in zip_member_names(uploaded_file) if name.lower().endswith(".shp")]
+
+
 def _pending_upload(value: Any) -> Any:
     """Return the upload behind ``value`` if it is a file that is yet to be
     stored, otherwise ``None``.
@@ -767,34 +783,87 @@ def validate_uploaded_file(uploaded_file: Any) -> None:
 
 
 def validate_zip_upload(uploaded_file: Any) -> None:
-    """Validate that an uploaded file is an acceptable zip archive (used by the
-    shapefile upload form)."""
+    """Validate that an uploaded file is an acceptable zip archive containing at
+    least one shapefile (used by the shapefile upload form).
+
+    Checking for a shapefile here means a zip that could never be parsed is
+    rejected on the form, rather than failing later with a generic error.
+    """
     validate_uploaded_file(uploaded_file)
     upload = _pending_upload(uploaded_file)
-    if upload is not None and PurePosixPath(upload.name).suffix.lstrip(".").lower() != "zip":
+    if upload is None:
+        return
+
+    if PurePosixPath(upload.name).suffix.lstrip(".").lower() != "zip":
         raise ValidationError("File type is not permitted (.zip only).")
+
+    try:
+        members = shapefile_member_names(upload)
+    except zipfile.BadZipFile as exc:
+        raise ValidationError("File is not a valid zip archive.") from exc
+    if not members:
+        raise ValidationError("Zip archive does not contain a shapefile (.shp).")
 
 
 def parse_shapefile(uploaded_shapefile: Any) -> list[Any] | bool:
-    """For a passed-in file object, parse it as a zipped shapefile."""
+    """For a passed-in file object, parse it as a zipped shapefile.
+
+    Every shapefile in the archive is parsed, whether its members sit at the
+    archive root or inside a folder, and the geometries are projected to GDA 94.
+    Returns a list of Shapely geometries (possibly empty), or ``False`` if the
+    archive is not a readable shapefile.
+    """
     try:
-        zip_file = ZipMemoryFile(uploaded_shapefile)
-        shapefile = zip_file.open()
-    except:
-        # Exception while opening the shapefile - catch and return to the referral view.
+        shapefile_members = shapefile_member_names(uploaded_shapefile)
+    except (zipfile.BadZipFile, OSError):
+        LOGGER.warning("Uploaded file is not a valid zip archive", exc_info=True)
+        return False
+    if not shapefile_members:
+        LOGGER.warning("Uploaded zip archive does not contain a shapefile (.shp)")
         return False
 
-    source_crs = pyproj.CRS(shapefile.crs.to_string())
-    dest_crs = pyproj.CRS("EPSG:4283")  # GDA 94
-    # Define our projection function.
-    project = pyproj.Transformer.from_crs(source_crs, dest_crs, always_xy=True).transform
     features = []
+    opened = 0
+    try:
+        uploaded_shapefile.seek(0)
+        zip_file = ZipMemoryFile(uploaded_shapefile)
+        for member in shapefile_members:
+            try:
+                shapefile = zip_file.open(member)
+            except Exception:
+                # One unreadable shapefile should not prevent the others from
+                # being imported.
+                LOGGER.warning(f"Could not open shapefile '{member}' in uploaded zip archive", exc_info=True)
+                continue
+            opened += 1
+            if not shapefile.crs:
+                LOGGER.warning(f"Shapefile '{member}' has no coordinate reference system; skipping")
+                continue
 
-    for feature in shapefile:
-        if feature.geometry:
-            geometry = shape(feature.geometry)
-            projected_geometry = transform(project, geometry)  # Project the geometry to GDA 94.
-            features.append(force_2d(projected_geometry))
+            source_crs = pyproj.CRS(shapefile.crs.to_string())
+            dest_crs = pyproj.CRS("EPSG:4283")  # GDA 94
+            transformer = pyproj.Transformer.from_crs(source_crs, dest_crs, always_xy=True)
+
+            def project(coords: Any) -> list[list[float]]:
+                """Adapt the pyproj transformer to the interface expected by
+                ``shapely.transform`` (a function over a coordinate array)."""
+                x, y = transformer.transform(coords[:, 0], coords[:, 1])
+                return [[float(px), float(py)] for px, py in zip(x, y, strict=True)]
+
+            for feature in shapefile:
+                if feature.geometry:
+                    # Project the geometry to GDA 94. ``include_z`` defaults to
+                    # False, so any z values are dropped.
+                    features.append(transform_geometry(shape(feature.geometry), project))
+    except Exception:
+        LOGGER.warning("Exception while parsing uploaded shapefile", exc_info=True)
+        return False
+    finally:
+        uploaded_shapefile.seek(0)
+
+    if not opened:
+        LOGGER.warning("No shapefile in uploaded zip archive could be opened")
+        return False
 
     return features
 
