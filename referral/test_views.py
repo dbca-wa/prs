@@ -1144,6 +1144,39 @@ class RecordUploadViewTest(PrsViewsTestCase):
         # New locations have been created.
         self.assertTrue(Location.objects.current().filter(referral=referral).count() > existing_location_count)
 
+    def test_post_nested_shapefile(self):
+        """A shapefile inside a folder in the zip must still import locations"""
+        referral = Referral.objects.first()
+        existing_location_count = Location.objects.current().filter(referral=referral).count()
+        url = reverse("referral_record_upload", kwargs={"pk": referral.pk})
+        with zipfile.ZipFile(os.path.join(self.test_data_path, "shapefile.zip")) as archive:
+            buffer = io.BytesIO()
+            with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as nested:
+                for name in archive.namelist():
+                    nested.writestr(f"Spatial/{name}", archive.read(name))
+        upload = SimpleUploadedFile("shapefile.zip", buffer.getvalue(), content_type="application/zip")
+        resp = self.client.post(url, {"file": upload})
+        self.assertEqual(resp.status_code, 200)
+        result = json.loads(resp.content.decode("utf8"))
+        self.assertTrue(Record.objects.filter(pk=result["object"]["id"]).exists())
+        # New locations have been created.
+        self.assertTrue(Location.objects.current().filter(referral=referral).count() > existing_location_count)
+
+    def test_post_zip_without_shapefile(self):
+        """A zip that is not a shapefile is saved as a record, with no locations"""
+        referral = Referral.objects.first()
+        existing_location_count = Location.objects.current().filter(referral=referral).count()
+        url = reverse("referral_record_upload", kwargs={"pk": referral.pk})
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, "w") as archive:
+            archive.writestr("readme.txt", "Not a shapefile")
+        upload = SimpleUploadedFile("archive.zip", buffer.getvalue(), content_type="application/zip")
+        resp = self.client.post(url, {"file": upload})
+        self.assertEqual(resp.status_code, 200)
+        result = json.loads(resp.content.decode("utf8"))
+        self.assertTrue(Record.objects.filter(pk=result["object"]["id"]).exists())
+        self.assertEqual(Location.objects.current().filter(referral=referral).count(), existing_location_count)
+
 
 class ShapefileUploadViewTest(PrsViewsTestCase):
     def test_post(self):

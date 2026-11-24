@@ -1,10 +1,20 @@
+import zipfile
 from datetime import date
+from io import BytesIO
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from referral.forms import OrganisationForm, RecordCreateForm, RecordForm, ReferralForm, ShapefileUploadForm
 from referral.models import DopTrigger, Organisation, ReferralType, Region
 from referral.test_models import PrsTestCase
+
+
+def _zip_bytes(members: dict[str, bytes]) -> bytes:
+    buffer = BytesIO()
+    with zipfile.ZipFile(buffer, "w") as archive:
+        for name, data in members.items():
+            archive.writestr(name, data)
+    return buffer.getvalue()
 
 
 class ReferralFormTest(PrsTestCase):
@@ -92,12 +102,25 @@ class RecordFormTest(PrsTestCase):
 
 
 class ShapefileUploadFormTest(PrsTestCase):
-    def test_accepts_zip(self):
-        upload = SimpleUploadedFile("shapefile.zip", b"PK\x05\x06" + b"\x00" * 18, content_type="text/plain")
-        # A minimal empty zip archive is structurally valid; only the upload
-        # validation is under test here.
+    def test_accepts_zip_with_shapefile(self):
+        """A zip containing a .shp member is accepted; the shapefile itself is
+        only parsed later, in the view."""
+        upload = SimpleUploadedFile("shapefile.zip", _zip_bytes({"polygons.shp": b"not parsed here"}), content_type="text/plain")
         form = ShapefileUploadForm(data={}, files={"uploaded_shapefile": upload})
         self.assertTrue(form.is_valid(), form.errors)
+
+    def test_accepts_zip_with_nested_shapefile(self):
+        """A shapefile inside a folder is just as valid as one at the root."""
+        upload = SimpleUploadedFile("shapefile.zip", _zip_bytes({"Spatial/polygons.shp": b"not parsed here"}), content_type="text/plain")
+        form = ShapefileUploadForm(data={}, files={"uploaded_shapefile": upload})
+        self.assertTrue(form.is_valid(), form.errors)
+
+    def test_rejects_zip_without_shapefile(self):
+        """A safe zip that contains no shapefile can never be imported."""
+        upload = SimpleUploadedFile("shapefile.zip", _zip_bytes({"readme.txt": b"Not a shapefile"}), content_type="text/plain")
+        form = ShapefileUploadForm(data={}, files={"uploaded_shapefile": upload})
+        self.assertFalse(form.is_valid())
+        self.assertIn("uploaded_shapefile", form.errors)
 
     def test_rejects_non_zip(self):
         upload = SimpleUploadedFile("shapefile.txt", b"Test data", content_type="application/zip")
