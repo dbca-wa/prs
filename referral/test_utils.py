@@ -1,9 +1,12 @@
+import zipfile
 from datetime import date, timedelta
+from io import BytesIO
 from pathlib import Path
 from unittest.mock import Mock, patch
 
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import connection
 from django.db.models.base import ModelBase
 from django.db.models.query import QuerySet
@@ -23,6 +26,7 @@ from referral.utils import (
     is_prs_power_user,
     is_prs_user,
     overdue_task_email,
+    parse_shapefile,
     prs_user,
     query_geocoder,
     smart_truncate,
@@ -256,3 +260,81 @@ class GroupMembershipTest(PrsTestCase):
         response = self.client.get(reverse("site_home"))
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.context["prs_power_user"])
+
+
+SHAPEFILE_TEST_DATA = Path(__file__).parent / "test_data"
+
+
+def _rearchive(source: Path, folder: str = "", exclude_suffixes: tuple[str, ...] = ()) -> bytes:
+    """Return the bytes of a zip archive rebuilt from ``source``, optionally
+    placing every member inside ``folder`` and dropping matching suffixes."""
+    with zipfile.ZipFile(source) as archive:
+        buffer = BytesIO()
+        with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as target:
+            for name in archive.namelist():
+                if Path(name).suffix.lower() in exclude_suffixes:
+                    continue
+                target.writestr(f"{folder}/{name}" if folder else name, archive.read(name))
+        return buffer.getvalue()
+
+
+def _shapefile_upload(data: bytes, name: str = "shapefile.zip") -> SimpleUploadedFile:
+    return SimpleUploadedFile(name, data, content_type="application/zip")
+
+
+def _merge_archives(*archives: bytes) -> bytes:
+    buffer = BytesIO()
+    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as target:
+        for data in archives:
+            with zipfile.ZipFile(BytesIO(data)) as archive:
+                for name in archive.namelist():
+                    target.writestr(name, archive.read(name))
+    return buffer.getvalue()
+
+
+class ParseShapefileTest(SimpleTestCase):
+    """``parse_shapefile`` must find shapefiles anywhere in an uploaded zip
+    archive, not just at the archive root, and must be resilient to a single
+    unreadable shapefile."""
+
+    def setUp(self):
+        self.source = SHAPEFILE_TEST_DATA / "shapefile.zip"
+        self.root_level = parse_shapefile(_shapefile_upload(_rearchive(self.source)))
+
+    def test_parses_root_level_shapefile(self):
+        self.assertIsInstance(self.root_level, list)
+        self.assertTrue(self.root_level)
+
+    def test_parses_shapefile_inside_folder(self):
+        nested = parse_shapefile(_shapefile_upload(_rearchive(self.source, "Spatial")))
+        self.assertIsInstance(nested, list)
+        self.assertEqual([geom.wkt for geom in nested], [geom.wkt for geom in self.root_level])
+
+    def test_parses_every_shapefile_in_archive(self):
+        data = _merge_archives(_rearchive(self.source), _rearchive(self.source, "copy"))
+        features = parse_shapefile(_shapefile_upload(data))
+        self.assertEqual(len(features), 2 * len(self.root_level))
+
+    def test_returns_false_without_shapefile(self):
+        buffer = BytesIO()
+        with zipfile.ZipFile(buffer, "w") as archive:
+            archive.writestr("readme.txt", "Not a shapefile")
+        self.assertFalse(parse_shapefile(_shapefile_upload(buffer.getvalue())))
+
+    def test_returns_false_for_unreadable_shapefile(self):
+        data = (SHAPEFILE_TEST_DATA / "shapefile_invalid.zip").read_bytes()
+        self.assertFalse(parse_shapefile(_shapefile_upload(data)))
+
+    def test_skips_shapefile_without_projection(self):
+        data = _rearchive(self.source, exclude_suffixes=(".prj",))
+        self.assertEqual(parse_shapefile(_shapefile_upload(data)), [])
+
+    def test_resets_file_position(self):
+        upload = _shapefile_upload(_rearchive(self.source))
+        parse_shapefile(upload)
+        self.assertEqual(upload.tell(), 0)
+
+    def test_resets_file_position_on_failure(self):
+        upload = _shapefile_upload(b"not a zip archive")
+        self.assertFalse(parse_shapefile(upload))
+        self.assertEqual(upload.tell(), 0)
