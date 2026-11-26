@@ -1835,7 +1835,7 @@ requires-dist = [
     { name = "unidecode", specifier = "==1.4.0" },
     { name = "webtemplate-dbca", specifier = "==1.9.1" },
     { name = "whitenoise", extras = ["brotli"], specifier = "==6.12.0" },
-    { name = "xlsxwriter", specifier = "==3.3.1" },
+    { name = "xlsxwriter", specifier = "==3.3.2" },
     { name = "xmltodict", specifier = "==1.0.4" },
 ]
 
@@ -2554,11 +2554,11 @@ sdist = { url = "https://files.pythonhosted.org/packages/89/8d/7aad74930380c8972
 
 [[package]]
 name = "xlsxwriter"
-version = "3.3.1"
+version = "3.3.2"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/9c/fb/31bdbf3737222d92ef7d2db4d50089b2253dbbb63ceb6d20a4447f6b7ed0/xlsxwriter-3.3.1.tar.gz", hash = "sha256:0867761912cceac76f97ffa76eeda18c623ae9217f601be8512f55b1af4bdb6e", size = 223040, upload-time = "2026-10-28T22:52:46.592Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/02/ff/ce271c4e8da536ea6527a755ceb7921a2d012ef32c68b34a8fed8b80b95a/xlsxwriter-3.3.2.tar.gz", hash = "sha256:a7ec4285416ee246753ad21c18ef6c161cdeaf2c29a7b9475236cce6098b21fe", size = 223740, upload-time = "2026-11-19T18:36:54.463Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/88/eb/1e6af9959a567901a7e7c7cef2e75883e487df223ed67f9a8977ff863bd8/xlsxwriter-3.3.1-py3-none-any.whl", hash = "sha256:8e2c89e59d733fe59e112317218c64fbbc276d90a8c144ebd6f7fa15e7ab184a", size = 180583, upload-time = "2026-10-28T22:52:45.048Z" },
+    { url = "https://files.pythonhosted.org/packages/55/d7/08bf584f3308e0ea1fa84f0cb9a0f225ef7178eb1face785a190f08a97be/xlsxwriter-3.3.2-py3-none-any.whl", hash = "sha256:bc10b314ec3bbcc910b489f095f1a365863d9482afa681748f97d6d5e976f944", size = 180558, upload-time = "2026-11-19T18:36:53.169Z" },
 ]
 
 [[package]]
